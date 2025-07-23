@@ -1,24 +1,23 @@
 
 import React from 'react';
-import { Button } from "@/components/ui/button";
+import Header from '../components/Header';
+import Footer from '../components/Footer';
+import HeroSection from '../components/HeroSection';
+import HowItWorks from '../components/HowItWorks';
+import FeaturedDesigners from '../components/FeaturedDesigners';
+import FeaturesSection from '../components/FeaturesSection';
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to DesignHub</h1>
-        <p className="text-xl text-muted-foreground mb-8">
-          India's first real-time design collaboration platform
-        </p>
-        <div className="flex gap-4 justify-center">
-          <Button asChild>
-            <a href="/about">Learn More</a>
-          </Button>
-          <Button variant="outline">
-            Get Started
-          </Button>
-        </div>
-      </div>
+    <div className="min-h-screen bg-background">
+      <Header />
+      <main>
+        <HeroSection />
+        <HowItWorks />
+        <FeaturedDesigners />
+        <FeaturesSection />
+      </main>
+      <Footer />
     </div>
   );
 };

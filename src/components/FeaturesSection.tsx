@@ -1,72 +1,61 @@
 
 import React from 'react';
+import { Search, Shield, MessageCircle, DollarSign, Star, Clock } from 'lucide-react';
 
 const FeaturesSection = () => {
   const features = [
     {
-      icon: '🎨',
-      title: 'Smart Logo Generator',
-      description: 'Create professional logos in minutes with AI-powered design suggestions tailored to your brand.',
-      color: 'from-purple-500 to-pink-500'
+      icon: Search,
+      title: 'Smart Matching',
+      description: 'Our AI-powered system matches you with designers who perfectly fit your project requirements and budget.'
     },
     {
-      icon: '🖼️',
-      title: 'AI Image Creation',
-      description: 'Generate stunning images, illustrations, and graphics from simple text descriptions.',
-      color: 'from-blue-500 to-cyan-500'
+      icon: Shield,
+      title: 'Verified Portfolios',
+      description: 'All designer portfolios are verified and showcase real work with client testimonials and project details.'
     },
     {
-      icon: '✨',
-      title: 'Design Enhancement',
-      description: 'Improve existing designs with AI-powered suggestions and automatic optimizations.',
-      color: 'from-green-500 to-teal-500'
+      icon: MessageCircle,
+      title: 'Seamless Communication',
+      description: 'Built-in messaging, video calls, and project management tools keep everyone aligned throughout the process.'
     },
     {
-      icon: '📐',
-      title: 'Template Generator',
-      description: 'Create custom templates for social media, presentations, and marketing materials.',
-      color: 'from-orange-500 to-red-500'
+      icon: DollarSign,
+      title: 'Transparent Pricing',
+      description: 'See upfront pricing, compare quotes, and pay securely with our escrow protection system.'
     },
     {
-      icon: '🎭',
-      title: 'Color Palette AI',
-      description: 'Generate harmonious color schemes that perfectly match your brand and design goals.',
-      color: 'from-indigo-500 to-purple-500'
+      icon: Star,
+      title: 'Quality Assurance',
+      description: 'Ratings, reviews, and our quality guarantee ensure you get exceptional results every time.'
     },
     {
-      icon: '🔤',
-      title: 'Typography Assistant',
-      description: 'Get intelligent font pairing suggestions and typography layouts for your designs.',
-      color: 'from-pink-500 to-rose-500'
+      icon: Clock,
+      title: 'Fast Delivery',
+      description: 'Most projects are completed 40% faster with our streamlined workflow and milestone tracking.'
     }
   ];
 
   return (
-    <section className="py-20 bg-background">
+    <section className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-foreground mb-6">
-            Powerful AI Features
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+            Why Choose Our Platform?
           </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Discover how our AI assistant can transform your design workflow and help you create professional-quality designs effortlessly.
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            We've built the most trusted marketplace for design services, connecting talented designers with clients worldwide.
           </p>
         </div>
-        
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature, index) => (
-            <div key={index} className="group p-8 bg-card rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-border">
-              <div className={`w-16 h-16 rounded-xl bg-gradient-to-r ${feature.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                <span className="text-2xl">{feature.icon}</span>
+            <div key={index} className="p-8 rounded-2xl bg-gray-50 hover:bg-green-50 transition-colors group">
+              <div className="w-16 h-16 flex items-center justify-center bg-green-100 rounded-2xl mb-6 group-hover:bg-green-200 transition-colors">
+                <feature.icon className="w-8 h-8 text-green-600" />
               </div>
-              
-              <h3 className="text-xl font-bold text-card-foreground mb-4">
-                {feature.title}
-              </h3>
-              
-              <p className="text-muted-foreground leading-relaxed">
-                {feature.description}
-              </p>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">{feature.title}</h3>
+              <p className="text-gray-600 leading-relaxed">{feature.description}</p>
             </div>
           ))}
         </div>
