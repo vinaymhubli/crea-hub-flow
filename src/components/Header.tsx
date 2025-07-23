@@ -41,6 +41,14 @@ const Header = () => {
               Designers
             </Link>
             <Link 
+              to="/ai-assistant" 
+              className={`transition-colors ${
+                isActive('/ai-assistant') ? 'text-green-600' : 'text-muted-foreground hover:text-green-600'
+              }`}
+            >
+              AI Assistant
+            </Link>
+            <Link 
               to="/about" 
               className={`transition-colors ${
                 isActive('/about') ? 'text-green-600' : 'text-muted-foreground hover:text-green-600'
@@ -85,6 +93,14 @@ const Header = () => {
                 }`}
               >
                 Designers
+              </Link>
+              <Link 
+                to="/ai-assistant" 
+                className={`transition-colors ${
+                  isActive('/ai-assistant') ? 'text-green-600' : 'text-muted-foreground hover:text-green-600'
+                }`}
+              >
+                AI Assistant
               </Link>
               <Link 
                 to="/about" 
