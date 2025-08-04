@@ -9,6 +9,7 @@ import About from "./pages/About";
 import Designers from "./pages/Designers";
 import AIAssistant from "./pages/AIAssistant";
 import HowToUse from "./pages/HowToUse";
+import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/designers" element={<Designers />} />
           <Route path="/ai-assistant" element={<AIAssistant />} />
           <Route path="/how-to-use" element={<HowToUse />} />
+          <Route path="/contact" element={<Contact />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
