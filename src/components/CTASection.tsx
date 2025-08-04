@@ -1,106 +1,84 @@
 
-import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 
-const CTASection = () => {
-  const [email, setEmail] = useState('');
-  const [isSubmitted, setIsSubmitted] = useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email) {
-      setIsSubmitted(true);
-      setEmail('');
-      setTimeout(() => setIsSubmitted(false), 3000);
-    }
-  };
-
+export default function CTASection() {
   return (
-    <section 
-      className="relative py-20 overflow-hidden"
-      style={{
-        backgroundImage: `url('https://readdy.ai/api/search-image?query=futuristic%20AI%20technology%20background%20with%20neural%20networks%2C%20digital%20brain%20connections%2C%20glowing%20circuits%20and%20data%20streams%2C%20abstract%20technological%20patterns%20in%20purple%20and%20blue%20colors%2C%20modern%20artificial%20intelligence%20visualization%2C%20high-tech%20digital%20environment%20with%20floating%20geometric%20shapes%20and%20light%20effects&width=1920&height=800&seq=ai-cta-bg&orientation=landscape')`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
-      }}
-    >
-      <div className="absolute inset-0 bg-gradient-to-r from-purple-900/90 to-blue-900/90"></div>
+    <section className="py-24 bg-gradient-to-br from-green-600 via-blue-600 to-purple-600 relative overflow-hidden">
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20"
+        style={{
+          backgroundImage: `url('https://readdy.ai/api/search-image?query=diverse%20team%20of%20creative%20professionals%20celebrating%20success%20in%20modern%20design%20studio%20with%20laptops%20tablets%20and%20design%20tools%20scattered%20around%20collaborative%20workspace%20environment%20with%20bright%20lighting%20and%20inspiring%20creative%20atmosphere&width=1200&height=600&seq=cta-success&orientation=landscape')`
+        }}
+      ></div>
       
-      <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
-        <div className="mb-12">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            <span className="bg-gradient-to-r from-yellow-300 to-pink-300 bg-clip-text text-transparent">
-              Ready to Transform
+      <div className="relative max-w-7xl mx-auto px-6 text-center">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-4xl md:text-6xl font-bold text-white mb-8 leading-tight">
+            Ready to Start Your
+            <span className="block bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">
+              Creative Journey?
             </span>
-            <br />
-            <span className="text-white">Your Design Process?</span>
           </h2>
-          <p className="text-xl text-gray-200 mb-8 leading-relaxed">
-            Join thousands of designers and businesses already using our AI-powered tools. 
-            Be the first to access our revolutionary design platform when it launches.
+          
+          <p className="text-xl md:text-2xl text-white/90 mb-12 leading-relaxed">
+            Join thousands of successful customers and designers who are already creating amazing work together. 
+            Your next great project is just one click away.
           </p>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-6 mb-12">
-          <div className="group bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 hover:bg-white/20 transition-all duration-300 hover:scale-105">
-            <div className="w-12 h-12 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center mb-4 mx-auto">
-              <span className="text-white text-xl">⚡</span>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-12">
+            {/* For Customers */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-8 hover:bg-white/20 transition-all duration-300 transform hover:-translate-y-2">
+              <div className="w-16 h-16 bg-green-400 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <i className="ri-user-heart-fill text-2xl text-white"></i>
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-4">I Need Design Work</h3>
+              <p className="text-white/80 mb-6">Find talented designers and bring your creative vision to life with professional results.</p>
+              <Link to="/designers" className="bg-white text-green-600 px-8 py-4 rounded-full font-semibold hover:bg-gray-100 transition-colors cursor-pointer whitespace-nowrap inline-flex items-center">
+                <i className="ri-search-eye-line mr-2"></i>
+                Browse Designers
+              </Link>
             </div>
-            <h3 className="text-white font-semibold mb-2">Lightning Fast</h3>
-            <p className="text-gray-300 text-sm">Generate designs in seconds, not hours</p>
+            
+            {/* For Designers */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-8 hover:bg-white/20 transition-all duration-300 transform hover:-translate-y-2">
+              <div className="w-16 h-16 bg-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <i className="ri-palette-fill text-2xl text-white"></i>
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-4">I'm a Designer</h3>
+              <p className="text-white/80 mb-6">Showcase your skills, connect with clients, and build a thriving design business.</p>
+              <Link to="/designers" className="bg-white text-blue-600 px-8 py-4 rounded-full font-semibold hover:bg-gray-100 transition-colors cursor-pointer whitespace-nowrap inline-flex items-center">
+                <i className="ri-user-add-line mr-2"></i>
+                Join as Designer
+              </Link>
+            </div>
           </div>
           
-          <div className="group bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 hover:bg-white/20 transition-all duration-300 hover:scale-105">
-            <div className="w-12 h-12 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full flex items-center justify-center mb-4 mx-auto">
-              <span className="text-white text-xl">🧠</span>
+          {/* Trust Indicators */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            <div>
+              <div className="text-3xl font-bold text-white mb-2">10,000+</div>
+              <div className="text-white/80">Happy Customers</div>
             </div>
-            <h3 className="text-white font-semibold mb-2">AI-Powered</h3>
-            <p className="text-gray-300 text-sm">Smart algorithms that understand your vision</p>
+            <div>
+              <div className="text-3xl font-bold text-white mb-2">5,000+</div>
+              <div className="text-white/80">Verified Designers</div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-white mb-2">50,000+</div>
+              <div className="text-white/80">Projects Completed</div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-white mb-2">99.2%</div>
+              <div className="text-white/80">Satisfaction Rate</div>
+            </div>
           </div>
-          
-          <div className="group bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 hover:bg-white/20 transition-all duration-300 hover:scale-105">
-            <div className="w-12 h-12 bg-gradient-to-r from-orange-400 to-red-500 rounded-full flex items-center justify-center mb-4 mx-auto">
-              <span className="text-white text-xl">💝</span>
-            </div>
-            <h3 className="text-white font-semibold mb-2">Free Forever</h3>
-            <p className="text-gray-300 text-sm">Core features always free for everyone</p>
-          </div>
-        </div>
-
-        <div className="max-w-md mx-auto">
-          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email address"
-              className="flex-1 px-6 py-4 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent"
-              required
-            />
-            <button
-              type="submit"
-              className="px-8 py-4 bg-gradient-to-r from-green-500 to-blue-600 text-white font-semibold rounded-full hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
-            >
-              {isSubmitted ? 'Thank You!' : 'Get Early Access'}
-            </button>
-          </form>
-          
-          {isSubmitted && (
-            <div className="mt-4 p-4 bg-green-500/20 backdrop-blur-sm border border-green-400/30 rounded-lg">
-              <p className="text-green-200 text-sm">
-                <span className="mr-2">✓</span>
-                You're on the list! We'll notify you when AI Assistant launches.
-              </p>
-            </div>
-          )}
-          
-          <p className="text-gray-300 text-sm mt-4">
-            No spam, unsubscribe anytime. Join 50,000+ designers already waiting.
-          </p>
         </div>
       </div>
+      
+      {/* Decorative Elements */}
+      <div className="absolute top-20 left-10 w-20 h-20 bg-white/10 rounded-full animate-pulse"></div>
+      <div className="absolute bottom-20 right-10 w-16 h-16 bg-yellow-300/20 rounded-full animate-bounce"></div>
+      <div className="absolute top-1/2 left-20 w-12 h-12 bg-pink-300/20 rounded-full animate-ping"></div>
     </section>
   );
-};
-
-export default CTASection;
+}
