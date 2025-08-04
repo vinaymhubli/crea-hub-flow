@@ -57,21 +57,39 @@ const Header = () => {
             >
               AI Assistant
             </Link>
-            <a href="/how-to-use" className="text-gray-700 hover:text-green-600 font-medium transition-colors">
+            <Link 
+              to="/how-to-use" 
+              className={`font-medium transition-colors ${
+                isActive('/how-to-use') ? 'text-green-600' : 'text-gray-700 hover:text-green-600'
+              }`}
+            >
               How to Use
-            </a>
-            <a href="/contact-us" className="text-gray-700 hover:text-green-600 font-medium transition-colors">
+            </Link>
+            <Link 
+              to="/contact" 
+              className={`font-medium transition-colors ${
+                isActive('/contact') ? 'text-green-600' : 'text-gray-700 hover:text-green-600'
+              }`}
+            >
               Contact Us
-            </a>
+            </Link>
           </nav>
 
           <div className="hidden md:flex items-center space-x-4">
-            <a href="/login" className="text-gray-700 hover:text-green-600 font-medium transition-colors">
+            <Link 
+              to="/login" 
+              className={`font-medium transition-colors ${
+                isActive('/login') ? 'text-green-600' : 'text-gray-700 hover:text-green-600'
+              }`}
+            >
               Sign In
-            </a>
-            <a href="/signup" className="bg-green-600 text-white px-6 py-2 rounded-full font-medium hover:bg-green-700 transition-colors whitespace-nowrap">
+            </Link>
+            <Link 
+              to="/signup" 
+              className="bg-green-600 text-white px-6 py-2 rounded-full font-medium hover:bg-green-700 transition-colors whitespace-nowrap"
+            >
               Get Started
-            </a>
+            </Link>
           </div>
 
           <button 
@@ -117,19 +135,37 @@ const Header = () => {
               >
                 AI Assistant
               </Link>
-              <a href="/how-to-use" className="text-gray-700 hover:text-green-600 font-medium transition-colors">
+              <Link 
+                to="/how-to-use" 
+                className={`font-medium transition-colors ${
+                  isActive('/how-to-use') ? 'text-green-600' : 'text-gray-700 hover:text-green-600'
+                }`}
+              >
                 How to Use
-              </a>
-              <a href="/contact-us" className="text-gray-700 hover:text-green-600 font-medium transition-colors">
+              </Link>
+              <Link 
+                to="/contact" 
+                className={`font-medium transition-colors ${
+                  isActive('/contact') ? 'text-green-600' : 'text-gray-700 hover:text-green-600'
+                }`}
+              >
                 Contact Us
-              </a>
+              </Link>
               <div className="pt-4 border-t border-gray-100 flex flex-col space-y-3">
-                <a href="/login" className="text-gray-700 hover:text-green-600 font-medium transition-colors">
+                <Link 
+                  to="/login" 
+                  className={`font-medium transition-colors ${
+                    isActive('/login') ? 'text-green-600' : 'text-gray-700 hover:text-green-600'
+                  }`}
+                >
                   Sign In
-                </a>
-                <a href="/signup" className="bg-green-600 text-white px-6 py-2 rounded-full font-medium hover:bg-green-700 transition-colors text-center whitespace-nowrap">
+                </Link>
+                <Link 
+                  to="/signup" 
+                  className="bg-green-600 text-white px-6 py-2 rounded-full font-medium hover:bg-green-700 transition-colors text-center whitespace-nowrap"
+                >
                   Get Started
-                </a>
+                </Link>
               </div>
             </nav>
           </div>

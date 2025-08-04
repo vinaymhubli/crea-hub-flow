@@ -10,6 +10,7 @@ import Designers from "./pages/Designers";
 import AIAssistant from "./pages/AIAssistant";
 import HowToUse from "./pages/HowToUse";
 import Contact from "./pages/Contact";
+import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/ai-assistant" element={<AIAssistant />} />
           <Route path="/how-to-use" element={<HowToUse />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/login" element={<Login />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
