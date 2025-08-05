@@ -256,12 +256,42 @@ export default function DesignerDashboard() {
                     </Button>
                   </div>
                   
-                  <div className="mt-6 p-4 bg-green-50 rounded-lg">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="text-sm font-medium text-green-800">Notification System Active</span>
-                    </div>
-                    <p className="text-sm text-green-700">You'll receive alerts when customers request sessions</p>
+                  <div className="grid grid-cols-3 gap-4 mt-6">
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <Clock className="w-4 h-4 text-gray-500" />
+                          <span className="text-sm text-gray-600">Response Time</span>
+                        </div>
+                        <p className="text-xl font-bold text-gray-900">0 min</p>
+                        <p className="text-xs text-gray-500 mt-1">Average time to respond to booking requests</p>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <Eye className="w-4 h-4 text-gray-500" />
+                          <span className="text-sm text-gray-600">Portfolio Views</span>
+                        </div>
+                        <p className="text-xl font-bold text-gray-900">0</p>
+                        <p className="text-xs text-gray-500 mt-1">Number of times clients viewed your portfolio</p>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <User className="w-4 h-4 text-gray-500" />
+                          <span className="text-sm text-gray-600">Profile Completion</span>
+                        </div>
+                        <p className="text-xl font-bold text-gray-900">85%</p>
+                        <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                          <div className="bg-green-500 h-2 rounded-full" style={{ width: '85%' }}></div>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">Complete your profile to attract more clients</p>
+                      </CardContent>
+                    </Card>
                   </div>
                 </CardContent>
               </Card>
