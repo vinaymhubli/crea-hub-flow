@@ -299,20 +299,45 @@ export default function DesignerProfile() {
               </TabsContent>
 
               <TabsContent value="portfolio" className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Portfolio</CardTitle>
-                    <CardDescription>Showcase your best work to attract potential clients.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-12">
-                      <FolderOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                      <h3 className="font-semibold text-gray-900 mb-2">No portfolio items yet</h3>
-                      <p className="text-sm text-gray-500 mb-4">Add your best work to showcase your skills to potential clients.</p>
-                      <Button>Add Portfolio Item</Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Portfolio</h2>
+                    <p className="text-gray-600">Showcase your best design work to attract more clients</p>
+                  </div>
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                    <span className="mr-2">+</span>
+                    Add Portfolio Item
+                  </Button>
+                </div>
+
+                <div className="border-b border-gray-200">
+                  <nav className="flex space-x-8">
+                    {["All Works", "Logo Design", "Branding", "UI/UX Design", "Print Design", "Illustration", "Web Design", "Other"].map((category) => (
+                      <button
+                        key={category}
+                        className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                          category === "All Works"
+                            ? "border-blue-500 text-blue-600"
+                            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                        }`}
+                      >
+                        {category}
+                      </button>
+                    ))}
+                  </nav>
+                </div>
+
+                <div className="text-center py-16">
+                  <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                    <FolderOpen className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">No portfolio items</h3>
+                  <p className="text-gray-500 mb-6">Get started by adding your first portfolio item.</p>
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                    <span className="mr-2">+</span>
+                    Add Portfolio Item
+                  </Button>
+                </div>
               </TabsContent>
 
               <TabsContent value="reviews" className="space-y-6">
