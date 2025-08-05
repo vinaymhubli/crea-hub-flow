@@ -132,7 +132,7 @@ export default function CustomerDashboard() {
         <main className="flex-1 flex">
           <div className="flex-1">
             {/* Header */}
-            <header className="bg-white border-b border-gray-200 px-6 py-4">
+            <header className="bg-white border-b border-gray-200 px-6 py-8">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <SidebarTrigger />
@@ -216,6 +216,22 @@ export default function CustomerDashboard() {
                   <span className="font-semibold text-gray-700">Add Funds</span>
                 </Button>
               </div>
+
+              {/* Wallet Balance */}
+              <Card>
+                <CardContent className="p-6">
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600 mb-2">Wallet Balance</p>
+                    <p className="text-3xl font-bold text-gray-900 mb-4">$120.00</p>
+                    <p className="text-sm text-gray-500 mb-4">Available for design sessions</p>
+                    <Link to="/customer-dashboard/wallet">
+                      <Button className="bg-blue-600 hover:bg-blue-700">
+                        Add Funds
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Upcoming Sessions */}
               <Card>
@@ -333,19 +349,6 @@ export default function CustomerDashboard() {
 
           {/* Right Sidebar */}
           <div className="w-80 bg-white border-l border-gray-200 p-6 space-y-6">
-            {/* Wallet Balance */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="text-center">
-                  <p className="text-sm text-gray-600 mb-2">Wallet Balance</p>
-                  <p className="text-3xl font-bold text-gray-900 mb-4">$120.00</p>
-                  <p className="text-sm text-gray-500 mb-4">Available for design sessions</p>
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                    Add Funds
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
 
             {/* Recent Designers */}
             <Card>
