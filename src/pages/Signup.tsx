@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
 export default function Signup() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -42,10 +43,16 @@ export default function Signup() {
 
     setIsLoading(true);
 
-    // Simulate signup process
+    // Simulate signup process and redirect based on user type
     setTimeout(() => {
       setIsLoading(false);
-      alert('Account creation functionality will be implemented soon!');
+      
+      // Redirect to appropriate dashboard based on user type
+      if (formData.userType === 'designer') {
+        navigate('/designer-dashboard');
+      } else {
+        navigate('/customer-dashboard');
+      }
     }, 1000);
   };
 

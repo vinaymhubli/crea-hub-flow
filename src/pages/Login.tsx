@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
 export default function Login() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -13,10 +14,12 @@ export default function Login() {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulate login process
+    // Simulate login process and redirect to customer dashboard by default
     setTimeout(() => {
       setIsLoading(false);
-      alert('Login functionality will be implemented soon!');
+      // For demo purposes, redirect to customer dashboard
+      // In real implementation, this would be based on user data from authentication
+      navigate('/customer-dashboard');
     }, 1000);
   };
 
