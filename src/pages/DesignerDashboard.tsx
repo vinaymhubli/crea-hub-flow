@@ -12,7 +12,8 @@ import {
   Star,
   TrendingUp,
   CalendarClock,
-  Bell
+  Bell,
+  LogOut
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import {
@@ -30,6 +31,8 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
 
 const sidebarItems = [
   { title: "Dashboard", url: "/designer-dashboard", icon: LayoutDashboard },
@@ -111,9 +114,55 @@ export default function DesignerDashboard() {
               </div>
               <div className="flex items-center space-x-3">
                 <Bell className="w-5 h-5 text-gray-600" />
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <span className="text-green-600 font-semibold text-sm">VB</span>
-                </div>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center hover:bg-green-200 transition-colors">
+                      <span className="text-green-600 font-semibold text-sm">VB</span>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 p-0" align="end">
+                    <div className="p-4">
+                      <div className="flex items-center space-x-3 mb-3">
+                        <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                          <span className="text-green-600 font-semibold text-sm">VB</span>
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900">Vb Bn</p>
+                          <p className="text-sm text-gray-500">lvbn200@gmail.com</p>
+                        </div>
+                      </div>
+                      <Separator className="my-3" />
+                      <div className="space-y-1">
+                        <Link 
+                          to="/designer-dashboard" 
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                        >
+                          <LayoutDashboard className="w-4 h-4 mr-3" />
+                          Dashboard
+                        </Link>
+                        <Link 
+                          to="/designer-dashboard/earnings" 
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                        >
+                          <DollarSign className="w-4 h-4 mr-3" />
+                          Earnings
+                        </Link>
+                        <Link 
+                          to="/designer-dashboard/profile" 
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                        >
+                          <User className="w-4 h-4 mr-3" />
+                          Profile
+                        </Link>
+                        <Separator className="my-2" />
+                        <button className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
+                          <LogOut className="w-4 h-4 mr-3" />
+                          Log out
+                        </button>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
           </header>
