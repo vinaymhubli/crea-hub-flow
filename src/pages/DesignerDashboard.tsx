@@ -103,21 +103,25 @@ export default function DesignerDashboard() {
         
         <main className="flex-1">
           {/* Header */}
-          <header className="bg-white border-b border-gray-200 px-6 py-4">
+          <header className="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <SidebarTrigger />
+                <SidebarTrigger className="text-white" />
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-                  <p className="text-gray-600">Welcome back, Designer</p>
+                  <h1 className="text-3xl font-bold text-white">Designer Dashboard</h1>
+                  <p className="text-green-100">Manage your design business</p>
                 </div>
               </div>
-              <div className="flex items-center space-x-3">
-                <Bell className="w-5 h-5 text-gray-600" />
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                  <span className="text-green-100 text-sm font-medium">Online</span>
+                </div>
+                <Bell className="w-5 h-5 text-green-100" />
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center hover:bg-green-200 transition-colors">
-                      <span className="text-green-600 font-semibold text-sm">VB</span>
+                    <button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
+                      <span className="text-white font-semibold text-sm">VB</span>
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-64 p-0" align="end">
@@ -168,24 +172,32 @@ export default function DesignerDashboard() {
           </header>
 
           <div className="p-6 space-y-6">
-            {/* Action Buttons */}
+            {/* Quick Actions */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Button className="h-12 bg-blue-600 hover:bg-blue-700 text-white">
-                <Calendar className="w-4 h-4 mr-2" />
-                View Bookings
-              </Button>
-              <Button variant="outline" className="h-12 border-gray-300 hover:bg-gray-50">
-                <FolderOpen className="w-4 h-4 mr-2" />
-                Update Portfolio
-              </Button>
-              <Button variant="outline" className="h-12 border-gray-300 hover:bg-gray-50">
-                <Clock className="w-4 h-4 mr-2" />
-                Set Availability
-              </Button>
-              <Button variant="outline" className="h-12 border-gray-300 hover:bg-gray-50">
-                <User className="w-4 h-4 mr-2" />
-                Edit Profile
-              </Button>
+              <Link to="/designer-dashboard/bookings">
+                <Button className="w-full h-16 bg-green-600 hover:bg-green-700 text-white flex-col space-y-2">
+                  <Calendar className="w-5 h-5" />
+                  <span className="font-semibold">Manage Bookings</span>
+                </Button>
+              </Link>
+              <Link to="/designer-dashboard/portfolio">
+                <Button variant="outline" className="w-full h-16 border-green-300 hover:bg-green-50 text-green-700 flex-col space-y-2">
+                  <FolderOpen className="w-5 h-5" />
+                  <span className="font-semibold">Update Portfolio</span>
+                </Button>
+              </Link>
+              <Link to="/designer-dashboard/availability">
+                <Button variant="outline" className="w-full h-16 border-green-300 hover:bg-green-50 text-green-700 flex-col space-y-2">
+                  <Clock className="w-5 h-5" />
+                  <span className="font-semibold">Set Availability</span>
+                </Button>
+              </Link>
+              <Link to="/designer-dashboard/earnings">
+                <Button variant="outline" className="w-full h-16 border-green-300 hover:bg-green-50 text-green-700 flex-col space-y-2">
+                  <DollarSign className="w-5 h-5" />
+                  <span className="font-semibold">View Earnings</span>
+                </Button>
+              </Link>
             </div>
 
             {/* Active Design Sessions */}
