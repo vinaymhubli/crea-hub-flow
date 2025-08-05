@@ -8,7 +8,8 @@ import {
   DollarSign, 
   History, 
   Settings,
-  Plus
+  Plus,
+  X
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import {
@@ -23,6 +24,11 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const sidebarItems = [
   { title: "Dashboard", url: "/designer-dashboard", icon: LayoutDashboard },
@@ -84,6 +90,137 @@ function DesignerSidebar() {
   );
 }
 
+function AddPortfolioDialog() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const portfolioCategories = [
+    "Logo Design",
+    "Branding", 
+    "UI/UX Design",
+    "Print Design",
+    "Illustration",
+    "Web Design",
+    "Other"
+  ];
+
+  const handleSave = () => {
+    // Handle save logic here
+    setIsOpen(false);
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button className="bg-blue-600 hover:bg-blue-700 text-white flex items-center space-x-2">
+          <Plus className="w-4 h-4" />
+          <span>Add Portfolio Item</span>
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg mx-auto">
+        <DialogHeader className="flex flex-row items-center justify-between">
+          <DialogTitle className="text-lg font-semibold">Add Portfolio Item</DialogTitle>
+          <button 
+            onClick={() => setIsOpen(false)}
+            className="p-1 hover:bg-gray-100 rounded"
+          >
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </DialogHeader>
+        
+        <div className="space-y-4 mt-4">
+          <p className="text-gray-600 text-sm">Add your best work to showcase your skills and attract clients.</p>
+          
+          <div className="space-y-2">
+            <Label htmlFor="projectTitle">Project Title</Label>
+            <Input 
+              id="projectTitle" 
+              placeholder="E.g., Modern Logo for Tech Startup"
+              className="w-full"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="category">Category</Label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {portfolioCategories.map((category) => (
+                    <SelectItem key={category} value={category.toLowerCase().replace(/\s+/g, '-')}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="year">Year</Label>
+              <Input 
+                id="year" 
+                placeholder="2025"
+                type="number"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="imageUrl">Image URL</Label>
+            <Input 
+              id="imageUrl" 
+              placeholder="https://example.com/image.jpg"
+              className="w-full"
+            />
+            <p className="text-sm text-gray-500">Provide a direct link to your image (preferred dimensions: 1200x800px)</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea 
+              id="description" 
+              placeholder="Describe your work, process, and results"
+              className="min-h-24 resize-none"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="client">Client (Optional)</Label>
+              <Input 
+                id="client" 
+                placeholder="Client name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="projectLink">Project Link (Optional)</Label>
+              <Input 
+                id="projectLink" 
+                placeholder="https://example.com"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSave}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              Save
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function DesignerPortfolio() {
   const [activeCategory, setActiveCategory] = useState("All Works");
 
@@ -114,10 +251,7 @@ export default function DesignerPortfolio() {
                   <p className="text-gray-600">Showcase your best design work to attract more clients</p>
                 </div>
               </div>
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white flex items-center space-x-2">
-                <Plus className="w-4 h-4" />
-                <span>Add Portfolio Item</span>
-              </Button>
+              <AddPortfolioDialog />
             </div>
           </header>
 
@@ -150,10 +284,7 @@ export default function DesignerPortfolio() {
               <p className="text-gray-500 mb-8 max-w-md mx-auto">
                 Get started by adding your first portfolio item.
               </p>
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white flex items-center space-x-2">
-                <Plus className="w-4 h-4" />
-                <span>Add Portfolio Item</span>
-              </Button>
+              <AddPortfolioDialog />
             </div>
           </div>
         </main>
