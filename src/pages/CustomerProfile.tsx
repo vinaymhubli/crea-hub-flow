@@ -24,7 +24,8 @@ import {
   Globe,
   Shield,
   Eye,
-  EyeOff
+  EyeOff,
+  Lock
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import {
@@ -47,6 +48,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Clock } from "lucide-react";
 
 const sidebarItems = [
   { title: "Dashboard", url: "/customer-dashboard", icon: LayoutDashboard },
@@ -209,206 +211,307 @@ export default function CustomerProfile() {
             </div>
           </header>
 
-          <div className="p-6 max-w-4xl mx-auto">
-            {/* Profile Picture Section */}
-            <Card className="mb-6">
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-6">
-                  <div className="relative">
-                    <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-blue-600 font-semibold text-2xl">VB</span>
+          <div className="p-6">
+          <div className="flex gap-6">
+            {/* Main Content */}
+            <div className="flex-1 space-y-6">
+              {/* Profile Picture Section */}
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-center mb-6">
+                    <div className="relative">
+                      <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span className="text-blue-600 font-semibold text-2xl">VB</span>
+                      </div>
+                      <button className="absolute -bottom-2 -right-2 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white hover:bg-blue-700 transition-colors">
+                        <Camera className="w-4 h-4" />
+                      </button>
                     </div>
-                    <button className="absolute -bottom-2 -right-2 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white hover:bg-blue-700 transition-colors">
-                      <Camera className="w-4 h-4" />
-                    </button>
                   </div>
+                  <div className="text-center">
+                    <h2 className="text-2xl font-semibold text-gray-900">{profileData.firstName} {profileData.lastName}</h2>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Personal Information */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-900">{profileData.firstName} {profileData.lastName}</h3>
-                    <p className="text-gray-600">{profileData.email}</p>
-                    <p className="text-sm text-gray-500 mt-1">Member since {profileData.joinedDate}</p>
+                    <CardTitle>Personal Information</CardTitle>
+                    <CardDescription>Update your personal details</CardDescription>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Personal Information */}
-            <Card className="mb-6">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle>Personal Information</CardTitle>
-                  <CardDescription>Update your personal details and contact information</CardDescription>
-                </div>
-                {!isEditing ? (
-                  <Button onClick={() => setIsEditing(true)} variant="outline">
-                    <Edit className="w-4 h-4 mr-2" />
-                    Edit
-                  </Button>
-                ) : (
-                  <div className="flex space-x-2">
-                    <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
-                      <Save className="w-4 h-4 mr-2" />
-                      Save
+                  {!isEditing ? (
+                    <Button onClick={() => setIsEditing(true)} className="bg-blue-600 hover:bg-blue-700">
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit
                     </Button>
-                    <Button onClick={handleCancel} variant="outline">
-                      <X className="w-4 h-4 mr-2" />
-                      Cancel
-                    </Button>
+                  ) : (
+                    <div className="flex space-x-2">
+                      <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
+                        <Save className="w-4 h-4 mr-2" />
+                        Save
+                      </Button>
+                      <Button onClick={handleCancel} variant="outline">
+                        <X className="w-4 h-4 mr-2" />
+                        Cancel
+                      </Button>
+                    </div>
+                  )}
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="firstName">First Name</Label>
+                      {isEditing ? (
+                        <Input
+                          id="firstName"
+                          value={formData.firstName}
+                          onChange={(e) => setFormData({...formData, firstName: e.target.value})}
+                        />
+                      ) : (
+                        <Input value={profileData.firstName} readOnly className="bg-gray-50" />
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName">Last Name</Label>
+                      {isEditing ? (
+                        <Input
+                          id="lastName"
+                          value={formData.lastName}
+                          onChange={(e) => setFormData({...formData, lastName: e.target.value})}
+                        />
+                      ) : (
+                        <Input value={profileData.lastName} readOnly className="bg-gray-50" />
+                      )}
+                    </div>
                   </div>
-                )}
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
-                    {isEditing ? (
-                      <Input
-                        id="firstName"
-                        value={formData.firstName}
-                        onChange={(e) => setFormData({...formData, firstName: e.target.value})}
-                      />
-                    ) : (
-                      <p className="py-2 text-gray-900">{profileData.firstName}</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
-                    {isEditing ? (
-                      <Input
-                        id="lastName"
-                        value={formData.lastName}
-                        onChange={(e) => setFormData({...formData, lastName: e.target.value})}
-                      />
-                    ) : (
-                      <p className="py-2 text-gray-900">{profileData.lastName}</p>
-                    )}
-                  </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <div className="flex items-center space-x-2">
-                    <Mail className="w-4 h-4 text-gray-400" />
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
                     {isEditing ? (
                       <Input
                         id="email"
                         type="email"
                         value={formData.email}
                         onChange={(e) => setFormData({...formData, email: e.target.value})}
-                        className="flex-1"
                       />
                     ) : (
-                      <p className="py-2 text-gray-900">{profileData.email}</p>
+                      <Input value={profileData.email} readOnly className="bg-gray-50" />
                     )}
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <div className="flex items-center space-x-2">
-                    <Phone className="w-4 h-4 text-gray-400" />
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone</Label>
                     {isEditing ? (
                       <Input
                         id="phone"
                         value={formData.phone}
                         onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                        className="flex-1"
                       />
                     ) : (
-                      <p className="py-2 text-gray-900">{profileData.phone}</p>
+                      <Input value={profileData.phone} readOnly className="bg-gray-50" />
                     )}
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="company">Company</Label>
-                  <div className="flex items-center space-x-2">
-                    <Building className="w-4 h-4 text-gray-400" />
-                    {isEditing ? (
-                      <Input
-                        id="company"
-                        value={formData.company}
-                        onChange={(e) => setFormData({...formData, company: e.target.value})}
-                        className="flex-1"
-                      />
-                    ) : (
-                      <p className="py-2 text-gray-900">{profileData.company}</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label>
-                  <div className="flex items-center space-x-2">
-                    <MapPin className="w-4 h-4 text-gray-400" />
+                  <div className="space-y-2">
+                    <Label htmlFor="location">Location</Label>
                     {isEditing ? (
                       <Input
                         id="location"
                         value={formData.location}
                         onChange={(e) => setFormData({...formData, location: e.target.value})}
-                        className="flex-1"
                       />
                     ) : (
-                      <p className="py-2 text-gray-900">{profileData.location}</p>
+                      <Input value={profileData.location} readOnly className="bg-gray-50" />
                     )}
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="website">Website</Label>
-                  <div className="flex items-center space-x-2">
-                    <Globe className="w-4 h-4 text-gray-400" />
+                  <div className="space-y-2">
+                    <Label htmlFor="website">Website</Label>
                     {isEditing ? (
                       <Input
                         id="website"
                         value={formData.website}
                         onChange={(e) => setFormData({...formData, website: e.target.value})}
-                        className="flex-1"
                       />
                     ) : (
-                      <a href={profileData.website} target="_blank" rel="noopener noreferrer" className="py-2 text-blue-600 hover:text-blue-700">
-                        {profileData.website}
-                      </a>
+                      <Input value={profileData.website} readOnly className="bg-gray-50" />
                     )}
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="bio">Bio</Label>
-                  {isEditing ? (
-                    <Textarea
-                      id="bio"
-                      value={formData.bio}
-                      onChange={(e) => setFormData({...formData, bio: e.target.value})}
-                      rows={4}
-                    />
-                  ) : (
-                    <p className="py-2 text-gray-900">{profileData.bio}</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Account Statistics */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <div className="text-2xl font-bold text-gray-900 mb-2">12</div>
-                  <p className="text-sm text-gray-600">Projects Completed</p>
+                  <div className="space-y-2">
+                    <Label htmlFor="bio">Bio</Label>
+                    {isEditing ? (
+                      <Textarea
+                        id="bio"
+                        value={formData.bio}
+                        onChange={(e) => setFormData({...formData, bio: e.target.value})}
+                        rows={4}
+                      />
+                    ) : (
+                      <Textarea value={profileData.bio} readOnly className="bg-gray-50" rows={4} />
+                    )}
+                  </div>
                 </CardContent>
               </Card>
+
+              {/* Security Section */}
               <Card>
-                <CardContent className="p-6 text-center">
-                  <div className="text-2xl font-bold text-gray-900 mb-2">8</div>
-                  <p className="text-sm text-gray-600">Designers Worked With</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <div className="text-2xl font-bold text-gray-900 mb-2">4.9</div>
-                  <p className="text-sm text-gray-600">Average Rating Given</p>
+                <CardHeader>
+                  <CardTitle>Security</CardTitle>
+                  <CardDescription>Manage your password and account security</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <h4 className="font-medium text-gray-900">Password</h4>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="currentPassword">Current Password</Label>
+                          <Input
+                            id="currentPassword"
+                            type="password"
+                            placeholder="Enter current password"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="newPassword">New Password</Label>
+                          <Input
+                            id="newPassword"
+                            type="password"
+                            placeholder="Enter new password"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                          <Input
+                            id="confirmPassword"
+                            type="password"
+                            placeholder="Confirm new password"
+                          />
+                        </div>
+                        <Button className="bg-blue-600 hover:bg-blue-700">
+                          <Lock className="w-4 h-4 mr-2" />
+                          Change Password
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      <h4 className="font-medium text-gray-900">Security Settings</h4>
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between p-4 border rounded-lg">
+                          <div>
+                            <p className="font-medium">Two-Factor Authentication</p>
+                            <p className="text-sm text-gray-500">Add an extra layer of security</p>
+                          </div>
+                          <Switch />
+                        </div>
+                        <div className="flex items-center justify-between p-4 border rounded-lg">
+                          <div>
+                            <p className="font-medium">Login Alerts</p>
+                            <p className="text-sm text-gray-500">Get notified of new logins</p>
+                          </div>
+                          <Switch defaultChecked />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>
+
+            {/* Sidebar */}
+            <div className="w-80 space-y-6">
+              {/* Account Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Account Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center space-x-3">
+                    <User className="w-4 h-4 text-gray-400" />
+                    <div>
+                      <p className="text-sm text-gray-500">Account Type</p>
+                      <p className="font-medium">Customer</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Calendar className="w-4 h-4 text-gray-400" />
+                    <div>
+                      <p className="text-sm text-gray-500">Member Since</p>
+                      <p className="font-medium">April 2023</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Clock className="w-4 h-4 text-gray-400" />
+                    <div>
+                      <p className="text-sm text-gray-500">Design Sessions</p>
+                      <p className="font-medium">12 completed</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <MapPin className="w-4 h-4 text-gray-400" />
+                    <div>
+                      <p className="text-sm text-gray-500">Location</p>
+                      <p className="font-medium">New York, NY</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Globe className="w-4 h-4 text-gray-400" />
+                    <div>
+                      <p className="text-sm text-gray-500">Website</p>
+                      <a href="https://www.mywebsite.com" className="font-medium text-blue-600 hover:text-blue-700">
+                        www.mywebsite.com
+                      </a>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Recent Activity */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Activity</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-4">
+                    <div className="flex items-start space-x-3">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">Booked a design session</p>
+                        <p className="text-sm text-gray-500">Emma Thompson for 45 minutes</p>
+                        <p className="text-xs text-gray-400">Yesterday</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">Added funds to wallet</p>
+                        <p className="text-sm text-gray-500">$50.00</p>
+                        <p className="text-xs text-gray-400">1 week ago</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">Completed design session</p>
+                        <p className="text-sm text-gray-500">Marcus Chen - Logo design</p>
+                        <p className="text-xs text-gray-400">2 weeks ago</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">Created account</p>
+                        <p className="text-xs text-gray-400">May 7, 2025</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
           </div>
         </main>
       </div>
