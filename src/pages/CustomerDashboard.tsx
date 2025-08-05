@@ -198,22 +198,30 @@ export default function CustomerDashboard() {
           <div className="p-6 space-y-6">
               {/* Action Buttons */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Button className="h-16 bg-blue-600 hover:bg-blue-700 text-white flex-col space-y-2">
-                  <Search className="w-5 h-5" />
-                  <span className="font-semibold">Find Designer</span>
-                </Button>
-                <Button variant="outline" className="h-16 border-gray-300 hover:bg-gray-50 flex-col space-y-2">
-                  <Calendar className="w-5 h-5 text-gray-600" />
-                  <span className="font-semibold text-gray-700">My Bookings</span>
-                </Button>
-                <Button variant="outline" className="h-16 border-gray-300 hover:bg-gray-50 flex-col space-y-2">
-                  <MessageCircle className="w-5 h-5 text-gray-600" />
-                  <span className="font-semibold text-gray-700">Messages</span>
-                </Button>
-                <Button variant="outline" className="h-16 border-gray-300 hover:bg-gray-50 flex-col space-y-2">
-                  <CreditCard className="w-5 h-5 text-gray-600" />
-                  <span className="font-semibold text-gray-700">Add Funds</span>
-                </Button>
+                <Link to="/designers">
+                  <Button className="w-full h-16 bg-blue-600 hover:bg-blue-700 text-white flex-col space-y-2">
+                    <Search className="w-5 h-5" />
+                    <span className="font-semibold">Find Designer</span>
+                  </Button>
+                </Link>
+                <Link to="/customer-dashboard/bookings">
+                  <Button variant="outline" className="w-full h-16 border-gray-300 hover:bg-gray-50 flex-col space-y-2">
+                    <Calendar className="w-5 h-5 text-gray-600" />
+                    <span className="font-semibold text-gray-700">My Bookings</span>
+                  </Button>
+                </Link>
+                <Link to="/customer-dashboard/messages">
+                  <Button variant="outline" className="w-full h-16 border-gray-300 hover:bg-gray-50 flex-col space-y-2">
+                    <MessageCircle className="w-5 h-5 text-gray-600" />
+                    <span className="font-semibold text-gray-700">Messages</span>
+                  </Button>
+                </Link>
+                <Link to="/customer-dashboard/wallet">
+                  <Button variant="outline" className="w-full h-16 border-gray-300 hover:bg-gray-50 flex-col space-y-2">
+                    <CreditCard className="w-5 h-5 text-gray-600" />
+                    <span className="font-semibold text-gray-700">Add Funds</span>
+                  </Button>
+                </Link>
               </div>
 
               {/* Wallet Balance */}
@@ -249,9 +257,11 @@ export default function CustomerDashboard() {
                     <CalendarClock className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <h3 className="font-semibold text-gray-900 mb-2">No upcoming sessions</h3>
                     <p className="text-sm text-gray-500 mb-4">You don't have any design sessions scheduled. Book a session with a designer to get started.</p>
-                    <Button className="bg-blue-600 hover:bg-blue-700">
-                      Find a Designer
-                    </Button>
+                    <Link to="/designers">
+                      <Button className="bg-blue-600 hover:bg-blue-700">
+                        Find a Designer
+                      </Button>
+                    </Link>
                   </div>
                 </CardContent>
               </Card>
@@ -329,10 +339,12 @@ export default function CustomerDashboard() {
                       <ChevronRight className="w-4 h-4 text-gray-400" />
                     </div>
                   ))}
-                  <Button variant="outline" className="w-full mt-4">
-                    <Search className="w-4 h-4 mr-2" />
-                    Find More Designers
-                  </Button>
+                  <Link to="/designers">
+                    <Button variant="outline" className="w-full mt-4">
+                      <Search className="w-4 h-4 mr-2" />
+                      Find More Designers
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
 
@@ -348,9 +360,11 @@ export default function CustomerDashboard() {
                       </div>
                       <h3 className="font-semibold text-gray-900 mb-2">AI Design Assistant</h3>
                       <p className="text-sm text-gray-600 mb-4">Get instant design suggestions powered by AI technology</p>
-                      <Button className="bg-blue-600 hover:bg-blue-700">
-                        Try AI Assistant
-                      </Button>
+                      <Link to="/ai-assistant">
+                        <Button className="bg-blue-600 hover:bg-blue-700">
+                          Try AI Assistant
+                        </Button>
+                      </Link>
                     </CardContent>
                   </Card>
 
@@ -361,9 +375,11 @@ export default function CustomerDashboard() {
                       </div>
                       <h3 className="font-semibold text-gray-900 mb-2">Design Tips</h3>
                       <p className="text-sm text-gray-600 mb-4">Learn how to get the most out of your design sessions</p>
-                      <Button variant="outline">
-                        View Tips
-                      </Button>
+                      <Link to="/how-to-use">
+                        <Button variant="outline">
+                          View Tips
+                        </Button>
+                      </Link>
                     </CardContent>
                   </Card>
 
@@ -374,9 +390,11 @@ export default function CustomerDashboard() {
                       </div>
                       <h3 className="font-semibold text-gray-900 mb-2">Top Designers</h3>
                       <p className="text-sm text-gray-600 mb-4">Browse our featured designers with excellent ratings</p>
-                      <Button variant="outline">
-                        Explore Designers
-                      </Button>
+                      <Link to="/designers">
+                        <Button variant="outline">
+                          Browse Designers
+                        </Button>
+                      </Link>
                     </CardContent>
                   </Card>
                 </div>

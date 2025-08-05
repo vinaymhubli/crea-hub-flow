@@ -26,6 +26,8 @@ import CustomerBookings from "./pages/CustomerBookings";
 import CustomerMessages from "./pages/CustomerMessages";
 import CustomerRecentDesigners from "./pages/CustomerRecentDesigners";
 import CustomerNotifications from "./pages/CustomerNotifications";
+import CustomerProfile from "./pages/CustomerProfile";
+import CustomerSettings from "./pages/CustomerSettings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -59,6 +61,8 @@ const App = () => (
           <Route path="/customer-dashboard/messages" element={<CustomerMessages />} />
           <Route path="/customer-dashboard/recent-designers" element={<CustomerRecentDesigners />} />
           <Route path="/customer-dashboard/notifications" element={<CustomerNotifications />} />
+          <Route path="/customer-dashboard/profile" element={<CustomerProfile />} />
+          <Route path="/customer-dashboard/settings" element={<CustomerSettings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
