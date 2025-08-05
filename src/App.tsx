@@ -15,6 +15,7 @@ import Signup from "./pages/Signup";
 import DesignerDashboard from "./pages/DesignerDashboard";
 import DesignerProfile from "./pages/DesignerProfile";
 import DesignerPortfolio from "./pages/DesignerPortfolio";
+import DesignerBookings from "./pages/DesignerBookings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const App = () => (
           <Route path="/designer-dashboard" element={<DesignerDashboard />} />
           <Route path="/designer-dashboard/profile" element={<DesignerProfile />} />
           <Route path="/designer-dashboard/portfolio" element={<DesignerPortfolio />} />
+          <Route path="/designer-dashboard/bookings" element={<DesignerBookings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
