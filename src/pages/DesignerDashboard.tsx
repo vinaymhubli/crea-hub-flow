@@ -101,92 +101,95 @@ function DesignerSidebar() {
 export default function DesignerDashboard() {
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gradient-subtle">
+      <div className="min-h-screen flex w-full" style={{ background: 'var(--gradient-subtle)' }}>
         <DesignerSidebar />
         
         <main className="flex-1">
           {/* Modern Header */}
-          <header className="bg-white/80 backdrop-blur-sm border-b border-gray-100/50 px-6 py-6">
+          <header className="bg-card/95 backdrop-blur-sm border-b border-border px-6 py-6 sticky top-0 z-10">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <SidebarTrigger className="hover:bg-gray-100 p-2 rounded-lg transition-colors" />
+                <SidebarTrigger className="hover:bg-accent/50 p-2 rounded-lg transition-colors" />
                 <div>
-                  <h1 className="text-3xl font-bold text-gradient">Good morning, Vb!</h1>
-                  <p className="text-gray-600 flex items-center space-x-2">
-                    <Sparkles className="w-4 h-4 text-yellow-500" />
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                    Good morning, Vb!
+                  </h1>
+                  <p className="text-muted-foreground flex items-center space-x-2 mt-1">
+                    <Sparkles className="w-4 h-4 text-accent" />
                     <span>Ready to create something amazing today?</span>
                   </p>
                 </div>
               </div>
               <div className="flex items-center space-x-4">
-                <div className="relative">
-                  <Bell className="w-6 h-6 text-gray-600 hover:text-primary cursor-pointer transition-colors" />
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                <div className="relative group">
+                  <Bell className="w-6 h-6 text-muted-foreground hover:text-primary cursor-pointer transition-colors" />
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-destructive rounded-full animate-pulse"></div>
                 </div>
-                <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-lg">
-                  <span className="text-white font-bold text-sm">VB</span>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg overflow-hidden" style={{ background: 'var(--gradient-primary)' }}>
+                  <span className="text-primary-foreground font-bold text-sm">VB</span>
                 </div>
               </div>
             </div>
           </header>
 
-          <div className="p-6 space-y-8">
+          <div className="p-6 space-y-8 max-w-7xl mx-auto">
             {/* Quick Actions */}
-            <div className="animate-fade-in">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center space-x-2">
-                <Zap className="w-5 h-5 text-yellow-500" />
+            <div className="animate-in slide-in-from-bottom-4 duration-700">
+              <h2 className="text-xl font-semibold text-foreground mb-6 flex items-center space-x-2">
+                <Zap className="w-5 h-5 text-accent" />
                 <span>Quick Actions</span>
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Link to="/designer-dashboard/bookings">
-                  <Button className="h-14 w-full btn-gradient group">
+                <Link to="/designer-dashboard/bookings" className="group">
+                  <Button className="h-16 w-full bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-300 group-hover:scale-[1.02]">
                     <Calendar className="w-5 h-5 mr-3" />
-                    <span>View Bookings</span>
+                    <span className="font-medium">View Bookings</span>
                     <ArrowUpRight className="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                   </Button>
                 </Link>
-                <Link to="/designer-dashboard/portfolio">
-                  <Button variant="outline" className="h-14 w-full hover-lift">
+                <Link to="/designer-dashboard/portfolio" className="group">
+                  <Button variant="outline" className="h-16 w-full border-2 hover:border-primary/50 hover:bg-primary/5 shadow-md hover:shadow-lg transition-all duration-300 group-hover:scale-[1.02]">
                     <FolderOpen className="w-5 h-5 mr-3" />
-                    <span>Update Portfolio</span>
+                    <span className="font-medium">Update Portfolio</span>
                   </Button>
                 </Link>
-                <Link to="/designer-dashboard/availability">
-                  <Button variant="outline" className="h-14 w-full hover-lift">
+                <Link to="/designer-dashboard/availability" className="group">
+                  <Button variant="outline" className="h-16 w-full border-2 hover:border-primary/50 hover:bg-primary/5 shadow-md hover:shadow-lg transition-all duration-300 group-hover:scale-[1.02]">
                     <Clock className="w-5 h-5 mr-3" />
-                    <span>Set Availability</span>
+                    <span className="font-medium">Set Availability</span>
                   </Button>
                 </Link>
-                <Link to="/designer-dashboard/profile">
-                  <Button variant="outline" className="h-14 w-full hover-lift">
+                <Link to="/designer-dashboard/profile" className="group">
+                  <Button variant="outline" className="h-16 w-full border-2 hover:border-primary/50 hover:bg-primary/5 shadow-md hover:shadow-lg transition-all duration-300 group-hover:scale-[1.02]">
                     <User className="w-5 h-5 mr-3" />
-                    <span>Edit Profile</span>
+                    <span className="font-medium">Edit Profile</span>
                   </Button>
                 </Link>
               </div>
             </div>
 
             {/* Active Sessions Card */}
-            <Card className="card-glow animate-slide-up border-0 overflow-hidden">
-              <div className="bg-gradient-primary p-6 text-white">
-                <div className="flex items-center justify-between">
+            <Card className="border-0 overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 animate-in slide-in-from-bottom-4 delay-150">
+              <div className="p-8 text-white relative overflow-hidden" style={{ background: 'var(--gradient-primary)' }}>
+                <div className="flex items-center justify-between relative z-10">
                   <div>
-                    <h2 className="text-xl font-bold mb-2">Active Design Sessions</h2>
-                    <p className="text-white/80">Manage your ongoing client work</p>
+                    <h2 className="text-2xl font-bold mb-2">Active Design Sessions</h2>
+                    <p className="text-primary-foreground/80">Manage your ongoing client work</p>
                   </div>
-                  <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
+                  <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
                     <CalendarClock className="w-8 h-8 text-white" />
                   </div>
                 </div>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16"></div>
               </div>
               <CardContent className="p-8">
                 <div className="text-center">
-                  <div className="w-20 h-20 bg-gradient-subtle rounded-full flex items-center justify-center mx-auto mb-4">
-                    <CalendarClock className="w-10 h-10 text-gray-400" />
+                  <div className="w-20 h-20 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CalendarClock className="w-10 h-10 text-muted-foreground" />
                   </div>
-                  <h3 className="font-semibold text-gray-900 mb-2">No active sessions</h3>
-                  <p className="text-gray-500 mb-4">When clients start a session with you, they will appear here.</p>
-                  <Button variant="outline" className="hover-lift">
+                  <h3 className="font-semibold text-foreground mb-2">No active sessions</h3>
+                  <p className="text-muted-foreground mb-6">When clients start a session with you, they will appear here.</p>
+                  <Button variant="outline" className="hover:bg-primary/5 hover:border-primary/50 transition-all duration-300">
                     <Calendar className="w-4 h-4 mr-2" />
                     Check Your Schedule
                   </Button>
