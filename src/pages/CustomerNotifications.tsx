@@ -44,6 +44,7 @@ import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 
 const sidebarItems = [
   { title: "Dashboard", url: "/customer-dashboard", icon: LayoutDashboard },
@@ -389,7 +390,9 @@ export default function CustomerNotifications() {
             </div>
           </header>
 
-          <div className="p-6">
+          <div className="flex-1 flex">
+            {/* Main Notifications Area */}
+            <div className="flex-1 p-6">
             {notifications.length === 0 ? (
               <Card>
                 <CardContent className="py-12 text-center">
@@ -401,18 +404,29 @@ export default function CustomerNotifications() {
             ) : (
               <Tabs defaultValue="all" className="space-y-6">
                 <div className="flex items-center justify-between">
-                  <TabsList>
+                  <TabsList className="grid grid-cols-6 w-full max-w-2xl">
                     <TabsTrigger value="all">All ({notifications.length})</TabsTrigger>
                     <TabsTrigger value="unread">Unread ({unreadCount})</TabsTrigger>
-                    <TabsTrigger value="read">Read ({readNotifications.length})</TabsTrigger>
+                    <TabsTrigger value="bookings">Bookings</TabsTrigger>
+                    <TabsTrigger value="messages">Messages</TabsTrigger>
+                    <TabsTrigger value="payments">Payments</TabsTrigger>
+                    <TabsTrigger value="system">System</TabsTrigger>
                   </TabsList>
                   
-                  {notifications.length > 0 && (
-                    <Button variant="outline" size="sm" onClick={handleClearAll}>
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Clear all
-                    </Button>
-                  )}
+                  <div className="flex space-x-3">
+                    {unreadCount > 0 && (
+                      <Button variant="outline" onClick={handleMarkAllAsRead}>
+                        <Check className="w-4 h-4 mr-2" />
+                        Mark all as read
+                      </Button>
+                    )}
+                    {notifications.length > 0 && (
+                      <Button variant="outline" size="sm" onClick={handleClearAll}>
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Clear all
+                      </Button>
+                    )}
+                  </div>
                 </div>
 
                 <TabsContent value="all" className="space-y-4">
@@ -447,17 +461,80 @@ export default function CustomerNotifications() {
                   )}
                 </TabsContent>
 
-                <TabsContent value="read" className="space-y-4">
-                  {readNotifications.length === 0 ? (
+                <TabsContent value="bookings" className="space-y-4">
+                  {notifications.filter(n => n.type.includes('booking')).length === 0 ? (
                     <Card>
                       <CardContent className="py-12 text-center">
-                        <Info className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                        <h3 className="font-semibold text-gray-900 mb-2">No read notifications</h3>
-                        <p className="text-sm text-gray-500">Read notifications will appear here.</p>
+                        <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                        <h3 className="font-semibold text-gray-900 mb-2">No booking notifications</h3>
+                        <p className="text-sm text-gray-500">Booking-related notifications will appear here.</p>
                       </CardContent>
                     </Card>
                   ) : (
-                    readNotifications.map((notification) => (
+                    notifications.filter(n => n.type.includes('booking')).map((notification) => (
+                      <NotificationCard
+                        key={notification.id}
+                        notification={notification}
+                        onMarkAsRead={handleMarkAsRead}
+                        onDelete={handleDeleteNotification}
+                      />
+                    ))
+                  )}
+                </TabsContent>
+
+                <TabsContent value="messages" className="space-y-4">
+                  {notifications.filter(n => n.type === 'message').length === 0 ? (
+                    <Card>
+                      <CardContent className="py-12 text-center">
+                        <MessageCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                        <h3 className="font-semibold text-gray-900 mb-2">No message notifications</h3>
+                        <p className="text-sm text-gray-500">Message notifications will appear here.</p>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    notifications.filter(n => n.type === 'message').map((notification) => (
+                      <NotificationCard
+                        key={notification.id}
+                        notification={notification}
+                        onMarkAsRead={handleMarkAsRead}
+                        onDelete={handleDeleteNotification}
+                      />
+                    ))
+                  )}
+                </TabsContent>
+
+                <TabsContent value="payments" className="space-y-4">
+                  {notifications.filter(n => n.type === 'payment').length === 0 ? (
+                    <Card>
+                      <CardContent className="py-12 text-center">
+                        <CreditCard className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                        <h3 className="font-semibold text-gray-900 mb-2">No payment notifications</h3>
+                        <p className="text-sm text-gray-500">Payment notifications will appear here.</p>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    notifications.filter(n => n.type === 'payment').map((notification) => (
+                      <NotificationCard
+                        key={notification.id}
+                        notification={notification}
+                        onMarkAsRead={handleMarkAsRead}
+                        onDelete={handleDeleteNotification}
+                      />
+                    ))
+                  )}
+                </TabsContent>
+
+                <TabsContent value="system" className="space-y-4">
+                  {notifications.filter(n => ['reminder', 'promotion'].includes(n.type)).length === 0 ? (
+                    <Card>
+                      <CardContent className="py-12 text-center">
+                        <Settings className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                        <h3 className="font-semibold text-gray-900 mb-2">No system notifications</h3>
+                        <p className="text-sm text-gray-500">System notifications will appear here.</p>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    notifications.filter(n => ['reminder', 'promotion'].includes(n.type)).map((notification) => (
                       <NotificationCard
                         key={notification.id}
                         notification={notification}
@@ -469,6 +546,85 @@ export default function CustomerNotifications() {
                 </TabsContent>
               </Tabs>
             )}
+            </div>
+
+            {/* Notification Settings Panel */}
+            <div className="w-80 bg-white border-l border-gray-200 p-6">
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 mb-2">Notification Settings</h2>
+                  <p className="text-sm text-gray-600">Configure how you receive updates</p>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Email Notifications */}
+                  <div className="space-y-4">
+                    <h3 className="font-medium text-gray-900">Email Notifications</h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-700">Booking updates</span>
+                        <Switch defaultChecked />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-700">New messages</span>
+                        <Switch defaultChecked />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-700">Payment confirmations</span>
+                        <Switch defaultChecked />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-700">Review requests</span>
+                        <Switch defaultChecked />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-700">Marketing updates</span>
+                        <Switch />
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Push Notifications */}
+                  <div className="space-y-4">
+                    <h3 className="font-medium text-gray-900">Push Notifications</h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-700">Booking updates</span>
+                        <Switch defaultChecked />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-700">New messages</span>
+                        <Switch defaultChecked />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-700">Payment confirmations</span>
+                        <Switch />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-700">Review requests</span>
+                        <Switch defaultChecked />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-700">Marketing updates</span>
+                        <Switch />
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Advanced Settings */}
+                  <div className="pt-4">
+                    <Link to="/customer-dashboard/settings" className="flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                      <Settings className="w-4 h-4 mr-2" />
+                      Advanced Settings
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </main>
       </div>
