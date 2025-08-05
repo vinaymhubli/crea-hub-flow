@@ -19,8 +19,7 @@ import {
   Info,
   Bot,
   ThumbsUp,
-  Users2,
-  ArrowRight
+  Users2
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import {
