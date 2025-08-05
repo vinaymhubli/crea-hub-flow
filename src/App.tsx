@@ -20,6 +20,7 @@ import DesignerAvailability from "./pages/DesignerAvailability";
 import DesignerEarnings from "./pages/DesignerEarnings";
 import DesignerSessionHistory from "./pages/DesignerSessionHistory";
 import DesignerSettings from "./pages/DesignerSettings";
+import CustomerDashboard from "./pages/CustomerDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,6 +48,7 @@ const App = () => (
           <Route path="/designer-dashboard/earnings" element={<DesignerEarnings />} />
           <Route path="/designer-dashboard/history" element={<DesignerSessionHistory />} />
           <Route path="/designer-dashboard/settings" element={<DesignerSettings />} />
+          <Route path="/customer-dashboard" element={<CustomerDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
