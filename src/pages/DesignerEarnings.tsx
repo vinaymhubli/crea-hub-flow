@@ -28,6 +28,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const sidebarItems = [
   { title: "Dashboard", url: "/designer-dashboard", icon: LayoutDashboard },
@@ -94,6 +97,14 @@ export default function DesignerEarnings() {
   const [selectedMonth, setSelectedMonth] = useState("august");
   const [selectedYear, setSelectedYear] = useState("2025");
   const [transactionFilter, setTransactionFilter] = useState("all");
+  const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
+  const [bankInfo, setBankInfo] = useState({
+    accountHolderName: "",
+    accountNumber: "",
+    routingNumber: "",
+    bankName: "",
+    accountType: "checking"
+  });
 
   const months = [
     { value: "january", label: "January" },
@@ -132,25 +143,18 @@ export default function DesignerEarnings() {
     window.URL.revokeObjectURL(url);
   };
 
-  const handleUpdateBankAccount = async () => {
-    try {
-      // Call Stripe Connect to set up bank account
-      const response = await fetch('/api/stripe/setup-bank-account', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (response.ok) {
-        const { url } = await response.json();
-        window.location.href = url;
-      } else {
-        console.error('Failed to setup bank account');
-      }
-    } catch (error) {
-      console.error('Error setting up bank account:', error);
-    }
+  const handleBankInfoChange = (field: string, value: string) => {
+    setBankInfo(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleSaveBankInfo = () => {
+    // Save bank information (you can add validation here)
+    console.log('Saving bank info:', bankInfo);
+    setIsUpdateDialogOpen(false);
+    // Here you would typically save to your backend
   };
 
   return (
@@ -423,9 +427,93 @@ export default function DesignerEarnings() {
                           <p className="font-medium">Bank Account</p>
                           <p className="text-sm text-gray-500">••••••••1234</p>
                         </div>
-                        <Button variant="outline" size="sm" onClick={handleUpdateBankAccount}>
-                          Update
-                        </Button>
+                        <Dialog open={isUpdateDialogOpen} onOpenChange={setIsUpdateDialogOpen}>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm">
+                              Update
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-[425px]">
+                            <DialogHeader>
+                              <DialogTitle>Update Bank Account</DialogTitle>
+                              <DialogDescription>
+                                Enter your bank account details for receiving payments.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="accountHolderName" className="text-right">
+                                  Account Holder
+                                </Label>
+                                <Input
+                                  id="accountHolderName"
+                                  value={bankInfo.accountHolderName}
+                                  onChange={(e) => handleBankInfoChange('accountHolderName', e.target.value)}
+                                  className="col-span-3"
+                                  placeholder="Full name"
+                                />
+                              </div>
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="accountNumber" className="text-right">
+                                  Account Number
+                                </Label>
+                                <Input
+                                  id="accountNumber"
+                                  value={bankInfo.accountNumber}
+                                  onChange={(e) => handleBankInfoChange('accountNumber', e.target.value)}
+                                  className="col-span-3"
+                                  placeholder="1234567890"
+                                />
+                              </div>
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="routingNumber" className="text-right">
+                                  Routing Number
+                                </Label>
+                                <Input
+                                  id="routingNumber"
+                                  value={bankInfo.routingNumber}
+                                  onChange={(e) => handleBankInfoChange('routingNumber', e.target.value)}
+                                  className="col-span-3"
+                                  placeholder="123456789"
+                                />
+                              </div>
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="bankName" className="text-right">
+                                  Bank Name
+                                </Label>
+                                <Input
+                                  id="bankName"
+                                  value={bankInfo.bankName}
+                                  onChange={(e) => handleBankInfoChange('bankName', e.target.value)}
+                                  className="col-span-3"
+                                  placeholder="Bank of America"
+                                />
+                              </div>
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="accountType" className="text-right">
+                                  Account Type
+                                </Label>
+                                <Select value={bankInfo.accountType} onValueChange={(value) => handleBankInfoChange('accountType', value)}>
+                                  <SelectTrigger className="col-span-3">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="checking">Checking</SelectItem>
+                                    <SelectItem value="savings">Savings</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                            <div className="flex justify-end space-x-2">
+                              <Button variant="outline" onClick={() => setIsUpdateDialogOpen(false)}>
+                                Cancel
+                              </Button>
+                              <Button onClick={handleSaveBankInfo}>
+                                Save Account
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
                       </div>
                     </div>
                   </CardContent>
