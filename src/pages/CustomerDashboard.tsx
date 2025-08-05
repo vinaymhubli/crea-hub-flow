@@ -129,74 +129,73 @@ export default function CustomerDashboard() {
       <div className="min-h-screen flex w-full bg-gray-50">
         <CustomerSidebar />
         
-        <main className="flex-1 flex">
-          <div className="flex-1">
-            {/* Header */}
-            <header className="bg-white border-b border-gray-200 px-6 py-8">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <SidebarTrigger />
-                  <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-                    <p className="text-gray-600">Welcome back, Customer</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Bell className="w-5 h-5 text-gray-600" />
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <button className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center hover:bg-blue-200 transition-colors">
-                        <span className="text-blue-600 font-semibold text-sm">VB</span>
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-64 p-0" align="end">
-                      <div className="p-4">
-                        <div className="flex items-center space-x-3 mb-3">
-                          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                            <span className="text-blue-600 font-semibold text-sm">VB</span>
-                          </div>
-                          <div>
-                            <p className="font-semibold text-gray-900">Viaan Bindra</p>
-                            <p className="text-sm text-gray-500">customer@example.com</p>
-                          </div>
-                        </div>
-                        <Separator className="my-3" />
-                        <div className="space-y-1">
-                          <Link 
-                            to="/customer-dashboard" 
-                            className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
-                          >
-                            <LayoutDashboard className="w-4 h-4 mr-3" />
-                            Dashboard
-                          </Link>
-                          <Link 
-                            to="/customer-dashboard/wallet" 
-                            className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
-                          >
-                            <Wallet className="w-4 h-4 mr-3" />
-                            Wallet
-                          </Link>
-                          <Link 
-                            to="/customer-dashboard/profile" 
-                            className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
-                          >
-                            <User className="w-4 h-4 mr-3" />
-                            Profile
-                          </Link>
-                          <Separator className="my-2" />
-                          <button className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
-                            <LogOut className="w-4 h-4 mr-3" />
-                            Log out
-                          </button>
-                        </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
+        <main className="flex-1">
+          {/* Header */}
+          <header className="bg-white border-b border-gray-200 px-6 py-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <SidebarTrigger />
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+                  <p className="text-gray-600">Welcome back, Customer</p>
                 </div>
               </div>
-            </header>
+              <div className="flex items-center space-x-3">
+                <Bell className="w-5 h-5 text-gray-600" />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center hover:bg-blue-200 transition-colors">
+                      <span className="text-blue-600 font-semibold text-sm">VB</span>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 p-0" align="end">
+                    <div className="p-4">
+                      <div className="flex items-center space-x-3 mb-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                          <span className="text-blue-600 font-semibold text-sm">VB</span>
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900">Viaan Bindra</p>
+                          <p className="text-sm text-gray-500">customer@example.com</p>
+                        </div>
+                      </div>
+                      <Separator className="my-3" />
+                      <div className="space-y-1">
+                        <Link 
+                          to="/customer-dashboard" 
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                        >
+                          <LayoutDashboard className="w-4 h-4 mr-3" />
+                          Dashboard
+                        </Link>
+                        <Link 
+                          to="/customer-dashboard/wallet" 
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                        >
+                          <Wallet className="w-4 h-4 mr-3" />
+                          Wallet
+                        </Link>
+                        <Link 
+                          to="/customer-dashboard/profile" 
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                        >
+                          <User className="w-4 h-4 mr-3" />
+                          Profile
+                        </Link>
+                        <Separator className="my-2" />
+                        <button className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
+                          <LogOut className="w-4 h-4 mr-3" />
+                          Log out
+                        </button>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+          </header>
 
-            <div className="p-6 space-y-6">
+          <div className="p-6 space-y-6">
               {/* Action Buttons */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Button className="h-16 bg-blue-600 hover:bg-blue-700 text-white flex-col space-y-2">
@@ -299,6 +298,44 @@ export default function CustomerDashboard() {
                 </div>
               </div>
 
+              {/* Recent Designers */}
+              <Card className="max-w-md">
+                <CardHeader className="flex flex-row items-center justify-between pb-4">
+                  <CardTitle className="text-lg text-gray-900">Recent Designers</CardTitle>
+                  <Link to="/customer-dashboard/recent-designers" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                    View All
+                  </Link>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {recentDesigners.map((designer, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-10 h-10 ${designer.color} rounded-full flex items-center justify-center text-white font-semibold text-sm relative`}>
+                          {designer.initials}
+                          {designer.online && (
+                            <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900 text-sm">{designer.name}</p>
+                          <div className="flex items-center space-x-1">
+                            <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                            <span className="text-xs text-gray-600">{designer.rating}</span>
+                            <span className="text-xs text-gray-500">•</span>
+                            <span className="text-xs text-gray-500">{designer.specialty}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-gray-400" />
+                    </div>
+                  ))}
+                  <Button variant="outline" className="w-full mt-4">
+                    <Search className="w-4 h-4 mr-2" />
+                    Find More Designers
+                  </Button>
+                </CardContent>
+              </Card>
+
               {/* Design Tools & Resources */}
               <div className="space-y-6">
                 <h2 className="text-2xl font-bold text-gray-900">Design Tools & Resources</h2>
@@ -345,49 +382,6 @@ export default function CustomerDashboard() {
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Right Sidebar */}
-          <div className="w-80 bg-white border-l border-gray-200 p-6 space-y-6">
-
-            {/* Recent Designers */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-lg text-gray-900">Recent Designers</CardTitle>
-                <Link to="/customer-dashboard/recent-designers" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                  View All
-                </Link>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {recentDesigners.map((designer, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-10 h-10 ${designer.color} rounded-full flex items-center justify-center text-white font-semibold text-sm relative`}>
-                        {designer.initials}
-                        {designer.online && (
-                          <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-gray-900 text-sm">{designer.name}</p>
-                        <div className="flex items-center space-x-1">
-                          <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                          <span className="text-xs text-gray-600">{designer.rating}</span>
-                          <span className="text-xs text-gray-500">•</span>
-                          <span className="text-xs text-gray-500">{designer.specialty}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-gray-400" />
-                  </div>
-                ))}
-                <Button variant="outline" className="w-full">
-                  <Search className="w-4 h-4 mr-2" />
-                  Find More Designers
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
         </main>
       </div>
     </SidebarProvider>
