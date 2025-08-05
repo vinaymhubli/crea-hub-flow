@@ -113,13 +113,44 @@ export default function DesignerEarnings() {
   const years = ["2025", "2024", "2023", "2022"];
 
   const handleExport = () => {
-    // Export functionality
-    console.log("Exporting earnings data...");
+    // Create CSV data
+    const csvData = [
+      ['Date', 'Type', 'Amount', 'Status', 'Client'],
+      ['2025-08-05', 'Design Session', '$0.00', 'Completed', 'No data'],
+      // Add more sample data or real data here
+    ];
+    
+    const csvContent = csvData.map(row => row.join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `earnings-${selectedMonth}-${selectedYear}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
   };
 
-  const handleUpdateBankAccount = () => {
-    // Update bank account functionality
-    console.log("Updating bank account...");
+  const handleUpdateBankAccount = async () => {
+    try {
+      // Call Stripe Connect to set up bank account
+      const response = await fetch('/api/stripe/setup-bank-account', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        const { url } = await response.json();
+        window.location.href = url;
+      } else {
+        console.error('Failed to setup bank account');
+      }
+    } catch (error) {
+      console.error('Error setting up bank account:', error);
+    }
   };
 
   return (
