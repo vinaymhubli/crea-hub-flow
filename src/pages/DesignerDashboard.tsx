@@ -12,7 +12,14 @@ import {
   Star,
   TrendingUp,
   CalendarClock,
-  Bell
+  Bell,
+  Sparkles,
+  ArrowUpRight,
+  Target,
+  Zap,
+  BarChart3,
+  Users,
+  CheckCircle
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import {
@@ -25,11 +32,11 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
-  useSidebar,
 } from "@/components/ui/sidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 
 const sidebarItems = [
   { title: "Dashboard", url: "/designer-dashboard", icon: LayoutDashboard },
@@ -43,7 +50,6 @@ const sidebarItems = [
 ];
 
 function DesignerSidebar() {
-  const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const currentPath = location.pathname;
 
@@ -51,31 +57,31 @@ function DesignerSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarContent className="bg-white border-r border-gray-200">
-        <div className="p-4 border-b border-gray-200">
+      <SidebarContent className="bg-gradient-subtle border-r border-gray-100/50">
+        <div className="p-6 border-b border-gray-100/50">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-              <span className="text-green-600 font-semibold text-sm">VB</span>
+            <div className="w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center shadow-lg">
+              <span className="text-white font-bold text-sm">VB</span>
             </div>
             <div>
-              <p className="font-semibold text-gray-900">Vb Bn</p>
-              <p className="text-sm text-gray-500">designer</p>
+              <p className="font-bold text-gray-900">Vb Bn</p>
+              <p className="text-sm text-gray-500">Pro Designer</p>
             </div>
           </div>
         </div>
         
         <SidebarGroup>
-          <SidebarGroupContent>
+          <SidebarGroupContent className="px-4">
             <SidebarMenu>
               {sidebarItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <Link 
                       to={item.url} 
-                      className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
+                      className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 mb-1 ${
                         isActive(item.url) 
-                          ? 'bg-green-50 text-green-600 border-r-2 border-green-600' 
-                          : 'text-gray-700 hover:bg-gray-50'
+                          ? 'bg-gradient-primary text-white shadow-lg' 
+                          : 'text-gray-700 hover:bg-white/80 hover:shadow-md'
                       }`}
                       >
                         <item.icon className="w-5 h-5" />
@@ -95,205 +101,304 @@ function DesignerSidebar() {
 export default function DesignerDashboard() {
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gray-50">
+      <div className="min-h-screen flex w-full bg-gradient-subtle">
         <DesignerSidebar />
         
         <main className="flex-1">
-          {/* Header */}
-          <header className="bg-white border-b border-gray-200 px-6 py-4">
+          {/* Modern Header */}
+          <header className="bg-white/80 backdrop-blur-sm border-b border-gray-100/50 px-6 py-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <SidebarTrigger />
+                <SidebarTrigger className="hover:bg-gray-100 p-2 rounded-lg transition-colors" />
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-                  <p className="text-gray-600">Welcome back, Designer</p>
+                  <h1 className="text-3xl font-bold text-gradient">Good morning, Vb!</h1>
+                  <p className="text-gray-600 flex items-center space-x-2">
+                    <Sparkles className="w-4 h-4 text-yellow-500" />
+                    <span>Ready to create something amazing today?</span>
+                  </p>
                 </div>
               </div>
-              <div className="flex items-center space-x-3">
-                <Bell className="w-5 h-5 text-gray-600" />
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <span className="text-green-600 font-semibold text-sm">VB</span>
+              <div className="flex items-center space-x-4">
+                <div className="relative">
+                  <Bell className="w-6 h-6 text-gray-600 hover:text-primary cursor-pointer transition-colors" />
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                </div>
+                <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-lg">
+                  <span className="text-white font-bold text-sm">VB</span>
                 </div>
               </div>
             </div>
           </header>
 
-          <div className="p-6 space-y-6">
-            {/* Action Buttons */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Button className="h-12 bg-blue-600 hover:bg-blue-700 text-white">
-                <Calendar className="w-4 h-4 mr-2" />
-                View Bookings
-              </Button>
-              <Button variant="outline" className="h-12 border-gray-300 hover:bg-gray-50">
-                <FolderOpen className="w-4 h-4 mr-2" />
-                Update Portfolio
-              </Button>
-              <Button variant="outline" className="h-12 border-gray-300 hover:bg-gray-50">
-                <Clock className="w-4 h-4 mr-2" />
-                Set Availability
-              </Button>
-              <Button variant="outline" className="h-12 border-gray-300 hover:bg-gray-50">
-                <User className="w-4 h-4 mr-2" />
-                Edit Profile
-              </Button>
+          <div className="p-6 space-y-8">
+            {/* Quick Actions */}
+            <div className="animate-fade-in">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+                <Zap className="w-5 h-5 text-yellow-500" />
+                <span>Quick Actions</span>
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Link to="/designer-dashboard/bookings">
+                  <Button className="h-14 w-full btn-gradient group">
+                    <Calendar className="w-5 h-5 mr-3" />
+                    <span>View Bookings</span>
+                    <ArrowUpRight className="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </Button>
+                </Link>
+                <Link to="/designer-dashboard/portfolio">
+                  <Button variant="outline" className="h-14 w-full hover-lift">
+                    <FolderOpen className="w-5 h-5 mr-3" />
+                    <span>Update Portfolio</span>
+                  </Button>
+                </Link>
+                <Link to="/designer-dashboard/availability">
+                  <Button variant="outline" className="h-14 w-full hover-lift">
+                    <Clock className="w-5 h-5 mr-3" />
+                    <span>Set Availability</span>
+                  </Button>
+                </Link>
+                <Link to="/designer-dashboard/profile">
+                  <Button variant="outline" className="h-14 w-full hover-lift">
+                    <User className="w-5 h-5 mr-3" />
+                    <span>Edit Profile</span>
+                  </Button>
+                </Link>
+              </div>
             </div>
 
-            {/* Active Design Sessions */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl text-gray-900">Active Design Sessions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <CalendarClock className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500 mb-2">You don't have any active design sessions at the moment.</p>
-                  <p className="text-sm text-gray-400">When customers start a session with you, they will appear here.</p>
+            {/* Active Sessions Card */}
+            <Card className="card-glow animate-slide-up border-0 overflow-hidden">
+              <div className="bg-gradient-primary p-6 text-white">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-xl font-bold mb-2">Active Design Sessions</h2>
+                    <p className="text-white/80">Manage your ongoing client work</p>
+                  </div>
+                  <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
+                    <CalendarClock className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+              </div>
+              <CardContent className="p-8">
+                <div className="text-center">
+                  <div className="w-20 h-20 bg-gradient-subtle rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CalendarClock className="w-10 h-10 text-gray-400" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-2">No active sessions</h3>
+                  <p className="text-gray-500 mb-4">When clients start a session with you, they will appear here.</p>
+                  <Button variant="outline" className="hover-lift">
+                    <Calendar className="w-4 h-4 mr-2" />
+                    Check Your Schedule
+                  </Button>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
+            {/* Performance Stats */}
+            <div className="animate-scale-in">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+                <BarChart3 className="w-5 h-5 text-primary" />
+                <span>Performance Overview</span>
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <Card className="card-modern hover-lift border-0">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="w-12 h-12 bg-gradient-accent rounded-xl flex items-center justify-center">
+                        <DollarSign className="w-6 h-6 text-white" />
+                      </div>
+                      <Badge variant="secondary" className="bg-green-100 text-green-700">
+                        +0%
+                      </Badge>
+                    </div>
                     <div>
                       <p className="text-sm text-gray-600 mb-1">Total Earnings</p>
-                      <p className="text-2xl font-bold text-gray-900">$0.00</p>
-                      <Link to="/designer-dashboard/earnings" className="text-sm text-green-600 hover:text-green-700 flex items-center mt-2">
-                        View earnings report
-                        <TrendingUp className="w-3 h-3 ml-1" />
+                      <p className="text-3xl font-bold text-gray-900 mb-2">$0.00</p>
+                      <Link to="/designer-dashboard/earnings" className="text-sm text-primary hover:text-primary/80 flex items-center transition-colors">
+                        View details
+                        <ArrowUpRight className="w-3 h-3 ml-1" />
                       </Link>
                     </div>
-                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                      <DollarSign className="w-6 h-6 text-green-600" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
 
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
+                <Card className="card-modern hover-lift border-0">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center">
+                        <Users className="w-6 h-6 text-white" />
+                      </div>
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                        New
+                      </Badge>
+                    </div>
                     <div>
                       <p className="text-sm text-gray-600 mb-1">Total Clients</p>
-                      <p className="text-2xl font-bold text-gray-900">0</p>
-                      <p className="text-sm text-gray-500 mt-2">0 pending bookings</p>
+                      <p className="text-3xl font-bold text-gray-900 mb-2">0</p>
+                      <p className="text-sm text-gray-500">0 pending bookings</p>
                     </div>
-                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                      <User className="w-6 h-6 text-blue-600" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
 
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Avg. Rating</p>
-                      <div className="flex items-center space-x-1">
-                        <p className="text-2xl font-bold text-gray-900">0.0</p>
-                        <Star className="w-5 h-5 text-yellow-400" />
+                <Card className="card-modern hover-lift border-0">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
+                        <Star className="w-6 h-6 text-yellow-600" />
                       </div>
-                      <p className="text-sm text-gray-500 mt-2">From 0 completed sessions</p>
+                      <div className="flex items-center space-x-1">
+                        <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                        <span className="text-sm font-medium">0.0</span>
+                      </div>
                     </div>
-                    <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
-                      <Star className="w-6 h-6 text-yellow-600" />
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Average Rating</p>
+                      <p className="text-3xl font-bold text-gray-900 mb-2">0.0</p>
+                      <p className="text-sm text-gray-500">From 0 reviews</p>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
 
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
+                <Card className="card-modern hover-lift border-0">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                        <Target className="w-6 h-6 text-purple-600" />
+                      </div>
+                      <Badge variant="secondary" className="bg-purple-100 text-purple-700">
+                        Goal
+                      </Badge>
+                    </div>
                     <div>
                       <p className="text-sm text-gray-600 mb-1">Completion Rate</p>
-                      <p className="text-2xl font-bold text-gray-900">0%</p>
-                      <p className="text-sm text-gray-500 mt-2">0 completed sessions</p>
+                      <p className="text-3xl font-bold text-gray-900 mb-2">0%</p>
+                      <p className="text-sm text-gray-500">0 completed sessions</p>
                     </div>
-                    <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                      <TrendingUp className="w-6 h-6 text-purple-600" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
 
-            {/* Bottom Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Weekly Earnings */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Weekly Earnings</CardTitle>
-                  <CardDescription>Your earnings for the current week</CardDescription>
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Weekly Performance */}
+              <Card className="lg:col-span-2 card-glow border-0">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-xl">Weekly Performance</CardTitle>
+                      <CardDescription>Your earnings and activity this week</CardDescription>
+                    </div>
+                    <div className="w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center">
+                      <TrendingUp className="w-6 h-6 text-white" />
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-48 flex items-center justify-center bg-gray-50 rounded-lg">
+                  <div className="h-64 flex items-center justify-center bg-gradient-subtle rounded-xl">
                     <div className="text-center">
-                      <TrendingUp className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-                      <p className="text-gray-500">No earnings data yet</p>
+                      <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md">
+                        <BarChart3 className="w-8 h-8 text-gray-400" />
+                      </div>
+                      <h3 className="font-semibold text-gray-900 mb-2">No data yet</h3>
+                      <p className="text-gray-500 text-sm">Start taking sessions to see your performance</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Upcoming Sessions */}
-              <Card>
+              {/* Profile Completion */}
+              <Card className="card-modern border-0">
                 <CardHeader>
-                  <CardTitle>Upcoming Sessions</CardTitle>
-                  <CardDescription>Your scheduled design sessions</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8">
-                    <CalendarClock className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                    <h3 className="font-semibold text-gray-900 mb-2">No upcoming sessions</h3>
-                    <p className="text-sm text-gray-500 mb-4">You don't have any design sessions scheduled.</p>
-                    <Button variant="outline" size="sm">
-                      Update Availability
-                    </Button>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-gradient-accent rounded-lg flex items-center justify-center">
+                      <CheckCircle className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle>Profile Setup</CardTitle>
+                      <CardDescription>Complete your profile</CardDescription>
+                    </div>
                   </div>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-700">Overall Progress</span>
+                      <span className="text-sm font-bold text-primary">85%</span>
+                    </div>
+                    <Progress value={85} className="h-3" />
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-3">
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <span className="text-sm text-gray-600">Basic information</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <span className="text-sm text-gray-600">Portfolio uploaded</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-4 h-4 border-2 border-gray-300 rounded-full"></div>
+                      <span className="text-sm text-gray-400">Availability set</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-4 h-4 border-2 border-gray-300 rounded-full"></div>
+                      <span className="text-sm text-gray-400">Payment setup</span>
+                    </div>
+                  </div>
+
+                  <Button className="w-full btn-gradient">
+                    Complete Setup
+                  </Button>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Additional Stats Cards */}
+            {/* Additional Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card>
+              <Card className="card-modern hover-lift border-0">
                 <CardContent className="p-6">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <Clock className="w-5 h-5 text-gray-500" />
-                    <span className="text-sm text-gray-600">Response Time</span>
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                      <Clock className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Response Time</p>
+                      <p className="text-2xl font-bold text-gray-900">0 min</p>
+                      <p className="text-xs text-gray-500">Avg. booking response</p>
+                    </div>
                   </div>
-                  <p className="text-2xl font-bold text-gray-900">0 min</p>
-                  <p className="text-sm text-gray-500 mt-1">Average time to respond to booking requests</p>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="card-modern hover-lift border-0">
                 <CardContent className="p-6">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <Eye className="w-5 h-5 text-gray-500" />
-                    <span className="text-sm text-gray-600">Portfolio Views</span>
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                      <Eye className="w-6 h-6 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Portfolio Views</p>
+                      <p className="text-2xl font-bold text-gray-900">0</p>
+                      <p className="text-xs text-gray-500">Views this month</p>
+                    </div>
                   </div>
-                  <p className="text-2xl font-bold text-gray-900">0</p>
-                  <p className="text-sm text-gray-500 mt-1">Number of times clients viewed your portfolio</p>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="card-modern hover-lift border-0">
                 <CardContent className="p-6">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <User className="w-5 h-5 text-gray-500" />
-                    <span className="text-sm text-gray-600">Profile Completion</span>
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                      <Sparkles className="w-6 h-6 text-purple-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Success Score</p>
+                      <p className="text-2xl font-bold text-gradient">95%</p>
+                      <p className="text-xs text-gray-500">Platform rating</p>
+                    </div>
                   </div>
-                  <p className="text-2xl font-bold text-gray-900">85%</p>
-                  <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                    <div className="bg-green-500 h-2 rounded-full" style={{ width: '85%' }}></div>
-                  </div>
-                  <p className="text-sm text-gray-500 mt-1">Complete your profile to attract more clients</p>
                 </CardContent>
               </Card>
             </div>
