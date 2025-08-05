@@ -13,7 +13,14 @@ import {
   ChevronRight,
   CalendarClock,
   Star,
-  LogOut
+  LogOut,
+  FileImage,
+  Download,
+  Info,
+  Bot,
+  ThumbsUp,
+  Users2,
+  ArrowRight
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import {
@@ -49,6 +56,21 @@ const recentDesigners = [
   { name: "Emma Thompson", rating: 4.9, specialty: "Logo & Brand Identity", initials: "EM", color: "bg-blue-500" },
   { name: "Marcus Chen", rating: 4.7, specialty: "UI/UX Design", initials: "MA", color: "bg-purple-500" },
   { name: "Sophie Williams", rating: 4.8, specialty: "Illustration", initials: "SO", color: "bg-green-500", online: true },
+];
+
+const recentProjects = [
+  { 
+    title: "Company Rebrand", 
+    designer: "Emma Thompson", 
+    date: "7/29/2025", 
+    image: "/placeholder.svg" 
+  },
+  { 
+    title: "Website Banner Design", 
+    designer: "Marcus Chen", 
+    date: "7/22/2025", 
+    image: "/placeholder.svg" 
+  },
 ];
 
 function CustomerSidebar() {
@@ -218,6 +240,94 @@ export default function CustomerDashboard() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Your Projects */}
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Your Projects</h2>
+                  <p className="text-gray-600">View your previous design projects</p>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-semibold text-gray-900">Recent Projects</h3>
+                  <Link to="/customer-dashboard/projects" className="text-gray-600 hover:text-gray-800 font-medium">
+                    All Projects
+                  </Link>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {recentProjects.map((project, index) => (
+                    <Card key={index} className="hover:shadow-lg transition-shadow">
+                      <CardContent className="p-0">
+                        <div className="aspect-video bg-gray-200 rounded-t-lg flex items-center justify-center">
+                          <FileImage className="w-16 h-16 text-gray-400" />
+                        </div>
+                        <div className="p-6">
+                          <h4 className="font-semibold text-gray-900 mb-2">{project.title}</h4>
+                          <p className="text-sm text-gray-600 mb-4">by {project.designer}</p>
+                          <p className="text-sm text-gray-500 mb-4">{project.date}</p>
+                          <div className="flex space-x-3">
+                            <Button variant="outline" size="sm" className="flex-1">
+                              <Download className="w-4 h-4 mr-2" />
+                              Download Files
+                            </Button>
+                            <Button variant="outline" size="sm" className="flex-1">
+                              <Info className="w-4 h-4 mr-2" />
+                              Details
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+
+              {/* Design Tools & Resources */}
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold text-gray-900">Design Tools & Resources</h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <Card className="bg-green-50 border-green-200 hover:shadow-lg transition-shadow">
+                    <CardContent className="p-6 text-center">
+                      <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Bot className="w-8 h-8 text-green-600" />
+                      </div>
+                      <h3 className="font-semibold text-gray-900 mb-2">AI Design Assistant</h3>
+                      <p className="text-sm text-gray-600 mb-4">Get instant design suggestions powered by AI technology</p>
+                      <Button className="bg-blue-600 hover:bg-blue-700">
+                        Try AI Assistant
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-blue-50 border-blue-200 hover:shadow-lg transition-shadow">
+                    <CardContent className="p-6 text-center">
+                      <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <ThumbsUp className="w-8 h-8 text-blue-600" />
+                      </div>
+                      <h3 className="font-semibold text-gray-900 mb-2">Design Tips</h3>
+                      <p className="text-sm text-gray-600 mb-4">Learn how to get the most out of your design sessions</p>
+                      <Button variant="outline">
+                        View Tips
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-purple-50 border-purple-200 hover:shadow-lg transition-shadow">
+                    <CardContent className="p-6 text-center">
+                      <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Users2 className="w-8 h-8 text-purple-600" />
+                      </div>
+                      <h3 className="font-semibold text-gray-900 mb-2">Top Designers</h3>
+                      <p className="text-sm text-gray-600 mb-4">Browse our featured designers with excellent ratings</p>
+                      <Button variant="outline">
+                        Explore Designers
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
             </div>
           </div>
 
