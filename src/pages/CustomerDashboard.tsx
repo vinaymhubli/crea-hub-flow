@@ -130,7 +130,7 @@ export default function CustomerDashboard() {
         
         <main className="flex-1">
           {/* Header with Gradient */}
-          <header className="bg-gradient-primary text-white px-6 py-12 relative overflow-hidden">
+          <header className="bg-gradient-to-r from-green-600 to-green-500 text-white px-6 py-12 relative overflow-hidden">
             <div className="absolute inset-0 bg-black/10"></div>
             <div className="relative z-10 flex items-center justify-between">
               <div className="flex items-center space-x-4">
@@ -163,27 +163,27 @@ export default function CustomerDashboard() {
                       <div className="space-y-1">
                         <Link 
                           to="/customer-dashboard" 
-                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                          className="flex items-center px-3 py-2 text-sm text-foreground hover:bg-accent rounded-md transition-colors"
                         >
                           <LayoutDashboard className="w-4 h-4 mr-3" />
                           Dashboard
                         </Link>
                         <Link 
                           to="/customer-dashboard/wallet" 
-                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                          className="flex items-center px-3 py-2 text-sm text-foreground hover:bg-accent rounded-md transition-colors"
                         >
                           <Wallet className="w-4 h-4 mr-3" />
                           Wallet
                         </Link>
                         <Link 
                           to="/customer-dashboard/profile" 
-                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                          className="flex items-center px-3 py-2 text-sm text-foreground hover:bg-accent rounded-md transition-colors"
                         >
                           <User className="w-4 h-4 mr-3" />
                           Profile
                         </Link>
                         <Separator className="my-2" />
-                        <button className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
+                        <button className="flex items-center w-full px-3 py-2 text-sm text-foreground hover:bg-accent rounded-md transition-colors">
                           <LogOut className="w-4 h-4 mr-3" />
                           Log out
                         </button>
@@ -200,10 +200,10 @@ export default function CustomerDashboard() {
             <div className="absolute top-12 right-40 w-1.5 h-1.5 bg-white/25 rounded-full animate-pulse delay-500"></div>
           </header>
 
-          <div className="p-6 space-y-8 bg-gradient-to-br from-background to-muted/20 min-h-screen">
+          <div className="p-6 space-y-8 bg-gradient-to-br from-background to-muted/10 min-h-screen">
             {/* Quick Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="bg-gradient-card border-0 shadow-xl">
+              <Card className="bg-card border shadow-lg">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -211,14 +211,14 @@ export default function CustomerDashboard() {
                       <p className="text-2xl font-bold text-foreground">$120.00</p>
                       <p className="text-xs text-muted-foreground mt-1">Available funds</p>
                     </div>
-                    <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center">
+                    <div className="w-12 h-12 bg-gradient-to-r from-green-600 to-green-500 rounded-full flex items-center justify-center">
                       <Wallet className="w-6 h-6 text-white" />
                     </div>
                   </div>
                 </CardContent>
               </Card>
               
-              <Card className="bg-gradient-card border-0 shadow-xl">
+              <Card className="bg-card border shadow-lg">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -226,14 +226,14 @@ export default function CustomerDashboard() {
                       <p className="text-2xl font-bold text-foreground">0</p>
                       <p className="text-xs text-muted-foreground mt-1">In progress</p>
                     </div>
-                    <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center">
+                    <div className="w-12 h-12 bg-gradient-to-r from-green-600 to-green-500 rounded-full flex items-center justify-center">
                       <Users2 className="w-6 h-6 text-white" />
                     </div>
                   </div>
                 </CardContent>
               </Card>
               
-              <Card className="bg-gradient-card border-0 shadow-xl">
+              <Card className="bg-card border shadow-lg">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -241,7 +241,7 @@ export default function CustomerDashboard() {
                       <p className="text-2xl font-bold text-foreground">2</p>
                       <p className="text-xs text-muted-foreground mt-1">Completed</p>
                     </div>
-                    <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center">
+                    <div className="w-12 h-12 bg-gradient-to-r from-green-600 to-green-500 rounded-full flex items-center justify-center">
                       <FileImage className="w-6 h-6 text-white" />
                     </div>
                   </div>
@@ -256,7 +256,7 @@ export default function CustomerDashboard() {
                 <h2 className="text-2xl font-bold text-foreground">Quick Actions</h2>
                 <div className="grid grid-cols-2 gap-4">
                   <Link to="/designers">
-                    <Card className="group hover:shadow-2xl transition-all duration-300 border-0 bg-gradient-primary text-white overflow-hidden">
+                    <Card className="group hover:shadow-2xl transition-all duration-300 border-0 bg-gradient-to-r from-green-600 to-green-500 text-white overflow-hidden">
                       <CardContent className="p-6 relative">
                         <div className="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-colors"></div>
                         <div className="relative z-10 text-center space-y-3">
@@ -271,10 +271,10 @@ export default function CustomerDashboard() {
                   </Link>
                   
                   <Link to="/customer-dashboard/bookings">
-                    <Card className="group hover:shadow-xl transition-all duration-300 bg-gradient-card border border-gradient-border">
+                    <Card className="group hover:shadow-xl transition-all duration-300 bg-card border">
                       <CardContent className="p-6 text-center space-y-3">
-                        <div className="w-12 h-12 bg-gradient-primary-soft rounded-full flex items-center justify-center mx-auto">
-                          <Calendar className="w-6 h-6 text-primary" />
+                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                          <Calendar className="w-6 h-6 text-green-600" />
                         </div>
                         <h3 className="font-semibold text-foreground">My Bookings</h3>
                         <p className="text-xs text-muted-foreground">Manage sessions</p>
@@ -283,10 +283,10 @@ export default function CustomerDashboard() {
                   </Link>
                   
                   <Link to="/customer-dashboard/messages">
-                    <Card className="group hover:shadow-xl transition-all duration-300 bg-gradient-card border border-gradient-border">
+                    <Card className="group hover:shadow-xl transition-all duration-300 bg-card border">
                       <CardContent className="p-6 text-center space-y-3">
-                        <div className="w-12 h-12 bg-gradient-primary-soft rounded-full flex items-center justify-center mx-auto">
-                          <MessageCircle className="w-6 h-6 text-primary" />
+                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
+                          <MessageCircle className="w-6 h-6 text-blue-600" />
                         </div>
                         <h3 className="font-semibold text-foreground">Messages</h3>
                         <p className="text-xs text-muted-foreground">Chat with designers</p>
@@ -295,10 +295,10 @@ export default function CustomerDashboard() {
                   </Link>
                   
                   <Link to="/customer-dashboard/wallet">
-                    <Card className="group hover:shadow-xl transition-all duration-300 bg-gradient-card border border-gradient-border">
+                    <Card className="group hover:shadow-xl transition-all duration-300 bg-card border">
                       <CardContent className="p-6 text-center space-y-3">
-                        <div className="w-12 h-12 bg-gradient-primary-soft rounded-full flex items-center justify-center mx-auto">
-                          <CreditCard className="w-6 h-6 text-primary" />
+                        <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto">
+                          <CreditCard className="w-6 h-6 text-purple-600" />
                         </div>
                         <h3 className="font-semibold text-foreground">Add Funds</h3>
                         <p className="text-xs text-muted-foreground">Top up wallet</p>
@@ -309,7 +309,7 @@ export default function CustomerDashboard() {
               </div>
 
               {/* Upcoming Sessions */}
-              <Card className="bg-gradient-card border-0 shadow-xl">
+              <Card className="bg-card border shadow-xl">
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between">
                     <div>
@@ -324,13 +324,13 @@ export default function CustomerDashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-center py-8">
-                    <div className="w-16 h-16 bg-gradient-primary-soft rounded-full flex items-center justify-center mx-auto mb-4">
-                      <CalendarClock className="w-8 h-8 text-primary" />
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <CalendarClock className="w-8 h-8 text-green-600" />
                     </div>
                     <h3 className="font-semibold text-foreground mb-2">No upcoming sessions</h3>
                     <p className="text-sm text-muted-foreground mb-4">You don't have any design sessions scheduled. Book a session with a designer to get started.</p>
                     <Link to="/designers">
-                      <Button className="bg-gradient-primary border-0 text-white hover:shadow-lg transition-all duration-300">
+                      <Button className="bg-gradient-to-r from-green-600 to-green-500 border-0 text-white hover:shadow-lg transition-all duration-300">
                         Find a Designer
                       </Button>
                     </Link>
@@ -354,22 +354,22 @@ export default function CustomerDashboard() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {recentProjects.map((project, index) => (
-                  <Card key={index} className="group hover:shadow-2xl transition-all duration-300 bg-gradient-card border-0 overflow-hidden">
+                  <Card key={index} className="group hover:shadow-2xl transition-all duration-300 bg-card border overflow-hidden">
                     <CardContent className="p-0">
                       <div className="aspect-video bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center relative overflow-hidden">
-                        <div className="absolute inset-0 bg-gradient-primary opacity-10"></div>
-                        <FileImage className="w-16 h-16 text-primary/50 relative z-10" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-green-600/10 to-green-500/10"></div>
+                        <FileImage className="w-16 h-16 text-green-600/50 relative z-10" />
                       </div>
                       <div className="p-6">
                         <h4 className="font-semibold text-foreground mb-2">{project.title}</h4>
                         <p className="text-sm text-muted-foreground mb-1">by {project.designer}</p>
                         <p className="text-xs text-muted-foreground mb-4">{project.date}</p>
                         <div className="flex space-x-3">
-                          <Button variant="outline" size="sm" className="flex-1 hover:bg-primary/10">
+                          <Button variant="outline" size="sm" className="flex-1 hover:bg-green-50">
                             <Download className="w-4 h-4 mr-2" />
                             Download
                           </Button>
-                          <Button variant="outline" size="sm" className="flex-1 hover:bg-primary/10">
+                          <Button variant="outline" size="sm" className="flex-1 hover:bg-green-50">
                             <Info className="w-4 h-4 mr-2" />
                             Details
                           </Button>
@@ -384,7 +384,7 @@ export default function CustomerDashboard() {
             {/* Bottom Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Recent Designers */}
-              <Card className="bg-gradient-card border-0 shadow-xl">
+              <Card className="bg-card border shadow-xl">
                 <CardHeader className="flex flex-row items-center justify-between pb-4">
                   <CardTitle className="text-lg text-foreground">Recent Designers</CardTitle>
                   <Link to="/customer-dashboard/recent-designers" className="text-primary hover:text-primary/80 text-sm font-medium">
@@ -393,12 +393,12 @@ export default function CustomerDashboard() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {recentDesigners.map((designer, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 rounded-lg hover:bg-gradient-primary-soft transition-all duration-300 cursor-pointer group">
+                    <div key={index} className="flex items-center justify-between p-3 rounded-lg hover:bg-green-50 transition-all duration-300 cursor-pointer group">
                       <div className="flex items-center space-x-3">
                         <div className={`w-10 h-10 ${designer.color} rounded-full flex items-center justify-center text-white font-semibold text-sm relative shadow-lg`}>
                           {designer.initials}
                           {designer.online && (
-                            <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-primary rounded-full border-2 border-white"></div>
+                            <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
                           )}
                         </div>
                         <div>
@@ -411,11 +411,11 @@ export default function CustomerDashboard() {
                           </div>
                         </div>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                      <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-green-600 transition-colors" />
                     </div>
                   ))}
                   <Link to="/designers">
-                    <Button variant="outline" className="w-full mt-4 hover:bg-gradient-primary-soft border-gradient-border">
+                    <Button variant="outline" className="w-full mt-4 hover:bg-green-50">
                       <Search className="w-4 h-4 mr-2" />
                       Find More Designers
                     </Button>
@@ -424,7 +424,7 @@ export default function CustomerDashboard() {
               </Card>
 
               {/* Design Tools & Resources */}
-              <Card className="bg-gradient-card border-0 shadow-xl">
+              <Card className="bg-card border shadow-xl">
                 <CardHeader>
                   <CardTitle className="text-lg text-foreground">Design Tools & Resources</CardTitle>
                   <CardDescription>Enhance your design journey with our tools</CardDescription>
@@ -434,12 +434,12 @@ export default function CustomerDashboard() {
                     <Link to="/ai-assistant">
                       <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-green-50 to-green-100/50 border-green-200/50">
                         <CardContent className="p-4 text-center">
-                          <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-3">
+                          <div className="w-12 h-12 bg-gradient-to-r from-green-600 to-green-500 rounded-full flex items-center justify-center mx-auto mb-3">
                             <Bot className="w-6 h-6 text-white" />
                           </div>
                           <h3 className="font-semibold text-foreground mb-2">AI Assistant</h3>
                           <p className="text-xs text-muted-foreground mb-3">Get instant design suggestions</p>
-                          <Button size="sm" className="bg-gradient-primary border-0 text-white">
+                          <Button size="sm" className="bg-gradient-to-r from-green-600 to-green-500 border-0 text-white">
                             Try Now
                           </Button>
                         </CardContent>
