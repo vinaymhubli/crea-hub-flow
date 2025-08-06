@@ -73,15 +73,15 @@ function CustomerSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarContent className="bg-gradient-to-br from-green-400 via-teal-500 to-blue-500 border-r-0 shadow-xl">
-        <div className="p-4 border-b border-white/20">
+      <SidebarContent className="bg-white border-r border-gray-200">
+        <div className="p-4 border-b border-gray-200">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center ring-2 ring-white/30">
+            <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center">
               <span className="text-white font-semibold text-sm">VB</span>
             </div>
             <div>
-              <p className="font-semibold text-white">Viaan Bindra</p>
-              <p className="text-sm text-white/80">Customer</p>
+              <p className="font-semibold text-gray-900">Viaan Bindra</p>
+              <p className="text-sm text-gray-500">Customer</p>
             </div>
           </div>
         </div>
@@ -94,10 +94,10 @@ function CustomerSidebar() {
                   <SidebarMenuButton asChild>
                     <Link 
                       to={item.url} 
-                      className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 ${
+                      className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
                         isActive(item.url) 
-                          ? 'bg-white/20 text-white backdrop-blur-sm border-r-2 border-white shadow-lg' 
-                          : 'text-white/80 hover:bg-white/10 hover:text-white'
+                          ? 'bg-gradient-to-r from-green-50 to-blue-50 text-green-600 border-r-2 border-green-500' 
+                          : 'text-gray-700 hover:bg-gray-50'
                       }`}
                     >
                       <item.icon className="w-5 h-5" />

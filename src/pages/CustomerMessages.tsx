@@ -146,15 +146,15 @@ function CustomerSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarContent className="bg-background border-r border-border">
-        <div className="p-4 border-b border-border">
+      <SidebarContent className="bg-white border-r border-gray-200">
+        <div className="p-4 border-b border-gray-200">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-teal-500 rounded-full flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center">
               <span className="text-white font-semibold text-sm">VB</span>
             </div>
             <div>
-              <p className="font-semibold text-foreground">Viaan Bindra</p>
-              <p className="text-sm text-muted-foreground">Customer</p>
+              <p className="font-semibold text-gray-900">Viaan Bindra</p>
+              <p className="text-sm text-gray-500">Customer</p>
             </div>
           </div>
         </div>
@@ -169,8 +169,8 @@ function CustomerSidebar() {
                       to={item.url} 
                       className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
                         isActive(item.url) 
-                          ? 'bg-gradient-to-r from-teal-50 to-blue-50 text-teal-600 border-r-2 border-teal-500' 
-                          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                          ? 'bg-gradient-to-r from-green-50 to-blue-50 text-green-600 border-r-2 border-green-500' 
+                          : 'text-gray-700 hover:bg-gray-50'
                       }`}
                     >
                       <item.icon className="w-5 h-5" />
