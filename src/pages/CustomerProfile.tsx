@@ -70,15 +70,15 @@ function CustomerSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarContent className="bg-white border-r border-gray-200">
-        <div className="p-4 border-b border-gray-200">
+      <SidebarContent className="bg-gradient-to-br from-green-400 via-teal-500 to-blue-500 border-r-0 shadow-xl">
+        <div className="p-4 border-b border-white/20">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-              <span className="text-blue-600 font-semibold text-sm">VB</span>
+            <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center ring-2 ring-white/30">
+              <span className="text-white font-semibold text-sm">VB</span>
             </div>
             <div>
-              <p className="font-semibold text-gray-900">Viaan Bindra</p>
-              <p className="text-sm text-gray-500">Customer</p>
+              <p className="font-semibold text-white">Viaan Bindra</p>
+              <p className="text-sm text-white/80">Customer</p>
             </div>
           </div>
         </div>
@@ -91,10 +91,10 @@ function CustomerSidebar() {
                   <SidebarMenuButton asChild>
                     <Link 
                       to={item.url} 
-                      className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
+                      className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 ${
                         isActive(item.url) 
-                          ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' 
-                          : 'text-gray-700 hover:bg-gray-50'
+                          ? 'bg-white/20 text-white backdrop-blur-sm border-r-2 border-white shadow-lg' 
+                          : 'text-white/80 hover:bg-white/10 hover:text-white'
                       }`}
                     >
                       <item.icon className="w-5 h-5" />
@@ -147,28 +147,28 @@ export default function CustomerProfile() {
         
         <main className="flex-1">
           {/* Header */}
-          <header className="bg-white border-b border-gray-200 px-6 py-8">
+          <header className="bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 border-b-0 px-6 py-8 shadow-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <SidebarTrigger />
+                <SidebarTrigger className="text-white hover:bg-white/20 rounded-lg p-2" />
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
-                  <p className="text-gray-600">Manage your personal information</p>
+                  <h1 className="text-2xl font-bold text-white">Profile</h1>
+                  <p className="text-white/90">Manage your personal information</p>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
-                <Bell className="w-5 h-5 text-gray-600" />
+                <Bell className="w-5 h-5 text-white/80 hover:text-white cursor-pointer transition-colors" />
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center hover:bg-blue-200 transition-colors">
-                      <span className="text-blue-600 font-semibold text-sm">VB</span>
+                    <button className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-all duration-200 ring-2 ring-white/30">
+                      <span className="text-white font-semibold text-sm">VB</span>
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-64 p-0" align="end">
                     <div className="p-4">
                       <div className="flex items-center space-x-3 mb-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-blue-600 font-semibold text-sm">VB</span>
+                        <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center">
+                          <span className="text-white font-semibold text-sm">VB</span>
                         </div>
                         <div>
                           <p className="font-semibold text-gray-900">Viaan Bindra</p>
@@ -179,27 +179,27 @@ export default function CustomerProfile() {
                       <div className="space-y-1">
                         <Link 
                           to="/customer-dashboard" 
-                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 rounded-md transition-colors"
                         >
                           <LayoutDashboard className="w-4 h-4 mr-3" />
                           Dashboard
                         </Link>
                         <Link 
                           to="/customer-dashboard/wallet" 
-                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 rounded-md transition-colors"
                         >
                           <Wallet className="w-4 h-4 mr-3" />
                           Wallet
                         </Link>
                         <Link 
                           to="/customer-dashboard/profile" 
-                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 rounded-md transition-colors"
                         >
                           <User className="w-4 h-4 mr-3" />
                           Profile
                         </Link>
                         <Separator className="my-2" />
-                        <button className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
+                        <button className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-red-50 rounded-md transition-colors">
                           <LogOut className="w-4 h-4 mr-3" />
                           Log out
                         </button>
@@ -216,43 +216,43 @@ export default function CustomerProfile() {
             {/* Main Content */}
             <div className="flex-1 space-y-6">
               {/* Profile Picture Section */}
-              <Card>
+              <Card className="border-0 bg-gradient-to-br from-green-50/50 via-teal-50/50 to-blue-50/50 backdrop-blur-sm shadow-lg">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-center mb-6">
                     <div className="relative">
-                      <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-blue-600 font-semibold text-2xl">VB</span>
+                      <div className="w-24 h-24 bg-gradient-to-br from-green-400 via-teal-500 to-blue-500 rounded-full flex items-center justify-center shadow-xl ring-4 ring-white/50">
+                        <span className="text-white font-semibold text-2xl">VB</span>
                       </div>
-                      <button className="absolute -bottom-2 -right-2 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white hover:bg-blue-700 transition-colors">
+                      <button className="absolute -bottom-2 -right-2 w-8 h-8 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center text-white hover:from-green-600 hover:to-blue-600 transition-all duration-200 shadow-lg">
                         <Camera className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
                   <div className="text-center">
-                    <h2 className="text-2xl font-semibold text-gray-900">{profileData.firstName} {profileData.lastName}</h2>
+                    <h2 className="text-2xl font-semibold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">{profileData.firstName} {profileData.lastName}</h2>
                   </div>
                 </CardContent>
               </Card>
 
               {/* Personal Information */}
-              <Card>
+              <Card className="border-0 bg-gradient-to-br from-white via-gray-50 to-green-50/30 backdrop-blur-sm shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
-                    <CardTitle>Personal Information</CardTitle>
+                    <CardTitle className="bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">Personal Information</CardTitle>
                     <CardDescription>Update your personal details</CardDescription>
                   </div>
                   {!isEditing ? (
-                    <Button onClick={() => setIsEditing(true)} className="bg-blue-600 hover:bg-blue-700">
+                    <Button onClick={() => setIsEditing(true)} className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white shadow-lg">
                       <Edit className="w-4 h-4 mr-2" />
                       Edit
                     </Button>
                   ) : (
                     <div className="flex space-x-2">
-                      <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
+                      <Button onClick={handleSave} className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white shadow-lg">
                         <Save className="w-4 h-4 mr-2" />
                         Save
                       </Button>
-                      <Button onClick={handleCancel} variant="outline">
+                      <Button onClick={handleCancel} variant="outline" className="border-2 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50">
                         <X className="w-4 h-4 mr-2" />
                         Cancel
                       </Button>

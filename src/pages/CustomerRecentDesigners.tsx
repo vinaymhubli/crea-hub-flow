@@ -158,15 +158,15 @@ function CustomerSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarContent className="bg-white border-r border-gray-200">
-        <div className="p-4 border-b border-gray-200">
+      <SidebarContent className="bg-gradient-to-br from-green-400 via-teal-500 to-blue-500 border-r-0 shadow-xl">
+        <div className="p-4 border-b border-white/20">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-              <span className="text-blue-600 font-semibold text-sm">VB</span>
+            <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center ring-2 ring-white/30">
+              <span className="text-white font-semibold text-sm">VB</span>
             </div>
             <div>
-              <p className="font-semibold text-gray-900">Viaan Bindra</p>
-              <p className="text-sm text-gray-500">Customer</p>
+              <p className="font-semibold text-white">Viaan Bindra</p>
+              <p className="text-sm text-white/80">Customer</p>
             </div>
           </div>
         </div>
@@ -179,10 +179,10 @@ function CustomerSidebar() {
                   <SidebarMenuButton asChild>
                     <Link 
                       to={item.url} 
-                      className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
+                      className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 ${
                         isActive(item.url) 
-                          ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' 
-                          : 'text-gray-700 hover:bg-gray-50'
+                          ? 'bg-white/20 text-white backdrop-blur-sm border-r-2 border-white shadow-lg' 
+                          : 'text-white/80 hover:bg-white/10 hover:text-white'
                       }`}
                     >
                       <item.icon className="w-5 h-5" />
@@ -202,19 +202,19 @@ function CustomerSidebar() {
 
 function DesignerCard({ designer }: { designer: any }) {
   return (
-    <Card className="hover:shadow-lg transition-shadow">
+    <Card className="hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-white via-gray-50 to-green-50/30 backdrop-blur-sm hover:scale-[1.02]">
       <CardContent className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center space-x-4">
-            <div className={`w-16 h-16 ${designer.color} rounded-full flex items-center justify-center text-white font-semibold text-lg relative`}>
+            <div className="w-16 h-16 bg-gradient-to-br from-green-400 via-teal-500 to-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-lg relative shadow-lg">
               {designer.avatar}
               {designer.online && (
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow-sm animate-pulse"></div>
               )}
             </div>
             <div>
               <h3 className="font-semibold text-gray-900 text-lg">{designer.name}</h3>
-              <p className="text-gray-600">{designer.specialty}</p>
+              <p className="text-gray-600 font-medium">{designer.specialty}</p>
               <div className="flex items-center space-x-1 mt-1">
                 <Star className="w-4 h-4 text-yellow-400 fill-current" />
                 <span className="text-sm font-medium text-gray-700">{designer.rating}</span>
@@ -223,7 +223,7 @@ function DesignerCard({ designer }: { designer: any }) {
             </div>
           </div>
           <div className="text-right">
-            <p className="font-semibold text-gray-900">{designer.hourlyRate}/hour</p>
+            <p className="font-semibold text-gray-900 bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">{designer.hourlyRate}/hour</p>
             <div className="flex items-center space-x-1 mt-1">
               <MapPin className="w-3 h-3 text-gray-400" />
               <span className="text-sm text-gray-500">{designer.location}</span>
@@ -276,15 +276,15 @@ function DesignerCard({ designer }: { designer: any }) {
         </div>
 
         <div className="flex space-x-3">
-          <Button className="flex-1 bg-blue-600 hover:bg-blue-700">
+          <Button className="flex-1 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white shadow-lg">
             <MessageCircle className="w-4 h-4 mr-2" />
             Message
           </Button>
-          <Button variant="outline" className="flex-1">
+          <Button variant="outline" className="flex-1 border-2 border-gradient-to-r from-green-400 to-blue-400 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50">
             <Calendar className="w-4 h-4 mr-2" />
             Book Again
           </Button>
-          <Button variant="outline" size="icon">
+          <Button variant="outline" size="icon" className="border-2 border-gradient-to-r from-green-400 to-blue-400 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50">
             <Heart className="w-4 h-4" />
           </Button>
         </div>
@@ -329,28 +329,28 @@ export default function CustomerRecentDesigners() {
         
         <main className="flex-1">
           {/* Header */}
-          <header className="bg-white border-b border-gray-200 px-6 py-8">
+          <header className="bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 border-b-0 px-6 py-8 shadow-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <SidebarTrigger />
+                <SidebarTrigger className="text-white hover:bg-white/20 rounded-lg p-2" />
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Recent Designers</h1>
-                  <p className="text-gray-600">Designers you've worked with previously</p>
+                  <h1 className="text-2xl font-bold text-white">Recent Designers</h1>
+                  <p className="text-white/90">Designers you've worked with previously</p>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
-                <Bell className="w-5 h-5 text-gray-600" />
+                <Bell className="w-5 h-5 text-white/80 hover:text-white cursor-pointer transition-colors" />
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center hover:bg-blue-200 transition-colors">
-                      <span className="text-blue-600 font-semibold text-sm">VB</span>
+                    <button className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-all duration-200 ring-2 ring-white/30">
+                      <span className="text-white font-semibold text-sm">VB</span>
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-64 p-0" align="end">
                     <div className="p-4">
                       <div className="flex items-center space-x-3 mb-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-blue-600 font-semibold text-sm">VB</span>
+                        <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center">
+                          <span className="text-white font-semibold text-sm">VB</span>
                         </div>
                         <div>
                           <p className="font-semibold text-gray-900">Viaan Bindra</p>
@@ -361,27 +361,27 @@ export default function CustomerRecentDesigners() {
                       <div className="space-y-1">
                         <Link 
                           to="/customer-dashboard" 
-                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 rounded-md transition-colors"
                         >
                           <LayoutDashboard className="w-4 h-4 mr-3" />
                           Dashboard
                         </Link>
                         <Link 
                           to="/customer-dashboard/wallet" 
-                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 rounded-md transition-colors"
                         >
                           <Wallet className="w-4 h-4 mr-3" />
                           Wallet
                         </Link>
                         <Link 
                           to="/customer-dashboard/profile" 
-                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 rounded-md transition-colors"
                         >
                           <User className="w-4 h-4 mr-3" />
                           Profile
                         </Link>
                         <Separator className="my-2" />
-                        <button className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
+                        <button className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-red-50 rounded-md transition-colors">
                           <LogOut className="w-4 h-4 mr-3" />
                           Log out
                         </button>
@@ -436,21 +436,21 @@ export default function CustomerRecentDesigners() {
 
             {/* Statistics */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <Card>
+              <Card className="border-0 bg-gradient-to-br from-green-400/10 via-teal-500/10 to-blue-500/10 backdrop-blur-sm">
                 <CardContent className="p-4 text-center">
-                  <p className="text-2xl font-bold text-gray-900">{mockRecentDesigners.length}</p>
+                  <p className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">{mockRecentDesigners.length}</p>
                   <p className="text-sm text-gray-600">Total Designers</p>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="border-0 bg-gradient-to-br from-green-400/10 via-teal-500/10 to-blue-500/10 backdrop-blur-sm">
                 <CardContent className="p-4 text-center">
-                  <p className="text-2xl font-bold text-gray-900">{mockRecentDesigners.reduce((sum, d) => sum + d.projectsCompleted, 0)}</p>
+                  <p className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">{mockRecentDesigners.reduce((sum, d) => sum + d.projectsCompleted, 0)}</p>
                   <p className="text-sm text-gray-600">Projects Completed</p>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="border-0 bg-gradient-to-br from-green-400/10 via-teal-500/10 to-blue-500/10 backdrop-blur-sm">
                 <CardContent className="p-4 text-center">
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
                     ${mockRecentDesigners.reduce((sum, d) => sum + parseInt(d.totalSpent.replace('$', '')), 0)}
                   </p>
                   <p className="text-sm text-gray-600">Total Spent</p>

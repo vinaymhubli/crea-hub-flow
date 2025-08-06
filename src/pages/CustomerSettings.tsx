@@ -73,15 +73,15 @@ function CustomerSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarContent className="bg-white border-r border-gray-200">
-        <div className="p-4 border-b border-gray-200">
+      <SidebarContent className="bg-gradient-to-br from-green-400 via-teal-500 to-blue-500 border-r-0 shadow-xl">
+        <div className="p-4 border-b border-white/20">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-              <span className="text-blue-600 font-semibold text-sm">VB</span>
+            <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center ring-2 ring-white/30">
+              <span className="text-white font-semibold text-sm">VB</span>
             </div>
             <div>
-              <p className="font-semibold text-gray-900">Viaan Bindra</p>
-              <p className="text-sm text-gray-500">Customer</p>
+              <p className="font-semibold text-white">Viaan Bindra</p>
+              <p className="text-sm text-white/80">Customer</p>
             </div>
           </div>
         </div>
@@ -94,10 +94,10 @@ function CustomerSidebar() {
                   <SidebarMenuButton asChild>
                     <Link 
                       to={item.url} 
-                      className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
+                      className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 ${
                         isActive(item.url) 
-                          ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' 
-                          : 'text-gray-700 hover:bg-gray-50'
+                          ? 'bg-white/20 text-white backdrop-blur-sm border-r-2 border-white shadow-lg' 
+                          : 'text-white/80 hover:bg-white/10 hover:text-white'
                       }`}
                     >
                       <item.icon className="w-5 h-5" />
@@ -156,28 +156,28 @@ export default function CustomerSettings() {
         
         <main className="flex-1">
           {/* Header */}
-          <header className="bg-white border-b border-gray-200 px-6 py-8">
+          <header className="bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 border-b-0 px-6 py-8 shadow-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <SidebarTrigger />
+                <SidebarTrigger className="text-white hover:bg-white/20 rounded-lg p-2" />
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-                  <p className="text-gray-600">Manage your account preferences</p>
+                  <h1 className="text-2xl font-bold text-white">Settings</h1>
+                  <p className="text-white/90">Manage your account preferences</p>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
-                <Bell className="w-5 h-5 text-gray-600" />
+                <Bell className="w-5 h-5 text-white/80 hover:text-white cursor-pointer transition-colors" />
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center hover:bg-blue-200 transition-colors">
-                      <span className="text-blue-600 font-semibold text-sm">VB</span>
+                    <button className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-all duration-200 ring-2 ring-white/30">
+                      <span className="text-white font-semibold text-sm">VB</span>
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-64 p-0" align="end">
                     <div className="p-4">
                       <div className="flex items-center space-x-3 mb-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-blue-600 font-semibold text-sm">VB</span>
+                        <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center">
+                          <span className="text-white font-semibold text-sm">VB</span>
                         </div>
                         <div>
                           <p className="font-semibold text-gray-900">Viaan Bindra</p>
@@ -188,27 +188,27 @@ export default function CustomerSettings() {
                       <div className="space-y-1">
                         <Link 
                           to="/customer-dashboard" 
-                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 rounded-md transition-colors"
                         >
                           <LayoutDashboard className="w-4 h-4 mr-3" />
                           Dashboard
                         </Link>
                         <Link 
                           to="/customer-dashboard/wallet" 
-                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 rounded-md transition-colors"
                         >
                           <Wallet className="w-4 h-4 mr-3" />
                           Wallet
                         </Link>
                         <Link 
                           to="/customer-dashboard/profile" 
-                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 rounded-md transition-colors"
                         >
                           <User className="w-4 h-4 mr-3" />
                           Profile
                         </Link>
                         <Separator className="my-2" />
-                        <button className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
+                        <button className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-red-50 rounded-md transition-colors">
                           <LogOut className="w-4 h-4 mr-3" />
                           Log out
                         </button>
@@ -232,11 +232,11 @@ export default function CustomerSettings() {
 
               {/* Notifications Settings */}
               <TabsContent value="notifications">
-                <Card>
+                <Card className="border-0 bg-gradient-to-br from-white via-gray-50 to-green-50/30 backdrop-blur-sm shadow-lg">
                   <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
-                      <Bell className="w-5 h-5" />
-                      <span>Notification Preferences</span>
+                      <Bell className="w-5 h-5 text-gradient-to-r from-green-500 to-blue-500" />
+                      <span className="bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">Notification Preferences</span>
                     </CardTitle>
                     <CardDescription>
                       Choose how you want to be notified about important updates

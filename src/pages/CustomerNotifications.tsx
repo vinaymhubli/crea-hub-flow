@@ -157,15 +157,15 @@ function CustomerSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarContent className="bg-white border-r border-gray-200">
-        <div className="p-4 border-b border-gray-200">
+      <SidebarContent className="bg-gradient-to-br from-green-400 via-teal-500 to-blue-500 border-r-0 shadow-xl">
+        <div className="p-4 border-b border-white/20">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-              <span className="text-blue-600 font-semibold text-sm">VB</span>
+            <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center ring-2 ring-white/30">
+              <span className="text-white font-semibold text-sm">VB</span>
             </div>
             <div>
-              <p className="font-semibold text-gray-900">Viaan Bindra</p>
-              <p className="text-sm text-gray-500">Customer</p>
+              <p className="font-semibold text-white">Viaan Bindra</p>
+              <p className="text-sm text-white/80">Customer</p>
             </div>
           </div>
         </div>
@@ -178,10 +178,10 @@ function CustomerSidebar() {
                   <SidebarMenuButton asChild>
                     <Link 
                       to={item.url} 
-                      className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
+                      className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 ${
                         isActive(item.url) 
-                          ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' 
-                          : 'text-gray-700 hover:bg-gray-50'
+                          ? 'bg-white/20 text-white backdrop-blur-sm border-r-2 border-white shadow-lg' 
+                          : 'text-white/80 hover:bg-white/10 hover:text-white'
                       }`}
                     >
                       <item.icon className="w-5 h-5" />
@@ -207,11 +207,11 @@ function NotificationCard({ notification, onMarkAsRead, onDelete }: {
   const IconComponent = notification.icon;
   
   return (
-    <Card className={`${!notification.read ? 'bg-blue-50 border-blue-200' : 'bg-white'} hover:shadow-md transition-shadow`}>
+    <Card className={`${!notification.read ? 'bg-gradient-to-br from-green-50/30 via-teal-50/30 to-blue-50/30 border-gradient-to-r from-green-200/50 to-blue-200/50' : 'bg-white'} hover:shadow-xl transition-all duration-300 border-0 backdrop-blur-sm`}>
       <CardContent className="p-4">
         <div className="flex items-start space-x-4">
-          <div className={`w-10 h-10 ${!notification.read ? 'bg-blue-100' : 'bg-gray-100'} rounded-full flex items-center justify-center flex-shrink-0`}>
-            <IconComponent className={`w-5 h-5 ${notification.iconColor}`} />
+          <div className={`w-10 h-10 ${!notification.read ? 'bg-gradient-to-br from-green-400 to-blue-500' : 'bg-gray-100'} rounded-full flex items-center justify-center flex-shrink-0 shadow-lg`}>
+            <IconComponent className={`w-5 h-5 ${!notification.read ? 'text-white' : notification.iconColor}`} />
           </div>
           
           <div className="flex-1 min-w-0">
@@ -314,40 +314,40 @@ export default function CustomerNotifications() {
         
         <main className="flex-1">
           {/* Header */}
-          <header className="bg-white border-b border-gray-200 px-6 py-8">
+          <header className="bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 border-b-0 px-6 py-8 shadow-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <SidebarTrigger />
+                <SidebarTrigger className="text-white hover:bg-white/20 rounded-lg p-2" />
                 <div>
                   <div className="flex items-center space-x-3">
-                    <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
+                    <h1 className="text-2xl font-bold text-white">Notifications</h1>
                     {unreadCount > 0 && (
-                      <Badge className="bg-blue-600 text-white">
+                      <Badge className="bg-white/20 text-white backdrop-blur-sm border border-white/30">
                         {unreadCount} new
                       </Badge>
                     )}
                   </div>
-                  <p className="text-gray-600">Stay updated with your design projects</p>
+                  <p className="text-white/90">Stay updated with your design projects</p>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
                 {unreadCount > 0 && (
-                  <Button variant="outline" onClick={handleMarkAllAsRead}>
+                  <Button variant="outline" onClick={handleMarkAllAsRead} className="border-white/30 text-white hover:bg-white/20 backdrop-blur-sm">
                     <Check className="w-4 h-4 mr-2" />
                     Mark all as read
                   </Button>
                 )}
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <Bell className="w-5 h-5 text-gray-600" />
+                    <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
+                      <Bell className="w-5 h-5" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-64 p-0" align="end">
                     <div className="p-4">
                       <div className="flex items-center space-x-3 mb-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-blue-600 font-semibold text-sm">VB</span>
+                        <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center">
+                          <span className="text-white font-semibold text-sm">VB</span>
                         </div>
                         <div>
                           <p className="font-semibold text-gray-900">Viaan Bindra</p>
@@ -358,27 +358,27 @@ export default function CustomerNotifications() {
                       <div className="space-y-1">
                         <Link 
                           to="/customer-dashboard" 
-                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 rounded-md transition-colors"
                         >
                           <LayoutDashboard className="w-4 h-4 mr-3" />
                           Dashboard
                         </Link>
                         <Link 
                           to="/customer-dashboard/wallet" 
-                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 rounded-md transition-colors"
                         >
                           <Wallet className="w-4 h-4 mr-3" />
                           Wallet
                         </Link>
                         <Link 
                           to="/customer-dashboard/profile" 
-                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 rounded-md transition-colors"
                         >
                           <User className="w-4 h-4 mr-3" />
                           Profile
                         </Link>
                         <Separator className="my-2" />
-                        <button className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
+                        <button className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-red-50 rounded-md transition-colors">
                           <LogOut className="w-4 h-4 mr-3" />
                           Log out
                         </button>
