@@ -80,15 +80,15 @@ function CustomerSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarContent className="bg-white border-r border-gray-200">
-        <div className="p-4 border-b border-gray-200">
+      <SidebarContent className="bg-background border-r border-border">
+        <div className="p-4 border-b border-border">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-              <span className="text-blue-600 font-semibold text-sm">VB</span>
+            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+              <span className="text-primary font-semibold text-sm">VB</span>
             </div>
             <div>
-              <p className="font-semibold text-gray-900">Viaan Bindra</p>
-              <p className="text-sm text-gray-500">Customer</p>
+              <p className="font-semibold text-foreground">Viaan Bindra</p>
+              <p className="text-sm text-muted-foreground">Customer</p>
             </div>
           </div>
         </div>
@@ -103,8 +103,8 @@ function CustomerSidebar() {
                       to={item.url} 
                       className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
                         isActive(item.url) 
-                          ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' 
-                          : 'text-gray-700 hover:bg-gray-50'
+                          ? 'bg-primary/10 text-primary border-r-2 border-primary' 
+                          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                       }`}
                     >
                       <item.icon className="w-5 h-5" />
@@ -125,26 +125,26 @@ function CustomerSidebar() {
 export default function CustomerDashboard() {
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gray-50">
+      <div className="min-h-screen flex w-full bg-background">
         <CustomerSidebar />
         
         <main className="flex-1">
           {/* Header */}
-          <header className="bg-white border-b border-gray-200 px-6 py-8">
+          <header className="bg-white border-b border-border px-6 py-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <SidebarTrigger />
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-                  <p className="text-gray-600">Welcome back, Customer</p>
+                  <h1 className="text-2xl font-bold text-foreground">Customer Dashboard</h1>
+                  <p className="text-muted-foreground">Welcome back, let's create something amazing</p>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
-                <Bell className="w-5 h-5 text-gray-600" />
+                <Bell className="w-5 h-5 text-muted-foreground" />
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center hover:bg-blue-200 transition-colors">
-                      <span className="text-blue-600 font-semibold text-sm">VB</span>
+                    <button className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center hover:bg-primary/20 transition-colors">
+                      <span className="text-primary font-semibold text-sm">VB</span>
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-64 p-0" align="end">
@@ -198,27 +198,27 @@ export default function CustomerDashboard() {
               {/* Action Buttons */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Link to="/designers">
-                  <Button className="w-full h-16 bg-blue-600 hover:bg-blue-700 text-white flex-col space-y-2">
+                  <Button className="w-full h-16 bg-primary hover:bg-primary/90 text-primary-foreground flex-col space-y-2">
                     <Search className="w-5 h-5" />
                     <span className="font-semibold">Find Designer</span>
                   </Button>
                 </Link>
                 <Link to="/customer-dashboard/bookings">
-                  <Button variant="outline" className="w-full h-16 border-gray-300 hover:bg-gray-50 flex-col space-y-2">
-                    <Calendar className="w-5 h-5 text-gray-600" />
-                    <span className="font-semibold text-gray-700">My Bookings</span>
+                  <Button variant="outline" className="w-full h-16 flex-col space-y-2">
+                    <Calendar className="w-5 h-5" />
+                    <span className="font-semibold">My Bookings</span>
                   </Button>
                 </Link>
                 <Link to="/customer-dashboard/messages">
-                  <Button variant="outline" className="w-full h-16 border-gray-300 hover:bg-gray-50 flex-col space-y-2">
-                    <MessageCircle className="w-5 h-5 text-gray-600" />
-                    <span className="font-semibold text-gray-700">Messages</span>
+                  <Button variant="outline" className="w-full h-16 flex-col space-y-2">
+                    <MessageCircle className="w-5 h-5" />
+                    <span className="font-semibold">Messages</span>
                   </Button>
                 </Link>
                 <Link to="/customer-dashboard/wallet">
-                  <Button variant="outline" className="w-full h-16 border-gray-300 hover:bg-gray-50 flex-col space-y-2">
-                    <CreditCard className="w-5 h-5 text-gray-600" />
-                    <span className="font-semibold text-gray-700">Add Funds</span>
+                  <Button variant="outline" className="w-full h-16 flex-col space-y-2">
+                    <CreditCard className="w-5 h-5" />
+                    <span className="font-semibold">Add Funds</span>
                   </Button>
                 </Link>
               </div>
@@ -227,11 +227,11 @@ export default function CustomerDashboard() {
               <Card>
                 <CardContent className="p-6">
                   <div className="text-center">
-                    <p className="text-sm text-gray-600 mb-2">Wallet Balance</p>
-                    <p className="text-3xl font-bold text-gray-900 mb-4">$120.00</p>
-                    <p className="text-sm text-gray-500 mb-4">Available for design sessions</p>
+                    <p className="text-sm text-muted-foreground mb-2">Wallet Balance</p>
+                    <p className="text-3xl font-bold text-foreground mb-4">$120.00</p>
+                    <p className="text-sm text-muted-foreground mb-4">Available for design sessions</p>
                     <Link to="/customer-dashboard/wallet">
-                      <Button className="bg-blue-600 hover:bg-blue-700">
+                      <Button className="bg-primary hover:bg-primary/90">
                         Add Funds
                       </Button>
                     </Link>
@@ -243,21 +243,21 @@ export default function CustomerDashboard() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
-                    <CardTitle className="text-xl text-gray-900">Upcoming Sessions</CardTitle>
+                    <CardTitle className="text-xl text-foreground">Upcoming Sessions</CardTitle>
                     <CardDescription>Your scheduled design sessions</CardDescription>
                   </div>
-                  <Link to="/customer-dashboard/bookings" className="text-blue-600 hover:text-blue-700 flex items-center text-sm font-medium">
+                  <Link to="/customer-dashboard/bookings" className="text-primary hover:text-primary/80 flex items-center text-sm font-medium">
                     View All
                     <ChevronRight className="w-4 h-4 ml-1" />
                   </Link>
                 </CardHeader>
                 <CardContent>
                   <div className="text-center py-12">
-                    <CalendarClock className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="font-semibold text-gray-900 mb-2">No upcoming sessions</h3>
-                    <p className="text-sm text-gray-500 mb-4">You don't have any design sessions scheduled. Book a session with a designer to get started.</p>
+                    <CalendarClock className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
+                    <h3 className="font-semibold text-foreground mb-2">No upcoming sessions</h3>
+                    <p className="text-sm text-muted-foreground mb-4">You don't have any design sessions scheduled. Book a session with a designer to get started.</p>
                     <Link to="/designers">
-                      <Button className="bg-blue-600 hover:bg-blue-700">
+                      <Button className="bg-primary hover:bg-primary/90">
                         Find a Designer
                       </Button>
                     </Link>

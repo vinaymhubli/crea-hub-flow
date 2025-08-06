@@ -54,15 +54,15 @@ function DesignerSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarContent className="bg-white border-r border-gray-200">
-        <div className="p-4 border-b border-gray-200">
+      <SidebarContent className="bg-background border-r border-border">
+        <div className="p-4 border-b border-border">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-              <span className="text-green-600 font-semibold text-sm">VB</span>
+            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+              <span className="text-primary font-semibold text-sm">VB</span>
             </div>
             <div>
-              <p className="font-semibold text-gray-900">Vb Bn</p>
-              <p className="text-sm text-gray-500">designer</p>
+              <p className="font-semibold text-foreground">Vb Bn</p>
+              <p className="text-sm text-muted-foreground">Designer</p>
             </div>
           </div>
         </div>
@@ -73,14 +73,14 @@ function DesignerSidebar() {
               {sidebarItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <Link 
-                      to={item.url} 
-                      className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
-                        isActive(item.url) 
-                          ? 'bg-green-50 text-green-600 border-r-2 border-green-600' 
-                          : 'text-gray-700 hover:bg-gray-50'
-                      }`}
-                      >
+                      <Link 
+                        to={item.url} 
+                        className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
+                          isActive(item.url) 
+                            ? 'bg-primary/10 text-primary border-r-2 border-primary' 
+                            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                        }`}
+                        >
                         <item.icon className="w-5 h-5" />
                         <span className="font-medium">{item.title}</span>
                       </Link>
@@ -98,41 +98,41 @@ function DesignerSidebar() {
 export default function DesignerDashboard() {
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gray-50">
+      <div className="min-h-screen flex w-full bg-background">
         <DesignerSidebar />
         
         <main className="flex-1">
           {/* Header */}
-          <header className="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-8">
+          <header className="bg-white border-b border-border px-6 py-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <SidebarTrigger className="text-white" />
+                <SidebarTrigger />
                 <div>
-                  <h1 className="text-3xl font-bold text-white">Designer Dashboard</h1>
-                  <p className="text-green-100">Manage your design business</p>
+                  <h1 className="text-2xl font-bold text-foreground">Designer Dashboard</h1>
+                  <p className="text-muted-foreground">Manage your design business and showcase your talent</p>
                 </div>
               </div>
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-                  <span className="text-green-100 text-sm font-medium">Online</span>
+                  <div className="w-3 h-3 bg-primary rounded-full animate-pulse"></div>
+                  <span className="text-muted-foreground text-sm font-medium">Online</span>
                 </div>
-                <Bell className="w-5 h-5 text-green-100" />
+                <Bell className="w-5 h-5 text-muted-foreground" />
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
-                      <span className="text-white font-semibold text-sm">VB</span>
+                    <button className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center hover:bg-primary/20 transition-colors">
+                      <span className="text-primary font-semibold text-sm">VB</span>
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-64 p-0" align="end">
                     <div className="p-4">
                       <div className="flex items-center space-x-3 mb-3">
-                        <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                          <span className="text-green-600 font-semibold text-sm">VB</span>
+                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                          <span className="text-primary font-semibold text-sm">VB</span>
                         </div>
                         <div>
-                          <p className="font-semibold text-gray-900">Vb Bn</p>
-                          <p className="text-sm text-gray-500">lvbn200@gmail.com</p>
+                          <p className="font-semibold text-foreground">Vb Bn</p>
+                          <p className="text-sm text-muted-foreground">lvbn200@gmail.com</p>
                         </div>
                       </div>
                       <Separator className="my-3" />
@@ -175,25 +175,25 @@ export default function DesignerDashboard() {
             {/* Quick Actions */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <Link to="/designer-dashboard/bookings">
-                <Button className="w-full h-16 bg-green-600 hover:bg-green-700 text-white flex-col space-y-2">
+                <Button className="w-full h-16 bg-primary hover:bg-primary/90 text-primary-foreground flex-col space-y-2">
                   <Calendar className="w-5 h-5" />
                   <span className="font-semibold">Manage Bookings</span>
                 </Button>
               </Link>
               <Link to="/designer-dashboard/portfolio">
-                <Button variant="outline" className="w-full h-16 border-green-300 hover:bg-green-50 text-green-700 flex-col space-y-2">
+                <Button variant="outline" className="w-full h-16 flex-col space-y-2">
                   <FolderOpen className="w-5 h-5" />
                   <span className="font-semibold">Update Portfolio</span>
                 </Button>
               </Link>
               <Link to="/designer-dashboard/availability">
-                <Button variant="outline" className="w-full h-16 border-green-300 hover:bg-green-50 text-green-700 flex-col space-y-2">
+                <Button variant="outline" className="w-full h-16 flex-col space-y-2">
                   <Clock className="w-5 h-5" />
                   <span className="font-semibold">Set Availability</span>
                 </Button>
               </Link>
               <Link to="/designer-dashboard/earnings">
-                <Button variant="outline" className="w-full h-16 border-green-300 hover:bg-green-50 text-green-700 flex-col space-y-2">
+                <Button variant="outline" className="w-full h-16 flex-col space-y-2">
                   <DollarSign className="w-5 h-5" />
                   <span className="font-semibold">View Earnings</span>
                 </Button>
@@ -203,13 +203,13 @@ export default function DesignerDashboard() {
             {/* Active Design Sessions */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-xl text-gray-900">Active Design Sessions</CardTitle>
+                <CardTitle className="text-xl text-foreground">Active Design Sessions</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-center py-12">
-                  <CalendarClock className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500 mb-2">You don't have any active design sessions at the moment.</p>
-                  <p className="text-sm text-gray-400">When customers start a session with you, they will appear here.</p>
+                  <CalendarClock className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
+                  <p className="text-muted-foreground mb-2">You don't have any active design sessions at the moment.</p>
+                  <p className="text-sm text-muted-foreground/80">When customers start a session with you, they will appear here.</p>
                 </div>
               </CardContent>
             </Card>
@@ -220,15 +220,15 @@ export default function DesignerDashboard() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600 mb-1">Total Earnings</p>
-                      <p className="text-2xl font-bold text-gray-900">$0.00</p>
-                      <Link to="/designer-dashboard/earnings" className="text-sm text-green-600 hover:text-green-700 flex items-center mt-2">
+                      <p className="text-sm text-muted-foreground mb-1">Total Earnings</p>
+                      <p className="text-2xl font-bold text-foreground">$0.00</p>
+                      <Link to="/designer-dashboard/earnings" className="text-sm text-primary hover:text-primary/80 flex items-center mt-2">
                         View earnings report
                         <TrendingUp className="w-3 h-3 ml-1" />
                       </Link>
                     </div>
-                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                      <DollarSign className="w-6 h-6 text-green-600" />
+                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                      <DollarSign className="w-6 h-6 text-primary" />
                     </div>
                   </div>
                 </CardContent>
