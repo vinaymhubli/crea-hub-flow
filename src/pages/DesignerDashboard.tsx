@@ -170,112 +170,145 @@ export default function DesignerDashboard() {
             </div>
           </header>
 
-          <div className="p-6 space-y-6">
+          <div className="p-6 space-y-8">
             {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Link to="/designer-dashboard/bookings">
-                <Button className="w-full h-16 bg-primary hover:bg-primary/90 text-primary-foreground flex-col space-y-2">
-                  <Calendar className="w-5 h-5" />
-                  <span className="font-semibold">Manage Bookings</span>
-                </Button>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Link to="/designer-dashboard/bookings" className="group">
+                <div className="relative overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl p-6 h-32 transition-all duration-300 hover:scale-105 hover:shadow-xl animate-fade-in">
+                  <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full"></div>
+                  <div className="relative z-10 flex flex-col justify-between h-full text-white">
+                    <Calendar className="w-8 h-8 mb-2" />
+                    <div>
+                      <h3 className="font-bold text-lg">Manage Bookings</h3>
+                      <p className="text-white/80 text-sm">View & organize sessions</p>
+                    </div>
+                  </div>
+                </div>
               </Link>
-              <Link to="/designer-dashboard/portfolio">
-                <Button variant="outline" className="w-full h-16 flex-col space-y-2">
-                  <FolderOpen className="w-5 h-5" />
-                  <span className="font-semibold">Update Portfolio</span>
-                </Button>
+
+              <Link to="/designer-dashboard/portfolio" className="group">
+                <div className="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 h-32 transition-all duration-300 hover:scale-105 hover:shadow-xl animate-fade-in" style={{animationDelay: '0.1s'}}>
+                  <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full"></div>
+                  <div className="relative z-10 flex flex-col justify-between h-full text-white">
+                    <FolderOpen className="w-8 h-8 mb-2" />
+                    <div>
+                      <h3 className="font-bold text-lg">Update Portfolio</h3>
+                      <p className="text-white/80 text-sm">Showcase your work</p>
+                    </div>
+                  </div>
+                </div>
               </Link>
-              <Link to="/designer-dashboard/availability">
-                <Button variant="outline" className="w-full h-16 flex-col space-y-2">
-                  <Clock className="w-5 h-5" />
-                  <span className="font-semibold">Set Availability</span>
-                </Button>
+
+              <Link to="/designer-dashboard/availability" className="group">
+                <div className="relative overflow-hidden bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl p-6 h-32 transition-all duration-300 hover:scale-105 hover:shadow-xl animate-fade-in" style={{animationDelay: '0.2s'}}>
+                  <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full"></div>
+                  <div className="relative z-10 flex flex-col justify-between h-full text-white">
+                    <Clock className="w-8 h-8 mb-2" />
+                    <div>
+                      <h3 className="font-bold text-lg">Set Availability</h3>
+                      <p className="text-white/80 text-sm">Manage your schedule</p>
+                    </div>
+                  </div>
+                </div>
               </Link>
-              <Link to="/designer-dashboard/earnings">
-                <Button variant="outline" className="w-full h-16 flex-col space-y-2">
-                  <DollarSign className="w-5 h-5" />
-                  <span className="font-semibold">View Earnings</span>
-                </Button>
+
+              <Link to="/designer-dashboard/earnings" className="group">
+                <div className="relative overflow-hidden bg-gradient-to-br from-violet-500 to-pink-500 rounded-2xl p-6 h-32 transition-all duration-300 hover:scale-105 hover:shadow-xl animate-fade-in" style={{animationDelay: '0.3s'}}>
+                  <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full"></div>
+                  <div className="relative z-10 flex flex-col justify-between h-full text-white">
+                    <DollarSign className="w-8 h-8 mb-2" />
+                    <div>
+                      <h3 className="font-bold text-lg">View Earnings</h3>
+                      <p className="text-white/80 text-sm">Track your income</p>
+                    </div>
+                  </div>
+                </div>
               </Link>
             </div>
 
             {/* Active Design Sessions */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl text-foreground">Active Design Sessions</CardTitle>
+            <Card className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-slate-50 to-gray-100 animate-fade-in" style={{animationDelay: '0.4s'}}>
+              <CardHeader className="bg-gradient-to-r from-slate-600 to-gray-700 text-white">
+                <CardTitle className="text-xl flex items-center">
+                  <CalendarClock className="w-6 h-6 mr-3" />
+                  Active Design Sessions
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <CalendarClock className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
-                  <p className="text-muted-foreground mb-2">You don't have any active design sessions at the moment.</p>
-                  <p className="text-sm text-muted-foreground/80">When customers start a session with you, they will appear here.</p>
+              <CardContent className="p-8">
+                <div className="text-center">
+                  <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <CalendarClock className="w-10 h-10 text-blue-500" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">No Active Sessions</h3>
+                  <p className="text-gray-600 mb-4">You don't have any active design sessions at the moment.</p>
+                  <p className="text-sm text-gray-500">When customers start a session with you, they will appear here.</p>
                 </div>
               </CardContent>
             </Card>
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card>
-                <CardContent className="p-6">
+              <Card className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in" style={{animationDelay: '0.5s'}}>
+                <CardContent className="p-6 bg-gradient-to-br from-green-50 to-emerald-50">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-muted-foreground mb-1">Total Earnings</p>
-                      <p className="text-2xl font-bold text-foreground">$0.00</p>
-                      <Link to="/designer-dashboard/earnings" className="text-sm text-primary hover:text-primary/80 flex items-center mt-2">
+                      <p className="text-sm text-gray-600 mb-1 font-medium">Total Earnings</p>
+                      <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">$0.00</p>
+                      <Link to="/designer-dashboard/earnings" className="text-sm text-green-600 hover:text-green-700 flex items-center mt-3 font-medium group">
                         View earnings report
-                        <TrendingUp className="w-3 h-3 ml-1" />
+                        <TrendingUp className="w-3 h-3 ml-1 transition-transform group-hover:translate-x-1" />
                       </Link>
                     </div>
-                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                      <DollarSign className="w-6 h-6 text-primary" />
+                    <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg">
+                      <DollarSign className="w-8 h-8 text-white" />
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardContent className="p-6">
+              <Card className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in" style={{animationDelay: '0.6s'}}>
+                <CardContent className="p-6 bg-gradient-to-br from-blue-50 to-cyan-50">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600 mb-1">Total Clients</p>
-                      <p className="text-2xl font-bold text-gray-900">0</p>
-                      <p className="text-sm text-gray-500 mt-2">0 pending bookings</p>
+                      <p className="text-sm text-gray-600 mb-1 font-medium">Total Clients</p>
+                      <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">0</p>
+                      <p className="text-sm text-blue-600 mt-3 font-medium">0 pending bookings</p>
                     </div>
-                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                      <User className="w-6 h-6 text-blue-600" />
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
+                      <User className="w-8 h-8 text-white" />
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardContent className="p-6">
+              <Card className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in" style={{animationDelay: '0.7s'}}>
+                <CardContent className="p-6 bg-gradient-to-br from-yellow-50 to-orange-50">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600 mb-1">Avg. Rating</p>
-                      <div className="flex items-center space-x-1">
-                        <p className="text-2xl font-bold text-gray-900">0.0</p>
-                        <Star className="w-5 h-5 text-yellow-400" />
+                      <p className="text-sm text-gray-600 mb-1 font-medium">Avg. Rating</p>
+                      <div className="flex items-center space-x-2 mb-3">
+                        <p className="text-3xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">0.0</p>
+                        <Star className="w-6 h-6 text-yellow-400 fill-current" />
                       </div>
-                      <p className="text-sm text-gray-500 mt-2">From 0 completed sessions</p>
+                      <p className="text-sm text-yellow-600 font-medium">From 0 completed sessions</p>
                     </div>
-                    <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
-                      <Star className="w-6 h-6 text-yellow-600" />
+                    <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
+                      <Star className="w-8 h-8 text-white" />
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardContent className="p-6">
+              <Card className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in" style={{animationDelay: '0.8s'}}>
+                <CardContent className="p-6 bg-gradient-to-br from-purple-50 to-pink-50">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600 mb-1">Completion Rate</p>
-                      <p className="text-2xl font-bold text-gray-900">0%</p>
-                      <p className="text-sm text-gray-500 mt-2">0 completed sessions</p>
+                      <p className="text-sm text-gray-600 mb-1 font-medium">Completion Rate</p>
+                      <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">0%</p>
+                      <p className="text-sm text-purple-600 mt-3 font-medium">0 completed sessions</p>
                     </div>
-                    <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                      <TrendingUp className="w-6 h-6 text-purple-600" />
+                    <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
+                      <TrendingUp className="w-8 h-8 text-white" />
                     </div>
                   </div>
                 </CardContent>
@@ -283,35 +316,46 @@ export default function DesignerDashboard() {
             </div>
 
             {/* Bottom Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Weekly Earnings */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Weekly Earnings</CardTitle>
-                  <CardDescription>Your earnings for the current week</CardDescription>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Weekly Earnings Chart */}
+              <Card className="overflow-hidden border-0 shadow-lg animate-fade-in" style={{animationDelay: '0.9s'}}>
+                <CardHeader className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+                  <CardTitle className="flex items-center">
+                    <TrendingUp className="w-6 h-6 mr-3" />
+                    Weekly Earnings
+                  </CardTitle>
+                  <CardDescription className="text-indigo-100">Your earnings for the current week</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="h-48 flex items-center justify-center bg-gray-50 rounded-lg">
+                <CardContent className="p-6">
+                  <div className="h-64 flex items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl">
                     <div className="text-center">
-                      <TrendingUp className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-                      <p className="text-gray-500">No earnings data yet</p>
+                      <div className="w-16 h-16 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <TrendingUp className="w-8 h-8 text-indigo-500" />
+                      </div>
+                      <h3 className="font-bold text-gray-800 text-lg mb-2">No Earnings Data</h3>
+                      <p className="text-gray-600">Start taking sessions to see your weekly progress</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               {/* Upcoming Sessions */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Upcoming Sessions</CardTitle>
-                  <CardDescription>Your scheduled design sessions</CardDescription>
+              <Card className="overflow-hidden border-0 shadow-lg animate-fade-in" style={{animationDelay: '1.0s'}}>
+                <CardHeader className="bg-gradient-to-r from-teal-500 to-cyan-600 text-white">
+                  <CardTitle className="flex items-center">
+                    <CalendarClock className="w-6 h-6 mr-3" />
+                    Upcoming Sessions
+                  </CardTitle>
+                  <CardDescription className="text-teal-100">Your scheduled design sessions</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-6">
                   <div className="text-center py-8">
-                    <CalendarClock className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                    <h3 className="font-semibold text-gray-900 mb-2">No upcoming sessions</h3>
-                    <p className="text-sm text-gray-500 mb-4">You don't have any design sessions scheduled.</p>
-                    <Button variant="outline" size="sm">
+                    <div className="w-16 h-16 bg-gradient-to-br from-teal-100 to-cyan-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <CalendarClock className="w-8 h-8 text-teal-500" />
+                    </div>
+                    <h3 className="font-bold text-gray-800 text-lg mb-2">No Upcoming Sessions</h3>
+                    <p className="text-gray-600 mb-6">You don't have any design sessions scheduled.</p>
+                    <Button className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white border-0 transition-all duration-300 hover:scale-105">
                       Update Availability
                     </Button>
                   </div>
@@ -319,41 +363,56 @@ export default function DesignerDashboard() {
               </Card>
             </div>
 
-            {/* Additional Stats Cards */}
+            {/* Performance Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <Clock className="w-5 h-5 text-gray-500" />
-                    <span className="text-sm text-gray-600">Response Time</span>
+              <Card className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in" style={{animationDelay: '1.1s'}}>
+                <CardContent className="p-6 bg-gradient-to-br from-amber-50 to-yellow-50">
+                  <div className="flex items-center space-x-4 mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-xl flex items-center justify-center">
+                      <Clock className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-800">Response Time</h3>
+                      <p className="text-sm text-gray-600">Average response to bookings</p>
+                    </div>
                   </div>
-                  <p className="text-2xl font-bold text-gray-900">0 min</p>
-                  <p className="text-sm text-gray-500 mt-1">Average time to respond to booking requests</p>
+                  <p className="text-3xl font-bold bg-gradient-to-r from-amber-600 to-yellow-600 bg-clip-text text-transparent mb-2">0 min</p>
+                  <p className="text-sm text-amber-600 font-medium">Respond faster to get more bookings</p>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <Eye className="w-5 h-5 text-gray-500" />
-                    <span className="text-sm text-gray-600">Portfolio Views</span>
+              <Card className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in" style={{animationDelay: '1.2s'}}>
+                <CardContent className="p-6 bg-gradient-to-br from-rose-50 to-pink-50">
+                  <div className="flex items-center space-x-4 mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-rose-500 to-pink-500 rounded-xl flex items-center justify-center">
+                      <Eye className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-800">Portfolio Views</h3>
+                      <p className="text-sm text-gray-600">Times clients viewed your work</p>
+                    </div>
                   </div>
-                  <p className="text-2xl font-bold text-gray-900">0</p>
-                  <p className="text-sm text-gray-500 mt-1">Number of times clients viewed your portfolio</p>
+                  <p className="text-3xl font-bold bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent mb-2">0</p>
+                  <p className="text-sm text-rose-600 font-medium">Update your portfolio to attract clients</p>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <User className="w-5 h-5 text-gray-500" />
-                    <span className="text-sm text-gray-600">Profile Completion</span>
+              <Card className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in" style={{animationDelay: '1.3s'}}>
+                <CardContent className="p-6 bg-gradient-to-br from-emerald-50 to-green-50">
+                  <div className="flex items-center space-x-4 mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-500 rounded-xl flex items-center justify-center">
+                      <User className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-800">Profile Completion</h3>
+                      <p className="text-sm text-gray-600">Complete to attract more clients</p>
+                    </div>
                   </div>
-                  <p className="text-2xl font-bold text-gray-900">85%</p>
-                  <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                    <div className="bg-green-500 h-2 rounded-full" style={{ width: '85%' }}></div>
+                  <p className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent mb-2">85%</p>
+                  <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                    <div className="bg-gradient-to-r from-emerald-500 to-green-500 h-3 rounded-full transition-all duration-500" style={{ width: '85%' }}></div>
                   </div>
-                  <p className="text-sm text-gray-500 mt-1">Complete your profile to attract more clients</p>
+                  <p className="text-sm text-emerald-600 font-medium">Almost there! Complete your profile</p>
                 </CardContent>
               </Card>
             </div>
