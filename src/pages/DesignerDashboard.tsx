@@ -46,7 +46,6 @@ const sidebarItems = [
 ];
 
 function DesignerSidebar() {
-  const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const currentPath = location.pathname;
 
@@ -54,15 +53,15 @@ function DesignerSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarContent className="bg-background border-r border-border">
-        <div className="p-4 border-b border-border">
+      <SidebarContent className="bg-white border-r border-gray-200">
+        <div className="p-4 border-b border-gray-200">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-              <span className="text-primary font-semibold text-sm">VB</span>
+            <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
+              <span className="text-white font-semibold text-sm">VB</span>
             </div>
             <div>
-              <p className="font-semibold text-foreground">Vb Bn</p>
-              <p className="text-sm text-muted-foreground">Designer</p>
+              <p className="font-semibold text-gray-900">Vb Bn</p>
+              <p className="text-sm text-gray-500">Designer</p>
             </div>
           </div>
         </div>
@@ -77,11 +76,11 @@ function DesignerSidebar() {
                         to={item.url} 
                         className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
                           isActive(item.url) 
-                            ? 'bg-primary/10 text-primary border-r-2 border-primary' 
-                            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                            ? 'bg-gradient-to-r from-green-50 to-blue-50 text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-blue-600 border-r-2 border-gradient-to-b from-green-500 to-blue-500' 
+                            : 'text-gray-700 hover:bg-gray-50'
                         }`}
                         >
-                        <item.icon className="w-5 h-5" />
+                        <item.icon className={`w-5 h-5 ${isActive(item.url) ? 'text-green-600' : ''}`} />
                         <span className="font-medium">{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -103,25 +102,25 @@ export default function DesignerDashboard() {
         
         <main className="flex-1">
           {/* Header */}
-          <header className="bg-white border-b border-border px-6 py-8">
+          <header className="bg-gradient-to-r from-green-400 to-blue-500 px-6 py-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <SidebarTrigger />
+                <SidebarTrigger className="text-white hover:bg-white/20" />
                 <div>
-                  <h1 className="text-2xl font-bold text-foreground">Designer Dashboard</h1>
-                  <p className="text-muted-foreground">Manage your design business and showcase your talent</p>
+                  <h1 className="text-2xl font-bold text-white">Designer Dashboard</h1>
+                  <p className="text-white/80">Manage your design business and showcase your talent</p>
                 </div>
               </div>
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-primary rounded-full animate-pulse"></div>
-                  <span className="text-muted-foreground text-sm font-medium">Online</span>
+                  <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+                  <span className="text-white/80 text-sm font-medium">Online</span>
                 </div>
-                <Bell className="w-5 h-5 text-muted-foreground" />
+                <Bell className="w-5 h-5 text-white/80" />
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center hover:bg-primary/20 transition-colors">
-                      <span className="text-primary font-semibold text-sm">VB</span>
+                    <button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
+                      <span className="text-white font-semibold text-sm">VB</span>
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-64 p-0" align="end">

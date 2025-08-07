@@ -58,12 +58,12 @@ function DesignerSidebar() {
       <SidebarContent className="bg-white border-r border-gray-200">
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-              <span className="text-green-600 font-semibold text-sm">VB</span>
+            <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
+              <span className="text-white font-semibold text-sm">VB</span>
             </div>
             <div>
               <p className="font-semibold text-gray-900">Vb Bn</p>
-              <p className="text-sm text-gray-500">designer</p>
+              <p className="text-sm text-gray-500">Designer</p>
             </div>
           </div>
         </div>
@@ -78,11 +78,11 @@ function DesignerSidebar() {
                       to={item.url} 
                       className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
                         isActive(item.url) 
-                          ? 'bg-green-50 text-green-600 border-r-2 border-green-600' 
+                          ? 'bg-gradient-to-r from-green-50 to-blue-50 text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-blue-600 border-r-2 border-green-500' 
                           : 'text-gray-700 hover:bg-gray-50'
                       }`}
                       >
-                        <item.icon className="w-5 h-5" />
+                        <item.icon className={`w-5 h-5 ${isActive(item.url) ? 'text-green-600' : ''}`} />
                         <span className="font-medium">{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -129,16 +129,16 @@ export default function DesignerProfile() {
         
         <main className="flex-1">
           {/* Header */}
-          <header className="bg-white border-b border-gray-200 px-6 py-4">
+          <header className="bg-gradient-to-r from-green-400 to-blue-500 px-6 py-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <SidebarTrigger />
+                <SidebarTrigger className="text-white hover:bg-white/20" />
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Designer Profile</h1>
-                  <p className="text-gray-600">Manage your profile information, portfolio, and professional details.</p>
+                  <h1 className="text-2xl font-bold text-white">Designer Profile</h1>
+                  <p className="text-white/80">Manage your profile information, portfolio, and professional details.</p>
                 </div>
               </div>
-              <Button variant="outline" className="flex items-center space-x-2">
+              <Button className="bg-white/20 hover:bg-white/30 text-white border-white/20 flex items-center space-x-2">
                 <Eye className="w-4 h-4" />
                 <span>View Public Profile</span>
               </Button>
