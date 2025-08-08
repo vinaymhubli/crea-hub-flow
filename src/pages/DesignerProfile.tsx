@@ -124,79 +124,115 @@ export default function DesignerProfile() {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gray-50">
+      <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 via-blue-50 to-green-50">
         <DesignerSidebar />
         
         <main className="flex-1">
-          {/* Clean Header */}
-          <header className="bg-white border-b border-gray-200 px-6 py-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <SidebarTrigger className="text-gray-600 hover:text-gray-900" />
+          {/* Enhanced Header with Profile Preview */}
+          <header className="bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 px-6 py-8 relative overflow-hidden">
+            <div className="absolute inset-0 bg-black/10"></div>
+            <div className="relative z-10 flex items-center justify-between">
+              <div className="flex items-center space-x-6">
+                <SidebarTrigger className="text-white hover:bg-white/20 rounded-lg p-2" />
                 <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-gray-900 rounded-lg flex items-center justify-center">
-                    <span className="text-white font-semibold text-lg">VB</span>
+                  <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/30 shadow-xl">
+                    <span className="text-white font-bold text-xl">VB</span>
                   </div>
                   <div>
-                    <h1 className="text-2xl font-semibold text-gray-900">Profile Settings</h1>
-                    <p className="text-gray-600">Manage your designer profile and preferences</p>
+                    <h1 className="text-3xl font-bold text-white">Designer Profile</h1>
+                    <p className="text-white/90 text-lg">Vb Bn • UI/UX Designer • 5+ years experience</p>
+                    <div className="flex items-center space-x-4 mt-2">
+                      <div className="flex items-center space-x-1">
+                        <Star className="w-4 h-4 fill-yellow-300 text-yellow-300" />
+                        <span className="text-white/90 font-medium">4.9</span>
+                      </div>
+                      <Badge className="bg-white/20 text-white border-white/30">Available</Badge>
+                    </div>
                   </div>
                 </div>
               </div>
-              <Button variant="outline" className="flex items-center space-x-2">
+              <Button className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-200">
                 <Eye className="w-4 h-4" />
-                <span>Preview Profile</span>
+                <span>View Public Profile</span>
+                <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
           </header>
 
-          <div className="p-6 max-w-6xl mx-auto">
+          <div className="p-8 max-w-7xl mx-auto">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              {/* Simple Tab Navigation */}
-              <TabsList className="grid w-full grid-cols-4 mb-6 bg-white border border-gray-200">
-                <TabsTrigger value="personal" className="data-[state=active]:bg-gray-900 data-[state=active]:text-white">
-                  Personal Info
-                </TabsTrigger>
-                <TabsTrigger value="professional" className="data-[state=active]:bg-gray-900 data-[state=active]:text-white">
-                  Professional
-                </TabsTrigger>
-                <TabsTrigger value="portfolio" className="data-[state=active]:bg-gray-900 data-[state=active]:text-white">
-                  Portfolio
-                </TabsTrigger>
-                <TabsTrigger value="reviews" className="data-[state=active]:bg-gray-900 data-[state=active]:text-white">
-                  Reviews
-                </TabsTrigger>
-              </TabsList>
+              {/* Enhanced Tab Navigation */}
+              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-2 mb-8">
+                <TabsList className="grid w-full grid-cols-4 bg-transparent gap-2">
+                  <TabsTrigger 
+                    value="personal" 
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 hover:scale-105 rounded-xl py-3 font-semibold"
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    Personal Info
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="professional" 
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 hover:scale-105 rounded-xl py-3 font-semibold"
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    Professional
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="portfolio" 
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 hover:scale-105 rounded-xl py-3 font-semibold"
+                  >
+                    <FolderOpen className="w-4 h-4 mr-2" />
+                    Portfolio
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="reviews" 
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 hover:scale-105 rounded-xl py-3 font-semibold"
+                  >
+                    <Star className="w-4 h-4 mr-2" />
+                    Reviews
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
-              <TabsContent value="personal" className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              <TabsContent value="personal" className="space-y-8 animate-fade-in">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                   {/* Profile Picture Section */}
                   <div className="lg:col-span-1">
-                    <Card className="bg-white border border-gray-200">
-                      <CardHeader className="text-center pb-4">
-                        <CardTitle className="text-lg">Profile Picture</CardTitle>
+                    <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden">
+                      <CardHeader className="bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 text-white text-center py-8">
+                        <CardTitle className="text-xl font-bold">Profile Picture</CardTitle>
                       </CardHeader>
-                      <CardContent className="text-center space-y-4">
-                        <div className="w-24 h-24 bg-gray-900 rounded-full flex items-center justify-center mx-auto">
-                          <span className="text-white font-semibold text-2xl">VB</span>
+                      <CardContent className="p-8 text-center">
+                        <div className="relative group">
+                          <div className="w-32 h-32 bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto shadow-2xl group-hover:scale-105 transition-transform duration-300">
+                            <span className="text-white font-bold text-3xl">VB</span>
+                          </div>
+                          <div className="absolute inset-0 bg-black/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <Camera className="w-8 h-8 text-white" />
+                          </div>
                         </div>
-                        <Button variant="outline" size="sm" className="w-full">
+                        <Button className="mt-6 bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 w-full">
                           <Camera className="w-4 h-4 mr-2" />
                           Change Photo
                         </Button>
+                        <p className="text-sm text-gray-500 mt-3">Upload a professional headshot</p>
                       </CardContent>
                     </Card>
                   </div>
 
                   {/* Personal Information Section */}
-                  <div className="lg:col-span-3">
-                    <Card className="bg-white border border-gray-200">
-                      <CardHeader>
-                        <CardTitle className="text-lg">Personal Information</CardTitle>
-                        <CardDescription>Update your personal details and contact information</CardDescription>
+                  <div className="lg:col-span-2">
+                    <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden">
+                      <CardHeader className="bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 text-white">
+                        <CardTitle className="text-xl font-bold flex items-center">
+                          <User className="w-5 h-5 mr-2" />
+                          Personal Information
+                        </CardTitle>
+                        <CardDescription className="text-white/80">Update your personal details and contact information</CardDescription>
                       </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <CardContent className="p-8 space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div className="space-y-2">
                             <Label htmlFor="firstName" className="text-sm font-semibold text-gray-700 flex items-center">
                               <User className="w-4 h-4 mr-1" />
