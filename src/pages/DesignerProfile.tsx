@@ -124,100 +124,215 @@ export default function DesignerProfile() {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gray-50">
+      <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 via-blue-50 to-green-50">
         <DesignerSidebar />
         
         <main className="flex-1">
-          {/* Header */}
-          <header className="bg-gradient-to-r from-green-400 to-blue-500 px-6 py-8">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <SidebarTrigger className="text-white hover:bg-white/20" />
-                <div>
-                  <h1 className="text-2xl font-bold text-white">Designer Profile</h1>
-                  <p className="text-white/80">Manage your profile information, portfolio, and professional details.</p>
+          {/* Enhanced Header with Profile Preview */}
+          <header className="bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 px-6 py-8 relative overflow-hidden">
+            <div className="absolute inset-0 bg-black/10"></div>
+            <div className="relative z-10 flex items-center justify-between">
+              <div className="flex items-center space-x-6">
+                <SidebarTrigger className="text-white hover:bg-white/20 rounded-lg p-2" />
+                <div className="flex items-center space-x-4">
+                  <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/30 shadow-xl">
+                    <span className="text-white font-bold text-xl">VB</span>
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-bold text-white">Designer Profile</h1>
+                    <p className="text-white/90 text-lg">Vb Bn • UI/UX Designer • 5+ years experience</p>
+                    <div className="flex items-center space-x-4 mt-2">
+                      <div className="flex items-center space-x-1">
+                        <Star className="w-4 h-4 fill-yellow-300 text-yellow-300" />
+                        <span className="text-white/90 font-medium">4.9</span>
+                      </div>
+                      <Badge className="bg-white/20 text-white border-white/30">Available</Badge>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <Button className="bg-white/20 hover:bg-white/30 text-white border-white/20 flex items-center space-x-2">
+              <Button className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-200">
                 <Eye className="w-4 h-4" />
                 <span>View Public Profile</span>
+                <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
           </header>
 
-          <div className="p-6">
+          <div className="p-8 max-w-7xl mx-auto">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-4 mb-8 bg-white shadow-lg border border-gray-200 p-1 rounded-lg">
-                <TabsTrigger value="personal" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-200 hover:scale-105">Personal Info</TabsTrigger>
-                <TabsTrigger value="professional" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-200 hover:scale-105">Professional</TabsTrigger>
-                <TabsTrigger value="portfolio" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-200 hover:scale-105">Portfolio</TabsTrigger>
-                <TabsTrigger value="reviews" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-200 hover:scale-105">Reviews</TabsTrigger>
-              </TabsList>
+              {/* Enhanced Tab Navigation */}
+              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-2 mb-8">
+                <TabsList className="grid w-full grid-cols-4 bg-transparent gap-2">
+                  <TabsTrigger 
+                    value="personal" 
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 hover:scale-105 rounded-xl py-3 font-semibold"
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    Personal Info
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="professional" 
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 hover:scale-105 rounded-xl py-3 font-semibold"
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    Professional
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="portfolio" 
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 hover:scale-105 rounded-xl py-3 font-semibold"
+                  >
+                    <FolderOpen className="w-4 h-4 mr-2" />
+                    Portfolio
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="reviews" 
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 hover:scale-105 rounded-xl py-3 font-semibold"
+                  >
+                    <Star className="w-4 h-4 mr-2" />
+                    Reviews
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
-              <TabsContent value="personal" className="space-y-6 animate-fade-in">
-                <Card className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-                  <CardHeader className="bg-gradient-to-r from-green-400 to-blue-500 text-white rounded-t-lg">
-                    <CardTitle className="text-xl font-bold">Personal Information</CardTitle>
-                    <CardDescription className="text-white/80">Update your personal details and how others will see you on the platform.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6 p-6">
-                    <div className="flex items-start space-x-6">
-                      <div className="flex flex-col items-center space-y-4">
-                        <div className="w-24 h-24 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-transform duration-200">
-                          <Camera className="w-8 h-8 text-white" />
+              <TabsContent value="personal" className="space-y-8 animate-fade-in">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  {/* Profile Picture Section */}
+                  <div className="lg:col-span-1">
+                    <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden">
+                      <CardHeader className="bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 text-white text-center py-8">
+                        <CardTitle className="text-xl font-bold">Profile Picture</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-8 text-center">
+                        <div className="relative group">
+                          <div className="w-32 h-32 bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto shadow-2xl group-hover:scale-105 transition-transform duration-300">
+                            <span className="text-white font-bold text-3xl">VB</span>
+                          </div>
+                          <div className="absolute inset-0 bg-black/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <Camera className="w-8 h-8 text-white" />
+                          </div>
                         </div>
-                        <Button variant="outline" size="sm" className="flex items-center space-x-2 bg-gradient-to-r from-green-50 to-blue-50 border-green-200 hover:border-green-300 text-green-700">
-                          <Camera className="w-4 h-4" />
-                          <span>Change Photo</span>
+                        <Button className="mt-6 bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 w-full">
+                          <Camera className="w-4 h-4 mr-2" />
+                          Change Photo
                         </Button>
-                      </div>
-                      
-                      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                          <Label htmlFor="firstName" className="text-sm font-semibold text-gray-700">First name</Label>
-                          <Input id="firstName" placeholder="First name" className="border-gray-200 focus:border-green-400 focus:ring-green-200" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="lastName" className="text-sm font-semibold text-gray-700">Last name</Label>
-                          <Input id="lastName" placeholder="Last name" className="border-gray-200 focus:border-green-400 focus:ring-green-200" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="displayName" className="text-sm font-semibold text-gray-700">Display name</Label>
-                          <Input id="displayName" placeholder="Display name" className="border-gray-200 focus:border-green-400 focus:ring-green-200" />
-                          <p className="text-sm text-gray-500">This is how your name will appear publicly.</p>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="email" className="text-sm font-semibold text-gray-700">Email</Label>
-                          <Input id="email" type="email" placeholder="your.email@example.com" className="border-gray-200 focus:border-green-400 focus:ring-green-200" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="phone" className="text-sm font-semibold text-gray-700">Phone (optional)</Label>
-                          <Input id="phone" placeholder="+91 1234567890" className="border-gray-200 focus:border-green-400 focus:ring-green-200" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="location" className="text-sm font-semibold text-gray-700">Location (optional)</Label>
-                          <Input id="location" placeholder="Delhi, India" className="border-gray-200 focus:border-green-400 focus:ring-green-200" />
-                          <p className="text-sm text-gray-500">City, Country where you're based</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="bio" className="text-sm font-semibold text-gray-700">Bio</Label>
-                      <Textarea 
-                        id="bio" 
-                        placeholder="Tell potential clients about yourself..." 
-                        className="min-h-32 border-gray-200 focus:border-green-400 focus:ring-green-200"
-                      />
-                      <p className="text-sm text-gray-500">Describe your background, experience, and what makes you unique.</p>
-                    </div>
+                        <p className="text-sm text-gray-500 mt-3">Upload a professional headshot</p>
+                      </CardContent>
+                    </Card>
+                  </div>
 
-                    <div className="flex justify-end space-x-3">
-                      <Button variant="outline" className="border-gray-300 hover:border-gray-400">Cancel</Button>
-                      <Button className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-200">Save Changes</Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                  {/* Personal Information Section */}
+                  <div className="lg:col-span-2">
+                    <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden">
+                      <CardHeader className="bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 text-white">
+                        <CardTitle className="text-xl font-bold flex items-center">
+                          <User className="w-5 h-5 mr-2" />
+                          Personal Information
+                        </CardTitle>
+                        <CardDescription className="text-white/80">Update your personal details and contact information</CardDescription>
+                      </CardHeader>
+                      <CardContent className="p-8 space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-2">
+                            <Label htmlFor="firstName" className="text-sm font-semibold text-gray-700 flex items-center">
+                              <User className="w-4 h-4 mr-1" />
+                              First name
+                            </Label>
+                            <Input 
+                              id="firstName" 
+                              placeholder="First name" 
+                              className="border-gray-200 focus:border-green-400 focus:ring-green-200 hover:border-green-300 transition-colors"
+                              defaultValue="Vb"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="lastName" className="text-sm font-semibold text-gray-700 flex items-center">
+                              <User className="w-4 h-4 mr-1" />
+                              Last name
+                            </Label>
+                            <Input 
+                              id="lastName" 
+                              placeholder="Last name" 
+                              className="border-gray-200 focus:border-green-400 focus:ring-green-200 hover:border-green-300 transition-colors"
+                              defaultValue="Bn"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="displayName" className="text-sm font-semibold text-gray-700 flex items-center">
+                              <Star className="w-4 h-4 mr-1" />
+                              Display name
+                            </Label>
+                            <Input 
+                              id="displayName" 
+                              placeholder="Display name" 
+                              className="border-gray-200 focus:border-green-400 focus:ring-green-200 hover:border-green-300 transition-colors"
+                              defaultValue="VB Design Studio"
+                            />
+                            <p className="text-sm text-gray-500">This is how your name will appear publicly.</p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="email" className="text-sm font-semibold text-gray-700 flex items-center">
+                              <span className="w-4 h-4 mr-1">📧</span>
+                              Email
+                            </Label>
+                            <Input 
+                              id="email" 
+                              type="email" 
+                              placeholder="your.email@example.com" 
+                              className="border-gray-200 focus:border-green-400 focus:ring-green-200 hover:border-green-300 transition-colors"
+                              defaultValue="vb@designstudio.com"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="phone" className="text-sm font-semibold text-gray-700 flex items-center">
+                              <span className="w-4 h-4 mr-1">📱</span>
+                              Phone (optional)
+                            </Label>
+                            <Input 
+                              id="phone" 
+                              placeholder="+91 1234567890" 
+                              className="border-gray-200 focus:border-green-400 focus:ring-green-200 hover:border-green-300 transition-colors"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="location" className="text-sm font-semibold text-gray-700 flex items-center">
+                              <span className="w-4 h-4 mr-1">📍</span>
+                              Location
+                            </Label>
+                            <Input 
+                              id="location" 
+                              placeholder="Delhi, India" 
+                              className="border-gray-200 focus:border-green-400 focus:ring-green-200 hover:border-green-300 transition-colors"
+                              defaultValue="Mumbai, India"
+                            />
+                            <p className="text-sm text-gray-500">City, Country where you're based</p>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2 md:col-span-2">
+                          <Label htmlFor="bio" className="text-sm font-semibold text-gray-700 flex items-center">
+                            <span className="w-4 h-4 mr-1">✍️</span>
+                            Professional Bio
+                          </Label>
+                          <Textarea 
+                            id="bio" 
+                            placeholder="Tell potential clients about yourself..." 
+                            className="min-h-32 border-gray-200 focus:border-green-400 focus:ring-green-200 hover:border-green-300 transition-colors"
+                            defaultValue="Experienced UI/UX designer with 5+ years in creating intuitive digital experiences. Specializing in user-centered design, prototyping, and design systems."
+                          />
+                          <p className="text-sm text-gray-500">Describe your background, experience, and what makes you unique.</p>
+                        </div>
+
+                        <div className="flex justify-end space-x-3 md:col-span-2">
+                          <Button variant="outline" className="border-gray-300 hover:border-gray-400 px-6">Cancel</Button>
+                          <Button className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 px-6">
+                            Save Changes
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
               </TabsContent>
 
               <TabsContent value="professional" className="space-y-6 animate-fade-in">
