@@ -147,26 +147,26 @@ export default function DesignerProfile() {
 
           <div className="p-6">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-4 mb-8">
-                <TabsTrigger value="personal">Personal Info</TabsTrigger>
-                <TabsTrigger value="professional">Professional</TabsTrigger>
-                <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
-                <TabsTrigger value="reviews">Reviews</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-4 mb-8 bg-white shadow-lg border border-gray-200 p-1 rounded-lg">
+                <TabsTrigger value="personal" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-200 hover:scale-105">Personal Info</TabsTrigger>
+                <TabsTrigger value="professional" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-200 hover:scale-105">Professional</TabsTrigger>
+                <TabsTrigger value="portfolio" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-200 hover:scale-105">Portfolio</TabsTrigger>
+                <TabsTrigger value="reviews" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-200 hover:scale-105">Reviews</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="personal" className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Personal Information</CardTitle>
-                    <CardDescription>Update your personal details and how others will see you on the platform.</CardDescription>
+              <TabsContent value="personal" className="space-y-6 animate-fade-in">
+                <Card className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+                  <CardHeader className="bg-gradient-to-r from-green-400 to-blue-500 text-white rounded-t-lg">
+                    <CardTitle className="text-xl font-bold">Personal Information</CardTitle>
+                    <CardDescription className="text-white/80">Update your personal details and how others will see you on the platform.</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-6">
+                  <CardContent className="space-y-6 p-6">
                     <div className="flex items-start space-x-6">
                       <div className="flex flex-col items-center space-y-4">
-                        <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center">
-                          <Camera className="w-8 h-8 text-gray-400" />
+                        <div className="w-24 h-24 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-transform duration-200">
+                          <Camera className="w-8 h-8 text-white" />
                         </div>
-                        <Button variant="outline" size="sm" className="flex items-center space-x-2">
+                        <Button variant="outline" size="sm" className="flex items-center space-x-2 bg-gradient-to-r from-green-50 to-blue-50 border-green-200 hover:border-green-300 text-green-700">
                           <Camera className="w-4 h-4" />
                           <span>Change Photo</span>
                         </Button>
@@ -174,64 +174,64 @@ export default function DesignerProfile() {
                       
                       <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                          <Label htmlFor="firstName">First name</Label>
-                          <Input id="firstName" placeholder="First name" />
+                          <Label htmlFor="firstName" className="text-sm font-semibold text-gray-700">First name</Label>
+                          <Input id="firstName" placeholder="First name" className="border-gray-200 focus:border-green-400 focus:ring-green-200" />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="lastName">Last name</Label>
-                          <Input id="lastName" placeholder="Last name" />
+                          <Label htmlFor="lastName" className="text-sm font-semibold text-gray-700">Last name</Label>
+                          <Input id="lastName" placeholder="Last name" className="border-gray-200 focus:border-green-400 focus:ring-green-200" />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="displayName">Display name</Label>
-                          <Input id="displayName" placeholder="Display name" />
+                          <Label htmlFor="displayName" className="text-sm font-semibold text-gray-700">Display name</Label>
+                          <Input id="displayName" placeholder="Display name" className="border-gray-200 focus:border-green-400 focus:ring-green-200" />
                           <p className="text-sm text-gray-500">This is how your name will appear publicly.</p>
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="email">Email</Label>
-                          <Input id="email" type="email" placeholder="your.email@example.com" />
+                          <Label htmlFor="email" className="text-sm font-semibold text-gray-700">Email</Label>
+                          <Input id="email" type="email" placeholder="your.email@example.com" className="border-gray-200 focus:border-green-400 focus:ring-green-200" />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="phone">Phone (optional)</Label>
-                          <Input id="phone" placeholder="+91 1234567890" />
+                          <Label htmlFor="phone" className="text-sm font-semibold text-gray-700">Phone (optional)</Label>
+                          <Input id="phone" placeholder="+91 1234567890" className="border-gray-200 focus:border-green-400 focus:ring-green-200" />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="location">Location (optional)</Label>
-                          <Input id="location" placeholder="Delhi, India" />
+                          <Label htmlFor="location" className="text-sm font-semibold text-gray-700">Location (optional)</Label>
+                          <Input id="location" placeholder="Delhi, India" className="border-gray-200 focus:border-green-400 focus:ring-green-200" />
                           <p className="text-sm text-gray-500">City, Country where you're based</p>
                         </div>
                       </div>
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="bio">Bio</Label>
+                      <Label htmlFor="bio" className="text-sm font-semibold text-gray-700">Bio</Label>
                       <Textarea 
                         id="bio" 
                         placeholder="Tell potential clients about yourself..." 
-                        className="min-h-32"
+                        className="min-h-32 border-gray-200 focus:border-green-400 focus:ring-green-200"
                       />
                       <p className="text-sm text-gray-500">Describe your background, experience, and what makes you unique.</p>
                     </div>
 
                     <div className="flex justify-end space-x-3">
-                      <Button variant="outline">Cancel</Button>
-                      <Button>Save Changes</Button>
+                      <Button variant="outline" className="border-gray-300 hover:border-gray-400">Cancel</Button>
+                      <Button className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-200">Save Changes</Button>
                     </div>
                   </CardContent>
                 </Card>
               </TabsContent>
 
-              <TabsContent value="professional" className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Professional Information</CardTitle>
-                    <CardDescription>Update your professional details and specializations.</CardDescription>
+              <TabsContent value="professional" className="space-y-6 animate-fade-in">
+                <Card className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+                  <CardHeader className="bg-gradient-to-r from-green-400 to-blue-500 text-white rounded-t-lg">
+                    <CardTitle className="text-xl font-bold">Professional Information</CardTitle>
+                    <CardDescription className="text-white/80">Update your professional details and specializations.</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-6">
+                  <CardContent className="space-y-6 p-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <Label htmlFor="specialization">Primary Specialization</Label>
+                        <Label htmlFor="specialization" className="text-sm font-semibold text-gray-700">Primary Specialization</Label>
                         <Select>
-                          <SelectTrigger>
+                          <SelectTrigger className="border-gray-200 focus:border-green-400 focus:ring-green-200">
                             <SelectValue placeholder="Select your primary design specialty" />
                           </SelectTrigger>
                           <SelectContent>
@@ -245,28 +245,28 @@ export default function DesignerProfile() {
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="experience">Years of Experience</Label>
-                        <Input id="experience" type="number" placeholder="0" />
+                        <Label htmlFor="experience" className="text-sm font-semibold text-gray-700">Years of Experience</Label>
+                        <Input id="experience" type="number" placeholder="0" className="border-gray-200 focus:border-green-400 focus:ring-green-200" />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <Label htmlFor="hourlyRate">Hourly Rate (₹)</Label>
-                        <Input id="hourlyRate" type="number" placeholder="0" />
+                        <Label htmlFor="hourlyRate" className="text-sm font-semibold text-gray-700">Hourly Rate (₹)</Label>
+                        <Input id="hourlyRate" type="number" placeholder="0" className="border-gray-200 focus:border-green-400 focus:ring-green-200" />
                         <p className="text-sm text-gray-500">The rate you charge per hour for your design services</p>
                       </div>
                       <div className="space-y-4">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
                           <div>
-                            <Label>Display Hourly Rate</Label>
+                            <Label className="font-semibold text-gray-700">Display Hourly Rate</Label>
                             <p className="text-sm text-gray-500">Show your hourly rate on your public profile</p>
                           </div>
                           <Switch checked={displayHourlyRate} onCheckedChange={setDisplayHourlyRate} />
                         </div>
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
                           <div>
-                            <Label>Available for Urgent Work</Label>
+                            <Label className="font-semibold text-gray-700">Available for Urgent Work</Label>
                             <p className="text-sm text-gray-500">Show that you're available for urgent/rush projects</p>
                           </div>
                           <Switch checked={availableUrgent} onCheckedChange={setAvailableUrgent} />
@@ -275,104 +275,110 @@ export default function DesignerProfile() {
                     </div>
 
                     <div className="space-y-4">
-                      <Label>Additional Skills</Label>
+                      <Label className="text-sm font-semibold text-gray-700">Additional Skills</Label>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {skills.map((skill) => (
-                          <div key={skill} className="flex items-center space-x-2">
+                          <div key={skill} className="flex items-center space-x-2 p-2 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-100 hover:border-green-200 transition-colors">
                             <Checkbox 
                               id={skill}
                               checked={selectedSkills.includes(skill)}
                               onCheckedChange={(checked) => handleSkillChange(skill, checked as boolean)}
+                              className="border-green-300"
                             />
-                            <Label htmlFor={skill} className="text-sm">{skill}</Label>
+                            <Label htmlFor={skill} className="text-sm font-medium text-gray-700">{skill}</Label>
                           </div>
                         ))}
                       </div>
                     </div>
 
                     <div className="flex justify-end space-x-3">
-                      <Button variant="outline">Cancel</Button>
-                      <Button>Save Changes</Button>
+                      <Button variant="outline" className="border-gray-300 hover:border-gray-400">Cancel</Button>
+                      <Button className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-200">Save Changes</Button>
                     </div>
                   </CardContent>
                 </Card>
               </TabsContent>
 
-              <TabsContent value="portfolio" className="space-y-6">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Portfolio</h2>
-                    <p className="text-gray-600">Showcase your best design work to attract more clients</p>
-                  </div>
-                  <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                    <span className="mr-2">+</span>
-                    Add Portfolio Item
-                  </Button>
-                </div>
+              <TabsContent value="portfolio" className="space-y-6 animate-fade-in">
+                <Card className="bg-white border-0 shadow-lg">
+                  <CardHeader className="bg-gradient-to-r from-green-400 to-blue-500 text-white rounded-t-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-xl font-bold">Portfolio</CardTitle>
+                        <CardDescription className="text-white/80">Showcase your best design work to attract more clients</CardDescription>
+                      </div>
+                      <Button className="bg-white/20 hover:bg-white/30 text-white border-white/20 shadow-lg hover:shadow-xl transition-all duration-200">
+                        <span className="mr-2">+</span>
+                        Add Portfolio Item
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <div className="border-b border-gray-200 mb-6">
+                      <nav className="flex space-x-8">
+                        {["All Works", "Logo Design", "Branding", "UI/UX Design", "Print Design", "Illustration", "Web Design", "Other"].map((category) => (
+                          <button
+                            key={category}
+                            className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors hover:scale-105 ${
+                              category === "All Works"
+                                ? "border-green-500 text-green-600 bg-gradient-to-r from-green-50 to-blue-50 rounded-t-lg px-3"
+                                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                            }`}
+                          >
+                            {category}
+                          </button>
+                        ))}
+                      </nav>
+                    </div>
 
-                <div className="border-b border-gray-200">
-                  <nav className="flex space-x-8">
-                    {["All Works", "Logo Design", "Branding", "UI/UX Design", "Print Design", "Illustration", "Web Design", "Other"].map((category) => (
-                      <button
-                        key={category}
-                        className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                          category === "All Works"
-                            ? "border-blue-500 text-blue-600"
-                            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                        }`}
-                      >
-                        {category}
-                      </button>
-                    ))}
-                  </nav>
-                </div>
-
-                <div className="text-center py-16">
-                  <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <FolderOpen className="w-8 h-8 text-gray-400" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">No portfolio items</h3>
-                  <p className="text-gray-500 mb-6">Get started by adding your first portfolio item.</p>
-                  <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                    <span className="mr-2">+</span>
-                    Add Portfolio Item
-                  </Button>
-                </div>
+                    <div className="text-center py-16">
+                      <div className="w-20 h-20 bg-gradient-to-r from-green-100 to-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                        <FolderOpen className="w-10 h-10 text-green-600" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-3">No portfolio items</h3>
+                      <p className="text-gray-500 mb-8 text-lg">Get started by adding your first portfolio item.</p>
+                      <Button className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105">
+                        <span className="mr-2">+</span>
+                        Add Portfolio Item
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
               </TabsContent>
 
-              <TabsContent value="reviews" className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Reviews</CardTitle>
-                    <CardDescription>View and manage client reviews of your design services.</CardDescription>
+              <TabsContent value="reviews" className="space-y-6 animate-fade-in">
+                <Card className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+                  <CardHeader className="bg-gradient-to-r from-green-400 to-blue-500 text-white rounded-t-lg">
+                    <CardTitle className="text-xl font-bold">Reviews</CardTitle>
+                    <CardDescription className="text-white/80">View and manage client reviews of your design services.</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-6">
+                  <CardContent className="space-y-6 p-6">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
-                        <div className="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <Star className="w-8 h-8 text-blue-600" />
+                        <div className="w-20 h-20 bg-gradient-to-r from-green-100 to-blue-100 rounded-2xl flex items-center justify-center shadow-lg">
+                          <Star className="w-10 h-10 text-green-600" />
                         </div>
                         <div>
                           <div className="flex items-center space-x-2">
-                            <span className="text-3xl font-bold text-gray-900">4.9</span>
+                            <span className="text-4xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">4.9</span>
                             <div className="flex space-x-1">
                               {[1, 2, 3, 4, 5].map((star) => (
-                                <Star key={star} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                                <Star key={star} className="w-6 h-6 fill-yellow-400 text-yellow-400 hover:scale-110 transition-transform" />
                               ))}
                             </div>
                           </div>
-                          <p className="text-sm text-gray-500">Based on 12 reviews</p>
+                          <p className="text-sm text-gray-500 font-medium">Based on 12 reviews</p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm text-gray-600">Your response rate</p>
-                        <p className="text-2xl font-bold text-gray-900">100%</p>
-                        <p className="text-sm text-green-600">✓ All reviews responded</p>
+                      <div className="text-right p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+                        <p className="text-sm text-gray-600 font-semibold">Your response rate</p>
+                        <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">100%</p>
+                        <p className="text-sm text-green-600 font-medium">✓ All reviews responded</p>
                       </div>
                     </div>
 
                     <div className="space-y-4">
-                      <div className="border rounded-lg p-4">
+                      <div className="border border-gray-200 rounded-lg p-6 bg-gradient-to-r from-green-50/50 to-blue-50/50 hover:shadow-md transition-all duration-200">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center space-x-3">
                             <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
