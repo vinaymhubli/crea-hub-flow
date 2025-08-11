@@ -14,15 +14,14 @@ import {
   Lock,
   Eye,
   EyeOff,
+  Bell,
+  Palette,
+  Monitor,
+  Smartphone,
+  LogOut,
   Download,
   Trash2,
-  Mail,
-  Edit,
-  LogOut,
-  Check,
-  Camera,
-  Monitor,
-  Key
+  Save
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import {
@@ -44,6 +43,7 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 
 const sidebarItems = [
   { title: "Dashboard", url: "/designer-dashboard", icon: LayoutDashboard },
@@ -113,163 +113,129 @@ export default function DesignerSettings() {
     language: "english",
     timezone: "est",
     currency: "usd",
-    darkMode: false,
+    theme: "light",
     // Notification settings
-    bookingRequests: true,
-    sessionReminders: true,
-    newMessages: true,
-    paymentReceipts: true,
-    newReviews: true,
-    designerTips: false,
-    // Designer Profile settings
-    autoAcceptBookings: false,
-    pauseNewBookings: false,
-    urgentWork: true,
-    displayHourlyRate: true,
-    useCustomRate: false,
-    currentRate: "5.00",
-    minBookingDuration: "30",
-    bufferTime: "15",
-    // Design Session settings
-    defaultTools: "all",
-    defaultCanvasSize: "large",
-    defaultColorPalette: "standard",
-    autoRecordSessions: true,
-    cameraEnabled: false,
-    screenSharingEnabled: true,
-    // Payment settings
-    payoutFrequency: "bi-weekly",
-    payoutMethod: "bank-transfer",
-    hourlyRate: "85.00",
-    // Security settings
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-    twoFactorAuth: false,
-    // Privacy settings
-    profileVisibility: "public",
+    emailNotifications: true,
+    pushNotifications: true,
+    bookingAlerts: true,
+    paymentAlerts: true,
+    marketingEmails: false,
+    // Profile settings
+    publicProfile: true,
     showOnlineStatus: true,
-    showRecentWork: true,
-    allowPortfolioShowcase: true,
-    enableWatermarking: true,
+    autoAcceptBookings: false,
+    // Security settings
+    twoFactorEnabled: false,
+    sessionTimeout: "30",
+    // Payment settings
+    hourlyRate: "85",
+    defaultCurrency: "USD",
+    payoutMethod: "bank"
   });
 
   const handleSettingChange = (key: string, value: any) => {
-    setSettings(prev => ({
-      ...prev,
-      [key]: value
-    }));
+    setSettings(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleSaveChanges = () => {
-    console.log('Saving settings:', settings);
-    // Implement save functionality
-  };
-
-  const handleUpdatePassword = () => {
-    console.log('Updating password');
-    // Implement password update functionality
-  };
-
-  const handleUpdateTaxInfo = () => {
-    console.log('Updating tax information');
-    // Implement tax info update functionality
-  };
-
-  const handleSaveBillingSettings = () => {
-    console.log('Saving billing settings');
-    // Implement billing settings save functionality
-  };
-
-  const handleSavePaymentDetails = () => {
-    console.log('Saving payment details');
-    // Implement payment details save functionality
-  };
-
-  const handleLogoutDevice = (device: string) => {
-    console.log('Logging out device:', device);
-    // Implement device logout functionality
-  };
-
-  const handleLogoutAllDevices = () => {
-    console.log('Logging out all devices');
-    // Implement logout all devices functionality
-  };
-
-  const handleExportData = () => {
-    console.log('Exporting data');
-    // Implement data export functionality
-  };
-
-  const handleDeleteAccount = () => {
-    console.log('Deleting account');
-    // Implement account deletion functionality
-  };
-
-  const handleSavePrivacySettings = () => {
-    console.log('Saving privacy settings');
-    // Implement privacy settings save functionality
-  };
+  const devices = [
+    { name: "MacBook Pro", type: "desktop", location: "San Francisco, CA", lastActive: "Current session", status: "active" },
+    { name: "iPhone 14 Pro", type: "mobile", location: "San Francisco, CA", lastActive: "2 hours ago", status: "active" },
+    { name: "iPad Air", type: "tablet", location: "San Francisco, CA", lastActive: "1 day ago", status: "inactive" }
+  ];
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gray-50">
+      <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 via-blue-50 to-green-50">
         <DesignerSidebar />
         
         <main className="flex-1">
-          {/* Header */}
-          <header className="bg-gradient-to-r from-green-400 to-blue-500 px-6 py-8">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <SidebarTrigger className="text-white hover:bg-white/20" />
-                <div>
-                  <h1 className="text-2xl font-bold text-white">Settings</h1>
-                  <p className="text-white/80">Manage your account settings and preferences</p>
+          {/* Enhanced Header */}
+          <header className="bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 px-6 py-8 relative overflow-hidden">
+            <div className="absolute inset-0 bg-black/10"></div>
+            <div className="relative z-10 flex items-center justify-between">
+              <div className="flex items-center space-x-6">
+                <SidebarTrigger className="text-white hover:bg-white/20 rounded-lg p-2" />
+                <div className="flex items-center space-x-4">
+                  <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/30 shadow-xl">
+                    <Settings className="w-8 h-8 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-bold text-white">Settings</h1>
+                    <p className="text-white/90 text-lg">Manage your account settings and preferences</p>
+                    <div className="flex items-center space-x-4 mt-2">
+                      <span className="text-white/90 font-medium">Account active</span>
+                      <span className="text-white/60">•</span>
+                      <span className="text-white/90 font-medium">All systems operational</span>
+                    </div>
+                  </div>
                 </div>
               </div>
+              <Button className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-200">
+                <Save className="w-4 h-4 mr-2" />
+                Save All Changes
+              </Button>
             </div>
           </header>
 
-          <div className="p-6">
-            {/* Settings Tabs */}
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-5 mb-6">
-                <TabsTrigger value="general" className="flex items-center space-x-2">
-                  <Globe className="w-4 h-4" />
-                  <span>General</span>
-                </TabsTrigger>
-                <TabsTrigger value="designer-profile" className="flex items-center space-x-2">
-                  <User className="w-4 h-4" />
-                  <span>Designer Profile</span>
-                </TabsTrigger>
-                <TabsTrigger value="payments" className="flex items-center space-x-2">
-                  <DollarSign className="w-4 h-4" />
-                  <span>Payments</span>
-                </TabsTrigger>
-                <TabsTrigger value="security" className="flex items-center space-x-2">
-                  <Shield className="w-4 h-4" />
-                  <span>Security</span>
-                </TabsTrigger>
-                <TabsTrigger value="privacy" className="flex items-center space-x-2">
-                  <Lock className="w-4 h-4" />
-                  <span>Privacy</span>
-                </TabsTrigger>
-              </TabsList>
+          <div className="p-8 max-w-7xl mx-auto space-y-8">
+            {/* Enhanced Tabs */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-2 mb-8">
+                <TabsList className="grid w-auto grid-cols-5 bg-transparent gap-2">
+                  <TabsTrigger 
+                    value="general"
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-xl py-3 px-6 font-semibold flex items-center space-x-2"
+                  >
+                    <Globe className="w-4 h-4" />
+                    <span>General</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="notifications"
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-xl py-3 px-6 font-semibold flex items-center space-x-2"
+                  >
+                    <Bell className="w-4 h-4" />
+                    <span>Notifications</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="profile"
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-xl py-3 px-6 font-semibold flex items-center space-x-2"
+                  >
+                    <User className="w-4 h-4" />
+                    <span>Profile</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="security"
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-xl py-3 px-6 font-semibold flex items-center space-x-2"
+                  >
+                    <Shield className="w-4 h-4" />
+                    <span>Security</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="billing"
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-xl py-3 px-6 font-semibold flex items-center space-x-2"
+                  >
+                    <CreditCard className="w-4 h-4" />
+                    <span>Billing</span>
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
               {/* General Tab */}
               <TabsContent value="general" className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Preferences */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Preferences</CardTitle>
-                      <CardDescription>Manage your interface and regional settings</CardDescription>
+                  <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
+                    <CardHeader className="bg-gradient-to-br from-green-400 to-blue-500 text-white rounded-t-lg">
+                      <CardTitle className="flex items-center">
+                        <Globe className="w-5 h-5 mr-2" />
+                        Regional Settings
+                      </CardTitle>
+                      <CardDescription className="text-white/80">Configure your location and language preferences</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="p-6 space-y-4">
                       <div>
-                        <Label htmlFor="language">Language</Label>
+                        <Label className="font-semibold text-gray-700">Language</Label>
                         <Select value={settings.language} onValueChange={(value) => handleSettingChange('language', value)}>
-                          <SelectTrigger>
+                          <SelectTrigger className="border-gray-200 focus:border-green-400">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -282,9 +248,9 @@ export default function DesignerSettings() {
                       </div>
 
                       <div>
-                        <Label htmlFor="timezone">Timezone</Label>
+                        <Label className="font-semibold text-gray-700">Timezone</Label>
                         <Select value={settings.timezone} onValueChange={(value) => handleSettingChange('timezone', value)}>
-                          <SelectTrigger>
+                          <SelectTrigger className="border-gray-200 focus:border-green-400">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -298,9 +264,9 @@ export default function DesignerSettings() {
                       </div>
 
                       <div>
-                        <Label htmlFor="currency">Currency</Label>
+                        <Label className="font-semibold text-gray-700">Currency</Label>
                         <Select value={settings.currency} onValueChange={(value) => handleSettingChange('currency', value)}>
-                          <SelectTrigger>
+                          <SelectTrigger className="border-gray-200 focus:border-green-400">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -311,441 +277,188 @@ export default function DesignerSettings() {
                           </SelectContent>
                         </Select>
                       </div>
-
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="dark-mode">Dark Mode</Label>
-                          <p className="text-sm text-gray-500">Switch between light and dark theme</p>
-                        </div>
-                        <Switch
-                          checked={settings.darkMode}
-                          onCheckedChange={(checked) => handleSettingChange('darkMode', checked)}
-                        />
-                      </div>
-
-                      <Button onClick={handleSaveChanges} className="w-full">
-                        Save Changes
-                      </Button>
                     </CardContent>
                   </Card>
 
-                  {/* Notifications */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Notifications</CardTitle>
-                      <CardDescription>Manage your email and push notifications</CardDescription>
+                  <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
+                    <CardHeader className="bg-gradient-to-br from-purple-400 to-pink-500 text-white rounded-t-lg">
+                      <CardTitle className="flex items-center">
+                        <Palette className="w-5 h-5 mr-2" />
+                        Appearance
+                      </CardTitle>
+                      <CardDescription className="text-white/80">Customize your interface appearance</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="p-6 space-y-4">
                       <div>
-                        <h4 className="font-medium mb-3">Email Notifications</h4>
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm">Booking requests</span>
-                            <Switch
-                              checked={settings.bookingRequests}
-                              onCheckedChange={(checked) => handleSettingChange('bookingRequests', checked)}
-                            />
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm">Session reminders</span>
-                            <Switch
-                              checked={settings.sessionReminders}
-                              onCheckedChange={(checked) => handleSettingChange('sessionReminders', checked)}
-                            />
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm">New messages</span>
-                            <Switch
-                              checked={settings.newMessages}
-                              onCheckedChange={(checked) => handleSettingChange('newMessages', checked)}
-                            />
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm">Payment receipts</span>
-                            <Switch
-                              checked={settings.paymentReceipts}
-                              onCheckedChange={(checked) => handleSettingChange('paymentReceipts', checked)}
-                            />
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm">New reviews</span>
-                            <Switch
-                              checked={settings.newReviews}
-                              onCheckedChange={(checked) => handleSettingChange('newReviews', checked)}
-                            />
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm">Designer tips & updates</span>
-                            <Switch
-                              checked={settings.designerTips}
-                              onCheckedChange={(checked) => handleSettingChange('designerTips', checked)}
-                            />
-                          </div>
-                        </div>
+                        <Label className="font-semibold text-gray-700">Theme</Label>
+                        <Select value={settings.theme} onValueChange={(value) => handleSettingChange('theme', value)}>
+                          <SelectTrigger className="border-gray-200 focus:border-green-400">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="light">Light</SelectItem>
+                            <SelectItem value="dark">Dark</SelectItem>
+                            <SelectItem value="auto">Auto (System)</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
 
-                      <Button className="w-full flex items-center space-x-2">
-                        <Settings className="w-4 h-4" />
-                        <span>Manage All Notifications</span>
-                      </Button>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label className="font-semibold text-gray-700">Compact Mode</Label>
+                          <p className="text-sm text-gray-500">Use a more compact interface</p>
+                        </div>
+                        <Switch />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label className="font-semibold text-gray-700">Animations</Label>
+                          <p className="text-sm text-gray-500">Enable interface animations</p>
+                        </div>
+                        <Switch defaultChecked />
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
               </TabsContent>
 
-              {/* Designer Profile Tab */}
-              <TabsContent value="designer-profile" className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Bookings & Availability */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Bookings & Availability</CardTitle>
-                      <CardDescription>Configure how customers can book your services</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label>Auto-Accept Bookings</Label>
-                          <p className="text-sm text-gray-500">Automatically accept booking requests</p>
-                        </div>
-                        <Switch
-                          checked={settings.autoAcceptBookings}
-                          onCheckedChange={(checked) => handleSettingChange('autoAcceptBookings', checked)}
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label>Pause New Bookings</Label>
-                          <p className="text-sm text-gray-500">Temporarily stop accepting new booking requests</p>
-                        </div>
-                        <Switch
-                          checked={settings.pauseNewBookings}
-                          onCheckedChange={(checked) => handleSettingChange('pauseNewBookings', checked)}
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label>Available for Urgent Work</Label>
-                          <p className="text-sm text-gray-500">Show as available for last-minute bookings</p>
-                        </div>
-                        <Switch
-                          checked={settings.urgentWork}
-                          onCheckedChange={(checked) => handleSettingChange('urgentWork', checked)}
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label>Display Hourly Rate</Label>
-                          <p className="text-sm text-gray-500">Show your hourly rate on your profile</p>
-                        </div>
-                        <Switch
-                          checked={settings.displayHourlyRate}
-                          onCheckedChange={(checked) => handleSettingChange('displayHourlyRate', checked)}
-                        />
-                      </div>
-
-                      <div>
-                        <Label htmlFor="min-booking">Minimum Booking Duration (minutes)</Label>
-                        <Select value={settings.minBookingDuration} onValueChange={(value) => handleSettingChange('minBookingDuration', value)}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="15">15 minutes</SelectItem>
-                            <SelectItem value="30">30 minutes</SelectItem>
-                            <SelectItem value="45">45 minutes</SelectItem>
-                            <SelectItem value="60">60 minutes</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="buffer-time">Buffer Time Between Bookings (minutes)</Label>
-                        <Select value={settings.bufferTime} onValueChange={(value) => handleSettingChange('bufferTime', value)}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="0">0 minutes</SelectItem>
-                            <SelectItem value="15">15 minutes</SelectItem>
-                            <SelectItem value="30">30 minutes</SelectItem>
-                            <SelectItem value="45">45 minutes</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <Button onClick={handleSaveChanges} className="w-full">
-                        Save Changes
-                      </Button>
-                    </CardContent>
-                  </Card>
-
-                  {/* Billing Rate Settings */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Billing Rate Settings</CardTitle>
-                      <CardDescription>Configure your session billing rates and preferences</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label>Use Custom Rate</Label>
-                          <p className="text-sm text-gray-500">Override platform default with your own pricing</p>
-                        </div>
-                        <Switch
-                          checked={settings.useCustomRate}
-                          onCheckedChange={(checked) => handleSettingChange('useCustomRate', checked)}
-                        />
-                      </div>
-
-                      <div>
-                        <Label htmlFor="current-rate">Current Rate: $5.00/min (Platform Default)</Label>
-                        <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                          <p className="text-blue-700 text-sm">Current Rate: $5.00/min (Platform Default)</p>
-                        </div>
-                      </div>
-
-                      <Button onClick={handleSaveBillingSettings} className="w-full">
-                        <DollarSign className="w-4 h-4 mr-2" />
-                        Save Billing Settings
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Design Session Settings */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Design Session Settings</CardTitle>
-                    <CardDescription>Configure your design session environment</CardDescription>
+              {/* Notifications Tab */}
+              <TabsContent value="notifications" className="space-y-6">
+                <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
+                  <CardHeader className="bg-gradient-to-br from-blue-400 to-indigo-500 text-white rounded-t-lg">
+                    <CardTitle className="flex items-center">
+                      <Bell className="w-5 h-5 mr-2" />
+                      Notification Preferences
+                    </CardTitle>
+                    <CardDescription className="text-white/80">Configure how you receive updates and alerts</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <Label htmlFor="default-tools">Default Design Tools</Label>
-                        <Select value={settings.defaultTools} onValueChange={(value) => handleSettingChange('defaultTools', value)}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Tools</SelectItem>
-                            <SelectItem value="basic">Basic Tools</SelectItem>
-                            <SelectItem value="advanced">Advanced Tools</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="canvas-size">Default Canvas Size</Label>
-                        <Select value={settings.defaultCanvasSize} onValueChange={(value) => handleSettingChange('defaultCanvasSize', value)}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="small">Small (800x600)</SelectItem>
-                            <SelectItem value="medium">Medium (1024x768)</SelectItem>
-                            <SelectItem value="large">Large (1280x960)</SelectItem>
-                            <SelectItem value="xlarge">X-Large (1920x1080)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="color-palette">Default Color Palette</Label>
-                        <Select value={settings.defaultColorPalette} onValueChange={(value) => handleSettingChange('defaultColorPalette', value)}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="standard">Standard</SelectItem>
-                            <SelectItem value="vibrant">Vibrant</SelectItem>
-                            <SelectItem value="pastel">Pastel</SelectItem>
-                            <SelectItem value="monochrome">Monochrome</SelectItem>
-                          </SelectContent>
-                        </Select>
+                  <CardContent className="p-6 space-y-6">
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-4">Email Notifications</h4>
+                      <div className="space-y-4">
+                        {[
+                          { key: 'bookingAlerts', label: 'Booking requests and updates', desc: 'New bookings, cancellations, and changes' },
+                          { key: 'paymentAlerts', label: 'Payment notifications', desc: 'Payment confirmations and receipts' },
+                          { key: 'marketingEmails', label: 'Marketing and tips', desc: 'Designer tips and product updates' }
+                        ].map((item) => (
+                          <div key={item.key} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div>
+                              <Label className="font-medium text-gray-700">{item.label}</Label>
+                              <p className="text-sm text-gray-500">{item.desc}</p>
+                            </div>
+                            <Switch 
+                              checked={settings[item.key as keyof typeof settings] as boolean}
+                              onCheckedChange={(checked) => handleSettingChange(item.key, checked)}
+                            />
+                          </div>
+                        ))}
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label>Auto-Record Sessions</Label>
-                        <p className="text-sm text-gray-500">Automatically record all design sessions</p>
-                      </div>
-                      <Switch
-                        checked={settings.autoRecordSessions}
-                        onCheckedChange={(checked) => handleSettingChange('autoRecordSessions', checked)}
-                      />
-                    </div>
+                    <Separator />
 
                     <div>
-                      <Label className="text-sm font-medium">Default Media Settings</Label>
-                      <div className="mt-3 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <Camera className="w-4 h-4" />
-                            <span className="text-sm">Camera</span>
-                          </div>
-                          <Select value={settings.cameraEnabled ? "enabled" : "disabled"} onValueChange={(value) => handleSettingChange('cameraEnabled', value === "enabled")}>
-                            <SelectTrigger className="w-40">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="disabled">Disabled by default</SelectItem>
-                              <SelectItem value="enabled">Enabled by default</SelectItem>
-                            </SelectContent>
-                          </Select>
+                      <h4 className="font-semibold text-gray-900 mb-4">Push Notifications</h4>
+                      <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div>
+                          <Label className="font-medium text-gray-700">Browser notifications</Label>
+                          <p className="text-sm text-gray-500">Real-time notifications in your browser</p>
                         </div>
-
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <Monitor className="w-4 h-4" />
-                            <span className="text-sm">Screen Sharing</span>
-                          </div>
-                          <Select value={settings.screenSharingEnabled ? "enabled" : "disabled"} onValueChange={(value) => handleSettingChange('screenSharingEnabled', value === "enabled")}>
-                            <SelectTrigger className="w-40">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="enabled">Enabled by default</SelectItem>
-                              <SelectItem value="disabled">Disabled by default</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
+                        <Switch 
+                          checked={settings.pushNotifications}
+                          onCheckedChange={(checked) => handleSettingChange('pushNotifications', checked)}
+                        />
                       </div>
                     </div>
-
-                    <Button onClick={handleSaveChanges} className="w-full">
-                      Save Changes
-                    </Button>
                   </CardContent>
                 </Card>
               </TabsContent>
 
-              {/* Payments Tab */}
-              <TabsContent value="payments" className="space-y-6">
+              {/* Profile Tab */}
+              <TabsContent value="profile" className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Payment Settings */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Payment Settings</CardTitle>
-                      <CardDescription>Manage your earnings and payment preferences</CardDescription>
+                  <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
+                    <CardHeader className="bg-gradient-to-br from-green-400 to-teal-500 text-white rounded-t-lg">
+                      <CardTitle className="flex items-center">
+                        <User className="w-5 h-5 mr-2" />
+                        Public Profile
+                      </CardTitle>
+                      <CardDescription className="text-white/80">Control how others see your profile</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div>
-                        <Label htmlFor="payout-frequency">Payout Frequency</Label>
-                        <Select value={settings.payoutFrequency} onValueChange={(value) => handleSettingChange('payoutFrequency', value)}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="weekly">Weekly</SelectItem>
-                            <SelectItem value="bi-weekly">Bi-weekly</SelectItem>
-                            <SelectItem value="monthly">Monthly</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="payout-method">Preferred Payout Method</Label>
-                        <Select value={settings.payoutMethod} onValueChange={(value) => handleSettingChange('payoutMethod', value)}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="bank-transfer">Bank Transfer</SelectItem>
-                            <SelectItem value="paypal">PayPal</SelectItem>
-                            <SelectItem value="crypto">Cryptocurrency</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <Label className="text-sm font-medium">Tax Information</Label>
-                        <div className="mt-2 space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span>Tax Form Status:</span>
-                            <span className="font-medium">Completed</span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span>Tax ID Type:</span>
-                            <span className="font-medium">SSN (Personal)</span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span>Last Updated:</span>
-                            <span className="font-medium">Jan 15, 2023</span>
-                          </div>
+                    <CardContent className="p-6 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label className="font-semibold text-gray-700">Public profile</Label>
+                          <p className="text-sm text-gray-500">Allow others to find and view your profile</p>
                         </div>
-                        <Button onClick={handleUpdateTaxInfo} className="w-full mt-3">
-                          Update Tax Info
-                        </Button>
+                        <Switch 
+                          checked={settings.publicProfile}
+                          onCheckedChange={(checked) => handleSettingChange('publicProfile', checked)}
+                        />
                       </div>
 
-                      <div>
-                        <Label htmlFor="hourly-rate">Hourly Rate (USD)</Label>
-                        <div className="relative">
-                          <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                          <Input
-                            id="hourly-rate"
-                            value={settings.hourlyRate}
-                            onChange={(e) => handleSettingChange('hourlyRate', e.target.value)}
-                            className="pl-10"
-                          />
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label className="font-semibold text-gray-700">Show online status</Label>
+                          <p className="text-sm text-gray-500">Let clients see when you're online</p>
                         </div>
-                        <p className="text-sm text-gray-500 mt-1">
-                          Your hourly rate impacts how often you appear in search results. The platform fee is 15% of your earnings.
-                        </p>
+                        <Switch 
+                          checked={settings.showOnlineStatus}
+                          onCheckedChange={(checked) => handleSettingChange('showOnlineStatus', checked)}
+                        />
                       </div>
 
-                      <Button onClick={handleSaveChanges} className="w-full">
-                        Save Changes
-                      </Button>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label className="font-semibold text-gray-700">Auto-accept bookings</Label>
+                          <p className="text-sm text-gray-500">Automatically accept booking requests</p>
+                        </div>
+                        <Switch 
+                          checked={settings.autoAcceptBookings}
+                          onCheckedChange={(checked) => handleSettingChange('autoAcceptBookings', checked)}
+                        />
+                      </div>
                     </CardContent>
                   </Card>
 
-                  {/* Payout Information */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Payout Information</CardTitle>
-                      <CardDescription>Manage your withdrawal details</CardDescription>
+                  <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
+                    <CardHeader className="bg-gradient-to-br from-orange-400 to-red-500 text-white rounded-t-lg">
+                      <CardTitle className="flex items-center">
+                        <DollarSign className="w-5 h-5 mr-2" />
+                        Pricing Settings
+                      </CardTitle>
+                      <CardDescription className="text-white/80">Configure your rates and pricing</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="p-6 space-y-4">
                       <div>
-                        <Label>Account Holder Name</Label>
-                        <Input value="Rajesh Kumar" readOnly className="bg-gray-50" />
-                      </div>
-
-                      <div>
-                        <Label>Account Number</Label>
-                        <Input value="••••••••••" readOnly className="bg-gray-50" />
-                      </div>
-
-                      <div>
-                        <Label>Bank Name</Label>
-                        <Input value="State Bank of India" readOnly className="bg-gray-50" />
-                      </div>
-
-                      <div>
-                        <Label>Routing Number</Label>
-                        <Input value="••••••••••" readOnly className="bg-gray-50" />
-                      </div>
-
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <Label className="font-semibold text-gray-700">Hourly Rate</Label>
                         <div className="flex items-center space-x-2">
-                          <Shield className="w-4 h-4 text-blue-600" />
-                          <span className="text-blue-700 font-medium text-sm">Your banking information is secure</span>
+                          <span className="text-gray-500">$</span>
+                          <Input 
+                            type="number"
+                            value={settings.hourlyRate}
+                            onChange={(e) => handleSettingChange('hourlyRate', e.target.value)}
+                            className="flex-1 border-gray-200 focus:border-green-400"
+                          />
+                          <span className="text-gray-500">/hour</span>
                         </div>
-                        <p className="text-blue-600 text-sm mt-1">
-                          We use industry-standard encryption to protect your sensitive financial information.
-                        </p>
                       </div>
 
-                      <Button onClick={handleSavePaymentDetails} className="w-full">
-                        <CreditCard className="w-4 h-4 mr-2" />
-                        Save Payment Details
-                      </Button>
+                      <div>
+                        <Label className="font-semibold text-gray-700">Minimum session duration</Label>
+                        <Select defaultValue="60">
+                          <SelectTrigger className="border-gray-200 focus:border-green-400">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="30">30 minutes</SelectItem>
+                            <SelectItem value="60">1 hour</SelectItem>
+                            <SelectItem value="90">1.5 hours</SelectItem>
+                            <SelectItem value="120">2 hours</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
@@ -754,296 +467,166 @@ export default function DesignerSettings() {
               {/* Security Tab */}
               <TabsContent value="security" className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Password */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Password</CardTitle>
-                      <CardDescription>Update your password to keep your account secure</CardDescription>
+                  <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
+                    <CardHeader className="bg-gradient-to-br from-red-400 to-pink-500 text-white rounded-t-lg">
+                      <CardTitle className="flex items-center">
+                        <Lock className="w-5 h-5 mr-2" />
+                        Password & Authentication
+                      </CardTitle>
+                      <CardDescription className="text-white/80">Secure your account</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="p-6 space-y-4">
                       <div>
-                        <Label htmlFor="current-password">Current Password</Label>
+                        <Label className="font-semibold text-gray-700">Current Password</Label>
                         <div className="relative">
-                          <Input
-                            id="current-password"
+                          <Input 
                             type={showPassword ? "text" : "password"}
-                            value={settings.currentPassword}
-                            onChange={(e) => handleSettingChange('currentPassword', e.target.value)}
+                            placeholder="Enter current password"
+                            className="border-gray-200 focus:border-green-400"
                           />
-                          <button
+                          <Button
                             type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-2 top-1/2 transform -translate-y-1/2"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 transform -translate-y-1/2"
                           >
                             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                          </button>
+                          </Button>
                         </div>
                       </div>
 
                       <div>
-                        <Label htmlFor="new-password">New Password</Label>
-                        <Input
-                          id="new-password"
+                        <Label className="font-semibold text-gray-700">New Password</Label>
+                        <Input 
                           type="password"
-                          value={settings.newPassword}
-                          onChange={(e) => handleSettingChange('newPassword', e.target.value)}
+                          placeholder="Enter new password"
+                          className="border-gray-200 focus:border-green-400"
                         />
                       </div>
 
-                      <div>
-                        <Label htmlFor="confirm-password">Confirm New Password</Label>
-                        <Input
-                          id="confirm-password"
-                          type="password"
-                          value={settings.confirmPassword}
-                          onChange={(e) => handleSettingChange('confirmPassword', e.target.value)}
-                        />
-                      </div>
-
-                      <div className="text-sm text-gray-600">
-                        <p className="mb-1">Password must:</p>
-                        <div className="space-y-1">
-                          <div className="flex items-center space-x-2">
-                            <Check className="w-3 h-3 text-green-500" />
-                            <span>Be at least 8 characters long</span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Check className="w-3 h-3 text-green-500" />
-                            <span>Include at least one uppercase letter</span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Check className="w-3 h-3 text-green-500" />
-                            <span>Include at least one number</span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Check className="w-3 h-3 text-green-500" />
-                            <span>Include at least one special character</span>
-                          </div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label className="font-semibold text-gray-700">Two-factor authentication</Label>
+                          <p className="text-sm text-gray-500">Add an extra layer of security</p>
                         </div>
+                        <Switch 
+                          checked={settings.twoFactorEnabled}
+                          onCheckedChange={(checked) => handleSettingChange('twoFactorEnabled', checked)}
+                        />
                       </div>
 
-                      <Button onClick={handleUpdatePassword} className="w-full">
-                        <Key className="w-4 h-4 mr-2" />
+                      <Button className="w-full bg-gradient-to-r from-red-400 to-pink-500 text-white">
                         Update Password
                       </Button>
                     </CardContent>
                   </Card>
 
-                  {/* Account Security */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Account Security</CardTitle>
-                      <CardDescription>Enhance the security of your account</CardDescription>
+                  <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
+                    <CardHeader className="bg-gradient-to-br from-indigo-400 to-purple-500 text-white rounded-t-lg">
+                      <CardTitle className="flex items-center">
+                        <Monitor className="w-5 h-5 mr-2" />
+                        Active Sessions
+                      </CardTitle>
+                      <CardDescription className="text-white/80">Manage your logged-in devices</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label>Two-Factor Authentication</Label>
-                          <p className="text-sm text-gray-500">Add an extra layer of security to your account</p>
-                        </div>
-                        <Switch
-                          checked={settings.twoFactorAuth}
-                          onCheckedChange={(checked) => handleSettingChange('twoFactorAuth', checked)}
-                        />
-                      </div>
-
-                      <Separator />
-
-                      <div>
-                        <Label className="text-sm font-medium">Active Sessions</Label>
-                        <div className="mt-3 space-y-3">
-                          <div className="flex items-center justify-between p-3 border rounded-lg">
-                            <div>
-                              <p className="font-medium text-sm">This Device</p>
-                              <p className="text-sm text-gray-500">Windows • Chrome • New York</p>
+                    <CardContent className="p-6 space-y-4">
+                      {devices.map((device, index) => (
+                        <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-lg flex items-center justify-center">
+                              {device.type === 'desktop' && <Monitor className="w-5 h-5 text-white" />}
+                              {device.type === 'mobile' && <Smartphone className="w-5 h-5 text-white" />}
+                              {device.type === 'tablet' && <Monitor className="w-5 h-5 text-white" />}
                             </div>
-                            <span className="text-sm text-green-600 font-medium">Current</span>
+                            <div>
+                              <h4 className="font-medium text-gray-900">{device.name}</h4>
+                              <p className="text-sm text-gray-500">{device.location}</p>
+                              <p className="text-xs text-gray-400">{device.lastActive}</p>
+                            </div>
                           </div>
-
-                          <div className="flex items-center justify-between p-3 border rounded-lg">
-                            <div>
-                              <p className="font-medium text-sm">MacBook Pro</p>
-                              <p className="text-sm text-gray-500">macOS • Safari • Chicago</p>
-                            </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleLogoutDevice('MacBook Pro')}
-                            >
-                              Logout
-                            </Button>
+                          <div className="flex items-center space-x-2">
+                            <Badge variant={device.status === 'active' ? 'default' : 'secondary'}>
+                              {device.status}
+                            </Badge>
+                            {device.status !== 'active' && (
+                              <Button variant="ghost" size="sm">
+                                <LogOut className="w-4 h-4" />
+                              </Button>
+                            )}
                           </div>
                         </div>
+                      ))}
 
-                        <Button 
-                          variant="outline" 
-                          onClick={handleLogoutAllDevices}
-                          className="w-full mt-3"
-                        >
-                          Logout of All Devices
-                        </Button>
-                      </div>
-
-                      <Separator />
-
-                      <div>
-                        <Label className="text-sm font-medium">Login History</Label>
-                        <div className="mt-3 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-sm font-medium">Today, 3:24 PM</p>
-                              <p className="text-sm text-gray-500">New York, USA • Chrome on Windows</p>
-                            </div>
-                            <Check className="w-4 h-4 text-green-500" />
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-sm font-medium">Yesterday, 7:15 PM</p>
-                              <p className="text-sm text-gray-500">Chicago, USA • Safari on macOS</p>
-                            </div>
-                            <Check className="w-4 h-4 text-green-500" />
-                          </div>
-                        </div>
-                        <Button variant="link" className="w-full mt-2 text-blue-600">
-                          View Complete History
-                        </Button>
-                      </div>
+                      <Button variant="outline" className="w-full">
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Sign out all devices
+                      </Button>
                     </CardContent>
                   </Card>
                 </div>
               </TabsContent>
 
-              {/* Privacy Tab */}
-              <TabsContent value="privacy" className="space-y-6">
+              {/* Billing Tab */}
+              <TabsContent value="billing" className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Data Privacy */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Data Privacy</CardTitle>
-                      <CardDescription>Manage your personal data and privacy settings</CardDescription>
+                  <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
+                    <CardHeader className="bg-gradient-to-br from-green-400 to-emerald-500 text-white rounded-t-lg">
+                      <CardTitle className="flex items-center">
+                        <CreditCard className="w-5 h-5 mr-2" />
+                        Payment Methods
+                      </CardTitle>
+                      <CardDescription className="text-white/80">Manage how you receive payments</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="p-6 space-y-4">
                       <div>
-                        <Label htmlFor="profile-visibility">Profile Visibility</Label>
-                        <Select value={settings.profileVisibility} onValueChange={(value) => handleSettingChange('profileVisibility', value)}>
-                          <SelectTrigger>
+                        <Label className="font-semibold text-gray-700">Payout Method</Label>
+                        <Select value={settings.payoutMethod} onValueChange={(value) => handleSettingChange('payoutMethod', value)}>
+                          <SelectTrigger className="border-gray-200 focus:border-green-400">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="public">Public</SelectItem>
-                            <SelectItem value="private">Private</SelectItem>
-                            <SelectItem value="contacts">Contacts Only</SelectItem>
+                            <SelectItem value="bank">Bank Transfer</SelectItem>
+                            <SelectItem value="paypal">PayPal</SelectItem>
+                            <SelectItem value="stripe">Stripe</SelectItem>
                           </SelectContent>
                         </Select>
-                        <p className="text-sm text-gray-500 mt-1">Control who can view your designer profile</p>
                       </div>
 
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label>Show Online Status</Label>
-                          <p className="text-sm text-gray-500">Show when you're online to potential clients</p>
-                        </div>
-                        <Switch
-                          checked={settings.showOnlineStatus}
-                          onCheckedChange={(checked) => handleSettingChange('showOnlineStatus', checked)}
-                        />
-                      </div>
+                      <Button className="w-full bg-gradient-to-r from-green-400 to-emerald-500 text-white">
+                        <CreditCard className="w-4 h-4 mr-2" />
+                        Add Payment Method
+                      </Button>
 
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label>Show Recent Work</Label>
-                          <p className="text-sm text-gray-500">Display your recent projects publicly</p>
-                        </div>
-                        <Switch
-                          checked={settings.showRecentWork}
-                          onCheckedChange={(checked) => handleSettingChange('showRecentWork', checked)}
-                        />
-                      </div>
-
-                      <div>
-                        <Label className="text-sm font-medium">Data Management</Label>
-                        <div className="mt-3 space-y-2">
-                          <Button variant="outline" onClick={handleExportData} className="w-full justify-start">
-                            <Download className="w-4 h-4 mr-2" />
-                            Export Data
-                          </Button>
-                          <Button variant="destructive" onClick={handleDeleteAccount} className="w-full justify-start">
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete Account
-                          </Button>
-                        </div>
-                      </div>
-
-                      <Button onClick={handleSavePrivacySettings} className="w-full">
-                        Save Privacy Settings
+                      <Button variant="outline" className="w-full">
+                        <Download className="w-4 h-4 mr-2" />
+                        Download Tax Forms
                       </Button>
                     </CardContent>
                   </Card>
 
-                  {/* Account Management */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Account Management</CardTitle>
-                      <CardDescription>Manage your account and data settings</CardDescription>
+                  <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
+                    <CardHeader className="bg-gradient-to-br from-red-400 to-orange-500 text-white rounded-t-lg">
+                      <CardTitle className="flex items-center">
+                        <Trash2 className="w-5 h-5 mr-2" />
+                        Account Management
+                      </CardTitle>
+                      <CardDescription className="text-white/80">Account deletion and data export</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div>
-                        <Label className="text-sm font-medium">Identity Verification</Label>
-                        <div className="mt-2 flex items-center space-x-2">
-                          <Check className="w-4 h-4 text-green-500" />
-                          <span className="text-sm text-green-600 font-medium">Your identity is verified</span>
-                        </div>
-                        <p className="text-sm text-gray-500 mt-1">Last verified on Jan 15, 2023</p>
-                      </div>
+                    <CardContent className="p-6 space-y-4">
+                      <Button variant="outline" className="w-full">
+                        <Download className="w-4 h-4 mr-2" />
+                        Export Account Data
+                      </Button>
 
-                      <Separator />
+                      <Button variant="outline" className="w-full border-red-200 text-red-600 hover:bg-red-50">
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete Account
+                      </Button>
 
-                      <div>
-                        <Label className="text-sm font-medium">Portfolio Content Rights</Label>
-                        <div className="mt-3 space-y-3">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <span className="text-sm">Allow platform to showcase your work</span>
-                              <p className="text-sm text-gray-500">We may feature your best work in our marketing materials</p>
-                            </div>
-                            <Switch
-                              checked={settings.allowPortfolioShowcase}
-                              onCheckedChange={(checked) => handleSettingChange('allowPortfolioShowcase', checked)}
-                            />
-                          </div>
-
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <span className="text-sm">Enable watermarking on previews</span>
-                              <p className="text-sm text-gray-500">Add subtle watermarks to protect your work</p>
-                            </div>
-                            <Switch
-                              checked={settings.enableWatermarking}
-                              onCheckedChange={(checked) => handleSettingChange('enableWatermarking', checked)}
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      <Separator />
-
-                      <div>
-                        <Label className="text-sm font-medium">Account Actions</Label>
-                        <div className="mt-3 space-y-2">
-                          <Button variant="outline" className="w-full justify-start">
-                            <Mail className="w-4 h-4 mr-2" />
-                            Change Email Address
-                          </Button>
-                          <Button variant="outline" className="w-full justify-start">
-                            <Edit className="w-4 h-4 mr-2" />
-                            Edit Designer Profile
-                          </Button>
-                          <Button variant="destructive" className="w-full justify-start">
-                            <LogOut className="w-4 h-4 mr-2" />
-                            Log Out
-                          </Button>
-                        </div>
-                      </div>
+                      <p className="text-xs text-gray-500">
+                        Account deletion is permanent and cannot be undone. All your data will be permanently removed.
+                      </p>
                     </CardContent>
                   </Card>
                 </div>
