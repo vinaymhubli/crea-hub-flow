@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
 export default function Signup() {
   const navigate = useNavigate();
+  const { signUp, user, profile, loading } = useAuth();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -19,6 +21,8 @@ export default function Signup() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -28,32 +32,49 @@ export default function Signup() {
     }));
   };
 
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!loading && user && profile) {
+      const redirectPath = profile.user_type === 'designer' 
+        ? '/designer-dashboard' 
+        : '/customer-dashboard';
+      navigate(redirectPath, { replace: true });
+    }
+  }, [user, profile, loading, navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
 
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match');
+      setError('Passwords do not match');
       return;
     }
 
     if (!agreeTerms) {
-      alert('Please accept the terms and conditions');
+      setError('Please accept the terms and conditions');
       return;
     }
 
     setIsLoading(true);
 
-    // Simulate signup process and redirect based on user type
-    setTimeout(() => {
+    const userData = {
+      user_type: formData.userType,
+      first_name: formData.firstName,
+      last_name: formData.lastName,
+      specialization: formData.userType === 'designer' ? formData.specialization : null,
+      rate_per_minute: formData.userType === 'designer' ? formData.ratePerMinute : null,
+    };
+
+    const { error } = await signUp(formData.email, formData.password, userData);
+    
+    if (error) {
+      setError(error.message);
       setIsLoading(false);
-      
-      // Redirect to appropriate dashboard based on user type
-      if (formData.userType === 'designer') {
-        navigate('/designer-dashboard');
-      } else {
-        navigate('/customer-dashboard');
-      }
-    }, 1000);
+    } else {
+      setSuccess(true);
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -66,6 +87,20 @@ export default function Signup() {
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Create your account</h2>
             <p className="text-gray-600">Join our community of designers and clients</p>
           </div>
+
+          {success && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <p className="text-sm text-green-600">
+                Account created successfully! Please check your email to verify your account.
+              </p>
+            </div>
+          )}
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
 
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-4">

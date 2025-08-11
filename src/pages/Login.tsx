@@ -1,26 +1,42 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
 export default function Login() {
   const navigate = useNavigate();
+  const { signIn, user, profile, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!loading && user && profile) {
+      const redirectPath = profile.user_type === 'designer' 
+        ? '/designer-dashboard' 
+        : '/customer-dashboard';
+      navigate(redirectPath, { replace: true });
+    }
+  }, [user, profile, loading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
     
-    // Simulate login process and redirect to customer dashboard by default
-    setTimeout(() => {
+    const { error } = await signIn(email, password);
+    
+    if (error) {
+      setError(error.message);
       setIsLoading(false);
-      // For demo purposes, redirect to customer dashboard
-      // In real implementation, this would be based on user data from authentication
-      navigate('/customer-dashboard');
-    }, 1000);
+    } else {
+      // Success handled by auth state change
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -33,6 +49,12 @@ export default function Login() {
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome back</h2>
             <p className="text-gray-600">Sign in to your account to continue</p>
           </div>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
 
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-4">

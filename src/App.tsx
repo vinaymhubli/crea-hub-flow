@@ -4,6 +4,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/hooks/useAuth";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import Designers from "./pages/Designers";
@@ -39,6 +41,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <AuthProvider>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/about" element={<About />} />
@@ -48,26 +51,95 @@ const App = () => (
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/designer-dashboard" element={<DesignerDashboard />} />
-          <Route path="/designer-dashboard/profile" element={<DesignerProfile />} />
-          <Route path="/designer-dashboard/portfolio" element={<DesignerPortfolio />} />
-          <Route path="/designer-dashboard/bookings" element={<DesignerBookings />} />
-          <Route path="/designer-dashboard/availability" element={<DesignerAvailability />} />
-          <Route path="/designer-dashboard/earnings" element={<DesignerEarnings />} />
-          <Route path="/designer-dashboard/history" element={<DesignerSessionHistory />} />
-          <Route path="/designer-dashboard/messages" element={<DesignerMessages />} />
-          <Route path="/designer-dashboard/settings" element={<DesignerSettings />} />
-          <Route path="/customer-dashboard" element={<CustomerDashboard />} />
-          <Route path="/customer-dashboard/wallet" element={<CustomerWallet />} />
-          <Route path="/customer-dashboard/bookings" element={<CustomerBookings />} />
-          <Route path="/customer-dashboard/messages" element={<CustomerMessages />} />
-          <Route path="/customer-dashboard/recent-designers" element={<CustomerRecentDesigners />} />
-          <Route path="/customer-dashboard/notifications" element={<CustomerNotifications />} />
-          <Route path="/customer-dashboard/profile" element={<CustomerProfile />} />
-          <Route path="/customer-dashboard/settings" element={<CustomerSettings />} />
+          <Route path="/designer-dashboard" element={
+            <ProtectedRoute requireUserType="designer">
+              <DesignerDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/designer-dashboard/profile" element={
+            <ProtectedRoute requireUserType="designer">
+              <DesignerProfile />
+            </ProtectedRoute>
+          } />
+          <Route path="/designer-dashboard/portfolio" element={
+            <ProtectedRoute requireUserType="designer">
+              <DesignerPortfolio />
+            </ProtectedRoute>
+          } />
+          <Route path="/designer-dashboard/bookings" element={
+            <ProtectedRoute requireUserType="designer">
+              <DesignerBookings />
+            </ProtectedRoute>
+          } />
+          <Route path="/designer-dashboard/availability" element={
+            <ProtectedRoute requireUserType="designer">
+              <DesignerAvailability />
+            </ProtectedRoute>
+          } />
+          <Route path="/designer-dashboard/earnings" element={
+            <ProtectedRoute requireUserType="designer">
+              <DesignerEarnings />
+            </ProtectedRoute>
+          } />
+          <Route path="/designer-dashboard/history" element={
+            <ProtectedRoute requireUserType="designer">
+              <DesignerSessionHistory />
+            </ProtectedRoute>
+          } />
+          <Route path="/designer-dashboard/messages" element={
+            <ProtectedRoute requireUserType="designer">
+              <DesignerMessages />
+            </ProtectedRoute>
+          } />
+          <Route path="/designer-dashboard/settings" element={
+            <ProtectedRoute requireUserType="designer">
+              <DesignerSettings />
+            </ProtectedRoute>
+          } />
+          <Route path="/customer-dashboard" element={
+            <ProtectedRoute requireUserType="client">
+              <CustomerDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/customer-dashboard/wallet" element={
+            <ProtectedRoute requireUserType="client">
+              <CustomerWallet />
+            </ProtectedRoute>
+          } />
+          <Route path="/customer-dashboard/bookings" element={
+            <ProtectedRoute requireUserType="client">
+              <CustomerBookings />
+            </ProtectedRoute>
+          } />
+          <Route path="/customer-dashboard/messages" element={
+            <ProtectedRoute requireUserType="client">
+              <CustomerMessages />
+            </ProtectedRoute>
+          } />
+          <Route path="/customer-dashboard/recent-designers" element={
+            <ProtectedRoute requireUserType="client">
+              <CustomerRecentDesigners />
+            </ProtectedRoute>
+          } />
+          <Route path="/customer-dashboard/notifications" element={
+            <ProtectedRoute requireUserType="client">
+              <CustomerNotifications />
+            </ProtectedRoute>
+          } />
+          <Route path="/customer-dashboard/profile" element={
+            <ProtectedRoute requireUserType="client">
+              <CustomerProfile />
+            </ProtectedRoute>
+          } />
+          <Route path="/customer-dashboard/settings" element={
+            <ProtectedRoute requireUserType="client">
+              <CustomerSettings />
+            </ProtectedRoute>
+          } />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
