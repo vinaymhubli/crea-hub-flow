@@ -18,8 +18,10 @@ import {
   PieChart,
   BarChart3,
   Eye,
-  EyeOff
+  EyeOff,
+  LineChart
 } from 'lucide-react';
+
 import { Link, useLocation } from 'react-router-dom';
 import {
   Sidebar,
@@ -104,6 +106,32 @@ export default function DesignerEarnings() {
   const [hideAmount, setHideAmount] = useState(false);
 
   // Sample earnings data
+  // Chart data
+  const monthlyData = [
+    { month: 'Jan', earnings: 1800 },
+    { month: 'Feb', earnings: 2100 },
+    { month: 'Mar', earnings: 1950 },
+    { month: 'Apr', earnings: 2300 },
+    { month: 'May', earnings: 2450 },
+    { month: 'Jun', earnings: 2600 },
+  ];
+
+  const dailyData = [
+    { day: 'Mon', amount: 120 },
+    { day: 'Tue', amount: 200 },
+    { day: 'Wed', amount: 150 },
+    { day: 'Thu', amount: 300 },
+    { day: 'Fri', amount: 180 },
+    { day: 'Sat', amount: 250 },
+    { day: 'Sun', amount: 100 },
+  ];
+
+  const categoryData = [
+    { name: 'Logo Design', value: 35, color: '#10B981' },
+    { name: 'Web Design', value: 45, color: '#3B82F6' },
+    { name: 'Branding', value: 20, color: '#8B5CF6' },
+  ];
+
   const earningsData = {
     thisMonth: {
       total: 2450,
@@ -268,24 +296,18 @@ export default function DesignerEarnings() {
             {/* Enhanced Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-2 mb-8">
-                <TabsList className="grid w-auto grid-cols-4 bg-transparent gap-2">
+                <TabsList className="grid w-auto grid-cols-3 bg-transparent gap-2">
                   <TabsTrigger 
                     value="this-month"
                     className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-xl py-3 px-6 font-semibold"
                   >
-                    This Month
+                    Overview
                   </TabsTrigger>
                   <TabsTrigger 
                     value="transactions"
                     className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-xl py-3 px-6 font-semibold"
                   >
                     Transactions
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="analytics"
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-xl py-3 px-6 font-semibold"
-                  >
-                    Analytics
                   </TabsTrigger>
                   <TabsTrigger 
                     value="payouts"
@@ -297,29 +319,95 @@ export default function DesignerEarnings() {
               </div>
 
               <TabsContent value="this-month" className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                  <Card className="bg-white border-0 shadow-xl">
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <LineChart className="w-5 h-5 mr-2" />
+                        Monthly Trends
+                      </CardTitle>
+                      <CardDescription>Your earnings over the last 6 months</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="h-80 bg-gradient-to-br from-green-50 to-blue-50 rounded-xl p-6 flex flex-col justify-between">
+                        <div className="grid grid-cols-6 gap-4 h-full items-end">
+                          {monthlyData.map((item, index) => (
+                            <div key={item.month} className="flex flex-col items-center space-y-2">
+                              <div 
+                                className="w-8 bg-gradient-to-t from-green-400 to-blue-500 rounded-t-md"
+                                style={{ height: `${(item.earnings / 3000) * 200}px` }}
+                              ></div>
+                              <span className="text-xs text-gray-600 font-medium">{item.month}</span>
+                              <span className="text-xs text-gray-500">${item.earnings}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-white border-0 shadow-xl">
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <BarChart3 className="w-5 h-5 mr-2" />
+                        Weekly Performance
+                      </CardTitle>
+                      <CardDescription>Daily earnings this week</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="h-80 bg-gradient-to-br from-blue-50 to-green-50 rounded-xl p-6 flex items-end justify-center space-x-3">
+                        {dailyData.map((item) => (
+                          <div key={item.day} className="flex flex-col items-center space-y-2">
+                            <div 
+                              className="w-10 bg-gradient-to-t from-blue-400 to-green-500 rounded-t-lg"
+                              style={{ height: `${(item.amount / 300) * 200}px` }}
+                            ></div>
+                            <span className="text-xs text-gray-600 font-medium">{item.day}</span>
+                            <span className="text-xs text-gray-500">${item.amount}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  <div className="lg:col-span-2">
-                    <Card className="bg-white border-0 shadow-xl">
-                      <CardHeader>
-                        <CardTitle className="flex items-center">
-                          <BarChart3 className="w-5 h-5 mr-2" />
-                          Earnings Overview
-                        </CardTitle>
-                        <CardDescription>Your monthly earnings breakdown</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="h-64 flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50 rounded-xl">
-                          <div className="text-center">
-                            <BarChart3 className="w-16 h-16 text-green-400 mx-auto mb-4" />
-                            <p className="text-gray-600 font-medium">Earnings Chart Visualization</p>
-                            <p className="text-sm text-gray-500">Monthly performance analytics</p>
+                  <Card className="bg-white border-0 shadow-xl">
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <PieChart className="w-5 h-5 mr-2" />
+                        Service Breakdown
+                      </CardTitle>
+                      <CardDescription>Earnings by service type</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="h-64 flex items-center justify-center mb-6">
+                        <div className="relative w-48 h-48">
+                          <div className="absolute inset-0 rounded-full bg-gradient-to-r from-green-400 to-blue-500 p-1">
+                            <div className="w-full h-full bg-white rounded-full flex items-center justify-center">
+                              <div className="text-center">
+                                <p className="text-2xl font-bold text-gray-900">100%</p>
+                                <p className="text-sm text-gray-600">Services</p>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
-                  </div>
+                      </div>
+                      <div className="space-y-3">
+                        {categoryData.map((item) => (
+                          <div key={item.name} className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
+                              <span className="text-sm text-gray-600">{item.name}</span>
+                            </div>
+                            <span className="text-sm font-medium">{item.value}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
 
-                  <div className="space-y-6">
+                  <div className="lg:col-span-2 space-y-6">
                     <Card className="bg-white border-0 shadow-xl">
                       <CardHeader>
                         <CardTitle>Quick Actions</CardTitle>
@@ -387,17 +475,6 @@ export default function DesignerEarnings() {
                 ))}
               </TabsContent>
 
-              <TabsContent value="analytics" className="space-y-6">
-                <div className="text-center py-20">
-                  <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl">
-                    <PieChart className="w-10 h-10 text-white" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-3">Analytics Dashboard</h3>
-                  <p className="text-gray-600 mb-8 max-w-md mx-auto text-lg">
-                    Detailed analytics and insights about your earnings performance.
-                  </p>
-                </div>
-              </TabsContent>
 
               <TabsContent value="payouts" className="space-y-6">
                 <div className="text-center py-20">
