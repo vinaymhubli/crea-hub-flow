@@ -242,13 +242,13 @@ export default function DesignerPortfolio() {
         
         <main className="flex-1">
           {/* Header */}
-          <header className="bg-gradient-to-r from-green-400 to-blue-500 px-6 py-8">
+          <header className="bg-card border-b border-border px-6 py-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <SidebarTrigger className="text-white hover:bg-white/20" />
+                <SidebarTrigger className="text-muted-foreground hover:bg-muted" />
                 <div>
-                  <h1 className="text-2xl font-bold text-white">Portfolio</h1>
-                  <p className="text-white/80">Showcase your best design work to attract more clients</p>
+                  <h1 className="text-2xl font-bold text-foreground">Portfolio</h1>
+                  <p className="text-muted-foreground">Showcase your best design work to attract more clients</p>
                 </div>
               </div>
               <AddPortfolioDialog />
@@ -257,16 +257,16 @@ export default function DesignerPortfolio() {
 
           <div className="p-6">
             {/* Category Filter */}
-            <div className="border-b border-gray-200 mb-8">
-              <nav className="flex space-x-8">
+            <div className="bg-card rounded-lg border border-border p-2 mb-8">
+              <nav className="flex flex-wrap gap-2">
                 {categories.map((category) => (
                   <button
                     key={category}
                     onClick={() => setActiveCategory(category)}
-                    className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
                       category === activeCategory
-                        ? "border-blue-500 text-blue-600"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
                     }`}
                   >
                     {category}
@@ -275,16 +275,49 @@ export default function DesignerPortfolio() {
               </nav>
             </div>
 
-            {/* Empty State */}
-            <div className="text-center py-20">
-              <div className="w-20 h-20 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-6">
-                <FolderOpen className="w-10 h-10 text-gray-400" />
+            {/* Portfolio Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+              {/* Sample Portfolio Items */}
+              {[1, 2, 3, 4, 5, 6].map((item) => (
+                <div key={item} className="group cursor-pointer">
+                  <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
+                    <div className="aspect-[4/3] bg-muted relative overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                        <span className="text-6xl font-bold text-muted-foreground/20">#{item}</span>
+                      </div>
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                        <Button variant="secondary" size="sm" className="shadow-lg">
+                          View Project
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-semibold text-foreground mb-1">Sample Project {item}</h3>
+                      <p className="text-sm text-muted-foreground mb-2">Logo Design</p>
+                      <p className="text-xs text-muted-foreground">2024</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Empty State for when no items */}
+            <div className="text-center py-12 hidden">
+              <div className="w-16 h-16 bg-muted rounded-xl flex items-center justify-center mx-auto mb-4">
+                <FolderOpen className="w-8 h-8 text-muted-foreground" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">No portfolio items</h3>
-              <p className="text-gray-500 mb-8 max-w-md mx-auto">
-                Get started by adding your first portfolio item.
+              <h3 className="text-lg font-semibold text-foreground mb-2">No portfolio items</h3>
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                Get started by adding your first portfolio item to showcase your work.
               </p>
               <AddPortfolioDialog />
+            </div>
+
+            {/* Load More Button */}
+            <div className="text-center">
+              <Button variant="outline" className="px-8">
+                Load More Projects
+              </Button>
             </div>
           </div>
         </main>
