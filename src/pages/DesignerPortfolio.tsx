@@ -9,7 +9,8 @@ import {
   History, 
   Settings,
   Plus,
-  X
+  X,
+  Eye
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import {
@@ -237,36 +238,47 @@ export default function DesignerPortfolio() {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gray-50">
+      <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 via-blue-50 to-green-50">
         <DesignerSidebar />
         
         <main className="flex-1">
-          {/* Header */}
-          <header className="bg-card border-b border-border px-6 py-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <SidebarTrigger className="text-muted-foreground hover:bg-muted" />
-                <div>
-                  <h1 className="text-2xl font-bold text-foreground">Portfolio</h1>
-                  <p className="text-muted-foreground">Showcase your best design work to attract more clients</p>
+          {/* Enhanced Header with Profile Preview */}
+          <header className="bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 px-6 py-8 relative overflow-hidden">
+            <div className="absolute inset-0 bg-black/10"></div>
+            <div className="relative z-10 flex items-center justify-between">
+              <div className="flex items-center space-x-6">
+                <SidebarTrigger className="text-white hover:bg-white/20 rounded-lg p-2" />
+                <div className="flex items-center space-x-4">
+                  <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/30 shadow-xl">
+                    <FolderOpen className="w-8 h-8 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-bold text-white">Portfolio</h1>
+                    <p className="text-white/90 text-lg">Showcase your best design work to attract more clients</p>
+                    <div className="flex items-center space-x-4 mt-2">
+                      <span className="text-white/90 font-medium">6 Projects</span>
+                      <span className="text-white/60">•</span>
+                      <span className="text-white/90 font-medium">3 Categories</span>
+                    </div>
+                  </div>
                 </div>
               </div>
               <AddPortfolioDialog />
             </div>
           </header>
 
-          <div className="p-6">
-            {/* Category Filter */}
-            <div className="bg-card rounded-lg border border-border p-2 mb-8">
+          <div className="p-8 max-w-7xl mx-auto">
+            {/* Enhanced Category Filter */}
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-2 mb-8">
               <nav className="flex flex-wrap gap-2">
                 {categories.map((category) => (
                   <button
                     key={category}
                     onClick={() => setActiveCategory(category)}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                    className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 hover:scale-105 ${
                       category === activeCategory
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                        ? "bg-gradient-to-r from-green-400 to-blue-500 text-white shadow-lg"
+                        : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
                     }`}
                   >
                     {category}
@@ -276,38 +288,48 @@ export default function DesignerPortfolio() {
             </div>
 
             {/* Portfolio Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
               {/* Sample Portfolio Items */}
-              {[1, 2, 3, 4, 5, 6].map((item) => (
-                <div key={item} className="group cursor-pointer">
-                  <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
-                    <div className="aspect-[4/3] bg-muted relative overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-                        <span className="text-6xl font-bold text-muted-foreground/20">#{item}</span>
+              {[
+                { id: 1, title: "Modern E-commerce UI", category: "UI/UX Design", year: "2024", color: "from-blue-400 to-purple-500" },
+                { id: 2, title: "Tech Startup Branding", category: "Branding", year: "2024", color: "from-green-400 to-blue-500" },
+                { id: 3, title: "Minimalist Logo Design", category: "Logo Design", year: "2023", color: "from-purple-400 to-pink-500" },
+                { id: 4, title: "Mobile App Interface", category: "UI/UX Design", year: "2024", color: "from-orange-400 to-red-500" },
+                { id: 5, title: "Corporate Identity", category: "Branding", year: "2023", color: "from-indigo-400 to-blue-500" },
+                { id: 6, title: "Creative Illustration", category: "Illustration", year: "2024", color: "from-green-400 to-teal-500" }
+              ].map((item) => (
+                <div key={item.id} className="group cursor-pointer">
+                  <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
+                    <div className="aspect-[4/3] relative overflow-hidden">
+                      <div className={`absolute inset-0 bg-gradient-to-br ${item.color} flex items-center justify-center`}>
+                        <span className="text-6xl font-bold text-white/20">#{item.id}</span>
                       </div>
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                        <Button variant="secondary" size="sm" className="shadow-lg">
+                        <Button className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm shadow-lg">
+                          <Eye className="w-4 h-4 mr-2" />
                           View Project
                         </Button>
                       </div>
                     </div>
-                    <div className="p-4">
-                      <h3 className="font-semibold text-foreground mb-1">Sample Project {item}</h3>
-                      <p className="text-sm text-muted-foreground mb-2">Logo Design</p>
-                      <p className="text-xs text-muted-foreground">2024</p>
+                    <div className="p-6">
+                      <h3 className="font-bold text-gray-900 mb-2 text-lg">{item.title}</h3>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full font-medium">{item.category}</span>
+                        <span className="text-xs text-gray-500 font-medium">{item.year}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Empty State for when no items */}
-            <div className="text-center py-12 hidden">
-              <div className="w-16 h-16 bg-muted rounded-xl flex items-center justify-center mx-auto mb-4">
-                <FolderOpen className="w-8 h-8 text-muted-foreground" />
+            {/* Empty State for when no items (hidden when we have sample data) */}
+            <div className="text-center py-16 hidden">
+              <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl">
+                <FolderOpen className="w-10 h-10 text-white" />
               </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">No portfolio items</h3>
-              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">No portfolio items</h3>
+              <p className="text-gray-600 mb-8 max-w-md mx-auto text-lg">
                 Get started by adding your first portfolio item to showcase your work.
               </p>
               <AddPortfolioDialog />
@@ -315,7 +337,7 @@ export default function DesignerPortfolio() {
 
             {/* Load More Button */}
             <div className="text-center">
-              <Button variant="outline" className="px-8">
+              <Button className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 px-8 py-3 text-lg font-semibold">
                 Load More Projects
               </Button>
             </div>
