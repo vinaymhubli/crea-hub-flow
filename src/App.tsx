@@ -20,6 +20,7 @@ import DesignerAvailability from "./pages/DesignerAvailability";
 import DesignerEarnings from "./pages/DesignerEarnings";
 import DesignerSessionHistory from "./pages/DesignerSessionHistory";
 import DesignerSettings from "./pages/DesignerSettings";
+import DesignerMessages from "./pages/DesignerMessages";
 import CustomerDashboard from "./pages/CustomerDashboard";
 import CustomerWallet from "./pages/CustomerWallet";
 import CustomerBookings from "./pages/CustomerBookings";
@@ -54,6 +55,7 @@ const App = () => (
           <Route path="/designer-dashboard/availability" element={<DesignerAvailability />} />
           <Route path="/designer-dashboard/earnings" element={<DesignerEarnings />} />
           <Route path="/designer-dashboard/history" element={<DesignerSessionHistory />} />
+          <Route path="/designer-dashboard/messages" element={<DesignerMessages />} />
           <Route path="/designer-dashboard/settings" element={<DesignerSettings />} />
           <Route path="/customer-dashboard" element={<CustomerDashboard />} />
           <Route path="/customer-dashboard/wallet" element={<CustomerWallet />} />
