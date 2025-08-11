@@ -21,6 +21,7 @@ import {
   ThumbsUp,
   Users2
 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Sidebar,
@@ -123,6 +124,16 @@ function CustomerSidebar() {
 }
 
 export default function CustomerDashboard() {
+  const { signOut } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
@@ -183,7 +194,10 @@ export default function CustomerDashboard() {
                           Profile
                         </Link>
                         <Separator className="my-2" />
-                        <button className="flex items-center w-full px-3 py-2 text-sm text-foreground hover:bg-accent rounded-md transition-colors">
+                        <button 
+                          onClick={handleLogout}
+                          className="flex items-center w-full px-3 py-2 text-sm text-foreground hover:bg-accent rounded-md transition-colors"
+                        >
                           <LogOut className="w-4 h-4 mr-3" />
                           Log out
                         </button>
