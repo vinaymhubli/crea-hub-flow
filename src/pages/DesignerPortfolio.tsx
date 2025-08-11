@@ -1,4 +1,10 @@
 import { useState } from 'react';
+import portfolioEcommerce from '@/assets/portfolio-ecommerce.jpg';
+import portfolioBranding from '@/assets/portfolio-branding.jpg';
+import portfolioLogos from '@/assets/portfolio-logos.jpg';
+import portfolioMobileApp from '@/assets/portfolio-mobile-app.jpg';
+import portfolioCorporate from '@/assets/portfolio-corporate.jpg';
+import portfolioIllustration from '@/assets/portfolio-illustration.jpg';
 import { 
   LayoutDashboard, 
   User, 
@@ -289,33 +295,103 @@ export default function DesignerPortfolio() {
 
             {/* Portfolio Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
-              {/* Sample Portfolio Items */}
+              {/* Real Portfolio Items */}
               {[
-                { id: 1, title: "Modern E-commerce UI", category: "UI/UX Design", year: "2024", color: "from-blue-400 to-purple-500" },
-                { id: 2, title: "Tech Startup Branding", category: "Branding", year: "2024", color: "from-green-400 to-blue-500" },
-                { id: 3, title: "Minimalist Logo Design", category: "Logo Design", year: "2023", color: "from-purple-400 to-pink-500" },
-                { id: 4, title: "Mobile App Interface", category: "UI/UX Design", year: "2024", color: "from-orange-400 to-red-500" },
-                { id: 5, title: "Corporate Identity", category: "Branding", year: "2023", color: "from-indigo-400 to-blue-500" },
-                { id: 6, title: "Creative Illustration", category: "Illustration", year: "2024", color: "from-green-400 to-teal-500" }
+                { 
+                  id: 1, 
+                  title: "Modern E-commerce Platform", 
+                  category: "UI/UX Design", 
+                  year: "2024", 
+                  image: portfolioEcommerce,
+                  client: "TechStore Inc.",
+                  description: "Complete e-commerce redesign with improved user experience and conversion optimization."
+                },
+                { 
+                  id: 2, 
+                  title: "Tech Startup Branding", 
+                  category: "Branding", 
+                  year: "2024", 
+                  image: portfolioBranding,
+                  client: "InnovateTech",
+                  description: "Full brand identity package including logo, guidelines, and marketing materials."
+                },
+                { 
+                  id: 3, 
+                  title: "Logo Design Collection", 
+                  category: "Logo Design", 
+                  year: "2023", 
+                  image: portfolioLogos,
+                  client: "Various Clients",
+                  description: "Collection of minimalist and modern logos for different industries."
+                },
+                { 
+                  id: 4, 
+                  title: "Mobile Banking App", 
+                  category: "UI/UX Design", 
+                  year: "2024", 
+                  image: portfolioMobileApp,
+                  client: "FinanceApp",
+                  description: "User-friendly mobile banking interface with advanced security features."
+                },
+                { 
+                  id: 5, 
+                  title: "Corporate Identity System", 
+                  category: "Branding", 
+                  year: "2023", 
+                  image: portfolioCorporate,
+                  client: "GlobalCorp",
+                  description: "Complete corporate identity system for a multinational company."
+                },
+                { 
+                  id: 6, 
+                  title: "Creative Digital Art", 
+                  category: "Illustration", 
+                  year: "2024", 
+                  image: portfolioIllustration,
+                  client: "ArtStudio",
+                  description: "Digital illustration project featuring abstract and contemporary art styles."
+                }
               ].map((item) => (
                 <div key={item.id} className="group cursor-pointer">
-                  <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
+                  <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-[1.03] hover:-rotate-1">
                     <div className="aspect-[4/3] relative overflow-hidden">
-                      <div className={`absolute inset-0 bg-gradient-to-br ${item.color} flex items-center justify-center`}>
-                        <span className="text-6xl font-bold text-white/20">#{item.id}</span>
+                      <img 
+                        src={item.image} 
+                        alt={item.title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300">
+                        <div className="absolute bottom-4 left-4 right-4">
+                          <p className="text-white text-sm font-medium mb-2">{item.description}</p>
+                          <Button className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm shadow-lg w-full">
+                            <Eye className="w-4 h-4 mr-2" />
+                            View Project Details
+                          </Button>
+                        </div>
                       </div>
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                        <Button className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm shadow-lg">
-                          <Eye className="w-4 h-4 mr-2" />
-                          View Project
-                        </Button>
+                      <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                        <span className="text-xs font-semibold text-gray-800">{item.year}</span>
                       </div>
                     </div>
                     <div className="p-6">
-                      <h3 className="font-bold text-gray-900 mb-2 text-lg">{item.title}</h3>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full font-medium">{item.category}</span>
-                        <span className="text-xs text-gray-500 font-medium">{item.year}</span>
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h3 className="font-bold text-gray-900 mb-1 text-lg leading-tight">{item.title}</h3>
+                          <p className="text-sm text-gray-500 font-medium">{item.client}</p>
+                        </div>
+                        <div className="flex items-center space-x-1 bg-gradient-to-r from-green-400 to-blue-500 text-white px-3 py-1 rounded-full">
+                          <span className="text-xs font-semibold">{item.category}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                          <span className="text-xs text-gray-600 font-medium">Live Project</span>
+                        </div>
+                        <div className="flex items-center space-x-1 text-gray-400">
+                          <Eye className="w-4 h-4" />
+                          <span className="text-xs">{Math.floor(Math.random() * 500 + 100)} views</span>
+                        </div>
                       </div>
                     </div>
                   </div>
