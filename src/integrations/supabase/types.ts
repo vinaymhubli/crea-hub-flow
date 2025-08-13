@@ -14,35 +14,252 @@ export type Database = {
   }
   public: {
     Tables: {
-      profiles: {
+      bookings: {
         Row: {
           created_at: string
+          customer_id: string
+          description: string | null
+          designer_id: string
+          duration_hours: number
+          id: string
+          requirements: string | null
+          scheduled_date: string
+          service: string
+          status: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          description?: string | null
+          designer_id: string
+          duration_hours?: number
+          id?: string
+          requirements?: string | null
+          scheduled_date: string
+          service: string
+          status?: string
+          total_amount: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          description?: string | null
+          designer_id?: string
+          duration_hours?: number
+          id?: string
+          requirements?: string | null
+          scheduled_date?: string
+          service?: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "bookings_designer_id_fkey"
+            columns: ["designer_id"]
+            isOneToOne: false
+            referencedRelation: "designers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      designers: {
+        Row: {
+          bio: string | null
+          completion_rate: number | null
+          created_at: string
+          hourly_rate: number
+          id: string
+          is_online: boolean | null
+          location: string | null
+          portfolio_images: string[] | null
+          rating: number | null
+          response_time: string | null
+          reviews_count: number | null
+          skills: string[] | null
+          specialty: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bio?: string | null
+          completion_rate?: number | null
+          created_at?: string
+          hourly_rate?: number
+          id?: string
+          is_online?: boolean | null
+          location?: string | null
+          portfolio_images?: string[] | null
+          rating?: number | null
+          response_time?: string | null
+          reviews_count?: number | null
+          skills?: string[] | null
+          specialty: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bio?: string | null
+          completion_rate?: number | null
+          created_at?: string
+          hourly_rate?: number
+          id?: string
+          is_online?: boolean | null
+          location?: string | null
+          portfolio_images?: string[] | null
+          rating?: number | null
+          response_time?: string | null
+          reviews_count?: number | null
+          skills?: string[] | null
+          specialty?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "designers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          booking_id: string
+          content: string
+          created_at: string
+          file_url: string | null
+          id: string
+          message_type: string | null
+          sender_id: string
+        }
+        Insert: {
+          booking_id: string
+          content: string
+          created_at?: string
+          file_url?: string | null
+          id?: string
+          message_type?: string | null
+          sender_id: string
+        }
+        Update: {
+          booking_id?: string
+          content?: string
+          created_at?: string
+          file_url?: string | null
+          id?: string
+          message_type?: string | null
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean | null
+          message: string
+          related_id: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message: string
+          related_id?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          related_id?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
           first_name: string | null
           id: string
           last_name: string | null
           rate_per_minute: number | null
+          role: string | null
           specialization: string | null
           updated_at: string
           user_id: string
           user_type: string
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string
+          email?: string | null
           first_name?: string | null
           id?: string
           last_name?: string | null
           rate_per_minute?: number | null
+          role?: string | null
           specialization?: string | null
           updated_at?: string
           user_id: string
           user_type: string
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string
+          email?: string | null
           first_name?: string | null
           id?: string
           last_name?: string | null
           rate_per_minute?: number | null
+          role?: string | null
           specialization?: string | null
           updated_at?: string
           user_id?: string
@@ -50,12 +267,63 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          booking_id: string | null
+          created_at: string
+          description: string
+          id: string
+          status: string
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          booking_id?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          status?: string
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          status?: string
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_transactions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wallet_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_wallet_balance: {
+        Args: { user_uuid: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
