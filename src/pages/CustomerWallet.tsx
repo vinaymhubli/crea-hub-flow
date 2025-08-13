@@ -218,7 +218,15 @@ function AddFundsModal() {
           </Button>
           <Button 
             className="bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 text-white hover:shadow-lg transition-all duration-300" 
-            onClick={() => setOpen(false)}
+            onClick={() => {
+              if (amount && parseFloat(amount) > 0) {
+                console.log('Adding funds:', amount);
+                // In a real app, this would process the payment
+                alert(`Successfully added $${amount} to your wallet!`);
+                setAmount('');
+                setOpen(false);
+              }
+            }}
           >
             Add Funds
           </Button>

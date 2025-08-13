@@ -276,15 +276,27 @@ function DesignerCard({ designer }: { designer: any }) {
         </div>
 
         <div className="flex space-x-3">
-          <Button className="flex-1 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white shadow-lg">
+          <Button 
+            className="flex-1 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white shadow-lg"
+            onClick={() => window.location.href = '/customer-dashboard/messages'}
+          >
             <MessageCircle className="w-4 h-4 mr-2" />
             Message
           </Button>
-          <Button variant="outline" className="flex-1 border-2 border-gradient-to-r from-green-400 to-blue-400 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50">
+          <Button 
+            variant="outline" 
+            className="flex-1 border-2 border-gradient-to-r from-green-400 to-blue-400 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50"
+            onClick={() => window.location.href = '/designers'}
+          >
             <Calendar className="w-4 h-4 mr-2" />
             Book Again
           </Button>
-          <Button variant="outline" size="icon" className="border-2 border-gradient-to-r from-green-400 to-blue-400 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="border-2 border-gradient-to-r from-green-400 to-blue-400 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50"
+            onClick={() => console.log('Added to favorites')}
+          >
             <Heart className="w-4 h-4" />
           </Button>
         </div>

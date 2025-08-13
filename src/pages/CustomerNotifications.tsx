@@ -301,6 +301,7 @@ export default function CustomerNotifications() {
           : notification
       )
     );
+    console.log('Marked notification as read:', id);
   };
 
   const handleMarkAllAsRead = () => {
@@ -311,6 +312,7 @@ export default function CustomerNotifications() {
 
   const handleDeleteNotification = (id: number) => {
     setNotifications(prev => prev.filter(notification => notification.id !== id));
+    console.log('Deleted notification:', id);
   };
 
   const handleClearAll = () => {

@@ -199,7 +199,16 @@ export default function CustomerMessages() {
 
   const handleSendMessage = () => {
     if (messageInput.trim()) {
-      console.log('Sending message:', messageInput);
+      // Add the new message to the mock messages
+      const newMessage = {
+        id: mockMessages.length + 1,
+        sender: "customer",
+        message: messageInput,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      
+      // In a real app, this would send to the backend
+      console.log('Sending message:', newMessage);
       setMessageInput('');
     }
   };
