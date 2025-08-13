@@ -14,6 +14,7 @@ import HowToUse from "./pages/HowToUse";
 import Contact from "./pages/Contact";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import Auth from "./pages/Auth";
 import DesignerDashboard from "./pages/DesignerDashboard";
 import DesignerProfile from "./pages/DesignerProfile";
 import DesignerPortfolio from "./pages/DesignerPortfolio";
@@ -51,6 +52,7 @@ const App = () => (
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/auth" element={<Auth />} />
           <Route path="/designer-dashboard" element={
             <ProtectedRoute requireUserType="designer">
               <DesignerDashboard />

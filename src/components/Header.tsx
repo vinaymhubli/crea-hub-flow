@@ -77,15 +77,15 @@ const Header = () => {
 
           <div className="hidden md:flex items-center space-x-4">
             <Link 
-              to="/login" 
+              to="/auth" 
               className={`font-medium transition-colors ${
-                isActive('/login') ? 'text-green-600' : 'text-gray-700 hover:text-green-600'
+                isActive('/auth') ? 'text-green-600' : 'text-gray-700 hover:text-green-600'
               }`}
             >
               Sign In
             </Link>
             <Link 
-              to="/signup" 
+              to="/auth" 
               className="bg-green-600 text-white px-6 py-2 rounded-full font-medium hover:bg-green-700 transition-colors whitespace-nowrap"
             >
               Get Started
@@ -153,15 +153,15 @@ const Header = () => {
               </Link>
               <div className="pt-4 border-t border-gray-100 flex flex-col space-y-3">
                 <Link 
-                  to="/login" 
+                  to="/auth" 
                   className={`font-medium transition-colors ${
-                    isActive('/login') ? 'text-green-600' : 'text-gray-700 hover:text-green-600'
+                    isActive('/auth') ? 'text-green-600' : 'text-gray-700 hover:text-green-600'
                   }`}
                 >
                   Sign In
                 </Link>
                 <Link 
-                  to="/signup" 
+                  to="/auth" 
                   className="bg-green-600 text-white px-6 py-2 rounded-full font-medium hover:bg-green-700 transition-colors text-center whitespace-nowrap"
                 >
                   Get Started
