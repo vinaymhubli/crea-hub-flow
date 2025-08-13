@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Star,
   Check,
+  LogOut,
   Camera,
   Edit,
   Save,

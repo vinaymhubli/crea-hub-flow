@@ -27,7 +27,6 @@ import {
   Trash2,
   Filter,
   Archive,
-  Archive,
   TrendingUp
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';

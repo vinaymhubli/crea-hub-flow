@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Star,
   X,
+  LogOut,
   Shield,
   Lock,
   Eye,
