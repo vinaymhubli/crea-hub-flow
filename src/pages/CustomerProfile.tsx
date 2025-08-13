@@ -12,7 +12,7 @@ import {
   Wallet,
   ChevronRight,
   Star,
-  LogOut,
+  Check,
   Camera,
   Edit,
   Save,
@@ -25,7 +25,13 @@ import {
   Shield,
   Eye,
   EyeOff,
-  Lock
+  Lock,
+  Clock,
+  Award,
+  FileText,
+  Download,
+  Upload,
+  TrendingUp
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import {
@@ -48,7 +54,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Clock } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const sidebarItems = [
   { title: "Dashboard", url: "/customer-dashboard", icon: LayoutDashboard },
@@ -73,7 +79,7 @@ function CustomerSidebar() {
       <SidebarContent className="bg-white border-r border-gray-200">
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
               <span className="text-white font-semibold text-sm">VB</span>
             </div>
             <div>
@@ -93,13 +99,12 @@ function CustomerSidebar() {
                       to={item.url} 
                       className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
                         isActive(item.url) 
-                          ? 'bg-gradient-to-r from-green-50 to-blue-50 text-green-600 border-r-2 border-green-500' 
+                          ? 'bg-gradient-to-r from-green-50 to-blue-50 text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-blue-600 border-r-2 border-gradient-to-b from-green-500 to-blue-500' 
                           : 'text-gray-700 hover:bg-gray-50'
                       }`}
                     >
-                      <item.icon className="w-5 h-5" />
+                      <item.icon className={`w-5 h-5 ${isActive(item.url) ? 'text-green-600' : ''}`} />
                       <span className="font-medium">{item.title}</span>
-                      {isActive(item.url) && <ChevronRight className="w-4 h-4 ml-auto" />}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -142,64 +147,68 @@ export default function CustomerProfile() {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gray-50">
+      <div className="min-h-screen flex w-full bg-background">
         <CustomerSidebar />
         
         <main className="flex-1">
           {/* Header */}
-          <header className="bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 border-b-0 px-6 py-8 shadow-lg">
+          <header className="bg-gradient-to-r from-green-400 to-blue-500 px-6 py-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <SidebarTrigger className="text-white hover:bg-white/20 rounded-lg p-2" />
+                <SidebarTrigger className="text-white hover:bg-white/20" />
                 <div>
                   <h1 className="text-2xl font-bold text-white">Profile</h1>
-                  <p className="text-white/90">Manage your personal information</p>
+                  <p className="text-white/80">Manage your personal information</p>
                 </div>
               </div>
-              <div className="flex items-center space-x-3">
-                <Bell className="w-5 h-5 text-white/80 hover:text-white cursor-pointer transition-colors" />
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+                  <span className="text-white/80 text-sm font-medium">Online</span>
+                </div>
+                <Bell className="w-5 h-5 text-white/80" />
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-all duration-200 ring-2 ring-white/30">
+                    <button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
                       <span className="text-white font-semibold text-sm">VB</span>
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-64 p-0" align="end">
                     <div className="p-4">
                       <div className="flex items-center space-x-3 mb-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-                          <span className="text-white font-semibold text-sm">VB</span>
+                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                          <span className="text-primary font-semibold text-sm">VB</span>
                         </div>
                         <div>
-                          <p className="font-semibold text-gray-900">Viaan Bindra</p>
-                          <p className="text-sm text-gray-500">customer@example.com</p>
+                          <p className="font-semibold text-foreground">Viaan Bindra</p>
+                          <p className="text-sm text-muted-foreground">customer@example.com</p>
                         </div>
                       </div>
                       <Separator className="my-3" />
                       <div className="space-y-1">
                         <Link 
                           to="/customer-dashboard" 
-                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 rounded-md transition-colors"
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
                         >
                           <LayoutDashboard className="w-4 h-4 mr-3" />
                           Dashboard
                         </Link>
                         <Link 
                           to="/customer-dashboard/wallet" 
-                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 rounded-md transition-colors"
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
                         >
                           <Wallet className="w-4 h-4 mr-3" />
                           Wallet
                         </Link>
                         <Link 
                           to="/customer-dashboard/profile" 
-                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 rounded-md transition-colors"
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
                         >
                           <User className="w-4 h-4 mr-3" />
                           Profile
                         </Link>
                         <Separator className="my-2" />
-                        <button className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-red-50 rounded-md transition-colors">
+                        <button className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
                           <LogOut className="w-4 h-4 mr-3" />
                           Log out
                         </button>
@@ -211,307 +220,342 @@ export default function CustomerProfile() {
             </div>
           </header>
 
-          <div className="p-6">
-          <div className="flex gap-6">
-            {/* Main Content */}
-            <div className="flex-1 space-y-6">
-              {/* Profile Picture Section */}
-              <Card className="border-0 bg-gradient-to-br from-green-50/50 via-teal-50/50 to-blue-50/50 backdrop-blur-sm shadow-lg">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-center mb-6">
-                    <div className="relative">
-                      <div className="w-24 h-24 bg-gradient-to-br from-green-400 via-teal-500 to-blue-500 rounded-full flex items-center justify-center shadow-xl ring-4 ring-white/50">
-                        <span className="text-white font-semibold text-2xl">VB</span>
+          <div className="p-6 space-y-8">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <Card className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in">
+                <CardContent className="p-6 bg-gradient-to-br from-green-50 to-emerald-50">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1 font-medium">Profile Views</p>
+                      <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">147</p>
+                      <p className="text-sm text-green-600 mt-3 font-medium">This month</p>
+                    </div>
+                    <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg">
+                      <Eye className="w-8 h-8 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in" style={{animationDelay: '0.1s'}}>
+                <CardContent className="p-6 bg-gradient-to-br from-blue-50 to-cyan-50">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1 font-medium">Projects Completed</p>
+                      <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">12</p>
+                      <p className="text-sm text-blue-600 mt-3 font-medium">Design projects</p>
+                    </div>
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
+                      <Award className="w-8 h-8 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in" style={{animationDelay: '0.2s'}}>
+                <CardContent className="p-6 bg-gradient-to-br from-purple-50 to-pink-50">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1 font-medium">Member Since</p>
+                      <p className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Jan 2024</p>
+                      <p className="text-sm text-purple-600 mt-3 font-medium">8 months</p>
+                    </div>
+                    <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
+                      <Clock className="w-8 h-8 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in" style={{animationDelay: '0.3s'}}>
+                <CardContent className="p-6 bg-gradient-to-br from-yellow-50 to-orange-50">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1 font-medium">Rating</p>
+                      <div className="flex items-center space-x-1 mb-1">
+                        <p className="text-2xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">4.9</p>
+                        <Star className="w-5 h-5 text-yellow-400 fill-current" />
                       </div>
-                      <button className="absolute -bottom-2 -right-2 w-8 h-8 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center text-white hover:from-green-600 hover:to-blue-600 transition-all duration-200 shadow-lg">
-                        <Camera className="w-4 h-4" />
-                      </button>
+                      <p className="text-sm text-yellow-600 mt-2 font-medium">From designers</p>
                     </div>
-                  </div>
-                  <div className="text-center">
-                    <h2 className="text-2xl font-semibold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">{profileData.firstName} {profileData.lastName}</h2>
+                    <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
+                      <TrendingUp className="w-8 h-8 text-white" />
+                    </div>
                   </div>
                 </CardContent>
               </Card>
+            </div>
 
-              {/* Personal Information */}
-              <Card className="border-0 bg-gradient-to-br from-white via-gray-50 to-green-50/30 backdrop-blur-sm shadow-lg">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle className="bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">Personal Information</CardTitle>
-                    <CardDescription>Update your personal details</CardDescription>
-                  </div>
-                  {!isEditing ? (
-                    <Button onClick={() => setIsEditing(true)} className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white shadow-lg">
-                      <Edit className="w-4 h-4 mr-2" />
-                      Edit
-                    </Button>
-                  ) : (
-                    <div className="flex space-x-2">
-                      <Button onClick={handleSave} className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white shadow-lg">
-                        <Save className="w-4 h-4 mr-2" />
-                        Save
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Profile Form */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Profile Picture Section */}
+                <Card className="overflow-hidden border-0 shadow-lg">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-center mb-6">
+                      <div className="relative">
+                        <div className="w-24 h-24 bg-gradient-to-br from-green-400 via-teal-500 to-blue-500 rounded-full flex items-center justify-center shadow-xl ring-4 ring-white/50">
+                          <span className="text-white font-semibold text-2xl">VB</span>
+                        </div>
+                        <button className="absolute -bottom-2 -right-2 w-8 h-8 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center text-white hover:from-green-600 hover:to-blue-600 transition-all duration-200 shadow-lg">
+                          <Camera className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <h2 className="text-2xl font-semibold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">{profileData.firstName} {profileData.lastName}</h2>
+                      <p className="text-muted-foreground">{profileData.company}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Personal Information */}
+                <Card className="overflow-hidden border-0 shadow-lg">
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                      <CardTitle className="text-xl text-foreground">Personal Information</CardTitle>
+                      <CardDescription>Update your personal details</CardDescription>
+                    </div>
+                    {!isEditing ? (
+                      <Button onClick={() => setIsEditing(true)} className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white shadow-lg">
+                        <Edit className="w-4 h-4 mr-2" />
+                        Edit
                       </Button>
-                      <Button onClick={handleCancel} variant="outline" className="border-2 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50">
-                        <X className="w-4 h-4 mr-2" />
-                        Cancel
-                      </Button>
-                    </div>
-                  )}
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="firstName">First Name</Label>
-                      {isEditing ? (
-                        <Input
-                          id="firstName"
-                          value={formData.firstName}
-                          onChange={(e) => setFormData({...formData, firstName: e.target.value})}
-                        />
-                      ) : (
-                        <Input value={profileData.firstName} readOnly className="bg-gray-50" />
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="lastName">Last Name</Label>
-                      {isEditing ? (
-                        <Input
-                          id="lastName"
-                          value={formData.lastName}
-                          onChange={(e) => setFormData({...formData, lastName: e.target.value})}
-                        />
-                      ) : (
-                        <Input value={profileData.lastName} readOnly className="bg-gray-50" />
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    {isEditing ? (
-                      <Input
-                        id="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      />
                     ) : (
-                      <Input value={profileData.email} readOnly className="bg-gray-50" />
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone</Label>
-                    {isEditing ? (
-                      <Input
-                        id="phone"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                      />
-                    ) : (
-                      <Input value={profileData.phone} readOnly className="bg-gray-50" />
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="location">Location</Label>
-                    {isEditing ? (
-                      <Input
-                        id="location"
-                        value={formData.location}
-                        onChange={(e) => setFormData({...formData, location: e.target.value})}
-                      />
-                    ) : (
-                      <Input value={profileData.location} readOnly className="bg-gray-50" />
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="website">Website</Label>
-                    {isEditing ? (
-                      <Input
-                        id="website"
-                        value={formData.website}
-                        onChange={(e) => setFormData({...formData, website: e.target.value})}
-                      />
-                    ) : (
-                      <Input value={profileData.website} readOnly className="bg-gray-50" />
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="bio">Bio</Label>
-                    {isEditing ? (
-                      <Textarea
-                        id="bio"
-                        value={formData.bio}
-                        onChange={(e) => setFormData({...formData, bio: e.target.value})}
-                        rows={4}
-                      />
-                    ) : (
-                      <Textarea value={profileData.bio} readOnly className="bg-gray-50" rows={4} />
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Security Section */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Security</CardTitle>
-                  <CardDescription>Manage your password and account security</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <h4 className="font-medium text-gray-900">Password</h4>
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="currentPassword">Current Password</Label>
-                          <Input
-                            id="currentPassword"
-                            type="password"
-                            placeholder="Enter current password"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="newPassword">New Password</Label>
-                          <Input
-                            id="newPassword"
-                            type="password"
-                            placeholder="Enter new password"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                          <Input
-                            id="confirmPassword"
-                            type="password"
-                            placeholder="Confirm new password"
-                          />
-                        </div>
-                        <Button className="bg-blue-600 hover:bg-blue-700">
-                          <Lock className="w-4 h-4 mr-2" />
-                          Change Password
+                      <div className="flex space-x-2">
+                        <Button onClick={handleSave} className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white shadow-lg">
+                          <Save className="w-4 h-4 mr-2" />
+                          Save
+                        </Button>
+                        <Button onClick={handleCancel} variant="outline">
+                          <X className="w-4 h-4 mr-2" />
+                          Cancel
                         </Button>
                       </div>
+                    )}
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="firstName">First Name</Label>
+                        {isEditing ? (
+                          <Input
+                            id="firstName"
+                            value={formData.firstName}
+                            onChange={(e) => setFormData({...formData, firstName: e.target.value})}
+                          />
+                        ) : (
+                          <Input value={profileData.firstName} readOnly className="bg-gray-50" />
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="lastName">Last Name</Label>
+                        {isEditing ? (
+                          <Input
+                            id="lastName"
+                            value={formData.lastName}
+                            onChange={(e) => setFormData({...formData, lastName: e.target.value})}
+                          />
+                        ) : (
+                          <Input value={profileData.lastName} readOnly className="bg-gray-50" />
+                        )}
+                      </div>
                     </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      {isEditing ? (
+                        <Input
+                          id="email"
+                          type="email"
+                          value={formData.email}
+                          onChange={(e) => setFormData({...formData, email: e.target.value})}
+                        />
+                      ) : (
+                        <Input value={profileData.email} readOnly className="bg-gray-50" />
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Phone</Label>
+                      {isEditing ? (
+                        <Input
+                          id="phone"
+                          value={formData.phone}
+                          onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                        />
+                      ) : (
+                        <Input value={profileData.phone} readOnly className="bg-gray-50" />
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="company">Company</Label>
+                        {isEditing ? (
+                          <Input
+                            id="company"
+                            value={formData.company}
+                            onChange={(e) => setFormData({...formData, company: e.target.value})}
+                          />
+                        ) : (
+                          <Input value={profileData.company} readOnly className="bg-gray-50" />
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="location">Location</Label>
+                        {isEditing ? (
+                          <Input
+                            id="location"
+                            value={formData.location}
+                            onChange={(e) => setFormData({...formData, location: e.target.value})}
+                          />
+                        ) : (
+                          <Input value={profileData.location} readOnly className="bg-gray-50" />
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="website">Website</Label>
+                      {isEditing ? (
+                        <Input
+                          id="website"
+                          value={formData.website}
+                          onChange={(e) => setFormData({...formData, website: e.target.value})}
+                        />
+                      ) : (
+                        <Input value={profileData.website} readOnly className="bg-gray-50" />
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="bio">Bio</Label>
+                      {isEditing ? (
+                        <Textarea
+                          id="bio"
+                          value={formData.bio}
+                          onChange={(e) => setFormData({...formData, bio: e.target.value})}
+                          rows={4}
+                        />
+                      ) : (
+                        <Textarea value={profileData.bio} readOnly className="bg-gray-50" rows={4} />
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Right Sidebar */}
+              <div className="space-y-6">
+                {/* Profile Completion */}
+                <Card className="overflow-hidden border-0 shadow-lg">
+                  <CardHeader className="bg-gradient-to-r from-green-500 to-teal-600 text-white">
+                    <CardTitle className="flex items-center text-lg">
+                      <User className="w-5 h-5 mr-2" />
+                      Profile Completion
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6">
                     <div className="space-y-4">
-                      <h4 className="font-medium text-gray-900">Security Settings</h4>
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between p-4 border rounded-lg">
-                          <div>
-                            <p className="font-medium">Two-Factor Authentication</p>
-                            <p className="text-sm text-gray-500">Add an extra layer of security</p>
-                          </div>
-                          <Switch />
+                      <div className="flex justify-between text-sm">
+                        <span>Progress</span>
+                        <span className="font-medium">85%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="bg-gradient-to-r from-green-400 to-blue-500 h-2 rounded-full" style={{width: '85%'}}></div>
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center text-green-600">
+                          <Check className="w-4 h-4 mr-2" />
+                          Profile picture added
                         </div>
-                        <div className="flex items-center justify-between p-4 border rounded-lg">
-                          <div>
-                            <p className="font-medium">Login Alerts</p>
-                            <p className="text-sm text-gray-500">Get notified of new logins</p>
-                          </div>
-                          <Switch defaultChecked />
+                        <div className="flex items-center text-green-600">
+                          <Check className="w-4 h-4 mr-2" />
+                          Contact info complete
+                        </div>
+                        <div className="flex items-center text-orange-600">
+                          <Clock className="w-4 h-4 mr-2" />
+                          Add portfolio projects
                         </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                  </CardContent>
+                </Card>
 
-            {/* Sidebar */}
-            <div className="w-80 space-y-6">
-              {/* Account Information */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Account Information</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center space-x-3">
-                    <User className="w-4 h-4 text-gray-400" />
-                    <div>
-                      <p className="text-sm text-gray-500">Account Type</p>
-                      <p className="font-medium">Customer</p>
+                {/* Security Overview */}
+                <Card className="overflow-hidden border-0 shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="flex items-center text-lg">
+                      <Shield className="w-5 h-5 mr-2" />
+                      Security
+                    </CardTitle>
+                    <CardDescription>Account security overview</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Lock className="w-4 h-4 text-green-500" />
+                          <span className="text-sm">Password</span>
+                        </div>
+                        <Badge variant="outline" className="text-green-600 border-green-200">Strong</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Shield className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm">Two-Factor Auth</span>
+                        </div>
+                        <Badge variant="outline" className="text-orange-600 border-orange-200">Disabled</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Eye className="w-4 h-4 text-green-500" />
+                          <span className="text-sm">Profile Visibility</span>
+                        </div>
+                        <Badge variant="outline" className="text-blue-600 border-blue-200">Public</Badge>
+                      </div>
+                      <Link to="/customer-dashboard/settings">
+                        <Button variant="outline" className="w-full">
+                          <Settings className="w-4 h-4 mr-2" />
+                          Security Settings
+                        </Button>
+                      </Link>
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Calendar className="w-4 h-4 text-gray-400" />
-                    <div>
-                      <p className="text-sm text-gray-500">Member Since</p>
-                      <p className="font-medium">April 2023</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Clock className="w-4 h-4 text-gray-400" />
-                    <div>
-                      <p className="text-sm text-gray-500">Design Sessions</p>
-                      <p className="font-medium">12 completed</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <MapPin className="w-4 h-4 text-gray-400" />
-                    <div>
-                      <p className="text-sm text-gray-500">Location</p>
-                      <p className="font-medium">New York, NY</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Globe className="w-4 h-4 text-gray-400" />
-                    <div>
-                      <p className="text-sm text-gray-500">Website</p>
-                      <a href="https://www.mywebsite.com" className="font-medium text-blue-600 hover:text-blue-700">
-                        www.mywebsite.com
-                      </a>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
 
-              {/* Recent Activity */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent Activity</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-4">
-                    <div className="flex items-start space-x-3">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">Booked a design session</p>
-                        <p className="text-sm text-gray-500">Emma Thompson for 45 minutes</p>
-                        <p className="text-xs text-gray-400">Yesterday</p>
-                      </div>
+                {/* Account Actions */}
+                <Card className="overflow-hidden border-0 shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Account Actions</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <Button variant="ghost" className="w-full justify-start">
+                        <Download className="w-4 h-4 mr-2" />
+                        Export Data
+                      </Button>
+                      <Button variant="ghost" className="w-full justify-start">
+                        <Upload className="w-4 h-4 mr-2" />
+                        Import Data
+                      </Button>
+                      <Button variant="ghost" className="w-full justify-start">
+                        <FileText className="w-4 h-4 mr-2" />
+                        Privacy Policy
+                      </Button>
+                      <Separator />
+                      <Button variant="ghost" className="w-full justify-start text-red-600 hover:text-red-700">
+                        <X className="w-4 h-4 mr-2" />
+                        Delete Account
+                      </Button>
                     </div>
-                    <div className="flex items-start space-x-3">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">Added funds to wallet</p>
-                        <p className="text-sm text-gray-500">$50.00</p>
-                        <p className="text-xs text-gray-400">1 week ago</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start space-x-3">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">Completed design session</p>
-                        <p className="text-sm text-gray-500">Marcus Chen - Logo design</p>
-                        <p className="text-xs text-gray-400">2 weeks ago</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start space-x-3">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">Created account</p>
-                        <p className="text-xs text-gray-400">May 7, 2025</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
-          </div>
           </div>
         </main>
       </div>
