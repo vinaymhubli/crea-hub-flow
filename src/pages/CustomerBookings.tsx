@@ -27,7 +27,7 @@ import {
   History,
   Filter
 } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Sidebar,
   SidebarContent,
@@ -247,7 +247,10 @@ function BookingCard({ booking }: { booking: any }) {
           <div className="flex space-x-3 pt-3 border-t">
             {booking.status === 'upcoming' && (
               <>
-                <Button className="flex-1 bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 text-white hover:shadow-lg transition-all duration-300">
+                <Button 
+                  className="flex-1 bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 text-white hover:shadow-lg transition-all duration-300"
+                  onClick={() => window.location.href = `/session/${booking.id}`}
+                >
                   <Video className="w-4 h-4 mr-2" />
                   Join Session
                 </Button>

@@ -32,6 +32,7 @@ import CustomerRecentDesigners from "./pages/CustomerRecentDesigners";
 import CustomerNotifications from "./pages/CustomerNotifications";
 import CustomerProfile from "./pages/CustomerProfile";
 import CustomerSettings from "./pages/CustomerSettings";
+import CallSession from "./pages/CallSession";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -136,6 +137,11 @@ const App = () => (
           <Route path="/customer-dashboard/settings" element={
             <ProtectedRoute requireUserType="client">
               <CustomerSettings />
+            </ProtectedRoute>
+          } />
+          <Route path="/session/:bookingId" element={
+            <ProtectedRoute>
+              <CallSession />
             </ProtectedRoute>
           } />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

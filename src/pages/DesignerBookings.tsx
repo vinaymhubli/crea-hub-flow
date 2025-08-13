@@ -23,7 +23,7 @@ import {
   Mail,
   Eye
 } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Sidebar,
   SidebarContent,
@@ -228,10 +228,16 @@ export default function DesignerBookings() {
                   </>
                 )}
                 {booking.status === 'confirmed' && (
-                  <DropdownMenuItem>
-                    <CalendarDays className="w-4 h-4 mr-2" />
-                    Reschedule
-                  </DropdownMenuItem>
+                  <>
+                    <DropdownMenuItem onClick={() => window.location.href = `/session/${booking.id}`}>
+                      <Video className="w-4 h-4 mr-2" />
+                      Join Session
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <CalendarDays className="w-4 h-4 mr-2" />
+                      Reschedule
+                    </DropdownMenuItem>
+                  </>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
@@ -300,9 +306,13 @@ export default function DesignerBookings() {
               Chat
             </Button>
             {booking.status === 'confirmed' && (
-              <Button size="sm" className="bg-gradient-to-r from-green-400 to-blue-500 text-white">
+              <Button 
+                size="sm" 
+                className="bg-gradient-to-r from-green-400 to-blue-500 text-white"
+                onClick={() => window.location.href = `/session/${booking.id}`}
+              >
                 <Video className="w-4 h-4 mr-1" />
-                Join Call
+                Join Session
               </Button>
             )}
           </div>
