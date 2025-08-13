@@ -215,15 +215,18 @@ export default function CustomerDashboard() {
           </header>
 
           <div className="p-6 space-y-8 bg-gradient-to-br from-background via-teal-50/30 to-blue-50/20 min-h-screen">
-            {/* Quick Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="bg-card border shadow-lg">
+            {/* Enhanced Stats Cards with Animations */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <Card className="bg-card border shadow-lg hover:shadow-xl transition-all duration-300 hover-scale">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">Wallet Balance</p>
                       <p className="text-2xl font-bold text-foreground">$120.00</p>
-                      <p className="text-xs text-muted-foreground mt-1">Available funds</p>
+                      <p className="text-xs text-green-600 mt-1 flex items-center">
+                        <ThumbsUp className="w-3 h-3 mr-1" />
+                        Available funds
+                      </p>
                     </div>
                     <div className="w-12 h-12 bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
                       <Wallet className="w-6 h-6 text-white" />
@@ -232,7 +235,7 @@ export default function CustomerDashboard() {
                 </CardContent>
               </Card>
               
-              <Card className="bg-card border shadow-lg">
+              <Card className="bg-card border shadow-lg hover:shadow-xl transition-all duration-300 hover-scale">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -247,13 +250,13 @@ export default function CustomerDashboard() {
                 </CardContent>
               </Card>
               
-              <Card className="bg-card border shadow-lg">
+              <Card className="bg-card border shadow-lg hover:shadow-xl transition-all duration-300 hover-scale">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">Projects</p>
                       <p className="text-2xl font-bold text-foreground">2</p>
-                      <p className="text-xs text-muted-foreground mt-1">Completed</p>
+                      <p className="text-xs text-blue-600 mt-1">Completed</p>
                     </div>
                     <div className="w-12 h-12 bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
                       <FileImage className="w-6 h-6 text-white" />
@@ -261,96 +264,211 @@ export default function CustomerDashboard() {
                   </div>
                 </CardContent>
               </Card>
+
+              <Card className="bg-card border shadow-lg hover:shadow-xl transition-all duration-300 hover-scale">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Total Spent</p>
+                      <p className="text-2xl font-bold text-foreground">$450.00</p>
+                      <p className="text-xs text-purple-600 mt-1">This month</p>
+                    </div>
+                    <div className="w-12 h-12 bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
+                      <CreditCard className="w-6 h-6 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
             
-            {/* Main Action Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Enhanced Layout with Three Columns */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Quick Actions */}
-              <div className="space-y-6">
+              <div className="lg:col-span-2 space-y-6">
                 <h2 className="text-2xl font-bold text-foreground">Quick Actions</h2>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <Link to="/designers">
-                    <Card className="group hover:shadow-2xl transition-all duration-300 border-0 bg-gradient-to-br from-green-400 via-teal-500 to-blue-500 text-white overflow-hidden">
-                      <CardContent className="p-6 relative">
+                    <Card className="group hover:shadow-2xl transition-all duration-300 border-0 bg-gradient-to-br from-green-400 via-teal-500 to-blue-500 text-white overflow-hidden hover-scale">
+                      <CardContent className="p-4 relative">
                         <div className="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-colors"></div>
-                        <div className="relative z-10 text-center space-y-3">
-                          <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto">
-                            <Search className="w-6 h-6 text-white" />
+                        <div className="relative z-10 text-center space-y-2">
+                          <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center mx-auto">
+                            <Search className="w-5 h-5 text-white" />
                           </div>
-                          <h3 className="font-semibold text-white">Find Designer</h3>
-                          <p className="text-xs text-green-100">Browse talented designers</p>
+                          <h3 className="font-semibold text-white text-sm">Find Designer</h3>
+                          <p className="text-xs text-green-100">Browse talent</p>
                         </div>
                       </CardContent>
                     </Card>
                   </Link>
                   
                   <Link to="/customer-dashboard/bookings">
-                    <Card className="group hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-green-50 via-teal-50 to-blue-50 border border-teal-200/50">
-                      <CardContent className="p-6 text-center space-y-3">
-                        <div className="w-12 h-12 bg-gradient-to-r from-green-400 to-teal-500 rounded-full flex items-center justify-center mx-auto shadow-lg">
-                          <Calendar className="w-6 h-6 text-white" />
+                    <Card className="group hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-green-50 via-teal-50 to-blue-50 border border-teal-200/50 hover-scale">
+                      <CardContent className="p-4 text-center space-y-2">
+                        <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-teal-500 rounded-full flex items-center justify-center mx-auto shadow-lg">
+                          <Calendar className="w-5 h-5 text-white" />
                         </div>
-                        <h3 className="font-semibold text-foreground">My Bookings</h3>
-                        <p className="text-xs text-muted-foreground">Manage sessions</p>
+                        <h3 className="font-semibold text-foreground text-sm">Bookings</h3>
+                        <p className="text-xs text-muted-foreground">Manage</p>
                       </CardContent>
                     </Card>
                   </Link>
                   
                   <Link to="/customer-dashboard/messages">
-                    <Card className="group hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-teal-50 via-blue-50 to-teal-50 border border-teal-200/50">
-                      <CardContent className="p-6 text-center space-y-3">
-                        <div className="w-12 h-12 bg-gradient-to-r from-teal-400 to-blue-500 rounded-full flex items-center justify-center mx-auto shadow-lg">
-                          <MessageCircle className="w-6 h-6 text-white" />
+                    <Card className="group hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-teal-50 via-blue-50 to-teal-50 border border-teal-200/50 hover-scale">
+                      <CardContent className="p-4 text-center space-y-2">
+                        <div className="w-10 h-10 bg-gradient-to-r from-teal-400 to-blue-500 rounded-full flex items-center justify-center mx-auto shadow-lg">
+                          <MessageCircle className="w-5 h-5 text-white" />
                         </div>
-                        <h3 className="font-semibold text-foreground">Messages</h3>
-                        <p className="text-xs text-muted-foreground">Chat with designers</p>
+                        <h3 className="font-semibold text-foreground text-sm">Messages</h3>
+                        <p className="text-xs text-muted-foreground">Chat</p>
                       </CardContent>
                     </Card>
                   </Link>
                   
-                  <Link to="/customer-dashboard/wallet">
-                    <Card className="group hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-blue-50 via-teal-50 to-green-50 border border-teal-200/50">
-                      <CardContent className="p-6 text-center space-y-3">
-                        <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-teal-500 rounded-full flex items-center justify-center mx-auto shadow-lg">
-                          <CreditCard className="w-6 h-6 text-white" />
+                  <Link to="/ai-assistant">
+                    <Card className="group hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-purple-50 via-pink-50 to-purple-50 border border-purple-200/50 hover-scale">
+                      <CardContent className="p-4 text-center space-y-2">
+                        <div className="w-10 h-10 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full flex items-center justify-center mx-auto shadow-lg">
+                          <Bot className="w-5 h-5 text-white" />
                         </div>
-                        <h3 className="font-semibold text-foreground">Add Funds</h3>
-                        <p className="text-xs text-muted-foreground">Top up wallet</p>
+                        <h3 className="font-semibold text-foreground text-sm">AI Assistant</h3>
+                        <p className="text-xs text-muted-foreground">Get help</p>
                       </CardContent>
                     </Card>
                   </Link>
                 </div>
+
+                {/* Activity Timeline */}
+                <div className="space-y-4">
+                  <h2 className="text-2xl font-bold text-foreground">Recent Activity</h2>
+                  <Card className="bg-card border shadow-lg">
+                    <CardContent className="p-6">
+                      <div className="space-y-4">
+                        <div className="flex items-start space-x-4">
+                          <div className="w-2 h-2 bg-gradient-to-r from-green-400 to-teal-500 rounded-full mt-2"></div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-foreground">Project completed with Emma Thompson</p>
+                            <p className="text-xs text-muted-foreground">Company Rebrand - 2 hours ago</p>
+                          </div>
+                          <Badge variant="outline" className="text-green-600 border-green-200">Completed</Badge>
+                        </div>
+                        <div className="flex items-start space-x-4">
+                          <div className="w-2 h-2 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full mt-2"></div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-foreground">Payment processed</p>
+                            <p className="text-xs text-muted-foreground">$80.00 - Yesterday</p>
+                          </div>
+                          <Badge variant="outline" className="text-blue-600 border-blue-200">Payment</Badge>
+                        </div>
+                        <div className="flex items-start space-x-4">
+                          <div className="w-2 h-2 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full mt-2"></div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-foreground">New message from Marcus Chen</p>
+                            <p className="text-xs text-muted-foreground">UI/UX feedback - 3 days ago</p>
+                          </div>
+                          <Badge variant="outline" className="text-purple-600 border-purple-200">Message</Badge>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
 
-              {/* Upcoming Sessions */}
-              <Card className="bg-gradient-to-br from-card via-teal-50/20 to-blue-50/10 border border-teal-200/30 shadow-xl">
-                <CardHeader className="pb-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-xl text-foreground">Upcoming Sessions</CardTitle>
-                      <CardDescription>Your scheduled design sessions</CardDescription>
+              {/* Right Sidebar */}
+              <div className="space-y-6">
+                {/* Upcoming Sessions */}
+                <Card className="bg-gradient-to-br from-card via-teal-50/20 to-blue-50/10 border border-teal-200/30 shadow-xl">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-lg text-foreground">Next Session</CardTitle>
+                        <CardDescription className="text-xs">Upcoming bookings</CardDescription>
+                      </div>
+                      <Link to="/customer-dashboard/bookings" className="text-primary hover:text-primary/80 text-xs font-medium">
+                        View All
+                      </Link>
                     </div>
-                    <Link to="/customer-dashboard/bookings" className="text-primary hover:text-primary/80 flex items-center text-sm font-medium">
-                      View All
-                      <ChevronRight className="w-4 h-4 ml-1" />
-                    </Link>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8">
-                    <div className="w-16 h-16 bg-gradient-to-br from-green-100 via-teal-200 to-blue-200 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                      <CalendarClock className="w-8 h-8 text-teal-600" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-6">
+                      <div className="w-12 h-12 bg-gradient-to-br from-green-100 via-teal-200 to-blue-200 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
+                        <CalendarClock className="w-6 h-6 text-teal-600" />
+                      </div>
+                      <h3 className="font-semibold text-foreground mb-2 text-sm">No sessions</h3>
+                      <p className="text-xs text-muted-foreground mb-3">Book with a designer</p>
+                      <Link to="/designers">
+                        <Button size="sm" className="bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 border-0 text-white hover:shadow-lg transition-all duration-300">
+                          Find Designer
+                        </Button>
+                      </Link>
                     </div>
-                    <h3 className="font-semibold text-foreground mb-2">No upcoming sessions</h3>
-                    <p className="text-sm text-muted-foreground mb-4">You don't have any design sessions scheduled. Book a session with a designer to get started.</p>
-                    <Link to="/designers">
-                      <Button className="bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 border-0 text-white hover:shadow-lg transition-all duration-300">
-                        Find a Designer
-                      </Button>
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+
+                {/* Favorite Designers */}
+                <Card className="bg-card border shadow-lg">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg text-foreground">Favorite Designers</CardTitle>
+                      <Link to="/customer-dashboard/recent-designers" className="text-primary hover:text-primary/80 text-xs font-medium">
+                        View All
+                      </Link>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {recentDesigners.slice(0, 3).map((designer, index) => (
+                        <div key={index} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-accent transition-colors">
+                          <div className={`w-8 h-8 ${designer.color} rounded-full flex items-center justify-center relative`}>
+                            <span className="text-white font-semibold text-xs">{designer.initials}</span>
+                            {designer.online && (
+                              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-foreground text-sm truncate">{designer.name}</p>
+                            <p className="text-xs text-muted-foreground truncate">{designer.specialty}</p>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Star className="w-3 h-3 text-yellow-500 fill-current" />
+                            <span className="text-xs font-medium text-foreground">{designer.rating}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Quick Tools */}
+                <Card className="bg-card border shadow-lg">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-lg text-foreground">Quick Tools</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <Link to="/customer-dashboard/wallet">
+                        <Button variant="ghost" className="w-full justify-start text-sm h-auto py-2">
+                          <CreditCard className="w-4 h-4 mr-2" />
+                          Add Funds
+                        </Button>
+                      </Link>
+                      <Link to="/customer-dashboard/notifications">
+                        <Button variant="ghost" className="w-full justify-start text-sm h-auto py-2">
+                          <Bell className="w-4 h-4 mr-2" />
+                          Notifications
+                        </Button>
+                      </Link>
+                      <Link to="/customer-dashboard/settings">
+                        <Button variant="ghost" className="w-full justify-start text-sm h-auto py-2">
+                          <Settings className="w-4 h-4 mr-2" />
+                          Settings
+                        </Button>
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
 
             {/* Your Projects Section */}
