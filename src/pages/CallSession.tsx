@@ -50,6 +50,11 @@ export default function CallSession() {
     try {
       setLoading(true);
       
+      if (!bookingId) {
+        setError('No booking ID provided');
+        return;
+      }
+      
       // Fetch booking with related user information
       const { data: bookingData, error: bookingError } = await supabase
         .from('bookings')
