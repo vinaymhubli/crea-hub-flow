@@ -15,11 +15,12 @@ import {
   Star,
   LogOut,
   FileImage,
-  Download,
-  Info,
+  TrendingUp,
+  Eye,
   Bot,
-  ThumbsUp,
-  Users2
+  History,
+  Download,
+  Info
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Link, useLocation } from 'react-router-dom';
@@ -84,7 +85,7 @@ function CustomerSidebar() {
       <SidebarContent className="bg-white border-r border-gray-200">
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
               <span className="text-white font-semibold text-sm">VB</span>
             </div>
             <div>
@@ -104,13 +105,12 @@ function CustomerSidebar() {
                       to={item.url} 
                       className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
                         isActive(item.url) 
-                          ? 'bg-gradient-to-r from-green-50 to-blue-50 text-green-600 border-r-2 border-green-500' 
+                          ? 'bg-gradient-to-r from-green-50 to-blue-50 text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-blue-600 border-r-2 border-gradient-to-b from-green-500 to-blue-500' 
                           : 'text-gray-700 hover:bg-gray-50'
                       }`}
                     >
-                      <item.icon className="w-5 h-5" />
+                      <item.icon className={`w-5 h-5 ${isActive(item.url) ? 'text-green-600' : ''}`} />
                       <span className="font-medium">{item.title}</span>
-                      {isActive(item.url) && <ChevronRight className="w-4 h-4 ml-auto" />}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -140,22 +140,25 @@ export default function CustomerDashboard() {
         <CustomerSidebar />
         
         <main className="flex-1">
-          {/* Header with Gradient */}
-          <header className="bg-gradient-to-br from-green-400 via-teal-500 to-blue-500 text-white px-6 py-12 relative overflow-hidden">
-            <div className="absolute inset-0 bg-black/10"></div>
-            <div className="relative z-10 flex items-center justify-between">
+          {/* Header */}
+          <header className="bg-gradient-to-r from-green-400 to-blue-500 px-6 py-8">
+            <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <SidebarTrigger className="text-white" />
+                <SidebarTrigger className="text-white hover:bg-white/20" />
                 <div>
-                  <h1 className="text-3xl font-bold text-white mb-2">Welcome back, Viaan!</h1>
-                  <p className="text-green-100">Ready to bring your next project to life?</p>
+                  <h1 className="text-2xl font-bold text-white">Customer Dashboard</h1>
+                  <p className="text-white/80">Explore amazing designs and connect with talented designers</p>
                 </div>
               </div>
-              <div className="flex items-center space-x-3">
-                <Bell className="w-5 h-5 text-green-100" />
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+                  <span className="text-white/80 text-sm font-medium">Online</span>
+                </div>
+                <Bell className="w-5 h-5 text-white/80" />
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
+                    <button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
                       <span className="text-white font-semibold text-sm">VB</span>
                     </button>
                   </PopoverTrigger>
@@ -174,21 +177,21 @@ export default function CustomerDashboard() {
                       <div className="space-y-1">
                         <Link 
                           to="/customer-dashboard" 
-                          className="flex items-center px-3 py-2 text-sm text-foreground hover:bg-accent rounded-md transition-colors"
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
                         >
                           <LayoutDashboard className="w-4 h-4 mr-3" />
                           Dashboard
                         </Link>
                         <Link 
                           to="/customer-dashboard/wallet" 
-                          className="flex items-center px-3 py-2 text-sm text-foreground hover:bg-accent rounded-md transition-colors"
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
                         >
                           <Wallet className="w-4 h-4 mr-3" />
                           Wallet
                         </Link>
                         <Link 
                           to="/customer-dashboard/profile" 
-                          className="flex items-center px-3 py-2 text-sm text-foreground hover:bg-accent rounded-md transition-colors"
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
                         >
                           <User className="w-4 h-4 mr-3" />
                           Profile
@@ -196,7 +199,7 @@ export default function CustomerDashboard() {
                         <Separator className="my-2" />
                         <button 
                           onClick={handleLogout}
-                          className="flex items-center w-full px-3 py-2 text-sm text-foreground hover:bg-accent rounded-md transition-colors"
+                          className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
                         >
                           <LogOut className="w-4 h-4 mr-3" />
                           Log out
@@ -207,391 +210,238 @@ export default function CustomerDashboard() {
                 </Popover>
               </div>
             </div>
-            
-            {/* Floating decorative elements */}
-            <div className="absolute top-4 right-20 w-2 h-2 bg-white/30 rounded-full animate-pulse"></div>
-            <div className="absolute bottom-6 right-32 w-1 h-1 bg-white/20 rounded-full animate-pulse delay-1000"></div>
-            <div className="absolute top-12 right-40 w-1.5 h-1.5 bg-white/25 rounded-full animate-pulse delay-500"></div>
           </header>
 
-          <div className="p-6 space-y-8 bg-gradient-to-br from-background via-teal-50/30 to-blue-50/20 min-h-screen">
-            {/* Enhanced Stats Cards with Animations */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <Card className="bg-card border shadow-lg hover:shadow-xl transition-all duration-300 hover-scale">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
+          <div className="p-6 space-y-8">
+            {/* Quick Actions */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Link to="/designers" className="group">
+                <div className="relative overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl p-6 h-32 transition-all duration-300 hover:scale-105 hover:shadow-xl animate-fade-in">
+                  <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full"></div>
+                  <div className="relative z-10 flex flex-col justify-between h-full text-white">
+                    <Search className="w-8 h-8 mb-2" />
                     <div>
-                      <p className="text-sm text-muted-foreground mb-1">Wallet Balance</p>
-                      <p className="text-2xl font-bold text-foreground">$120.00</p>
-                      <p className="text-xs text-green-600 mt-1 flex items-center">
-                        <ThumbsUp className="w-3 h-3 mr-1" />
-                        Available funds
-                      </p>
-                    </div>
-                    <div className="w-12 h-12 bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
-                      <Wallet className="w-6 h-6 text-white" />
+                      <h3 className="font-bold text-lg">Find Designer</h3>
+                      <p className="text-white/80 text-sm">Browse talented designers</p>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-              
-              <Card className="bg-card border shadow-lg hover:shadow-xl transition-all duration-300 hover-scale">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Active Sessions</p>
-                      <p className="text-2xl font-bold text-foreground">0</p>
-                      <p className="text-xs text-muted-foreground mt-1">In progress</p>
-                    </div>
-                    <div className="w-12 h-12 bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
-                      <Users2 className="w-6 h-6 text-white" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card className="bg-card border shadow-lg hover:shadow-xl transition-all duration-300 hover-scale">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Projects</p>
-                      <p className="text-2xl font-bold text-foreground">2</p>
-                      <p className="text-xs text-blue-600 mt-1">Completed</p>
-                    </div>
-                    <div className="w-12 h-12 bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
-                      <FileImage className="w-6 h-6 text-white" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-card border shadow-lg hover:shadow-xl transition-all duration-300 hover-scale">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Total Spent</p>
-                      <p className="text-2xl font-bold text-foreground">$450.00</p>
-                      <p className="text-xs text-purple-600 mt-1">This month</p>
-                    </div>
-                    <div className="w-12 h-12 bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
-                      <CreditCard className="w-6 h-6 text-white" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-            
-            {/* Enhanced Layout with Three Columns */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Quick Actions */}
-              <div className="lg:col-span-2 space-y-6">
-                <h2 className="text-2xl font-bold text-foreground">Quick Actions</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <Link to="/designers">
-                    <Card className="group hover:shadow-2xl transition-all duration-300 border-0 bg-gradient-to-br from-green-400 via-teal-500 to-blue-500 text-white overflow-hidden hover-scale">
-                      <CardContent className="p-4 relative">
-                        <div className="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-colors"></div>
-                        <div className="relative z-10 text-center space-y-2">
-                          <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center mx-auto">
-                            <Search className="w-5 h-5 text-white" />
-                          </div>
-                          <h3 className="font-semibold text-white text-sm">Find Designer</h3>
-                          <p className="text-xs text-green-100">Browse talent</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                  
-                  <Link to="/customer-dashboard/bookings">
-                    <Card className="group hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-green-50 via-teal-50 to-blue-50 border border-teal-200/50 hover-scale">
-                      <CardContent className="p-4 text-center space-y-2">
-                        <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-teal-500 rounded-full flex items-center justify-center mx-auto shadow-lg">
-                          <Calendar className="w-5 h-5 text-white" />
-                        </div>
-                        <h3 className="font-semibold text-foreground text-sm">Bookings</h3>
-                        <p className="text-xs text-muted-foreground">Manage</p>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                  
-                  <Link to="/customer-dashboard/messages">
-                    <Card className="group hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-teal-50 via-blue-50 to-teal-50 border border-teal-200/50 hover-scale">
-                      <CardContent className="p-4 text-center space-y-2">
-                        <div className="w-10 h-10 bg-gradient-to-r from-teal-400 to-blue-500 rounded-full flex items-center justify-center mx-auto shadow-lg">
-                          <MessageCircle className="w-5 h-5 text-white" />
-                        </div>
-                        <h3 className="font-semibold text-foreground text-sm">Messages</h3>
-                        <p className="text-xs text-muted-foreground">Chat</p>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                  
-                  <Link to="/ai-assistant">
-                    <Card className="group hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-purple-50 via-pink-50 to-purple-50 border border-purple-200/50 hover-scale">
-                      <CardContent className="p-4 text-center space-y-2">
-                        <div className="w-10 h-10 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full flex items-center justify-center mx-auto shadow-lg">
-                          <Bot className="w-5 h-5 text-white" />
-                        </div>
-                        <h3 className="font-semibold text-foreground text-sm">AI Assistant</h3>
-                        <p className="text-xs text-muted-foreground">Get help</p>
-                      </CardContent>
-                    </Card>
-                  </Link>
                 </div>
+              </Link>
 
-                {/* Activity Timeline */}
-                <div className="space-y-4">
-                  <h2 className="text-2xl font-bold text-foreground">Recent Activity</h2>
-                  <Card className="bg-card border shadow-lg">
-                    <CardContent className="p-6">
-                      <div className="space-y-4">
-                        <div className="flex items-start space-x-4">
-                          <div className="w-2 h-2 bg-gradient-to-r from-green-400 to-teal-500 rounded-full mt-2"></div>
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-foreground">Project completed with Emma Thompson</p>
-                            <p className="text-xs text-muted-foreground">Company Rebrand - 2 hours ago</p>
-                          </div>
-                          <Badge variant="outline" className="text-green-600 border-green-200">Completed</Badge>
-                        </div>
-                        <div className="flex items-start space-x-4">
-                          <div className="w-2 h-2 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full mt-2"></div>
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-foreground">Payment processed</p>
-                            <p className="text-xs text-muted-foreground">$80.00 - Yesterday</p>
-                          </div>
-                          <Badge variant="outline" className="text-blue-600 border-blue-200">Payment</Badge>
-                        </div>
-                        <div className="flex items-start space-x-4">
-                          <div className="w-2 h-2 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full mt-2"></div>
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-foreground">New message from Marcus Chen</p>
-                            <p className="text-xs text-muted-foreground">UI/UX feedback - 3 days ago</p>
-                          </div>
-                          <Badge variant="outline" className="text-purple-600 border-purple-200">Message</Badge>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+              <Link to="/customer-dashboard/bookings" className="group">
+                <div className="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 h-32 transition-all duration-300 hover:scale-105 hover:shadow-xl animate-fade-in" style={{animationDelay: '0.1s'}}>
+                  <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full"></div>
+                  <div className="relative z-10 flex flex-col justify-between h-full text-white">
+                    <Calendar className="w-8 h-8 mb-2" />
+                    <div>
+                      <h3 className="font-bold text-lg">My Bookings</h3>
+                      <p className="text-white/80 text-sm">Manage your sessions</p>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </Link>
 
-              {/* Right Sidebar */}
-              <div className="space-y-6">
-                {/* Upcoming Sessions */}
-                <Card className="bg-gradient-to-br from-card via-teal-50/20 to-blue-50/10 border border-teal-200/30 shadow-xl">
-                  <CardHeader className="pb-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <CardTitle className="text-lg text-foreground">Next Session</CardTitle>
-                        <CardDescription className="text-xs">Upcoming bookings</CardDescription>
-                      </div>
-                      <Link to="/customer-dashboard/bookings" className="text-primary hover:text-primary/80 text-xs font-medium">
-                        View All
-                      </Link>
+              <Link to="/customer-dashboard/messages" className="group">
+                <div className="relative overflow-hidden bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl p-6 h-32 transition-all duration-300 hover:scale-105 hover:shadow-xl animate-fade-in" style={{animationDelay: '0.2s'}}>
+                  <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full"></div>
+                  <div className="relative z-10 flex flex-col justify-between h-full text-white">
+                    <MessageCircle className="w-8 h-8 mb-2" />
+                    <div>
+                      <h3 className="font-bold text-lg">Messages</h3>
+                      <p className="text-white/80 text-sm">Chat with designers</p>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-6">
-                      <div className="w-12 h-12 bg-gradient-to-br from-green-100 via-teal-200 to-blue-200 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
-                        <CalendarClock className="w-6 h-6 text-teal-600" />
-                      </div>
-                      <h3 className="font-semibold text-foreground mb-2 text-sm">No sessions</h3>
-                      <p className="text-xs text-muted-foreground mb-3">Book with a designer</p>
-                      <Link to="/designers">
-                        <Button size="sm" className="bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 border-0 text-white hover:shadow-lg transition-all duration-300">
-                          Find Designer
-                        </Button>
-                      </Link>
-                    </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
+              </Link>
 
-                {/* Favorite Designers */}
-                <Card className="bg-card border shadow-lg">
-                  <CardHeader className="pb-4">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg text-foreground">Favorite Designers</CardTitle>
-                      <Link to="/customer-dashboard/recent-designers" className="text-primary hover:text-primary/80 text-xs font-medium">
-                        View All
-                      </Link>
+              <Link to="/customer-dashboard/wallet" className="group">
+                <div className="relative overflow-hidden bg-gradient-to-br from-violet-500 to-pink-500 rounded-2xl p-6 h-32 transition-all duration-300 hover:scale-105 hover:shadow-xl animate-fade-in" style={{animationDelay: '0.3s'}}>
+                  <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full"></div>
+                  <div className="relative z-10 flex flex-col justify-between h-full text-white">
+                    <Wallet className="w-8 h-8 mb-2" />
+                    <div>
+                      <h3 className="font-bold text-lg">Wallet</h3>
+                      <p className="text-white/80 text-sm">Manage your funds</p>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {recentDesigners.slice(0, 3).map((designer, index) => (
-                        <div key={index} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-accent transition-colors">
-                          <div className={`w-8 h-8 ${designer.color} rounded-full flex items-center justify-center relative`}>
-                            <span className="text-white font-semibold text-xs">{designer.initials}</span>
-                            {designer.online && (
-                              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></div>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-foreground text-sm truncate">{designer.name}</p>
-                            <p className="text-xs text-muted-foreground truncate">{designer.specialty}</p>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Star className="w-3 h-3 text-yellow-500 fill-current" />
-                            <span className="text-xs font-medium text-foreground">{designer.rating}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Quick Tools */}
-                <Card className="bg-card border shadow-lg">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="text-lg text-foreground">Quick Tools</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <Link to="/customer-dashboard/wallet">
-                        <Button variant="ghost" className="w-full justify-start text-sm h-auto py-2">
-                          <CreditCard className="w-4 h-4 mr-2" />
-                          Add Funds
-                        </Button>
-                      </Link>
-                      <Link to="/customer-dashboard/notifications">
-                        <Button variant="ghost" className="w-full justify-start text-sm h-auto py-2">
-                          <Bell className="w-4 h-4 mr-2" />
-                          Notifications
-                        </Button>
-                      </Link>
-                      <Link to="/customer-dashboard/settings">
-                        <Button variant="ghost" className="w-full justify-start text-sm h-auto py-2">
-                          <Settings className="w-4 h-4 mr-2" />
-                          Settings
-                        </Button>
-                      </Link>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+                  </div>
+                </div>
+              </Link>
             </div>
 
-            {/* Your Projects Section */}
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold text-foreground">Your Projects</h2>
-                  <p className="text-muted-foreground">View your design project portfolio</p>
+            {/* Active Sessions */}
+            <Card className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-slate-50 to-gray-100 animate-fade-in" style={{animationDelay: '0.4s'}}>
+              <CardHeader className="bg-gradient-to-r from-slate-600 to-gray-700 text-white">
+                <CardTitle className="text-xl flex items-center">
+                  <CalendarClock className="w-6 h-6 mr-3" />
+                  Active Design Sessions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-8">
+                <div className="text-center">
+                  <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <CalendarClock className="w-10 h-10 text-blue-500" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">No Active Sessions</h3>
+                  <p className="text-gray-600 mb-4">You don't have any active design sessions at the moment.</p>
+                  <p className="text-sm text-gray-500">Start by finding a designer and booking a session.</p>
                 </div>
-                <Link to="/customer-dashboard/projects" className="text-primary hover:text-primary/80 font-medium flex items-center">
-                  All Projects
-                  <ChevronRight className="w-4 h-4 ml-1" />
-                </Link>
-              </div>
+              </CardContent>
+            </Card>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {recentProjects.map((project, index) => (
-                  <Card key={index} className="group hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-card via-teal-50/20 to-blue-50/10 border border-teal-200/30 overflow-hidden">
-                    <CardContent className="p-0">
-                      <div className="aspect-video bg-gradient-to-br from-green-100 via-teal-200 to-blue-200 flex items-center justify-center relative overflow-hidden">
-                        <div className="absolute inset-0 bg-gradient-to-r from-green-400/20 via-teal-500/10 to-blue-500/20"></div>
-                        <FileImage className="w-16 h-16 text-teal-600 relative z-10" />
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in" style={{animationDelay: '0.5s'}}>
+                <CardContent className="p-6 bg-gradient-to-br from-green-50 to-emerald-50">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1 font-medium">Wallet Balance</p>
+                      <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">$120.00</p>
+                      <Link to="/customer-dashboard/wallet" className="text-sm text-green-600 hover:text-green-700 flex items-center mt-3 font-medium group">
+                        Manage wallet
+                        <TrendingUp className="w-3 h-3 ml-1 transition-transform group-hover:translate-x-1" />
+                      </Link>
+                    </div>
+                    <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg">
+                      <Wallet className="w-8 h-8 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in" style={{animationDelay: '0.6s'}}>
+                <CardContent className="p-6 bg-gradient-to-br from-blue-50 to-cyan-50">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1 font-medium">Total Sessions</p>
+                      <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">2</p>
+                      <p className="text-sm text-blue-600 mt-3 font-medium">Completed sessions</p>
+                    </div>
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
+                      <Calendar className="w-8 h-8 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in" style={{animationDelay: '0.7s'}}>
+                <CardContent className="p-6 bg-gradient-to-br from-yellow-50 to-orange-50">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1 font-medium">Favorite Designers</p>
+                      <div className="flex items-center space-x-2 mb-3">
+                        <p className="text-3xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">3</p>
+                        <Star className="w-6 h-6 text-yellow-400 fill-current" />
                       </div>
-                      <div className="p-6">
-                        <h4 className="font-semibold text-foreground mb-2">{project.title}</h4>
-                        <p className="text-sm text-muted-foreground mb-1">by {project.designer}</p>
-                        <p className="text-xs text-muted-foreground mb-4">{project.date}</p>
-                        <div className="flex space-x-3">
-                          <Button variant="outline" size="sm" className="flex-1 hover:bg-gradient-to-r hover:from-teal-50 hover:to-blue-100 border-teal-300/50">
-                            <Download className="w-4 h-4 mr-2" />
-                            Download
-                          </Button>
-                          <Button variant="outline" size="sm" className="flex-1 hover:bg-gradient-to-r hover:from-teal-50 hover:to-blue-100 border-teal-300/50">
-                            <Info className="w-4 h-4 mr-2" />
-                            Details
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                      <p className="text-sm text-yellow-600 font-medium">In your network</p>
+                    </div>
+                    <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
+                      <Users className="w-8 h-8 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in" style={{animationDelay: '0.8s'}}>
+                <CardContent className="p-6 bg-gradient-to-br from-purple-50 to-pink-50">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1 font-medium">Total Spent</p>
+                      <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">$450</p>
+                      <p className="text-sm text-purple-600 mt-3 font-medium">On design services</p>
+                    </div>
+                    <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
+                      <CreditCard className="w-8 h-8 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
             {/* Bottom Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Recent Designers */}
-              <Card className="bg-gradient-to-br from-card via-teal-50/20 to-blue-50/10 border border-teal-200/30 shadow-xl">
-                <CardHeader className="flex flex-row items-center justify-between pb-4">
-                  <CardTitle className="text-lg text-foreground">Recent Designers</CardTitle>
-                  <Link to="/customer-dashboard/recent-designers" className="text-primary hover:text-primary/80 text-sm font-medium">
-                    View All
-                  </Link>
+              {/* Recent Projects */}
+              <Card className="overflow-hidden border-0 shadow-lg animate-fade-in" style={{animationDelay: '0.9s'}}>
+                <CardHeader className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+                  <CardTitle className="flex items-center">
+                    <FileImage className="w-6 h-6 mr-3" />
+                    Recent Projects
+                  </CardTitle>
+                  <CardDescription className="text-indigo-100">Your completed design projects</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  {recentDesigners.map((designer, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 rounded-lg hover:bg-gradient-to-r hover:from-teal-50 hover:to-blue-100/50 transition-all duration-300 cursor-pointer group">
-                      <div className="flex items-center space-x-3">
-                        <div className={`w-10 h-10 ${designer.color} rounded-full flex items-center justify-center text-white font-semibold text-sm relative shadow-lg`}>
-                          {designer.initials}
-                          {designer.online && (
-                            <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
-                          )}
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg flex items-center justify-center">
+                          <FileImage className="w-6 h-6 text-blue-500" />
                         </div>
                         <div>
-                          <p className="font-semibold text-foreground text-sm">{designer.name}</p>
-                          <div className="flex items-center space-x-1">
-                            <Star className="w-3 h-3 text-yellow-500 fill-current" />
-                            <span className="text-xs text-muted-foreground">{designer.rating}</span>
-                            <span className="text-xs text-muted-foreground">•</span>
-                            <span className="text-xs text-muted-foreground">{designer.specialty}</span>
-                          </div>
+                          <h4 className="font-semibold text-gray-800">Company Rebrand</h4>
+                          <p className="text-sm text-gray-600">by Emma Thompson</p>
                         </div>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-teal-600 transition-colors" />
+                      <div className="text-right">
+                        <p className="text-sm font-medium text-green-600">Completed</p>
+                        <p className="text-xs text-gray-500">7/29/2025</p>
+                      </div>
                     </div>
-                  ))}
-                  <Link to="/designers">
-                    <Button variant="outline" className="w-full mt-4 hover:bg-gradient-to-r hover:from-teal-50 hover:to-blue-100 border-teal-300/50">
-                      <Search className="w-4 h-4 mr-2" />
-                      Find More Designers
-                    </Button>
-                  </Link>
+                    
+                    <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-green-100 to-teal-100 rounded-lg flex items-center justify-center">
+                          <FileImage className="w-6 h-6 text-green-500" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-gray-800">Website Banner</h4>
+                          <p className="text-sm text-gray-600">by Marcus Chen</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium text-green-600">Completed</p>
+                        <p className="text-xs text-gray-500">7/22/2025</p>
+                      </div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
-              {/* Design Tools & Resources */}
-              <Card className="bg-gradient-to-br from-card via-teal-50/20 to-blue-50/10 border border-teal-200/30 shadow-xl">
-                <CardHeader>
-                  <CardTitle className="text-lg text-foreground">Design Tools & Resources</CardTitle>
-                  <CardDescription>Enhance your design journey with our tools</CardDescription>
+              {/* Recent Activity */}
+              <Card className="overflow-hidden border-0 shadow-lg animate-fade-in" style={{animationDelay: '1s'}}>
+                <CardHeader className="bg-gradient-to-r from-teal-500 to-cyan-600 text-white">
+                  <CardTitle className="flex items-center">
+                    <History className="w-6 h-6 mr-3" />
+                    Recent Activity
+                  </CardTitle>
+                  <CardDescription className="text-teal-100">Your latest platform interactions</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Link to="/ai-assistant">
-                      <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-green-50 via-teal-50 to-blue-50 border-teal-200/50">
-                        <CardContent className="p-4 text-center">
-                          <div className="w-12 h-12 bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
-                            <Bot className="w-6 h-6 text-white" />
-                          </div>
-                          <h3 className="font-semibold text-foreground mb-2">AI Assistant</h3>
-                          <p className="text-xs text-muted-foreground mb-3">Get instant design suggestions</p>
-                          <Button size="sm" className="bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 border-0 text-white shadow-lg hover:shadow-xl transition-all duration-300">
-                            Try Now
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    </Link>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    <div className="flex items-start space-x-4">
+                      <div className="w-2 h-2 bg-gradient-to-r from-green-400 to-teal-500 rounded-full mt-2"></div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-800">Project completed with Emma Thompson</p>
+                        <p className="text-xs text-gray-500">Company Rebrand - 2 hours ago</p>
+                      </div>
+                      <Badge variant="outline" className="text-green-600 border-green-200">Completed</Badge>
+                    </div>
                     
-                    <Link to="/how-to-use">
-                      <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-200/50">
-                        <CardContent className="p-4 text-center">
-                          <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <ThumbsUp className="w-6 h-6 text-white" />
-                          </div>
-                          <h3 className="font-semibold text-foreground mb-2">Design Tips</h3>
-                          <p className="text-xs text-muted-foreground mb-3">Learn best practices</p>
-                          <Button size="sm" variant="outline" className="hover:bg-blue-50">
-                            View Tips
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    </Link>
+                    <div className="flex items-start space-x-4">
+                      <div className="w-2 h-2 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full mt-2"></div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-800">Payment processed</p>
+                        <p className="text-xs text-gray-500">$80.00 - Yesterday</p>
+                      </div>
+                      <Badge variant="outline" className="text-blue-600 border-blue-200">Payment</Badge>
+                    </div>
+                    
+                    <div className="flex items-start space-x-4">
+                      <div className="w-2 h-2 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full mt-2"></div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-800">New message from Marcus Chen</p>
+                        <p className="text-xs text-gray-500">UI/UX feedback - 3 days ago</p>
+                      </div>
+                      <Badge variant="outline" className="text-purple-600 border-purple-200">Message</Badge>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
