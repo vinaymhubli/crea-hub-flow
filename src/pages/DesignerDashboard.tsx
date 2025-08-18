@@ -17,6 +17,8 @@ import {
   LogOut
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useRealtimeBookings } from '@/hooks/useRealtimeBookings';
+import { RealtimeSessionIndicator } from '@/components/RealtimeSessionIndicator';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Sidebar,
@@ -99,6 +101,10 @@ function DesignerSidebar() {
 
 export default function DesignerDashboard() {
   const { signOut } = useAuth();
+  const { activeSession, getUpcomingBookings, getCompletedBookings, loading } = useRealtimeBookings();
+  
+  const upcomingBookings = getUpcomingBookings();
+  const completedBookings = getCompletedBookings();
 
   const handleLogout = async () => {
     try {
@@ -251,14 +257,35 @@ export default function DesignerDashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-8">
-                <div className="text-center">
-                  <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <CalendarClock className="w-10 h-10 text-blue-500" />
+                {activeSession ? (
+                  <div className="bg-gradient-to-r from-green-50 to-teal-50 rounded-lg p-6 border border-green-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                        <span className="font-bold text-green-800">Live Session</span>
+                      </div>
+                      <Link 
+                        to={`/session/${activeSession.id}`}
+                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
+                      >
+                        Join Session
+                      </Link>
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-800 mb-2">{activeSession.service}</h3>
+                    <p className="text-gray-600">
+                      with {activeSession.customer?.first_name} {activeSession.customer?.last_name}
+                    </p>
                   </div>
-                  <h3 className="text-xl font-bold text-gray-800 mb-2">No Active Sessions</h3>
-                  <p className="text-gray-600 mb-4">You don't have any active design sessions at the moment.</p>
-                  <p className="text-sm text-gray-500">When customers start a session with you, they will appear here.</p>
-                </div>
+                ) : (
+                  <div className="text-center">
+                    <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <CalendarClock className="w-10 h-10 text-blue-500" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-800 mb-2">No Active Sessions</h3>
+                    <p className="text-gray-600 mb-4">You don't have any active design sessions at the moment.</p>
+                    <p className="text-sm text-gray-500">When customers start a session with you, they will appear here.</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -287,8 +314,8 @@ export default function DesignerDashboard() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-600 mb-1 font-medium">Total Clients</p>
-                      <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">0</p>
-                      <p className="text-sm text-blue-600 mt-3 font-medium">0 pending bookings</p>
+                      <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">{completedBookings.length}</p>
+                      <p className="text-sm text-blue-600 mt-3 font-medium">{upcomingBookings.length} upcoming bookings</p>
                     </div>
                     <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
                       <User className="w-8 h-8 text-white" />
@@ -320,8 +347,10 @@ export default function DesignerDashboard() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-600 mb-1 font-medium">Completion Rate</p>
-                      <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">0%</p>
-                      <p className="text-sm text-purple-600 mt-3 font-medium">0 completed sessions</p>
+                      <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                        {completedBookings.length > 0 ? '100' : '0'}%
+                      </p>
+                      <p className="text-sm text-purple-600 mt-3 font-medium">{completedBookings.length} completed sessions</p>
                     </div>
                     <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
                       <TrendingUp className="w-8 h-8 text-white" />
@@ -434,6 +463,7 @@ export default function DesignerDashboard() {
             </div>
           </div>
         </main>
+        <RealtimeSessionIndicator />
       </div>
     </SidebarProvider>
   );

@@ -23,6 +23,8 @@ import {
   Info
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useRealtimeBookings } from '@/hooks/useRealtimeBookings';
+import { RealtimeSessionIndicator } from '@/components/RealtimeSessionIndicator';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Sidebar,
@@ -125,6 +127,10 @@ function CustomerSidebar() {
 
 export default function CustomerDashboard() {
   const { signOut } = useAuth();
+  const { activeSession, getUpcomingBookings, getCompletedBookings, loading } = useRealtimeBookings();
+  
+  const upcomingBookings = getUpcomingBookings();
+  const completedBookings = getCompletedBookings();
 
   const handleLogout = async () => {
     try {
@@ -277,14 +283,35 @@ export default function CustomerDashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-8">
-                <div className="text-center">
-                  <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <CalendarClock className="w-10 h-10 text-blue-500" />
+                {activeSession ? (
+                  <div className="bg-gradient-to-r from-green-50 to-teal-50 rounded-lg p-6 border border-green-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                        <span className="font-bold text-green-800">Live Session</span>
+                      </div>
+                      <Link 
+                        to={`/session/${activeSession.id}`}
+                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
+                      >
+                        Join Session
+                      </Link>
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-800 mb-2">{activeSession.service}</h3>
+                    <p className="text-gray-600">
+                      with {activeSession.designer?.user?.first_name} {activeSession.designer?.user?.last_name}
+                    </p>
                   </div>
-                  <h3 className="text-xl font-bold text-gray-800 mb-2">No Active Sessions</h3>
-                  <p className="text-gray-600 mb-4">You don't have any active design sessions at the moment.</p>
-                  <p className="text-sm text-gray-500">Start by finding a designer and booking a session.</p>
-                </div>
+                ) : (
+                  <div className="text-center">
+                    <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <CalendarClock className="w-10 h-10 text-blue-500" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-800 mb-2">No Active Sessions</h3>
+                    <p className="text-gray-600 mb-4">You don't have any active design sessions at the moment.</p>
+                    <p className="text-sm text-gray-500">Start by finding a designer and booking a session.</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -313,7 +340,7 @@ export default function CustomerDashboard() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-600 mb-1 font-medium">Total Sessions</p>
-                      <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">2</p>
+                      <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">{completedBookings.length}</p>
                       <p className="text-sm text-blue-600 mt-3 font-medium">Completed sessions</p>
                     </div>
                     <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
@@ -448,6 +475,7 @@ export default function CustomerDashboard() {
             </div>
           </div>
         </main>
+        <RealtimeSessionIndicator />
       </div>
     </SidebarProvider>
   );

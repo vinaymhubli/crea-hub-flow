@@ -50,7 +50,7 @@ export default function CallSession() {
     try {
       setLoading(true);
       
-      if (!bookingId) {
+      if (!bookingId || bookingId === ':bookingId') {
         setError('No booking ID provided');
         return;
       }
@@ -69,7 +69,7 @@ export default function CallSession() {
           )
         `)
         .eq('id', bookingId)
-        .single();
+        .maybeSingle();
 
       if (bookingError) {
         console.error('Error fetching booking:', bookingError);
