@@ -33,6 +33,7 @@ import CustomerNotifications from "./pages/CustomerNotifications";
 import CustomerProfile from "./pages/CustomerProfile";
 import CustomerSettings from "./pages/CustomerSettings";
 import CallSession from "./pages/CallSession";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -142,6 +143,11 @@ const App = () => (
           <Route path="/session/:bookingId" element={
             <ProtectedRoute>
               <CallSession />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin-dashboard" element={
+            <ProtectedRoute requireAdmin={true}>
+              <AdminDashboard />
             </ProtectedRoute>
           } />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

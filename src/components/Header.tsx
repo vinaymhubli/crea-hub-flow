@@ -3,10 +3,12 @@ import React from 'react';
 import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  const { user, profile, signOut } = useAuth();
 
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -76,20 +78,57 @@ const Header = () => {
           </nav>
 
           <div className="hidden md:flex items-center space-x-4">
-            <Link 
-              to="/auth" 
-              className={`font-medium transition-colors ${
-                isActive('/auth') ? 'text-green-600' : 'text-gray-700 hover:text-green-600'
-              }`}
-            >
-              Sign In
-            </Link>
-            <Link 
-              to="/auth" 
-              className="bg-green-600 text-white px-6 py-2 rounded-full font-medium hover:bg-green-700 transition-colors whitespace-nowrap"
-            >
-              Get Started
-            </Link>
+            {user ? (
+              <>
+                {profile?.user_type === 'designer' && (
+                  <Link 
+                    to="/designer-dashboard" 
+                    className="font-medium text-gray-700 hover:text-green-600 transition-colors"
+                  >
+                    Designer Dashboard
+                  </Link>
+                )}
+                {profile?.user_type === 'client' && (
+                  <Link 
+                    to="/customer-dashboard" 
+                    className="font-medium text-gray-700 hover:text-green-600 transition-colors"
+                  >
+                    Customer Dashboard
+                  </Link>
+                )}
+                {profile?.is_admin && (
+                  <Link 
+                    to="/admin-dashboard" 
+                    className="font-medium text-gray-700 hover:text-green-600 transition-colors"
+                  >
+                    Admin Dashboard
+                  </Link>
+                )}
+                <button 
+                  onClick={signOut}
+                  className="font-medium text-gray-700 hover:text-green-600 transition-colors"
+                >
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link 
+                  to="/auth" 
+                  className={`font-medium transition-colors ${
+                    isActive('/auth') ? 'text-green-600' : 'text-gray-700 hover:text-green-600'
+                  }`}
+                >
+                  Sign In
+                </Link>
+                <Link 
+                  to="/auth" 
+                  className="bg-green-600 text-white px-6 py-2 rounded-full font-medium hover:bg-green-700 transition-colors whitespace-nowrap"
+                >
+                  Get Started
+                </Link>
+              </>
+            )}
           </div>
 
           <button 

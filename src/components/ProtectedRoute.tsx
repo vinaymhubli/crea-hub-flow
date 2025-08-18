@@ -5,9 +5,10 @@ import { useAuth } from '@/hooks/useAuth';
 interface ProtectedRouteProps {
   children: ReactNode;
   requireUserType?: 'client' | 'designer';
+  requireAdmin?: boolean;
 }
 
-export const ProtectedRoute = ({ children, requireUserType }: ProtectedRouteProps) => {
+export const ProtectedRoute = ({ children, requireUserType, requireAdmin }: ProtectedRouteProps) => {
   const { user, profile, loading } = useAuth();
 
   if (loading) {
@@ -23,6 +24,10 @@ export const ProtectedRoute = ({ children, requireUserType }: ProtectedRouteProp
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (requireAdmin && !profile?.is_admin) {
+    return <Navigate to="/" replace />;
   }
 
   if (requireUserType && profile?.user_type !== requireUserType) {
