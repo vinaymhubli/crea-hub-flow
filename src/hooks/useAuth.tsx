@@ -10,7 +10,6 @@ interface Profile {
   last_name?: string;
   specialization?: string;
   rate_per_minute?: number;
-  is_admin?: boolean;
   created_at: string;
   updated_at: string;
 }
