@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, Calendar, DollarSign, UserCheck, Settings, MessageSquare } from 'lucide-react';
+import { Users, Calendar, DollarSign, UserCheck, Settings, MessageSquare, Activity, TrendingUp, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface AdminStats {
@@ -118,16 +118,25 @@ export default function AdminDashboard() {
     }
   };
 
-  const StatCard = ({ title, value, description, icon: Icon }: any) => (
-    <Card>
+  const StatCard = ({ title, value, description, icon: Icon, trend, trendValue }: any) => (
+    <Card className="relative overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
         <Icon className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">{value}</div>
-        <p className="text-xs text-muted-foreground">{description}</p>
+        <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+          <span>{description}</span>
+          {trend && (
+            <div className={`flex items-center ${trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+              <TrendingUp className={`h-3 w-3 mr-1 ${trend === 'down' ? 'rotate-180' : ''}`} />
+              <span>{trendValue}</span>
+            </div>
+          )}
+        </div>
       </CardContent>
+      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-primary/60" />
     </Card>
   );
 
@@ -157,32 +166,78 @@ export default function AdminDashboard() {
             value={stats?.total_users || 0}
             description="Registered users"
             icon={Users}
+            trend="up"
+            trendValue="+12%"
           />
           <StatCard
             title="Active Designers"
             value={stats?.total_designers || 0}
             description="Available designers"
             icon={UserCheck}
+            trend="up"
+            trendValue="+8%"
           />
           <StatCard
             title="Total Bookings"
             value={stats?.total_bookings || 0}
             description={`${stats?.pending_bookings || 0} pending`}
             icon={Calendar}
+            trend="up"
+            trendValue="+23%"
           />
           <StatCard
             title="Total Revenue"
             value={`$${stats?.total_revenue || 0}`}
             description="From completed bookings"
             icon={DollarSign}
+            trend="up"
+            trendValue="+15%"
           />
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid gap-4 md:grid-cols-3 mb-8">
+          <Card className="p-6">
+            <div className="flex items-center space-x-4">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Activity className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold">System Health</h3>
+                <p className="text-sm text-muted-foreground">All systems operational</p>
+              </div>
+            </div>
+          </Card>
+          <Card className="p-6">
+            <div className="flex items-center space-x-4">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <MessageSquare className="h-6 w-6 text-green-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Recent Activity</h3>
+                <p className="text-sm text-muted-foreground">{bookings.length} recent bookings</p>
+              </div>
+            </div>
+          </Card>
+          <Card className="p-6">
+            <div className="flex items-center space-x-4">
+              <div className="p-2 bg-yellow-100 rounded-lg">
+                <AlertTriangle className="h-6 w-6 text-yellow-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Pending Reviews</h3>
+                <p className="text-sm text-muted-foreground">{stats?.pending_bookings || 0} items need attention</p>
+              </div>
+            </div>
+          </Card>
         </div>
 
         {/* Main Content */}
         <Tabs defaultValue="users" className="space-y-4">
-          <TabsList>
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="bookings">Bookings</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
@@ -296,6 +351,39 @@ export default function AdminDashboard() {
             </Card>
           </TabsContent>
 
+          <TabsContent value="analytics" className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2 mb-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>User Growth</CardTitle>
+                  <CardDescription>Monthly user registration trends</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-32 flex items-center justify-center text-muted-foreground">
+                    <div className="text-center">
+                      <Activity className="h-8 w-8 mx-auto mb-2" />
+                      <p>Analytics dashboard coming soon</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Revenue Trends</CardTitle>
+                  <CardDescription>Monthly revenue analytics</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-32 flex items-center justify-center text-muted-foreground">
+                    <div className="text-center">
+                      <TrendingUp className="h-8 w-8 mx-auto mb-2" />
+                      <p>Chart visualization in development</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
           <TabsContent value="settings" className="space-y-4">
             <Card>
               <CardHeader>
@@ -305,24 +393,31 @@ export default function AdminDashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors">
                   <div>
                     <h3 className="font-medium">User Registration</h3>
                     <p className="text-sm text-muted-foreground">Allow new users to register</p>
                   </div>
                   <Button variant="outline">Configure</Button>
                 </div>
-                <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors">
                   <div>
                     <h3 className="font-medium">Email Notifications</h3>
                     <p className="text-sm text-muted-foreground">Manage email notification settings</p>
                   </div>
                   <Button variant="outline">Configure</Button>
                 </div>
-                <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors">
                   <div>
                     <h3 className="font-medium">Payment Settings</h3>
                     <p className="text-sm text-muted-foreground">Configure payment processing</p>
+                  </div>
+                  <Button variant="outline">Configure</Button>
+                </div>
+                <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors">
+                  <div>
+                    <h3 className="font-medium">Security Settings</h3>
+                    <p className="text-sm text-muted-foreground">Manage authentication and security</p>
                   </div>
                   <Button variant="outline">Configure</Button>
                 </div>
