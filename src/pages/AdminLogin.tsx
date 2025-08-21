@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -19,24 +19,25 @@ export default function AdminLogin() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // If already logged in as admin, redirect to admin panel
-  if (user) {
-    // Check if user is admin and redirect accordingly
-    const checkAdminStatus = async () => {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('is_admin')
-        .eq('user_id', user.id)
-        .single();
-      
-      if (profile?.is_admin) {
-        navigate('/secret-admin-panel');
-      } else {
-        navigate('/');
-      }
-    };
-    checkAdminStatus();
-  }
+  // Check if already logged in as admin and redirect
+  useEffect(() => {
+    if (user) {
+      const checkAdminStatus = async () => {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('is_admin')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (profile?.is_admin) {
+          navigate('/secret-admin-panel');
+        } else {
+          navigate('/');
+        }
+      };
+      checkAdminStatus();
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
