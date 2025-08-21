@@ -11,8 +11,9 @@ import { ShieldCheck, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AdminLogin() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('admin@demo.com');
+  const [password, setPassword] = useState('admin123');
+  const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -43,44 +44,93 @@ export default function AdminLogin() {
     setError('');
 
     try {
-      // Sign in with email and password
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      if (isSignUp) {
+        // Create demo admin account
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/secret-admin-panel`,
+            data: {
+              first_name: 'Demo',
+              last_name: 'Admin',
+              user_type: 'client'
+            }
+          }
+        });
 
-      if (signInError) throw signInError;
+        if (signUpError) throw signUpError;
 
-      if (data.user) {
-        // Check if user is admin
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('is_admin')
-          .eq('user_id', data.user.id)
-          .single();
+        if (data.user) {
+          // Make this user an admin
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ is_admin: true })
+            .eq('user_id', data.user.id);
 
-        if (profileError) {
-          throw new Error('Failed to verify admin status');
+          if (updateError) {
+            console.error('Failed to set admin status:', updateError);
+          }
+
+          toast.success('Demo admin account created! You can now log in.');
+          setIsSignUp(false);
         }
+      } else {
+        // Sign in with email and password
+        const { data, error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
-        if (!profile?.is_admin) {
-          // Sign out non-admin users
-          await supabase.auth.signOut();
-          throw new Error('Access denied. Administrator privileges required.');
+        if (signInError) throw signInError;
+
+        if (data.user) {
+          // Check if user is admin
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('is_admin')
+            .eq('user_id', data.user.id)
+            .single();
+
+          if (profileError) {
+            throw new Error('Failed to verify admin status');
+          }
+
+          if (!profile?.is_admin) {
+            // For demo email, make them admin if they aren't already
+            if (email === 'admin@demo.com') {
+              const { error: updateError } = await supabase
+                .from('profiles')
+                .update({ is_admin: true })
+                .eq('user_id', data.user.id);
+
+              if (!updateError) {
+                toast.success('Welcome, Administrator');
+                navigate('/secret-admin-panel');
+                return;
+              }
+            }
+            
+            // Sign out non-admin users
+            await supabase.auth.signOut();
+            throw new Error('Access denied. Administrator privileges required.');
+          }
+
+          toast.success('Welcome, Administrator');
+          navigate('/secret-admin-panel');
         }
-
-        toast.success('Welcome, Administrator');
-        navigate('/secret-admin-panel');
       }
     } catch (error: any) {
       console.error('Admin login error:', error);
-      setError(error.message || 'Login failed');
+      setError(error.message || 'Operation failed');
       
       // Sign out on any error to ensure clean state
-      try {
-        await supabase.auth.signOut();
-      } catch (signOutError) {
-        console.error('Sign out error:', signOutError);
+      if (!isSignUp) {
+        try {
+          await supabase.auth.signOut();
+        } catch (signOutError) {
+          console.error('Sign out error:', signOutError);
+        }
       }
     } finally {
       setLoading(false);
@@ -97,10 +147,22 @@ export default function AdminLogin() {
                 <ShieldCheck className="h-8 w-8 text-primary" />
               </div>
             </div>
-            <CardTitle className="text-2xl font-bold">Admin Access</CardTitle>
+            <CardTitle className="text-2xl font-bold">
+              {isSignUp ? 'Create Admin Account' : 'Admin Access'}
+            </CardTitle>
             <p className="text-muted-foreground">
-              Restricted area - Administrator login required
+              {isSignUp 
+                ? 'Create demo administrator account' 
+                : 'Restricted area - Administrator login required'
+              }
             </p>
+            
+            {/* Demo credentials info */}
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 text-sm">
+              <p className="font-medium text-primary mb-1">Demo Credentials:</p>
+              <p className="text-muted-foreground">Email: admin@demo.com</p>
+              <p className="text-muted-foreground">Password: admin123</p>
+            </div>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -145,15 +207,27 @@ export default function AdminLogin() {
                 {loading ? (
                   <div className="flex items-center gap-2">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground"></div>
-                    Verifying Access...
+                    {isSignUp ? 'Creating Account...' : 'Verifying Access...'}
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="h-4 w-4" />
-                    Access Admin Panel
+                    {isSignUp ? 'Create Admin Account' : 'Access Admin Panel'}
                   </div>
                 )}
               </Button>
+              
+              <div className="text-center mt-4">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsSignUp(!isSignUp)}
+                  disabled={loading}
+                >
+                  {isSignUp ? 'Already have an account? Sign In' : 'Need to create demo account? Sign Up'}
+                </Button>
+              </div>
             </form>
             
             <div className="mt-6 text-center">
