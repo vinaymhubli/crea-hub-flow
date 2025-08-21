@@ -143,7 +143,7 @@ export default function Services() {
     const matchesSearch = service.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          service.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          service.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesCategory = !selectedCategory || service.category === selectedCategory;
+    const matchesCategory = selectedCategory === '' || selectedCategory === 'all' || service.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -198,7 +198,7 @@ export default function Services() {
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
+                <SelectItem value="all">All Categories</SelectItem>
                 {categories.map(category => (
                   <SelectItem key={category} value={category}>{category}</SelectItem>
                 ))}
