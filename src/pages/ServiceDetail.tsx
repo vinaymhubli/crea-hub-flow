@@ -78,7 +78,6 @@ export default function ServiceDetail() {
   const [service, setService] = useState<ServiceDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedPackage, setSelectedPackage] = useState<ServicePackage | null>(null);
-  const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -155,7 +154,6 @@ export default function ServiceDetail() {
       navigate('/auth');
       return;
     }
-    setBookingDialogOpen(true);
   };
 
   if (loading) {
@@ -265,15 +263,28 @@ export default function ServiceDetail() {
                             </div>
                           ))}
                         </div>
-                        <Button
-                          className="w-full mt-4"
-                          onClick={() => {
-                            setSelectedPackage(pkg);
-                            handleBookService();
+                        <BookingDialog
+                          designer={{
+                            id: service.designer.id,
+                            user_id: service.designer.user_id,
+                            first_name: service.designer.profiles.first_name,
+                            last_name: service.designer.profiles.last_name,
+                            hourly_rate: service.designer.hourly_rate,
+                            specialization: service.category,
+                            avatar_url: service.designer.profiles.avatar_url
+                          }}
+                          service={{
+                            id: service.id,
+                            title: service.title,
+                            price: service.price,
+                            delivery_time_days: service.delivery_time_days,
+                            packages: service.packages
                           }}
                         >
-                          Select ${pkg.price}
-                        </Button>
+                          <Button className="w-full mt-4">
+                            Select ${pkg.price}
+                          </Button>
+                        </BookingDialog>
                       </div>
                     </TabsContent>
                   ))}
@@ -352,9 +363,28 @@ export default function ServiceDetail() {
                     <span>Delivery time</span>
                     <span>{service.delivery_time_days} days</span>
                   </div>
-                  <Button className="w-full" onClick={handleBookService}>
-                    Book Now
-                  </Button>
+                  <BookingDialog
+                    designer={{
+                      id: service.designer.id,
+                      user_id: service.designer.user_id,
+                      first_name: service.designer.profiles.first_name,
+                      last_name: service.designer.profiles.last_name,
+                      hourly_rate: service.designer.hourly_rate,
+                      specialization: service.category,
+                      avatar_url: service.designer.profiles.avatar_url
+                    }}
+                    service={{
+                      id: service.id,
+                      title: service.title,
+                      price: service.price,
+                      delivery_time_days: service.delivery_time_days,
+                      packages: service.packages
+                    }}
+                  >
+                    <Button className="w-full">
+                      Book Now
+                    </Button>
+                  </BookingDialog>
                 </div>
               </CardContent>
             </Card>
@@ -362,27 +392,6 @@ export default function ServiceDetail() {
         </div>
       </div>
 
-      {/* Booking Dialog */}
-      {selectedPackage && (
-        <BookingDialog
-          open={bookingDialogOpen}
-          onOpenChange={setBookingDialogOpen}
-          designer={{
-            id: service.designer.id,
-            user_id: service.designer.user_id,
-            first_name: service.designer.profiles.first_name,
-            last_name: service.designer.profiles.last_name,
-            hourly_rate: selectedPackage.price, // Use package price instead of hourly rate
-            specialization: service.category,
-            avatar_url: service.designer.profiles.avatar_url
-          }}
-          service={{
-            id: service.id,
-            title: service.title,
-            selectedPackage: selectedPackage
-          }}
-        />
-      )}
     </div>
   );
 }
