@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -59,7 +60,7 @@ export default function Auth() {
           data: {
             full_name: fullName,
             role: role,
-            user_type: role === 'designer' ? 'professional' : 'client'
+            user_type: role === 'designer' ? 'designer' : 'client'
           }
         }
       });
@@ -102,7 +103,7 @@ export default function Auth() {
           .eq('user_id', data.user.id)
           .single();
         
-        if (profile?.role === 'designer' || profile?.user_type === 'professional') {
+        if (profile?.role === 'designer' || profile?.user_type === 'designer') {
           navigate('/designer-dashboard');
         } else {
           navigate('/customer-dashboard');
