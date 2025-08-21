@@ -45,10 +45,36 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<User[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  // Check if user is admin - temporarily allow access for development
+  // Check admin status
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (!user) {
+        return <Navigate to="/secret-admin-login" replace />;
+      }
+
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('user_id', user.id)
+        .single();
+
+      setIsAdmin(profileData?.is_admin || false);
+    };
+
+    if (user) {
+      checkAdminStatus();
+    }
+  }, [user]);
+
+  // Redirect if not logged in or not admin
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/secret-admin-login" replace />;
+  }
+
+  if (user && !loading && !isAdmin) {
+    return <Navigate to="/secret-admin-login" replace />;
   }
 
   useEffect(() => {

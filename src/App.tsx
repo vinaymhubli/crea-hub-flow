@@ -33,6 +33,7 @@ import CustomerNotifications from "./pages/CustomerNotifications";
 import CustomerProfile from "./pages/CustomerProfile";
 import CustomerSettings from "./pages/CustomerSettings";
 import CallSession from "./pages/CallSession";
+import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
@@ -145,7 +146,8 @@ const App = () => (
               <CallSession />
             </ProtectedRoute>
           } />
-          {/* Hidden admin route - not linked anywhere */}
+          {/* Hidden admin routes - not linked anywhere */}
+          <Route path="/secret-admin-login" element={<AdminLogin />} />
           <Route path="/secret-admin-panel" element={
             <ProtectedRoute>
               <AdminDashboard />
