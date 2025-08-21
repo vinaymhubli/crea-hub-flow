@@ -19,7 +19,7 @@ import DesignerDashboard from "./pages/DesignerDashboard";
 import DesignerProfile from "./pages/DesignerProfile";
 import DesignerPortfolio from "./pages/DesignerPortfolio";
 import DesignerBookings from "./pages/DesignerBookings";
-import DesignerAvailability from "./pages/DesignerAvailability";
+import DesignerAvailabilityPage from "./pages/DesignerAvailability";
 import DesignerEarnings from "./pages/DesignerEarnings";
 import DesignerSessionHistory from "./pages/DesignerSessionHistory";
 import DesignerSettings from "./pages/DesignerSettings";
@@ -35,6 +35,10 @@ import CustomerSettings from "./pages/CustomerSettings";
 import CallSession from "./pages/CallSession";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
+import { AdminLayout } from "./components/AdminLayout";
+import DesignerVerification from "./pages/admin/DesignerVerification";
+import DesignerAvailability from "./pages/admin/DesignerAvailability";
+import SessionControl from "./pages/admin/SessionControl";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -78,7 +82,7 @@ const App = () => (
           } />
           <Route path="/designer-dashboard/availability" element={
             <ProtectedRoute requireUserType="designer">
-              <DesignerAvailability />
+              <DesignerAvailabilityPage />
             </ProtectedRoute>
           } />
           <Route path="/designer-dashboard/earnings" element={
@@ -150,7 +154,30 @@ const App = () => (
           <Route path="/secret-admin-login" element={<AdminLogin />} />
           <Route path="/secret-admin-panel" element={
             <ProtectedRoute>
-              <AdminDashboard />
+              <AdminLayout>
+                <AdminDashboard />
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
+          <Route path="/secret-admin-panel/designer-verification" element={
+            <ProtectedRoute>
+              <AdminLayout>
+                <DesignerVerification />
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
+          <Route path="/secret-admin-panel/designer-availability" element={
+            <ProtectedRoute>
+              <AdminLayout>
+                <DesignerAvailability />
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
+          <Route path="/secret-admin-panel/session-control" element={
+            <ProtectedRoute>
+              <AdminLayout>
+                <SessionControl />
+              </AdminLayout>
             </ProtectedRoute>
           } />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
