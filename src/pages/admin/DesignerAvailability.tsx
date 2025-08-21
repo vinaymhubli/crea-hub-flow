@@ -1,143 +1,394 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, Users, Clock, Activity } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Calendar } from '@/components/ui/calendar';
+import { Switch } from '@/components/ui/switch';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Clock, Search, Calendar as CalendarIcon, Users, MapPin, Star, Settings, CheckCircle, XCircle } from 'lucide-react';
+import { toast } from 'sonner';
+
+// Dummy data for designer availability
+const dummyDesigners = [
+  {
+    id: '1',
+    name: 'Sarah Johnson',
+    email: 'sarah.johnson@email.com',
+    specialty: 'UI/UX Design',
+    location: 'New York, USA',
+    avatar: '/lovable-uploads/33257a77-a6e4-46e6-ae77-b94b22a97d58.png',
+    isOnline: true,
+    isAvailable: true,
+    rating: 4.8,
+    hourlyRate: 85,
+    totalHours: 240,
+    completedSessions: 48,
+    responseTime: '< 1 hour',
+    workingHours: {
+      monday: { start: '09:00', end: '17:00', enabled: true },
+      tuesday: { start: '09:00', end: '17:00', enabled: true },
+      wednesday: { start: '09:00', end: '17:00', enabled: true },
+      thursday: { start: '09:00', end: '17:00', enabled: true },
+      friday: { start: '09:00', end: '17:00', enabled: true },
+      saturday: { start: '10:00', end: '14:00', enabled: false },
+      sunday: { start: '10:00', end: '14:00', enabled: false }
+    },
+    upcomingBookings: [
+      { date: '2024-01-20', time: '10:00', client: 'Tech Corp', duration: 2 },
+      { date: '2024-01-22', time: '14:00', client: 'StartUp Inc', duration: 1 }
+    ],
+    timezone: 'EST (UTC-5)'
+  },
+  {
+    id: '2',
+    name: 'Michael Chen',
+    email: 'michael.chen@email.com',
+    specialty: 'Graphic Design',
+    location: 'San Francisco, USA',
+    avatar: '/lovable-uploads/33257a77-a6e4-46e6-ae77-b94b22a97d58.png',
+    isOnline: false,
+    isAvailable: true,
+    rating: 4.9,
+    hourlyRate: 95,
+    totalHours: 180,
+    completedSessions: 36,
+    responseTime: '< 2 hours',
+    workingHours: {
+      monday: { start: '10:00', end: '18:00', enabled: true },
+      tuesday: { start: '10:00', end: '18:00', enabled: true },
+      wednesday: { start: '10:00', end: '18:00', enabled: true },
+      thursday: { start: '10:00', end: '18:00', enabled: true },
+      friday: { start: '10:00', end: '16:00', enabled: true },
+      saturday: { start: '11:00', end: '15:00', enabled: true },
+      sunday: { start: '11:00', end: '15:00', enabled: false }
+    },
+    upcomingBookings: [
+      { date: '2024-01-21', time: '11:00', client: 'Design Studio', duration: 3 }
+    ],
+    timezone: 'PST (UTC-8)'
+  },
+  {
+    id: '3',
+    name: 'Emma Williams',
+    email: 'emma.williams@email.com',
+    specialty: 'Web Design',
+    location: 'London, UK',
+    avatar: '/lovable-uploads/33257a77-a6e4-46e6-ae77-b94b22a97d58.png',
+    isOnline: true,
+    isAvailable: false,
+    rating: 4.2,
+    hourlyRate: 65,
+    totalHours: 120,
+    completedSessions: 24,
+    responseTime: '< 3 hours',
+    workingHours: {
+      monday: { start: '08:00', end: '16:00', enabled: true },
+      tuesday: { start: '08:00', end: '16:00', enabled: true },
+      wednesday: { start: '08:00', end: '16:00', enabled: true },
+      thursday: { start: '08:00', end: '16:00', enabled: true },
+      friday: { start: '08:00', end: '16:00', enabled: true },
+      saturday: { start: '09:00', end: '13:00', enabled: false },
+      sunday: { start: '09:00', end: '13:00', enabled: false }
+    },
+    upcomingBookings: [],
+    timezone: 'GMT (UTC+0)'
+  },
+  {
+    id: '4',
+    name: 'Alex Rodriguez',
+    email: 'alex.rodriguez@email.com',
+    specialty: 'Mobile App Design',
+    location: 'Toronto, Canada',
+    avatar: '/lovable-uploads/33257a77-a6e4-46e6-ae77-b94b22a97d58.png',
+    isOnline: true,
+    isAvailable: true,
+    rating: 4.6,
+    hourlyRate: 80,
+    totalHours: 200,
+    completedSessions: 40,
+    responseTime: '< 1 hour',
+    workingHours: {
+      monday: { start: '09:30', end: '17:30', enabled: true },
+      tuesday: { start: '09:30', end: '17:30', enabled: true },
+      wednesday: { start: '09:30', end: '17:30', enabled: true },
+      thursday: { start: '09:30', end: '17:30', enabled: true },
+      friday: { start: '09:30', end: '17:30', enabled: true },
+      saturday: { start: '10:00', end: '14:00', enabled: true },
+      sunday: { start: '10:00', end: '14:00', enabled: false }
+    },
+    upcomingBookings: [
+      { date: '2024-01-19', time: '15:00', client: 'Mobile First', duration: 2 },
+      { date: '2024-01-23', time: '10:00', client: 'App Innovators', duration: 1 }
+    ],
+    timezone: 'EST (UTC-5)'
+  }
+];
 
 export default function DesignerAvailability() {
-  const [designers, setDesigners] = useState([
-    {
-      id: '1',
-      name: 'Sarah Johnson',
-      specialty: 'UI/UX Design',
-      status: 'online',
-      nextAvailable: '2024-01-15T14:00:00Z',
-      weeklyHours: 32,
-      bookedHours: 24
-    },
-    {
-      id: '2', 
-      name: 'Mike Chen',
-      specialty: 'Web Development',
-      status: 'busy',
-      nextAvailable: '2024-01-16T09:00:00Z',
-      weeklyHours: 40,
-      bookedHours: 38
+  const [designers, setDesigners] = useState(dummyDesigners);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedDesigner, setSelectedDesigner] = useState<any>(null);
+
+  const toggleAvailability = (designerId: string) => {
+    setDesigners(prev => 
+      prev.map(designer => 
+        designer.id === designerId 
+          ? { ...designer, isAvailable: !designer.isAvailable }
+          : designer
+      )
+    );
+    toast.success('Designer availability updated');
+  };
+
+  const filteredDesigners = designers.filter(designer => {
+    const matchesSearch = designer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         designer.specialty.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         designer.location.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    let matchesStatus = true;
+    if (statusFilter === 'online') matchesStatus = designer.isOnline;
+    else if (statusFilter === 'available') matchesStatus = designer.isAvailable;
+    else if (statusFilter === 'busy') matchesStatus = !designer.isAvailable;
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  const getStatusBadge = (designer: any) => {
+    if (!designer.isAvailable) {
+      return <Badge variant="secondary" className="bg-red-100 text-red-800">Busy</Badge>;
     }
-  ]);
+    if (designer.isOnline) {
+      return <Badge variant="secondary" className="bg-green-100 text-green-800">Online</Badge>;
+    }
+    return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Offline</Badge>;
+  };
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            Designer Availability
-          </h1>
-          <p className="text-muted-foreground">Monitor designer schedules and availability</p>
+          <h1 className="text-3xl font-bold text-foreground">Designer Availability</h1>
+          <p className="text-muted-foreground">Monitor and manage designer schedules and availability</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search designers..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 w-64"
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Designers</SelectItem>
+              <SelectItem value="online">Online</SelectItem>
+              <SelectItem value="available">Available</SelectItem>
+              <SelectItem value="busy">Busy</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card className="border-l-4 border-l-green-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Online Now</CardTitle>
-            <Activity className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground">Available designers</p>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="border-border/50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Designers</p>
+                <p className="text-2xl font-bold text-foreground">{designers.length}</p>
+              </div>
+              <Users className="h-8 w-8 text-primary" />
+            </div>
           </CardContent>
         </Card>
-
-        <Card className="border-l-4 border-l-orange-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">In Session</CardTitle>
-            <Users className="h-4 w-4 text-orange-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">8</div>
-            <p className="text-xs text-muted-foreground">Currently busy</p>
+        <Card className="border-border/50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Online Now</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {designers.filter(d => d.isOnline).length}
+                </p>
+              </div>
+              <CheckCircle className="h-8 w-8 text-green-600" />
+            </div>
           </CardContent>
         </Card>
-
-        <Card className="border-l-4 border-l-blue-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Scheduled Today</CardTitle>
-            <Calendar className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">24</div>
-            <p className="text-xs text-muted-foreground">Total sessions</p>
+        <Card className="border-border/50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Available</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {designers.filter(d => d.isAvailable).length}
+                </p>
+              </div>
+              <Clock className="h-8 w-8 text-blue-600" />
+            </div>
           </CardContent>
         </Card>
-
-        <Card className="border-l-4 border-l-purple-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Utilization</CardTitle>
-            <Clock className="h-4 w-4 text-purple-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">75%</div>
-            <p className="text-xs text-muted-foreground">This week</p>
+        <Card className="border-border/50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Busy</p>
+                <p className="text-2xl font-bold text-red-600">
+                  {designers.filter(d => !d.isAvailable).length}
+                </p>
+              </div>
+              <XCircle className="h-8 w-8 text-red-600" />
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Calendar View */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Weekly Schedule Overview</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-64 flex items-center justify-center text-muted-foreground">
-            <div className="text-center">
-              <Calendar className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <p>Calendar integration coming soon</p>
-              <p className="text-sm">Full schedule view with drag & drop functionality</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Designer List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Designer Status</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {designers.map((designer) => (
-              <div key={designer.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                    <Users className="h-5 w-5 text-primary" />
+      {/* Designers Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredDesigners.map((designer) => (
+          <Card key={designer.id} className="border-border/50 hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage src={designer.avatar} alt={designer.name} />
+                      <AvatarFallback>{designer.name.split(' ').map((n: string) => n[0]).join('')}</AvatarFallback>
+                    </Avatar>
+                    {designer.isOnline && (
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+                    )}
                   </div>
                   <div>
-                    <h3 className="font-medium">{designer.name}</h3>
+                    <h3 className="font-semibold text-foreground">{designer.name}</h3>
                     <p className="text-sm text-muted-foreground">{designer.specialty}</p>
                   </div>
                 </div>
-                
-                <div className="flex items-center gap-4">
-                  <Badge variant={designer.status === 'online' ? 'default' : 'secondary'}>
-                    {designer.status}
-                  </Badge>
-                  
-                  <div className="text-sm text-muted-foreground">
-                    <div>Next: {new Date(designer.nextAvailable).toLocaleTimeString()}</div>
-                    <div>Utilization: {Math.round((designer.bookedHours / designer.weeklyHours) * 100)}%</div>
-                  </div>
-                  
-                  <Button variant="outline" size="sm">
-                    View Schedule
-                  </Button>
-                </div>
+                {getStatusBadge(designer)}
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Location:</span>
+                <span className="flex items-center gap-1">
+                  <MapPin className="h-3 w-3" />
+                  {designer.location}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Rate:</span>
+                <span className="font-medium">${designer.hourlyRate}/hr</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Rating:</span>
+                <span className="flex items-center gap-1">
+                  <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                  {designer.rating}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Response Time:</span>
+                <span>{designer.responseTime}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Availability:</span>
+                <Switch
+                  checked={designer.isAvailable}
+                  onCheckedChange={() => toggleAvailability(designer.id)}
+                />
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Upcoming Bookings:</p>
+                {designer.upcomingBookings.length > 0 ? (
+                  <div className="space-y-1">
+                    {designer.upcomingBookings.slice(0, 2).map((booking: any, index: number) => (
+                      <div key={index} className="text-xs p-2 bg-muted/50 rounded">
+                        <div className="flex items-center gap-2">
+                          <CalendarIcon className="h-3 w-3" />
+                          {booking.date} at {booking.time}
+                        </div>
+                        <div className="text-muted-foreground">{booking.client} ({booking.duration}h)</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">No upcoming bookings</p>
+                )}
+              </div>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={() => setSelectedDesigner(designer)}
+                  >
+                    <Settings className="h-4 w-4 mr-2" />
+                    Manage Schedule
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Manage {designer?.name}'s Schedule</DialogTitle>
+                  </DialogHeader>
+                  {selectedDesigner && (
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <h4 className="font-medium mb-2">Working Hours</h4>
+                          <div className="space-y-2">
+                            {Object.entries(selectedDesigner.workingHours).map(([day, hours]: [string, any]) => (
+                              <div key={day} className="flex items-center justify-between text-sm">
+                                <span className="capitalize">{day}:</span>
+                                <div className="flex items-center gap-2">
+                                  <span className={hours.enabled ? 'text-foreground' : 'text-muted-foreground'}>
+                                    {hours.enabled ? `${hours.start} - ${hours.end}` : 'Off'}
+                                  </span>
+                                  <Switch checked={hours.enabled} />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <h4 className="font-medium mb-2">Statistics</h4>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span>Total Hours:</span>
+                              <span>{selectedDesigner.totalHours}h</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Completed Sessions:</span>
+                              <span>{selectedDesigner.completedSessions}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Timezone:</span>
+                              <span>{selectedDesigner.timezone}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="font-medium mb-2">Calendar View</h4>
+                        <Calendar mode="single" className="rounded-md border" />
+                      </div>
+                    </div>
+                  )}
+                </DialogContent>
+              </Dialog>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
