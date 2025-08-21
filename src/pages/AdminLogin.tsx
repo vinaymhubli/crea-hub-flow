@@ -97,8 +97,9 @@ export default function AdminLogin() {
           }
 
           if (!profile?.is_admin) {
-            // For demo email, make them admin if they aren't already
-            if (email === 'admin@demo.com') {
+            // For demo emails, make them admin if they aren't already
+            const demoEmails = ['admin@demo.com', 'viaan9885@gmail.com', 'lnvb200@gmail.com'];
+            if (demoEmails.includes(email)) {
               const { error: updateError } = await supabase
                 .from('profiles')
                 .update({ is_admin: true })
