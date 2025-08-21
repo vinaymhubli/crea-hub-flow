@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   User, 
@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRealtimeBookings } from '@/hooks/useRealtimeBookings';
+import { useDesignerProfile } from '@/hooks/useDesignerProfile';
 import { RealtimeSessionIndicator } from '@/components/RealtimeSessionIndicator';
 import { Link, useLocation } from 'react-router-dom';
 import {
@@ -62,15 +63,7 @@ function DesignerSidebar() {
     <Sidebar collapsible="icon">
       <SidebarContent className="bg-white border-r border-gray-200">
         <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-white font-semibold text-sm">VB</span>
-            </div>
-            <div>
-              <p className="font-semibold text-gray-900">Vb Bn</p>
-              <p className="text-sm text-gray-500">Designer</p>
-            </div>
-          </div>
+          <SidebarUserInfo />
         </div>
         
         <SidebarGroup>
@@ -101,12 +94,85 @@ function DesignerSidebar() {
   );
 }
 
+function SidebarUserInfo() {
+  const { user, profile } = useAuth();
+  const { designerProfile } = useDesignerProfile();
+  
+  const getInitials = (firstName?: string, lastName?: string) => {
+    if (!firstName && !lastName) return 'D';
+    return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase();
+  };
+
+  const getDisplayName = () => {
+    if (profile?.first_name || profile?.last_name) {
+      return `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+    }
+    return user?.email?.split('@')[0] || 'Designer';
+  };
+
+  return (
+    <div className="flex items-center space-x-3">
+      <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
+        <span className="text-white font-semibold text-sm">
+          {getInitials(profile?.first_name, profile?.last_name)}
+        </span>
+      </div>
+      <div>
+        <p className="font-semibold text-gray-900">{getDisplayName()}</p>
+        <p className="text-sm text-gray-500">
+          {designerProfile?.is_online ? 'Online' : 'Offline'}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function DesignerDashboard() {
-  const { signOut } = useAuth();
+  const { signOut, user, profile } = useAuth();
   const { activeSession, getUpcomingBookings, getCompletedBookings, loading } = useRealtimeBookings();
+  const { designerProfile, calculateTotalEarnings } = useDesignerProfile();
+  const [totalEarnings, setTotalEarnings] = useState(0);
   
   const upcomingBookings = getUpcomingBookings();
   const completedBookings = getCompletedBookings();
+
+  useEffect(() => {
+    if (designerProfile) {
+      calculateTotalEarnings().then(setTotalEarnings);
+    }
+  }, [designerProfile]);
+
+  const getInitials = (firstName?: string, lastName?: string) => {
+    if (!firstName && !lastName) return 'D';
+    return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase();
+  };
+
+  const getDisplayName = () => {
+    if (profile?.first_name || profile?.last_name) {
+      return `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+    }
+    return user?.email?.split('@')[0] || 'Designer';
+  };
+
+  const calculateProfileCompletion = () => {
+    if (!designerProfile || !profile) return 0;
+    
+    const fields = [
+      profile.first_name,
+      profile.last_name,
+      designerProfile.bio,
+      designerProfile.specialty,
+      designerProfile.hourly_rate > 0,
+      designerProfile.skills?.length > 0,
+      designerProfile.portfolio_images?.length > 0,
+      designerProfile.location
+    ];
+    
+    const completedFields = fields.filter(Boolean).length;
+    return Math.round((completedFields / fields.length) * 100);
+  };
+
+  const uniqueClients = new Set(completedBookings.map(booking => booking.customer_id)).size;
 
   const handleLogout = async () => {
     try {
@@ -134,25 +200,31 @@ export default function DesignerDashboard() {
               </div>
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
-                  <span className="text-white/80 text-sm font-medium">Online</span>
+                  <div className={`w-3 h-3 rounded-full ${designerProfile?.is_online ? 'bg-green-400 animate-pulse' : 'bg-gray-400'}`}></div>
+                  <span className="text-white/80 text-sm font-medium">
+                    {designerProfile?.is_online ? 'Online' : 'Offline'}
+                  </span>
                 </div>
                 <Bell className="w-5 h-5 text-white/80" />
                 <Popover>
                   <PopoverTrigger asChild>
                     <button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
-                      <span className="text-white font-semibold text-sm">VB</span>
+                      <span className="text-white font-semibold text-sm">
+                        {getInitials(profile?.first_name, profile?.last_name)}
+                      </span>
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-64 p-0" align="end">
                     <div className="p-4">
                       <div className="flex items-center space-x-3 mb-3">
                         <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                          <span className="text-primary font-semibold text-sm">VB</span>
+                          <span className="text-primary font-semibold text-sm">
+                            {getInitials(profile?.first_name, profile?.last_name)}
+                          </span>
                         </div>
                         <div>
-                          <p className="font-semibold text-foreground">Vb Bn</p>
-                          <p className="text-sm text-muted-foreground">lvbn200@gmail.com</p>
+                          <p className="font-semibold text-foreground">{getDisplayName()}</p>
+                          <p className="text-sm text-muted-foreground">{user?.email}</p>
                         </div>
                       </div>
                       <Separator className="my-3" />
@@ -305,7 +377,9 @@ export default function DesignerDashboard() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-600 mb-1 font-medium">Total Earnings</p>
-                      <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">$0.00</p>
+                      <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                        ${totalEarnings.toFixed(2)}
+                      </p>
                       <Link to="/designer-dashboard/earnings" className="text-sm text-green-600 hover:text-green-700 flex items-center mt-3 font-medium group">
                         View earnings report
                         <TrendingUp className="w-3 h-3 ml-1 transition-transform group-hover:translate-x-1" />
@@ -323,7 +397,7 @@ export default function DesignerDashboard() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-600 mb-1 font-medium">Total Clients</p>
-                      <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">{completedBookings.length}</p>
+                      <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">{uniqueClients}</p>
                       <p className="text-sm text-blue-600 mt-3 font-medium">{upcomingBookings.length} upcoming bookings</p>
                     </div>
                     <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
@@ -339,10 +413,14 @@ export default function DesignerDashboard() {
                     <div>
                       <p className="text-sm text-gray-600 mb-1 font-medium">Avg. Rating</p>
                       <div className="flex items-center space-x-2 mb-3">
-                        <p className="text-3xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">0.0</p>
+                        <p className="text-3xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
+                          {designerProfile?.rating?.toFixed(1) || '0.0'}
+                        </p>
                         <Star className="w-6 h-6 text-yellow-400 fill-current" />
                       </div>
-                      <p className="text-sm text-yellow-600 font-medium">From 0 completed sessions</p>
+                      <p className="text-sm text-yellow-600 font-medium">
+                        From {designerProfile?.reviews_count || 0} completed sessions
+                      </p>
                     </div>
                     <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
                       <Star className="w-8 h-8 text-white" />
@@ -357,7 +435,7 @@ export default function DesignerDashboard() {
                     <div>
                       <p className="text-sm text-gray-600 mb-1 font-medium">Completion Rate</p>
                       <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                        {completedBookings.length > 0 ? '100' : '0'}%
+                        {designerProfile?.completion_rate || 0}%
                       </p>
                       <p className="text-sm text-purple-600 mt-3 font-medium">{completedBookings.length} completed sessions</p>
                     </div>
@@ -403,16 +481,50 @@ export default function DesignerDashboard() {
                   <CardDescription className="text-teal-100">Your scheduled design sessions</CardDescription>
                 </CardHeader>
                 <CardContent className="p-6">
-                  <div className="text-center py-8">
-                    <div className="w-16 h-16 bg-gradient-to-br from-teal-100 to-cyan-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <CalendarClock className="w-8 h-8 text-teal-500" />
+                  {upcomingBookings.length > 0 ? (
+                    <div className="space-y-4">
+                      {upcomingBookings.slice(0, 3).map((booking) => (
+                        <div key={booking.id} className="bg-gradient-to-r from-teal-50 to-cyan-50 rounded-lg p-4 border border-teal-200">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h4 className="font-semibold text-gray-800">{booking.service}</h4>
+                              <p className="text-sm text-gray-600">
+                                with {booking.customer?.first_name} {booking.customer?.last_name}
+                              </p>
+                              <p className="text-xs text-teal-600 mt-1">
+                                {new Date(booking.scheduled_date).toLocaleDateString()} at{' '}
+                                {new Date(booking.scheduled_date).toLocaleTimeString()}
+                              </p>
+                            </div>
+                            <Badge variant="outline" className="border-teal-200 text-teal-600">
+                              {booking.status}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                      {upcomingBookings.length > 3 && (
+                        <Link 
+                          to="/designer-dashboard/bookings"
+                          className="text-sm text-teal-600 hover:text-teal-700 font-medium block text-center"
+                        >
+                          View all {upcomingBookings.length} upcoming sessions
+                        </Link>
+                      )}
                     </div>
-                    <h3 className="font-bold text-gray-800 text-lg mb-2">No Upcoming Sessions</h3>
-                    <p className="text-gray-600 mb-6">You don't have any design sessions scheduled.</p>
-                    <Button className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white border-0 transition-all duration-300 hover:scale-105">
-                      Update Availability
-                    </Button>
-                  </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <div className="w-16 h-16 bg-gradient-to-br from-teal-100 to-cyan-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <CalendarClock className="w-8 h-8 text-teal-500" />
+                      </div>
+                      <h3 className="font-bold text-gray-800 text-lg mb-2">No Upcoming Sessions</h3>
+                      <p className="text-gray-600 mb-6">You don't have any design sessions scheduled.</p>
+                      <Link to="/designer-dashboard/availability">
+                        <Button className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white border-0 transition-all duration-300 hover:scale-105">
+                          Update Availability
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -430,7 +542,9 @@ export default function DesignerDashboard() {
                       <p className="text-sm text-gray-600">Average response to bookings</p>
                     </div>
                   </div>
-                  <p className="text-3xl font-bold bg-gradient-to-r from-amber-600 to-yellow-600 bg-clip-text text-transparent mb-2">0 min</p>
+                  <p className="text-3xl font-bold bg-gradient-to-r from-amber-600 to-yellow-600 bg-clip-text text-transparent mb-2">
+                    {designerProfile?.response_time || '1 hour'}
+                  </p>
                   <p className="text-sm text-amber-600 font-medium">Respond faster to get more bookings</p>
                 </CardContent>
               </Card>
@@ -462,11 +576,18 @@ export default function DesignerDashboard() {
                       <p className="text-sm text-gray-600">Complete to attract more clients</p>
                     </div>
                   </div>
-                  <p className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent mb-2">85%</p>
+                  <p className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent mb-2">
+                    {calculateProfileCompletion()}%
+                  </p>
                   <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
-                    <div className="bg-gradient-to-r from-emerald-500 to-green-500 h-3 rounded-full transition-all duration-500" style={{ width: '85%' }}></div>
+                    <div 
+                      className="bg-gradient-to-r from-emerald-500 to-green-500 h-3 rounded-full transition-all duration-500" 
+                      style={{ width: `${calculateProfileCompletion()}%` }}
+                    ></div>
                   </div>
-                  <p className="text-sm text-emerald-600 font-medium">Almost there! Complete your profile</p>
+                  <p className="text-sm text-emerald-600 font-medium">
+                    {calculateProfileCompletion() === 100 ? 'Profile Complete!' : 'Almost there! Complete your profile'}
+                  </p>
                 </CardContent>
               </Card>
             </div>
