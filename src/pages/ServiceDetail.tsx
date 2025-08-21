@@ -33,7 +33,7 @@ interface ServiceFAQ {
   question: string;
   answer: string;
   created_at: string;
-  updated_at: string;
+  updated_at?: string; // Make this optional since it might not be returned
 }
 
 interface ServiceDetail {
@@ -126,10 +126,13 @@ export default function ServiceDetail() {
           ...pkg,
           tier: pkg.tier as 'basic' | 'standard' | 'premium'
         })),
-        service_faqs: data.service_faqs || [],
+        service_faqs: data.service_faqs.map((faq: any) => ({
+          ...faq,
+          updated_at: faq.updated_at || faq.created_at // Fallback to created_at if updated_at is missing
+        })) || [],
         designer: {
           ...data.designer,
-          profile: data.designer.profiles
+          profiles: data.designer.profiles
         }
       };
 
@@ -376,7 +379,7 @@ export default function ServiceDetail() {
           service={{
             id: service.id,
             title: service.title,
-            package: selectedPackage
+            selectedPackage: selectedPackage
           }}
         />
       )}
