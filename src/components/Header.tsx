@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -38,7 +39,7 @@ export default function Header() {
 
   const getDashboardLink = () => {
     if (profile?.is_admin) return '/admin-dashboard';
-    if (profile?.role === 'designer' || profile?.user_type === 'designer') return '/designer-dashboard';
+    if (profile?.user_type === 'designer') return '/designer-dashboard';
     return '/customer-dashboard';
   };
 

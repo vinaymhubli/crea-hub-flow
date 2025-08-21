@@ -12,6 +12,8 @@ interface Profile {
   rate_per_minute?: number;
   created_at: string;
   updated_at: string;
+  is_admin?: boolean;
+  role?: string;
 }
 
 interface AuthContextType {

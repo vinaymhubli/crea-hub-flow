@@ -41,7 +41,7 @@ import DesignerServices from "./pages/DesignerServices"
 import CallSession from "./pages/CallSession"
 import AIAssistant from "./pages/AIAssistant"
 import NotFound from "./pages/NotFound"
-import ProtectedRoute from "./components/ProtectedRoute"
+import { ProtectedRoute } from "./components/ProtectedRoute"
 import Header from "./components/Header"
 import Footer from "./components/Footer"
 import "./App.css"
@@ -73,116 +73,116 @@ function App() {
                   
                   {/* Protected Admin Routes */}
                   <Route path="/admin-dashboard" element={
-                    <ProtectedRoute requireAdmin>
+                    <ProtectedRoute>
                       <AdminDashboard />
                     </ProtectedRoute>
                   } />
                   <Route path="/admin/designer-verification" element={
-                    <ProtectedRoute requireAdmin>
+                    <ProtectedRoute>
                       <DesignerVerification />
                     </ProtectedRoute>
                   } />
                   <Route path="/admin/session-control" element={
-                    <ProtectedRoute requireAdmin>
+                    <ProtectedRoute>
                       <SessionControl />
                     </ProtectedRoute>
                   } />
                   <Route path="/admin/designer-availability" element={
-                    <ProtectedRoute requireAdmin>
+                    <ProtectedRoute>
                       <AdminDesignerAvailability />
                     </ProtectedRoute>
                   } />
                   
                   {/* Protected Customer Routes */}
                   <Route path="/customer-dashboard" element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requireUserType="client">
                       <CustomerDashboard />
                     </ProtectedRoute>
                   } />
                   <Route path="/customer-dashboard/profile" element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requireUserType="client">
                       <CustomerProfile />
                     </ProtectedRoute>
                   } />
                   <Route path="/customer-dashboard/bookings" element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requireUserType="client">
                       <CustomerBookings />
                     </ProtectedRoute>
                   } />
                   <Route path="/customer-dashboard/wallet" element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requireUserType="client">
                       <CustomerWallet />
                     </ProtectedRoute>
                   } />
                   <Route path="/customer-dashboard/messages" element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requireUserType="client">
                       <CustomerMessages />
                     </ProtectedRoute>
                   } />
                   <Route path="/customer-dashboard/notifications" element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requireUserType="client">
                       <CustomerNotifications />
                     </ProtectedRoute>
                   } />
                   <Route path="/customer-dashboard/settings" element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requireUserType="client">
                       <CustomerSettings />
                     </ProtectedRoute>
                   } />
                   <Route path="/customer-dashboard/recent-designers" element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requireUserType="client">
                       <CustomerRecentDesigners />
                     </ProtectedRoute>
                   } />
                   
                   {/* Protected Designer Routes */}
                   <Route path="/designer-dashboard" element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requireUserType="designer">
                       <DesignerDashboard />
                     </ProtectedRoute>
                   } />
                   <Route path="/designer-dashboard/profile" element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requireUserType="designer">
                       <DesignerProfile />
                     </ProtectedRoute>
                   } />
                   <Route path="/designer-dashboard/portfolio" element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requireUserType="designer">
                       <DesignerPortfolio />
                     </ProtectedRoute>
                   } />
                   <Route path="/designer-dashboard/bookings" element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requireUserType="designer">
                       <DesignerBookings />
                     </ProtectedRoute>
                   } />
                   <Route path="/designer-dashboard/services" element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requireUserType="designer">
                       <DesignerServices />
                     </ProtectedRoute>
                   } />
                   <Route path="/designer-dashboard/messages" element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requireUserType="designer">
                       <DesignerMessages />
                     </ProtectedRoute>
                   } />
                   <Route path="/designer-dashboard/availability" element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requireUserType="designer">
                       <DesignerAvailability />
                     </ProtectedRoute>
                   } />
                   <Route path="/designer-dashboard/earnings" element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requireUserType="designer">
                       <DesignerEarnings />
                     </ProtectedRoute>
                   } />
                   <Route path="/designer-dashboard/history" element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requireUserType="designer">
                       <DesignerSessionHistory />
                     </ProtectedRoute>
                   } />
                   <Route path="/designer-dashboard/settings" element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requireUserType="designer">
                       <DesignerSettings />
                     </ProtectedRoute>
                   } />
