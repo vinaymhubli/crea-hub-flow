@@ -14,7 +14,8 @@ import {
   TrendingUp,
   CalendarClock,
   Bell,
-  LogOut
+  LogOut,
+  Package
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRealtimeBookings } from '@/hooks/useRealtimeBookings';
@@ -41,6 +42,7 @@ import { Separator } from "@/components/ui/separator";
 const sidebarItems = [
   { title: "Dashboard", url: "/designer-dashboard", icon: LayoutDashboard },
   { title: "Profile", url: "/designer-dashboard/profile", icon: User },
+  { title: "Services", url: "/designer-dashboard/services", icon: Package },
   { title: "Portfolio", url: "/designer-dashboard/portfolio", icon: FolderOpen },
   { title: "Bookings", url: "/designer-dashboard/bookings", icon: Calendar },
   { title: "Messages", url: "/designer-dashboard/messages", icon: MessageSquare },
@@ -163,6 +165,13 @@ export default function DesignerDashboard() {
                           Dashboard
                         </Link>
                         <Link 
+                          to="/designer-dashboard/services" 
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                        >
+                          <Package className="w-4 h-4 mr-3" />
+                          Services
+                        </Link>
+                        <Link 
                           to="/designer-dashboard/earnings" 
                           className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
                         >
@@ -195,8 +204,21 @@ export default function DesignerDashboard() {
           <div className="p-6 space-y-8">
             {/* Quick Actions */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Link to="/designer-dashboard/services" className="group">
+                <div className="relative overflow-hidden bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl p-6 h-32 transition-all duration-300 hover:scale-105 hover:shadow-xl animate-fade-in">
+                  <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full"></div>
+                  <div className="relative z-10 flex flex-col justify-between h-full text-white">
+                    <Package className="w-8 h-8 mb-2" />
+                    <div>
+                      <h3 className="font-bold text-lg">Manage Services</h3>
+                      <p className="text-white/80 text-sm">Create & edit offerings</p>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+
               <Link to="/designer-dashboard/bookings" className="group">
-                <div className="relative overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl p-6 h-32 transition-all duration-300 hover:scale-105 hover:shadow-xl animate-fade-in">
+                <div className="relative overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl p-6 h-32 transition-all duration-300 hover:scale-105 hover:shadow-xl animate-fade-in" style={{animationDelay: '0.1s'}}>
                   <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full"></div>
                   <div className="relative z-10 flex flex-col justify-between h-full text-white">
                     <Calendar className="w-8 h-8 mb-2" />
@@ -209,26 +231,13 @@ export default function DesignerDashboard() {
               </Link>
 
               <Link to="/designer-dashboard/portfolio" className="group">
-                <div className="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 h-32 transition-all duration-300 hover:scale-105 hover:shadow-xl animate-fade-in" style={{animationDelay: '0.1s'}}>
+                <div className="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 h-32 transition-all duration-300 hover:scale-105 hover:shadow-xl animate-fade-in" style={{animationDelay: '0.2s'}}>
                   <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full"></div>
                   <div className="relative z-10 flex flex-col justify-between h-full text-white">
                     <FolderOpen className="w-8 h-8 mb-2" />
                     <div>
                       <h3 className="font-bold text-lg">Update Portfolio</h3>
                       <p className="text-white/80 text-sm">Showcase your work</p>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-
-              <Link to="/designer-dashboard/availability" className="group">
-                <div className="relative overflow-hidden bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl p-6 h-32 transition-all duration-300 hover:scale-105 hover:shadow-xl animate-fade-in" style={{animationDelay: '0.2s'}}>
-                  <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full"></div>
-                  <div className="relative z-10 flex flex-col justify-between h-full text-white">
-                    <Clock className="w-8 h-8 mb-2" />
-                    <div>
-                      <h3 className="font-bold text-lg">Set Availability</h3>
-                      <p className="text-white/80 text-sm">Manage your schedule</p>
                     </div>
                   </div>
                 </div>

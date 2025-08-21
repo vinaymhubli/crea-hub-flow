@@ -1,0 +1,692 @@
+
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { toast } from 'sonner';
+import { 
+  Plus, 
+  Edit, 
+  Trash2, 
+  Eye, 
+  Star, 
+  DollarSign, 
+  Clock, 
+  Package,
+  Tag,
+  Image as ImageIcon
+} from 'lucide-react';
+
+interface Service {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  tags: string[];
+  price: number;
+  currency: string;
+  delivery_time_days: number;
+  revisions: number;
+  is_active: boolean;
+  rating: number;
+  reviews_count: number;
+  cover_image_url: string;
+  gallery_urls: string[];
+  created_at: string;
+  updated_at: string;
+  packages?: ServicePackage[];
+}
+
+interface ServicePackage {
+  id: string;
+  tier: 'basic' | 'standard' | 'premium';
+  title: string;
+  description: string;
+  price: number;
+  delivery_time_days: number;
+  revisions: number;
+  features: string[];
+}
+
+// Dummy data for rich UI experience
+const dummyServices: Service[] = [
+  {
+    id: 'dummy-1',
+    title: 'Professional Logo Design',
+    description: 'I will create a stunning professional logo for your brand with unlimited revisions',
+    category: 'Logo Design',
+    tags: ['logo', 'branding', 'business'],
+    price: 25.00,
+    currency: 'USD',
+    delivery_time_days: 3,
+    revisions: 3,
+    is_active: true,
+    rating: 4.8,
+    reviews_count: 47,
+    cover_image_url: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400',
+    gallery_urls: ['https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400'],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'dummy-2',
+    title: 'Modern Website Design',
+    description: 'Complete website design with modern UI/UX principles and responsive layout',
+    category: 'Web Design',
+    tags: ['website', 'ui/ux', 'responsive'],
+    price: 150.00,
+    currency: 'USD',
+    delivery_time_days: 7,
+    revisions: 2,
+    is_active: true,
+    rating: 4.9,
+    reviews_count: 23,
+    cover_image_url: 'https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?w=400',
+    gallery_urls: ['https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?w=400'],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }
+];
+
+const categories = [
+  'Logo Design', 'Web Design', 'UI/UX Design', 'Mobile App Design', 
+  'Branding', 'Print Design', 'Illustration', 'Other'
+];
+
+export default function DesignerServices() {
+  const { user } = useAuth();
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editingService, setEditingService] = useState<Service | null>(null);
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    category: '',
+    tags: '',
+    price: 0,
+    delivery_time_days: 3,
+    revisions: 1,
+    cover_image_url: '',
+    gallery_urls: ''
+  });
+
+  const [packages, setPackages] = useState({
+    basic: { title: 'Basic', description: '', price: 0, delivery_time_days: 3, revisions: 1, features: [''] },
+    standard: { title: 'Standard', description: '', price: 0, delivery_time_days: 5, revisions: 2, features: ['', ''] },
+    premium: { title: 'Premium', description: '', price: 0, delivery_time_days: 7, revisions: 3, features: ['', '', ''] }
+  });
+
+  useEffect(() => {
+    fetchServices();
+  }, [user]);
+
+  const fetchServices = async () => {
+    if (!user) return;
+    
+    try {
+      // First get the designer record
+      const { data: designer } = await supabase
+        .from('designers')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (designer) {
+        const { data: servicesData, error } = await supabase
+          .from('services')
+          .select(`
+            *,
+            service_packages (*)
+          `)
+          .eq('designer_id', designer.id)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        setServices(servicesData || []);
+      } else {
+        // Show dummy data if no designer profile exists yet
+        setServices(dummyServices);
+      }
+    } catch (error) {
+      console.error('Error fetching services:', error);
+      // Fallback to dummy data for rich UI
+      setServices(dummyServices);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateService = async () => {
+    if (!user || !formData.title.trim()) {
+      toast.error('Please fill in required fields');
+      return;
+    }
+
+    try {
+      // Get designer ID first
+      const { data: designer } = await supabase
+        .from('designers')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!designer) {
+        toast.error('Designer profile not found');
+        return;
+      }
+
+      const { data: service, error } = await supabase
+        .from('services')
+        .insert({
+          designer_id: designer.id,
+          title: formData.title,
+          description: formData.description,
+          category: formData.category || 'Other',
+          tags: formData.tags.split(',').map(t => t.trim()).filter(t => t),
+          price: formData.price,
+          delivery_time_days: formData.delivery_time_days,
+          revisions: formData.revisions,
+          cover_image_url: formData.cover_image_url,
+          gallery_urls: formData.gallery_urls.split(',').map(u => u.trim()).filter(u => u)
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Create packages if they have data
+      const packageData = [];
+      Object.entries(packages).forEach(([tier, pkg]) => {
+        if (pkg.price > 0) {
+          packageData.push({
+            service_id: service.id,
+            tier,
+            title: pkg.title,
+            description: pkg.description,
+            price: pkg.price,
+            delivery_time_days: pkg.delivery_time_days,
+            revisions: pkg.revisions,
+            features: pkg.features.filter(f => f.trim())
+          });
+        }
+      });
+
+      if (packageData.length > 0) {
+        await supabase.from('service_packages').insert(packageData);
+      }
+
+      toast.success('Service created successfully!');
+      setCreateDialogOpen(false);
+      resetForm();
+      fetchServices();
+    } catch (error) {
+      console.error('Error creating service:', error);
+      toast.error('Failed to create service');
+    }
+  };
+
+  const handleToggleActive = async (service: Service) => {
+    if (service.id.startsWith('dummy-')) {
+      toast.info('This is demo data - create a real service to enable this feature');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('services')
+        .update({ is_active: !service.is_active })
+        .eq('id', service.id);
+
+      if (error) throw error;
+
+      setServices(prev => prev.map(s => 
+        s.id === service.id ? { ...s, is_active: !s.is_active } : s
+      ));
+
+      toast.success(`Service ${service.is_active ? 'deactivated' : 'activated'}`);
+    } catch (error) {
+      console.error('Error updating service:', error);
+      toast.error('Failed to update service');
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      title: '',
+      description: '',
+      category: '',
+      tags: '',
+      price: 0,
+      delivery_time_days: 3,
+      revisions: 1,
+      cover_image_url: '',
+      gallery_urls: ''
+    });
+    setPackages({
+      basic: { title: 'Basic', description: '', price: 0, delivery_time_days: 3, revisions: 1, features: [''] },
+      standard: { title: 'Standard', description: '', price: 0, delivery_time_days: 5, revisions: 2, features: ['', ''] },
+      premium: { title: 'Premium', description: '', price: 0, delivery_time_days: 7, revisions: 3, features: ['', '', ''] }
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">My Services</h1>
+            <p className="text-gray-600">Manage your service offerings</p>
+          </div>
+        </div>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map(i => (
+            <Card key={i} className="animate-pulse">
+              <div className="h-48 bg-gray-200 rounded-t-lg"></div>
+              <CardContent className="p-4">
+                <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+            My Services
+          </h1>
+          <p className="text-gray-600 mt-2">Create and manage your service offerings</p>
+        </div>
+        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700">
+              <Plus className="w-4 h-4 mr-2" />
+              Create Service
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Create New Service</DialogTitle>
+            </DialogHeader>
+            
+            <Tabs defaultValue="basic" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="basic">Basic Info</TabsTrigger>
+                <TabsTrigger value="packages">Packages</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="basic" className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="title">Service Title *</Label>
+                    <Input
+                      id="title"
+                      value={formData.title}
+                      onChange={(e) => setFormData({...formData, title: e.target.value})}
+                      placeholder="I will create a professional logo design..."
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="category">Category</Label>
+                    <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map(cat => (
+                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    placeholder="Describe what you'll deliver..."
+                    rows={4}
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="price">Starting Price ($)</Label>
+                    <Input
+                      id="price"
+                      type="number"
+                      min="5"
+                      step="5"
+                      value={formData.price}
+                      onChange={(e) => setFormData({...formData, price: parseFloat(e.target.value) || 0})}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="delivery">Delivery (days)</Label>
+                    <Input
+                      id="delivery"
+                      type="number"
+                      min="1"
+                      value={formData.delivery_time_days}
+                      onChange={(e) => setFormData({...formData, delivery_time_days: parseInt(e.target.value) || 1})}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="revisions">Revisions</Label>
+                    <Input
+                      id="revisions"
+                      type="number"
+                      min="0"
+                      value={formData.revisions}
+                      onChange={(e) => setFormData({...formData, revisions: parseInt(e.target.value) || 0})}
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="tags">Tags (comma-separated)</Label>
+                  <Input
+                    id="tags"
+                    value={formData.tags}
+                    onChange={(e) => setFormData({...formData, tags: e.target.value})}
+                    placeholder="logo, branding, business, modern"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="cover">Cover Image URL</Label>
+                  <Input
+                    id="cover"
+                    value={formData.cover_image_url}
+                    onChange={(e) => setFormData({...formData, cover_image_url: e.target.value})}
+                    placeholder="https://example.com/image.jpg"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="gallery">Gallery URLs (comma-separated)</Label>
+                  <Input
+                    id="gallery"
+                    value={formData.gallery_urls}
+                    onChange={(e) => setFormData({...formData, gallery_urls: e.target.value})}
+                    placeholder="https://example.com/img1.jpg, https://example.com/img2.jpg"
+                  />
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="packages" className="space-y-6">
+                {Object.entries(packages).map(([tier, pkg]) => (
+                  <Card key={tier}>
+                    <CardHeader>
+                      <CardTitle className="capitalize">{tier} Package</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label>Package Title</Label>
+                          <Input
+                            value={pkg.title}
+                            onChange={(e) => setPackages({...packages, [tier]: {...pkg, title: e.target.value}})}
+                          />
+                        </div>
+                        <div>
+                          <Label>Price ($)</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="5"
+                            value={pkg.price}
+                            onChange={(e) => setPackages({...packages, [tier]: {...pkg, price: parseFloat(e.target.value) || 0}})}
+                          />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <Label>Description</Label>
+                        <Textarea
+                          value={pkg.description}
+                          onChange={(e) => setPackages({...packages, [tier]: {...pkg, description: e.target.value}})}
+                          rows={2}
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label>Delivery (days)</Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            value={pkg.delivery_time_days}
+                            onChange={(e) => setPackages({...packages, [tier]: {...pkg, delivery_time_days: parseInt(e.target.value) || 1}})}
+                          />
+                        </div>
+                        <div>
+                          <Label>Revisions</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            value={pkg.revisions}
+                            onChange={(e) => setPackages({...packages, [tier]: {...pkg, revisions: parseInt(e.target.value) || 0}})}
+                          />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <Label>Features</Label>
+                        {pkg.features.map((feature, idx) => (
+                          <Input
+                            key={idx}
+                            value={feature}
+                            onChange={(e) => {
+                              const newFeatures = [...pkg.features];
+                              newFeatures[idx] = e.target.value;
+                              setPackages({...packages, [tier]: {...pkg, features: newFeatures}});
+                            }}
+                            placeholder={`Feature ${idx + 1}`}
+                            className="mb-2"
+                          />
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </TabsContent>
+            </Tabs>
+            
+            <div className="flex justify-end space-x-4 pt-4 border-t">
+              <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleCreateService} className="bg-gradient-to-r from-green-600 to-blue-600">
+                Create Service
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <Package className="w-6 h-6 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Total Services</p>
+                <p className="text-2xl font-bold">{services.length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Eye className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Active Services</p>
+                <p className="text-2xl font-bold">{services.filter(s => s.is_active).length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                <Star className="w-6 h-6 text-yellow-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Avg Rating</p>
+                <p className="text-2xl font-bold">
+                  {services.length > 0 
+                    ? (services.reduce((acc, s) => acc + s.rating, 0) / services.length).toFixed(1)
+                    : '0.0'
+                  }
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                <DollarSign className="w-6 h-6 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Starting From</p>
+                <p className="text-2xl font-bold">
+                  ${services.length > 0 ? Math.min(...services.map(s => s.price)).toFixed(0) : '0'}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Services Grid */}
+      {services.length === 0 ? (
+        <Card className="p-12 text-center">
+          <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-gray-600 mb-2">No Services Yet</h3>
+          <p className="text-gray-500 mb-6">Create your first service to start attracting clients</p>
+          <Button onClick={() => setCreateDialogOpen(true)} className="bg-gradient-to-r from-green-600 to-blue-600">
+            <Plus className="w-4 h-4 mr-2" />
+            Create Your First Service
+          </Button>
+        </Card>
+      ) : (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {services.map((service) => (
+            <Card key={service.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+              <div className="relative">
+                <div className="h-48 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                  {service.cover_image_url ? (
+                    <img 
+                      src={service.cover_image_url} 
+                      alt={service.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <ImageIcon className="w-16 h-16 text-gray-400" />
+                  )}
+                </div>
+                <div className="absolute top-3 right-3">
+                  <Badge variant={service.is_active ? "default" : "secondary"}>
+                    {service.is_active ? "Active" : "Inactive"}
+                  </Badge>
+                </div>
+                {service.id.startsWith('dummy-') && (
+                  <div className="absolute top-3 left-3">
+                    <Badge variant="outline" className="bg-white/90">
+                      Demo
+                    </Badge>
+                  </div>
+                )}
+              </div>
+              
+              <CardContent className="p-6">
+                <h3 className="font-semibold text-lg mb-2 line-clamp-1">{service.title}</h3>
+                <p className="text-gray-600 text-sm mb-3 line-clamp-2">{service.description}</p>
+                
+                <div className="flex items-center justify-between mb-3">
+                  <Badge variant="outline">{service.category}</Badge>
+                  <div className="flex items-center space-x-1">
+                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    <span className="text-sm font-medium">{service.rating}</span>
+                    <span className="text-xs text-gray-500">({service.reviews_count})</span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-1">
+                    <DollarSign className="w-4 h-4 text-green-600" />
+                    <span className="font-semibold text-green-600">${service.price}</span>
+                  </div>
+                  <div className="flex items-center space-x-1 text-sm text-gray-600">
+                    <Clock className="w-4 h-4" />
+                    <span>{service.delivery_time_days}d delivery</span>
+                  </div>
+                </div>
+                
+                <div className="flex flex-wrap gap-1 mb-4">
+                  {service.tags.slice(0, 3).map((tag, idx) => (
+                    <Badge key={idx} variant="outline" className="text-xs">
+                      <Tag className="w-3 h-3 mr-1" />
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+                
+                <Separator className="my-4" />
+                
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleToggleActive(service)}
+                    className="flex-1"
+                  >
+                    {service.is_active ? 'Deactivate' : 'Activate'}
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <Eye className="w-4 h-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

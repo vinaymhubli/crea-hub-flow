@@ -270,6 +270,156 @@ export type Database = {
         }
         Relationships: []
       }
+      service_faqs: {
+        Row: {
+          answer: string
+          created_at: string
+          id: string
+          question: string
+          service_id: string
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          id?: string
+          question: string
+          service_id: string
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          id?: string
+          question?: string
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_faqs_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_packages: {
+        Row: {
+          created_at: string
+          delivery_time_days: number
+          description: string | null
+          features: string[]
+          id: string
+          price: number
+          revisions: number
+          service_id: string
+          tier: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          delivery_time_days: number
+          description?: string | null
+          features?: string[]
+          id?: string
+          price: number
+          revisions?: number
+          service_id: string
+          tier: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          delivery_time_days?: number
+          description?: string | null
+          features?: string[]
+          id?: string
+          price?: number
+          revisions?: number
+          service_id?: string
+          tier?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_packages_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      services: {
+        Row: {
+          category: string
+          cover_image_url: string | null
+          created_at: string
+          currency: string
+          delivery_time_days: number
+          description: string | null
+          designer_id: string
+          gallery_urls: string[]
+          id: string
+          is_active: boolean
+          price: number
+          rating: number
+          reviews_count: number
+          revisions: number
+          tags: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          cover_image_url?: string | null
+          created_at?: string
+          currency?: string
+          delivery_time_days?: number
+          description?: string | null
+          designer_id: string
+          gallery_urls?: string[]
+          id?: string
+          is_active?: boolean
+          price: number
+          rating?: number
+          reviews_count?: number
+          revisions?: number
+          tags?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          cover_image_url?: string | null
+          created_at?: string
+          currency?: string
+          delivery_time_days?: number
+          description?: string | null
+          designer_id?: string
+          gallery_urls?: string[]
+          id?: string
+          is_active?: boolean
+          price?: number
+          rating?: number
+          reviews_count?: number
+          revisions?: number
+          tags?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_designer_fk"
+            columns: ["designer_id"]
+            isOneToOne: false
+            referencedRelation: "designers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wallet_transactions: {
         Row: {
           amount: number
