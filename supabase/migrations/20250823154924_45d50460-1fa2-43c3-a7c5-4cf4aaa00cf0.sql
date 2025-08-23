@@ -1,0 +1,5 @@
+-- Insert sample service packages for the existing service
+INSERT INTO service_packages (service_id, tier, title, description, price, delivery_time_days, revisions, features) VALUES
+('3c1155fe-fde2-4c28-860a-e75cabeb4411', 'basic', 'Basic Web Design', 'Essential web design package with core features', 299.00, 5, 2, ARRAY['Homepage design', 'Responsive layout', 'Basic SEO optimization', '2 revisions included']),
+('3c1155fe-fde2-4c28-860a-e75cabeb4411', 'standard', 'Standard Web Design', 'Complete web design solution with enhanced features', 599.00, 7, 3, ARRAY['Multi-page design', 'Responsive layout', 'Advanced SEO optimization', 'Contact form integration', 'Social media integration', '3 revisions included']),
+('3c1155fe-fde2-4c28-860a-e75cabeb4411', 'premium', 'Premium Web Design', 'Full-featured web design with premium services', 888.00, 10, 5, ARRAY['Complete website design', 'E-commerce integration', 'Advanced animations', 'Performance optimization', 'Content management system', '30-day support', '5 revisions included']);
