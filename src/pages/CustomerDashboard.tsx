@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   User, 
@@ -27,110 +27,123 @@ import { useRealtimeBookings } from '@/hooks/useRealtimeBookings';
 import { RealtimeSessionIndicator } from '@/components/RealtimeSessionIndicator';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 
-const sidebarItems = [
-  { title: "Dashboard", url: "/customer-dashboard", icon: LayoutDashboard },
-  { title: "Find Designer", url: "/designers", icon: Search },
-  { title: "My Bookings", url: "/customer-dashboard/bookings", icon: Calendar },
-  { title: "Messages", url: "/customer-dashboard/messages", icon: MessageCircle },
-  { title: "Recent Designers", url: "/customer-dashboard/recent-designers", icon: Users },
-  { title: "Wallet", url: "/customer-dashboard/wallet", icon: Wallet },
-  { title: "Notifications", url: "/customer-dashboard/notifications", icon: Bell },
-  { title: "Profile", url: "/customer-dashboard/profile", icon: User },
-  { title: "Settings", url: "/customer-dashboard/settings", icon: Settings },
-];
-
-const recentDesigners = [
-  { name: "Emma Thompson", rating: 4.9, specialty: "Logo & Brand Identity", initials: "EM", color: "bg-blue-500" },
-  { name: "Marcus Chen", rating: 4.7, specialty: "UI/UX Design", initials: "MA", color: "bg-purple-500" },
-  { name: "Sophie Williams", rating: 4.8, specialty: "Illustration", initials: "SO", color: "bg-green-500", online: true },
-];
-
-const recentProjects = [
-  { 
-    title: "Company Rebrand", 
-    designer: "Emma Thompson", 
-    date: "7/29/2025", 
-    image: "/placeholder.svg" 
-  },
-  { 
-    title: "Website Banner Design", 
-    designer: "Marcus Chen", 
-    date: "7/22/2025", 
-    image: "/placeholder.svg" 
-  },
-];
-
-function CustomerSidebar() {
-  const location = useLocation();
-  const currentPath = location.pathname;
-
-  const isActive = (path: string) => currentPath === path;
-
-  return (
-    <Sidebar collapsible="icon">
-      <SidebarContent className="bg-white border-r border-gray-200">
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-white font-semibold text-sm">VB</span>
-            </div>
-            <div>
-              <p className="font-semibold text-gray-900">Viaan Bindra</p>
-              <p className="text-sm text-gray-500">Customer</p>
-            </div>
-          </div>
-        </div>
-        
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {sidebarItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <Link 
-                      to={item.url} 
-                      className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
-                        isActive(item.url) 
-                          ? 'bg-gradient-to-r from-green-50 to-blue-50 text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-blue-600 border-r-2 border-gradient-to-b from-green-500 to-blue-500' 
-                          : 'text-gray-700 hover:bg-gray-50'
-                      }`}
-                    >
-                      <item.icon className={`w-5 h-5 ${isActive(item.url) ? 'text-green-600' : ''}`} />
-                      <span className="font-medium">{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
-  );
-}
+// Use the shared CustomerSidebar component
+import { CustomerSidebar } from '@/components/CustomerSidebar';
 
 export default function CustomerDashboard() {
-  const { signOut } = useAuth();
+  const { signOut, user, profile } = useAuth();
   const { activeSession, getUpcomingBookings, getCompletedBookings, loading } = useRealtimeBookings();
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [recentDesigners, setRecentDesigners] = useState([]);
+  const [recentProjects, setRecentProjects] = useState([]);
   
   const upcomingBookings = getUpcomingBookings();
   const completedBookings = getCompletedBookings();
+
+  useEffect(() => {
+    if (user) {
+      fetchWalletBalance();
+      fetchRecentDesigners();
+      fetchRecentProjects();
+    }
+  }, [user]);
+
+  const fetchWalletBalance = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_wallet_balance', { user_uuid: user.id });
+      if (error) throw error;
+      setWalletBalance(data || 0);
+    } catch (error) {
+      console.error('Error fetching wallet balance:', error);
+    }
+  };
+
+  const fetchRecentDesigners = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .select(`
+          designer_id,
+          designers (
+            id,
+            specialty,
+            rating,
+            profiles (
+              first_name,
+              last_name,
+              avatar_url
+            )
+          )
+        `)
+        .eq('customer_id', user.id)
+        .limit(3);
+      
+      if (error) throw error;
+      
+      const uniqueDesigners = data?.reduce((acc, booking) => {
+        if (booking.designers && !acc.find(d => d.id === booking.designers.id)) {
+          acc.push({
+            id: booking.designers.id,
+            name: `${booking.designers.profiles?.first_name} ${booking.designers.profiles?.last_name}`,
+            rating: booking.designers.rating || 4.5,
+            specialty: booking.designers.specialty || 'Design',
+            initials: `${booking.designers.profiles?.first_name?.[0] || 'D'}${booking.designers.profiles?.last_name?.[0] || 'R'}`,
+            avatar_url: booking.designers.profiles?.avatar_url
+          });
+        }
+        return acc;
+      }, []) || [];
+      
+      setRecentDesigners(uniqueDesigners);
+    } catch (error) {
+      console.error('Error fetching recent designers:', error);
+    }
+  };
+
+  const fetchRecentProjects = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .select(`
+          id,
+          service,
+          created_at,
+          designers (
+            profiles (
+              first_name,
+              last_name
+            )
+          )
+        `)
+        .eq('customer_id', user.id)
+        .eq('status', 'completed')
+        .order('created_at', { ascending: false })
+        .limit(2);
+      
+      if (error) throw error;
+      
+      const projects = data?.map(booking => ({
+        title: booking.service || 'Design Project',
+        designer: `${booking.designers?.profiles?.first_name} ${booking.designers?.profiles?.last_name}`,
+        date: new Date(booking.created_at).toLocaleDateString(),
+        image: "/placeholder.svg"
+      })) || [];
+      
+      setRecentProjects(projects);
+    } catch (error) {
+      console.error('Error fetching recent projects:', error);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -139,6 +152,15 @@ export default function CustomerDashboard() {
       console.error('Error signing out:', error);
     }
   };
+
+  const userDisplayName = profile?.first_name && profile?.last_name 
+    ? `${profile.first_name} ${profile.last_name}`
+    : user?.email || 'Customer';
+
+  const userInitials = profile?.first_name && profile?.last_name 
+    ? `${profile.first_name[0]}${profile.last_name[0]}`
+    : user?.email ? user.email.substring(0, 2).toUpperCase()
+    : 'CU';
 
   return (
     <SidebarProvider>
@@ -152,7 +174,7 @@ export default function CustomerDashboard() {
               <div className="flex items-center space-x-4">
                 <SidebarTrigger className="text-white hover:bg-white/20" />
                 <div>
-                  <h1 className="text-2xl font-bold text-white">Customer Dashboard</h1>
+                  <h1 className="text-2xl font-bold text-white">Welcome back, {profile?.first_name || 'Customer'}!</h1>
                   <p className="text-white/80">Explore amazing designs and connect with talented designers</p>
                 </div>
               </div>
@@ -165,18 +187,18 @@ export default function CustomerDashboard() {
                 <Popover>
                   <PopoverTrigger asChild>
                     <button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
-                      <span className="text-white font-semibold text-sm">VB</span>
+                      <span className="text-white font-semibold text-sm">{userInitials}</span>
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-64 p-0" align="end">
                     <div className="p-4">
                       <div className="flex items-center space-x-3 mb-3">
                         <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                          <span className="text-primary font-semibold text-sm">VB</span>
+                          <span className="text-primary font-semibold text-sm">{userInitials}</span>
                         </div>
                         <div>
-                          <p className="font-semibold text-foreground">Viaan Bindra</p>
-                          <p className="text-sm text-muted-foreground">customer@example.com</p>
+                          <p className="font-semibold text-foreground">{userDisplayName}</p>
+                          <p className="text-sm text-muted-foreground">{user?.email}</p>
                         </div>
                       </div>
                       <Separator className="my-3" />
@@ -322,7 +344,7 @@ export default function CustomerDashboard() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-600 mb-1 font-medium">Wallet Balance</p>
-                      <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">$120.00</p>
+                      <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">${walletBalance.toFixed(2)}</p>
                       <Link to="/customer-dashboard/wallet" className="text-sm text-green-600 hover:text-green-700 flex items-center mt-3 font-medium group">
                         Manage wallet
                         <TrendingUp className="w-3 h-3 ml-1 transition-transform group-hover:translate-x-1" />

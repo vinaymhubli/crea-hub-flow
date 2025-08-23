@@ -5,8 +5,28 @@ import Footer from '../components/Footer';
 import DesignerGrid from '../components/DesignerGrid';
 import FilterSidebar from '../components/FilterSidebar';
 
+export interface FilterState {
+  searchTerm: string;
+  priceRange: [number, number];
+  selectedSkills: string[];
+  selectedCategories: string[];
+  selectedRating: number | null;
+  isOnlineOnly: boolean;
+  isAvailableNow: boolean;
+}
+
 const Designers = () => {
   const [showFilters, setShowFilters] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState<FilterState>({
+    searchTerm: '',
+    priceRange: [0, 200],
+    selectedSkills: [],
+    selectedCategories: [],
+    selectedRating: null,
+    isOnlineOnly: false,
+    isAvailableNow: false,
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
@@ -38,6 +58,8 @@ const Designers = () => {
                   <input
                     type="text"
                     placeholder="Search designers by name, skill, or specialty..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full pl-12 pr-4 py-4 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm bg-background"
                   />
                 </div>
@@ -50,7 +72,12 @@ const Designers = () => {
                   <span>🔍</span>
                   <span>Filters</span>
                 </button>
-                <button className="flex items-center space-x-2 px-6 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors">
+                <button 
+                  onClick={() => {
+                    setFilters(prev => ({ ...prev, searchTerm }));
+                  }}
+                  className="flex items-center space-x-2 px-6 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors"
+                >
                   <span>🔍</span>
                   <span>Search</span>
                 </button>
@@ -60,10 +87,10 @@ const Designers = () => {
           
           <div className="flex flex-col lg:flex-row gap-8">
             <div className={`lg:w-1/4 ${showFilters ? 'block' : 'hidden lg:block'}`}>
-              <FilterSidebar />
+              <FilterSidebar filters={filters} onFiltersChange={setFilters} />
             </div>
             <div className="lg:w-3/4">
-              <DesignerGrid />
+              <DesignerGrid filters={filters} />
             </div>
           </div>
         </div>

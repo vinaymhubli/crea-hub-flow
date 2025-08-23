@@ -82,13 +82,15 @@ export default function Services() {
     }
   };
 
-  const categories = ['Logo Design', 'Web Design', 'Branding', 'Print Design', 'Mobile App', 'Illustration'];
+  // Generate dynamic categories from services
+  const categories = [...new Set(services.map(service => service.category))].filter(Boolean);
 
   const filteredServices = services.filter(service => {
     const matchesSearch = service.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          service.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          service.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesCategory = selectedCategory === '' || selectedCategory === 'all' || service.category === selectedCategory;
+    const matchesCategory = selectedCategory === '' || selectedCategory === 'all' || 
+                           service.category?.toLowerCase() === selectedCategory?.toLowerCase();
     return matchesSearch && matchesCategory;
   });
 

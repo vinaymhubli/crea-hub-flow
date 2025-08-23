@@ -1,11 +1,13 @@
 
 import React, { useState } from 'react';
+import { FilterState } from '../pages/Designers';
 
-const FilterSidebar = () => {
-  const [priceRange, setPriceRange] = useState([0, 200]);
-  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedRating, setSelectedRating] = useState<number | null>(null);
+interface FilterSidebarProps {
+  filters: FilterState;
+  onFiltersChange: (filters: FilterState) => void;
+}
+
+const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFiltersChange }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const categories = [
@@ -25,29 +27,37 @@ const FilterSidebar = () => {
   ];
 
   const toggleSkill = (skill: string) => {
-    if (selectedSkills.includes(skill)) {
-      setSelectedSkills(selectedSkills.filter(s => s !== skill));
-    } else {
-      setSelectedSkills([...selectedSkills, skill]);
-    }
+    const newSkills = filters.selectedSkills.includes(skill)
+      ? filters.selectedSkills.filter(s => s !== skill)
+      : [...filters.selectedSkills, skill];
+    onFiltersChange({ ...filters, selectedSkills: newSkills });
   };
 
   const toggleCategory = (category: string) => {
-    if (selectedCategories.includes(category)) {
-      setSelectedCategories(selectedCategories.filter(c => c !== category));
-    } else {
-      setSelectedCategories([...selectedCategories, category]);
-    }
+    const newCategories = filters.selectedCategories.includes(category)
+      ? filters.selectedCategories.filter(c => c !== category)
+      : [...filters.selectedCategories, category];
+    onFiltersChange({ ...filters, selectedCategories: newCategories });
   };
 
   const clearAllFilters = () => {
-    setPriceRange([0, 200]);
-    setSelectedSkills([]);
-    setSelectedCategories([]);
-    setSelectedRating(null);
+    onFiltersChange({
+      searchTerm: '',
+      priceRange: [0, 200],
+      selectedSkills: [],
+      selectedCategories: [],
+      selectedRating: null,
+      isOnlineOnly: false,
+      isAvailableNow: false,
+    });
   };
 
-  const hasActiveFilters = selectedSkills.length > 0 || selectedCategories.length > 0 || selectedRating !== null || priceRange[1] < 200;
+  const hasActiveFilters = filters.selectedSkills.length > 0 || 
+                          filters.selectedCategories.length > 0 || 
+                          filters.selectedRating !== null || 
+                          filters.priceRange[1] < 200 ||
+                          filters.isOnlineOnly ||
+                          filters.isAvailableNow;
 
   return (
     <div className="bg-card rounded-2xl shadow-sm border border-border sticky top-6 overflow-hidden">
@@ -67,7 +77,7 @@ const FilterSidebar = () => {
         {hasActiveFilters && (
           <div className="mt-3 flex items-center justify-between">
             <span className="text-sm text-green-600 font-medium">
-              {selectedSkills.length + selectedCategories.length + (selectedRating ? 1 : 0)} active filters
+              {filters.selectedSkills.length + filters.selectedCategories.length + (filters.selectedRating ? 1 : 0)} active filters
             </span>
             <button
               onClick={clearAllFilters}
@@ -89,10 +99,10 @@ const FilterSidebar = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="bg-muted px-3 py-2 rounded-lg">
-                  <span className="text-sm font-medium text-foreground">${priceRange[0]}</span>
+                  <span className="text-sm font-medium text-foreground">${filters.priceRange[0]}</span>
                 </div>
                 <div className="bg-muted px-3 py-2 rounded-lg">
-                  <span className="text-sm font-medium text-foreground">${priceRange[1]}+</span>
+                  <span className="text-sm font-medium text-foreground">${filters.priceRange[1]}+</span>
                 </div>
               </div>
               <div className="relative">
@@ -100,8 +110,8 @@ const FilterSidebar = () => {
                   type="range"
                   min="0"
                   max="200"
-                  value={priceRange[1]}
-                  onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
+                  value={filters.priceRange[1]}
+                  onChange={(e) => onFiltersChange({ ...filters, priceRange: [filters.priceRange[0], parseInt(e.target.value)] })}
                   className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer"
                 />
               </div>
@@ -119,7 +129,7 @@ const FilterSidebar = () => {
                   <div className="flex items-center space-x-3">
                     <input
                       type="checkbox"
-                      checked={selectedCategories.includes(category.name)}
+                      checked={filters.selectedCategories.includes(category.name)}
                       onChange={() => toggleCategory(category.name)}
                       className="w-4 h-4 text-green-600 border-border rounded focus:ring-green-500"
                     />
@@ -144,7 +154,7 @@ const FilterSidebar = () => {
                   key={skill}
                   onClick={() => toggleSkill(skill)}
                   className={`px-3 py-2 text-sm rounded-xl border transition-all duration-200 ${
-                    selectedSkills.includes(skill)
+                    filters.selectedSkills.includes(skill)
                       ? 'bg-green-100 border-green-300 text-green-700'
                       : 'bg-background border-border text-foreground hover:border-green-200 hover:bg-green-50'
                   }`}
@@ -167,8 +177,8 @@ const FilterSidebar = () => {
                     type="radio"
                     name="rating"
                     value={rating}
-                    checked={selectedRating === rating}
-                    onChange={() => setSelectedRating(rating)}
+                    checked={filters.selectedRating === rating}
+                    onChange={() => onFiltersChange({ ...filters, selectedRating: rating })}
                     className="w-4 h-4 text-green-600 border-border focus:ring-green-500"
                   />
                   <div className="ml-3 flex items-center space-x-2">
@@ -198,14 +208,24 @@ const FilterSidebar = () => {
             </h4>
             <div className="space-y-3">
               <label className="flex items-center cursor-pointer group hover:bg-accent -mx-2 px-2 py-2 rounded-lg transition-colors">
-                <input type="checkbox" className="w-4 h-4 text-green-600 border-border rounded focus:ring-green-500" />
+                <input 
+                  type="checkbox" 
+                  checked={filters.isAvailableNow}
+                  onChange={(e) => onFiltersChange({ ...filters, isAvailableNow: e.target.checked })}
+                  className="w-4 h-4 text-green-600 border-border rounded focus:ring-green-500" 
+                />
                 <div className="ml-3 flex items-center space-x-2">
                   <div className="w-2 h-2 bg-green-400 rounded-full"></div>
                   <span className="text-sm text-foreground">Available now</span>
                 </div>
               </label>
               <label className="flex items-center cursor-pointer group hover:bg-accent -mx-2 px-2 py-2 rounded-lg transition-colors">
-                <input type="checkbox" className="w-4 h-4 text-green-600 border-border rounded focus:ring-green-500" />
+                <input 
+                  type="checkbox" 
+                  checked={filters.isOnlineOnly}
+                  onChange={(e) => onFiltersChange({ ...filters, isOnlineOnly: e.target.checked })}
+                  className="w-4 h-4 text-green-600 border-border rounded focus:ring-green-500" 
+                />
                 <span className="ml-3 text-sm text-foreground">Online now</span>
               </label>
             </div>

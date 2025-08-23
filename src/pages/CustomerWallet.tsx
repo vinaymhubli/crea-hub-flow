@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   User, 
@@ -22,6 +22,9 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { CustomerSidebar } from '@/components/CustomerSidebar';
 import {
   Sidebar,
   SidebarContent,
@@ -44,127 +47,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const sidebarItems = [
-  { title: "Dashboard", url: "/customer-dashboard", icon: LayoutDashboard },
-  { title: "Find Designer", url: "/designers", icon: Search },
-  { title: "My Bookings", url: "/customer-dashboard/bookings", icon: Calendar },
-  { title: "Messages", url: "/customer-dashboard/messages", icon: MessageCircle },
-  { title: "Recent Designers", url: "/customer-dashboard/recent-designers", icon: Users },
-  { title: "Wallet", url: "/customer-dashboard/wallet", icon: Wallet },
-  { title: "Notifications", url: "/customer-dashboard/notifications", icon: Bell },
-  { title: "Profile", url: "/customer-dashboard/profile", icon: User },
-  { title: "Settings", url: "/customer-dashboard/settings", icon: Settings },
-];
+// Real data will be fetched from database
 
-const transactions = [
-  {
-    id: 1,
-    type: "deposit",
-    title: "Added funds",
-    date: "Aug 4, 2025",
-    amount: "+$50.00",
-    status: "completed",
-    icon: ArrowDownLeft,
-    color: "bg-gradient-to-r from-green-100 to-teal-100",
-    iconColor: "text-green-600"
-  },
-  {
-    id: 2,
-    type: "payment",
-    title: "Design session",
-    date: "Jul 29, 2025",
-    designer: "Emma Thompson",
-    amount: "-$25.00",
-    status: "completed",
-    icon: ArrowUpRight,
-    color: "bg-gradient-to-r from-teal-100 to-blue-100",
-    iconColor: "text-blue-600"
-  },
-  {
-    id: 3,
-    type: "payment",
-    title: "Logo design session",
-    date: "Jul 22, 2025",
-    designer: "Marcus Chen",
-    amount: "-$15.00",
-    status: "completed",
-    icon: ArrowUpRight,
-    color: "bg-gradient-to-r from-teal-100 to-blue-100",
-    iconColor: "text-blue-600"
-  },
-  {
-    id: 4,
-    type: "refund",
-    title: "Cancelled session refund",
-    date: "Jul 6, 2025",
-    amount: "+$10.00",
-    status: "completed",
-    icon: RefreshCw,
-    color: "bg-yellow-100",
-    iconColor: "text-yellow-600"
-  },
-  {
-    id: 5,
-    type: "deposit",
-    title: "Added funds",
-    date: "Jun 6, 2025",
-    amount: "+$100.00",
-    status: "completed",
-    icon: ArrowDownLeft,
-    color: "bg-gradient-to-r from-green-100 to-teal-100",
-    iconColor: "text-green-600"
-  }
-];
-
-function CustomerSidebar() {
-  const location = useLocation();
-  const currentPath = location.pathname;
-
-  const isActive = (path: string) => currentPath === path;
-
-  return (
-    <Sidebar collapsible="icon">
-      <SidebarContent className="bg-white border-r border-gray-200">
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-white font-semibold text-sm">VB</span>
-            </div>
-            <div>
-              <p className="font-semibold text-gray-900">Viaan Bindra</p>
-              <p className="text-sm text-gray-500">Customer</p>
-            </div>
-          </div>
-        </div>
-        
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {sidebarItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <Link 
-                      to={item.url} 
-                      className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
-                        isActive(item.url) 
-                          ? 'bg-gradient-to-r from-green-50 to-blue-50 text-green-600 border-r-2 border-green-500' 
-                          : 'text-gray-700 hover:bg-gray-50'
-                      }`}
-                    >
-                      <item.icon className="w-5 h-5" />
-                      <span className="font-medium">{item.title}</span>
-                      {isActive(item.url) && <ChevronRight className="w-4 h-4 ml-auto" />}
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
-  );
-}
+// CustomerSidebar is now imported from shared component
 
 function AddFundsModal() {
   const [amount, setAmount] = useState('');
@@ -237,7 +122,60 @@ function AddFundsModal() {
 }
 
 export default function CustomerWallet() {
+  const { user, profile } = useAuth();
   const [activeTab, setActiveTab] = useState("all");
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      fetchWalletData();
+    }
+  }, [user]);
+
+  const fetchWalletData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch wallet balance
+      const { data: balanceData, error: balanceError } = await supabase.rpc('get_wallet_balance', { user_uuid: user.id });
+      if (balanceError) throw balanceError;
+      setWalletBalance(balanceData || 0);
+
+      // Fetch transactions
+      const { data: transactionsData, error: transactionsError } = await supabase
+        .from('wallet_transactions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      
+      if (transactionsError) throw transactionsError;
+      
+      const formattedTransactions = transactionsData?.map(transaction => ({
+        id: transaction.id,
+        type: transaction.transaction_type,
+        title: transaction.description,
+        date: new Date(transaction.created_at).toLocaleDateString(),
+        amount: transaction.transaction_type === 'deposit' || transaction.transaction_type === 'refund' 
+          ? `+$${transaction.amount}` 
+          : `-$${transaction.amount}`,
+        status: transaction.status,
+        icon: transaction.transaction_type === 'deposit' ? ArrowDownLeft : 
+              transaction.transaction_type === 'refund' ? RefreshCw : ArrowUpRight,
+        color: transaction.transaction_type === 'deposit' ? "bg-gradient-to-r from-green-100 to-teal-100" :
+               transaction.transaction_type === 'refund' ? "bg-yellow-100" : "bg-gradient-to-r from-teal-100 to-blue-100",
+        iconColor: transaction.transaction_type === 'deposit' ? "text-green-600" :
+                   transaction.transaction_type === 'refund' ? "text-yellow-600" : "text-blue-600"
+      })) || [];
+      
+      setTransactions(formattedTransactions);
+    } catch (error) {
+      console.error('Error fetching wallet data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredTransactions = transactions.filter(transaction => {
     if (activeTab === "all") return true;
@@ -246,6 +184,15 @@ export default function CustomerWallet() {
     if (activeTab === "refunds") return transaction.type === "refund";
     return true;
   });
+
+  const userDisplayName = profile?.first_name && profile?.last_name 
+    ? `${profile.first_name} ${profile.last_name}`
+    : user?.email || 'Customer';
+
+  const userInitials = profile?.first_name && profile?.last_name 
+    ? `${profile.first_name[0]}${profile.last_name[0]}`
+    : user?.email ? user.email.substring(0, 2).toUpperCase()
+    : 'CU';
 
   return (
     <SidebarProvider>
@@ -269,18 +216,18 @@ export default function CustomerWallet() {
                 <Popover>
                   <PopoverTrigger asChild>
                     <button className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
-                      <span className="text-white font-semibold text-sm">VB</span>
+                          <span className="text-white font-semibold text-sm">{userInitials}</span>
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-64 p-0" align="end">
                     <div className="p-4">
                       <div className="flex items-center space-x-3 mb-3">
                         <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-teal-500 rounded-full flex items-center justify-center">
-                          <span className="text-white font-semibold text-sm">VB</span>
+                          <span className="text-white font-semibold text-sm">{userInitials}</span>
                         </div>
                         <div>
-                          <p className="font-semibold text-foreground">Viaan Bindra</p>
-                          <p className="text-sm text-muted-foreground">customer@example.com</p>
+                          <p className="font-semibold text-foreground">{userDisplayName}</p>
+                          <p className="text-sm text-muted-foreground">{user?.email}</p>
                         </div>
                       </div>
                       <Separator className="my-3" />
@@ -340,7 +287,7 @@ export default function CustomerWallet() {
                 <CardContent>
                   <div className="space-y-4">
                     <div>
-                      <p className="text-4xl font-bold text-foreground mb-2">$120.00</p>
+                      <p className="text-4xl font-bold text-foreground mb-2">${walletBalance.toFixed(2)}</p>
                       <p className="text-muted-foreground">Available for design sessions</p>
                     </div>
                     <div className="flex space-x-3">
@@ -403,8 +350,13 @@ export default function CustomerWallet() {
                     <TabsTrigger value="refunds" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-teal-500 data-[state=active]:text-white">Refunds</TabsTrigger>
                   </TabsList>
                   <TabsContent value={activeTab} className="mt-6">
-                    <div className="space-y-3">
-                      {filteredTransactions.map((transaction) => (
+                    {loading ? (
+                      <div className="flex justify-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {filteredTransactions.length > 0 ? filteredTransactions.map((transaction) => (
                         <div key={transaction.id} className="flex items-center justify-between p-4 border border-teal-200/30 rounded-lg hover:bg-gradient-to-r hover:from-teal-50/50 hover:to-blue-50/50 transition-all duration-300">
                           <div className="flex items-center space-x-4">
                             <div className={`w-12 h-12 ${transaction.color} rounded-full flex items-center justify-center shadow-lg`}>
@@ -441,9 +393,14 @@ export default function CustomerWallet() {
                             </div>
                             <ChevronRight className="w-4 h-4 text-muted-foreground" />
                           </div>
-                        </div>
-                      ))}
-                    </div>
+                          </div>
+                        )) : (
+                          <div className="text-center py-8">
+                            <p className="text-muted-foreground">No transactions found.</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                     <div className="text-center mt-8">
                       <Button variant="outline" className="hover:bg-gradient-to-r hover:from-teal-50 hover:to-blue-100 border-teal-300/50">
                         View All Transactions

@@ -5,8 +5,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { BookingDialog } from './BookingDialog';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { FilterState } from '../pages/Designers';
 
-const DesignerGrid = () => {
+interface DesignerGridProps {
+  filters: FilterState;
+}
+
+const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
   const [sortBy, setSortBy] = useState('rating');
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [designers, setDesigners] = useState([]);
@@ -21,7 +26,7 @@ const DesignerGrid = () => {
 
   useEffect(() => {
     fetchDesigners();
-  }, [sortBy]);
+  }, [sortBy, filters]);
 
   const fetchDesigners = async () => {
     try {
@@ -36,6 +41,27 @@ const DesignerGrid = () => {
             avatar_url
           )
         `);
+
+      // Apply search filter
+      if (filters.searchTerm) {
+        query = query.or(`specialty.ilike.%${filters.searchTerm}%,bio.ilike.%${filters.searchTerm}%,profiles.first_name.ilike.%${filters.searchTerm}%,profiles.last_name.ilike.%${filters.searchTerm}%`);
+      }
+
+      // Apply price filter
+      if (filters.priceRange[1] < 200) {
+        query = query.lte('hourly_rate', filters.priceRange[1]);
+      }
+      query = query.gte('hourly_rate', filters.priceRange[0]);
+
+      // Apply online filter
+      if (filters.isOnlineOnly) {
+        query = query.eq('is_online', true);
+      }
+
+      // Apply rating filter
+      if (filters.selectedRating) {
+        query = query.gte('rating', filters.selectedRating);
+      }
 
       // Apply sorting
       if (sortBy === 'hourly_rate') {
@@ -52,7 +78,26 @@ const DesignerGrid = () => {
       
       if (error) throw error;
       
-      setDesigners(data || []);
+      // Apply client-side filters for skills and categories
+      let filteredData = data || [];
+      
+      if (filters.selectedSkills.length > 0) {
+        filteredData = filteredData.filter(designer => 
+          designer.skills && filters.selectedSkills.some(skill => 
+            designer.skills.includes(skill)
+          )
+        );
+      }
+      
+      if (filters.selectedCategories.length > 0) {
+        filteredData = filteredData.filter(designer => 
+          filters.selectedCategories.some(category => 
+            designer.specialty?.toLowerCase().includes(category.toLowerCase())
+          )
+        );
+      }
+
+      setDesigners(filteredData);
     } catch (error) {
       console.error('Error fetching designers:', error);
       toast.error('Failed to load designers');
