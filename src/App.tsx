@@ -52,13 +52,12 @@ const queryClient = new QueryClient()
 function AppContent() {
   const location = useLocation();
   
-  // Hide header/footer on dashboard and session routes
+  // Hide header/footer only on dashboard and session routes
   const hideGlobalChrome = location.pathname.startsWith('/customer-dashboard') ||
                           location.pathname.startsWith('/designer-dashboard') ||
                           location.pathname.startsWith('/admin') ||
                           location.pathname === '/admin-dashboard' ||
-                          location.pathname.startsWith('/session/') ||
-                          location.pathname.startsWith('/services/');
+                          location.pathname.startsWith('/session/');
   
   return (
     <div className="min-h-screen w-full flex flex-col">
