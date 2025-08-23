@@ -137,7 +137,7 @@ export default function ServiceDetail() {
 
       setService(transformedService);
       // Set the first package as default
-      if (transformedService.packages.length > 0) {
+      if (transformedService.packages?.length > 0) {
         setSelectedPackage(transformedService.packages[0]);
       }
     } catch (error) {
@@ -225,15 +225,15 @@ export default function ServiceDetail() {
                 <CardTitle>Service Packages</CardTitle>
               </CardHeader>
               <CardContent>
-                <Tabs defaultValue={service.packages[0]?.tier || 'basic'} className="w-full">
+                <Tabs defaultValue={service.packages?.[0]?.tier || 'basic'} className="w-full">
                   <TabsList className="grid w-full grid-cols-3">
-                    {service.packages.map((pkg) => (
+                    {service.packages?.map((pkg) => (
                       <TabsTrigger key={pkg.tier} value={pkg.tier} className="capitalize">
                         {pkg.tier}
                       </TabsTrigger>
-                    ))}
+                    )) || []}
                   </TabsList>
-                  {service.packages.map((pkg) => (
+                  {service.packages?.map((pkg) => (
                     <TabsContent key={pkg.tier} value={pkg.tier}>
                       <div className="border rounded-lg p-4">
                         <div className="flex justify-between items-center mb-4">
@@ -256,12 +256,12 @@ export default function ServiceDetail() {
                           </div>
                         </div>
                         <div className="space-y-2">
-                          {pkg.features.map((feature, index) => (
+                          {pkg.features?.map((feature, index) => (
                             <div key={index} className="flex items-center">
                               <Check className="w-4 h-4 text-green-600 mr-2" />
                               <span className="text-sm">{feature}</span>
                             </div>
-                          ))}
+                          )) || []}
                         </div>
                         <BookingDialog
                           designer={{
@@ -322,12 +322,12 @@ export default function ServiceDetail() {
                   <Avatar>
                     <AvatarImage src={service.designer.profiles.avatar_url} />
                     <AvatarFallback>
-                      {service.designer.profiles.first_name[0]}{service.designer.profiles.last_name[0]}
+                      {service.designer.profiles?.first_name?.[0] || 'U'}{service.designer.profiles?.last_name?.[0] || 'N'}
                     </AvatarFallback>
                   </Avatar>
                   <div>
                     <h4 className="font-medium">
-                      {service.designer.profiles.first_name} {service.designer.profiles.last_name}
+                      {service.designer.profiles?.first_name || 'Unknown'} {service.designer.profiles?.last_name || 'User'}
                     </h4>
                     <div className="flex items-center text-sm text-gray-600">
                       <Star className="w-3 h-3 fill-yellow-400 text-yellow-400 mr-1" />
