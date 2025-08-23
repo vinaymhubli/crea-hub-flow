@@ -9,7 +9,7 @@ interface FilterSidebarProps {
   skills: string[];
 }
 
-const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFiltersChange }) => {
+const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFiltersChange, categories, skills }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
 
