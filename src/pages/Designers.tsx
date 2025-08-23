@@ -100,54 +100,53 @@ const Designers = () => {
             </p>
           </div>
 
-              <div className="bg-card rounded-2xl shadow-sm border border-border p-6 mb-8">
-                <div className="flex flex-col lg:flex-row gap-4">
-                  <div className="flex-1">
-                    <div className="relative">
-                      <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground text-lg">🔍</span>
-                      <input
-                        type="text"
-                        placeholder="Search designers by name, skill, or specialty..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-12 pr-4 py-4 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm bg-background"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => setShowFilters(!showFilters)}
-                      className="lg:hidden flex items-center space-x-2 px-6 py-4 bg-muted text-foreground rounded-xl hover:bg-accent transition-colors"
-                    >
-                      <span>🔍</span>
-                      <span>Filters</span>
-                    </button>
-                    <button 
-                      onClick={() => {
-                        setFilters(prev => ({ ...prev, searchTerm }));
-                      }}
-                      className="flex items-center space-x-2 px-6 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors"
-                    >
-                      <span>🔍</span>
-                      <span>Search</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex flex-col lg:flex-row gap-8">
-                <div className={`lg:w-1/4 ${showFilters ? 'block' : 'hidden lg:block'}`}>
-                  <FilterSidebar 
-                    filters={filters} 
-                    onFiltersChange={setFilters}
-                    categories={categories}
-                    skills={skills}
+          <div className="bg-card rounded-2xl shadow-sm border border-border p-6 mb-8">
+            <div className="flex flex-col lg:flex-row gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground text-lg">🔍</span>
+                  <input
+                    type="text"
+                    placeholder="Search designers by name, skill, or specialty..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-12 pr-4 py-4 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm bg-background"
                   />
                 </div>
-                <div className="lg:w-3/4">
-                  <DesignerGrid filters={filters} />
-                </div>
               </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="lg:hidden flex items-center space-x-2 px-6 py-4 bg-muted text-foreground rounded-xl hover:bg-accent transition-colors"
+                >
+                  <span>🔍</span>
+                  <span>Filters</span>
+                </button>
+                <button 
+                  onClick={() => {
+                    setFilters(prev => ({ ...prev, searchTerm }));
+                  }}
+                  className="flex items-center space-x-2 px-6 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors"
+                >
+                  <span>🔍</span>
+                  <span>Search</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex flex-col lg:flex-row gap-8">
+            <div className={`lg:w-1/4 ${showFilters ? 'block' : 'hidden lg:block'}`}>
+              <FilterSidebar 
+                filters={filters} 
+                onFiltersChange={setFilters}
+                categories={categories}
+                skills={skills}
+              />
+            </div>
+            <div className="lg:w-3/4">
+              <DesignerGrid filters={filters} />
+            </div>
           </div>
         </div>
       </div>
