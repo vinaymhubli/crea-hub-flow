@@ -211,11 +211,20 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
               {/* Left Side - Profile Image */}
               <div className="flex-shrink-0">
                 <div className="relative">
-                  <img 
-                    src={designer.profiles?.avatar_url || `https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face`} 
-                    alt={`${designer.profiles?.first_name} ${designer.profiles?.last_name}`}
-                    className="w-20 h-20 rounded-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-white font-semibold text-xl group-hover:scale-105 transition-transform duration-300 shadow-lg">
+                    {designer.profiles?.avatar_url ? (
+                      <img 
+                        src={designer.profiles.avatar_url} 
+                        alt={`${designer.profiles?.first_name} ${designer.profiles?.last_name}`}
+                        className="w-20 h-20 rounded-full object-cover"
+                      />
+                    ) : (
+                      <span>
+                        {designer.profiles?.first_name?.[0]?.toUpperCase() || 'D'}
+                        {designer.profiles?.last_name?.[0]?.toUpperCase() || 'E'}
+                      </span>
+                    )}
+                  </div>
                   {designer.is_online && (
                     <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-400 rounded-full border-2 border-white flex items-center justify-center">
                       <span className="text-xs text-white font-bold">●</span>
@@ -229,7 +238,9 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
                 <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                   <div className="flex-1">
                     <h3 className="text-xl font-semibold text-foreground group-hover:text-green-600 transition-colors duration-200 mb-1">
-                      {designer.profiles?.first_name} {designer.profiles?.last_name}
+                      {designer.profiles?.first_name && designer.profiles?.last_name 
+                        ? `${designer.profiles.first_name} ${designer.profiles.last_name}` 
+                        : designer.profiles?.email?.split('@')[0] || 'Designer'}
                     </h3>
                     <p className="text-green-600 font-medium text-sm mb-1">{designer.specialty}</p>
                     <p className="text-xs text-muted-foreground mb-2">

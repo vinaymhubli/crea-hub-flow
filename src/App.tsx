@@ -57,7 +57,8 @@ function AppContent() {
                           location.pathname.startsWith('/designer-dashboard') ||
                           location.pathname.startsWith('/admin') ||
                           location.pathname === '/admin-dashboard' ||
-                          location.pathname.startsWith('/session/');
+                          location.pathname.startsWith('/session/') ||
+                          location.pathname === '/designers';
   
   return (
     <div className="min-h-screen w-full flex flex-col">
