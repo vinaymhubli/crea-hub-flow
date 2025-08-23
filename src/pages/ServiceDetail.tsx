@@ -131,7 +131,7 @@ export default function ServiceDetail() {
         })) || [],
         designer: {
           ...data.designer,
-          profiles: data.designer.profiles
+          profiles: data.designer?.profiles || null
         }
       };
 
@@ -267,11 +267,11 @@ export default function ServiceDetail() {
                           designer={{
                             id: service.designer.id,
                             user_id: service.designer.user_id,
-                            first_name: service.designer.profiles.first_name,
-                            last_name: service.designer.profiles.last_name,
+                            first_name: service.designer.profiles?.first_name || 'Unknown',
+                            last_name: service.designer.profiles?.last_name || 'User',
                             hourly_rate: service.designer.hourly_rate,
                             specialization: service.category,
-                            avatar_url: service.designer.profiles.avatar_url
+                            avatar_url: service.designer.profiles?.avatar_url
                           }}
                           service={{
                             id: service.id,
@@ -320,7 +320,7 @@ export default function ServiceDetail() {
               <CardContent>
                 <div className="flex items-center space-x-3 mb-4">
                   <Avatar>
-                    <AvatarImage src={service.designer.profiles.avatar_url} />
+                    <AvatarImage src={service.designer.profiles?.avatar_url} />
                     <AvatarFallback>
                       {service.designer.profiles?.first_name?.[0] || 'U'}{service.designer.profiles?.last_name?.[0] || 'N'}
                     </AvatarFallback>
@@ -335,7 +335,7 @@ export default function ServiceDetail() {
                     </div>
                   </div>
                 </div>
-                <p className="text-sm text-gray-600 mb-4">{service.designer.bio}</p>
+                <p className="text-sm text-gray-600 mb-4">{service.designer.bio || 'No bio available'}</p>
                 <div className="space-y-2 text-sm">
                   <div>Response time: {service.designer.response_time}</div>
                   <div>Hourly rate: ${service.designer.hourly_rate}/hour</div>
@@ -367,11 +367,11 @@ export default function ServiceDetail() {
                     designer={{
                       id: service.designer.id,
                       user_id: service.designer.user_id,
-                      first_name: service.designer.profiles.first_name,
-                      last_name: service.designer.profiles.last_name,
+                      first_name: service.designer.profiles?.first_name || 'Unknown',
+                      last_name: service.designer.profiles?.last_name || 'User',
                       hourly_rate: service.designer.hourly_rate,
                       specialization: service.category,
-                      avatar_url: service.designer.profiles.avatar_url
+                      avatar_url: service.designer.profiles?.avatar_url
                     }}
                     service={{
                       id: service.id,
