@@ -13,6 +13,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { DesignerSidebar } from '@/components/DesignerSidebar';
 import { 
   Plus, 
   Edit, 
@@ -274,22 +276,32 @@ export default function DesignerServices() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-            My Services
-          </h1>
-          <p className="text-gray-600 mt-2">Create and manage your service offerings</p>
-        </div>
-        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Create Service
-            </Button>
-          </DialogTrigger>
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background">
+        <DesignerSidebar />
+        
+        <main className="flex-1">
+          {/* Header */}
+          <header className="bg-gradient-to-r from-green-400 to-blue-500 px-6 py-8">
+            <div className="flex items-center space-x-4">
+              <SidebarTrigger className="text-white hover:bg-white/20" />
+              <div>
+                <h1 className="text-2xl font-bold text-white">My Services</h1>
+                <p className="text-white/80">Create and manage your design services</p>
+              </div>
+            </div>
+          </header>
+
+          <div className="p-6 space-y-6">
+            {/* Create Service Button */}
+            <div className="flex justify-end">
+              <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Service
+                  </Button>
+                </DialogTrigger>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create New Service</DialogTitle>
@@ -489,12 +501,12 @@ export default function DesignerServices() {
               <Button onClick={handleCreateService} className="bg-gradient-to-r from-green-600 to-blue-600">
                 Create Service
               </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
 
-      {/* Stats */}
+          {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardContent className="p-6">
@@ -648,8 +660,11 @@ export default function DesignerServices() {
               </CardContent>
             </Card>
           ))}
-        </div>
-      )}
-    </div>
+          </div>
+        )}
+      </div>
+        </main>
+      </div>
+    </SidebarProvider>
   );
 }
