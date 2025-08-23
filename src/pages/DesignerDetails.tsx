@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Star, MapPin, Clock, MessageCircle, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface DesignerProfile {
   id: string;
@@ -71,7 +72,7 @@ const DesignerDetails: React.FC = () => {
         .from('profiles')
         .select('first_name, last_name, avatar_url, email')
         .eq('user_id', designerData.user_id)
-        .single();
+        .maybeSingle();
 
       if (profileError) {
         console.error('Profile error:', profileError);
@@ -137,11 +138,25 @@ const DesignerDetails: React.FC = () => {
             <div className="flex-1">
               <div className="flex items-start gap-6 mb-6">
                 <div className="relative">
-                  <img
-                    src={designer.avatar_url || `https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face`}
-                    alt={`${designer.first_name} ${designer.last_name}`}
-                    className="w-24 h-24 rounded-full object-cover"
-                  />
+                  <Avatar className="w-24 h-24">
+                    <AvatarImage src={designer.avatar_url} />
+                    <AvatarFallback className="text-lg">
+                      {(() => {
+                        const firstName = designer.first_name || '';
+                        const lastName = designer.last_name || '';
+                        const email = designer.email || '';
+                        
+                        if (firstName && lastName) {
+                          return `${firstName[0]}${lastName[0]}`.toUpperCase();
+                        } else if (firstName) {
+                          return firstName.slice(0, 2).toUpperCase();
+                        } else if (email) {
+                          return email.slice(0, 2).toUpperCase();
+                        }
+                        return 'D';
+                      })()}
+                    </AvatarFallback>
+                  </Avatar>
                   {designer.is_online && (
                     <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-400 rounded-full border-4 border-white flex items-center justify-center">
                       <span className="text-xs text-white font-bold">●</span>
@@ -151,7 +166,20 @@ const DesignerDetails: React.FC = () => {
                 
                 <div className="flex-1">
                   <h1 className="text-3xl font-bold text-foreground mb-2">
-                    {designer.first_name} {designer.last_name}
+                    {(() => {
+                      const firstName = designer.first_name || '';
+                      const lastName = designer.last_name || '';
+                      const email = designer.email || '';
+                      
+                      if (firstName && lastName) {
+                        return `${firstName} ${lastName}`;
+                      } else if (firstName) {
+                        return firstName;
+                      } else if (email) {
+                        return email.split('@')[0];
+                      }
+                      return 'Designer';
+                    })()}
                   </h1>
                   <p className="text-green-600 font-semibold text-lg mb-1">{designer.specialty}</p>
                   <p className="text-sm text-muted-foreground mb-3">
@@ -255,7 +283,17 @@ const DesignerDetails: React.FC = () => {
         {activeTab === 'about' && (
           <Card>
             <CardHeader>
-              <CardTitle>About {designer.first_name}</CardTitle>
+              <CardTitle>About {(() => {
+                const firstName = designer.first_name || '';
+                const email = designer.email || '';
+                
+                if (firstName) {
+                  return firstName;
+                } else if (email) {
+                  return email.split('@')[0];
+                }
+                return 'Designer';
+              })()}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground leading-relaxed">
