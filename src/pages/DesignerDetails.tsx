@@ -25,6 +25,7 @@ interface DesignerProfile {
   first_name?: string;
   last_name?: string;
   avatar_url?: string;
+  email?: string;
 }
 
 interface Service {
@@ -68,7 +69,7 @@ const DesignerDetails: React.FC = () => {
       // Fetch profile data separately
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('first_name, last_name, avatar_url')
+        .select('first_name, last_name, avatar_url, email')
         .eq('user_id', designerData.user_id)
         .single();
 
@@ -81,7 +82,8 @@ const DesignerDetails: React.FC = () => {
         ...designerData,
         first_name: profileData?.first_name,
         last_name: profileData?.last_name,
-        avatar_url: profileData?.avatar_url
+        avatar_url: profileData?.avatar_url,
+        email: profileData?.email
       };
 
       setDesigner(combinedData);
@@ -151,7 +153,10 @@ const DesignerDetails: React.FC = () => {
                   <h1 className="text-3xl font-bold text-foreground mb-2">
                     {designer.first_name} {designer.last_name}
                   </h1>
-                  <p className="text-green-600 font-semibold text-lg mb-3">{designer.specialty}</p>
+                  <p className="text-green-600 font-semibold text-lg mb-1">{designer.specialty}</p>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    {designer.email || 'Email not available'}
+                  </p>
                   
                   <div className="flex flex-wrap items-center gap-4 mb-4">
                     <div className="flex items-center gap-1">

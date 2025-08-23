@@ -60,10 +60,7 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
         query = query.in('id', designerIds);
       }
 
-      // Apply search filter
-      if (filters.searchTerm) {
-        query = query.or(`specialty.ilike.%${filters.searchTerm}%,bio.ilike.%${filters.searchTerm}%,profiles.first_name.ilike.%${filters.searchTerm}%,profiles.last_name.ilike.%${filters.searchTerm}%`);
-      }
+      // Skip DB-side search filter for profiles - will apply client-side later
 
       // Apply price filter
       if (filters.priceRange[1] < 200) {
@@ -101,7 +98,7 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
         (data || []).map(async (designer) => {
           const { data: profile } = await supabase
             .from('profiles')
-            .select('first_name, last_name, avatar_url')
+            .select('first_name, last_name, avatar_url, email')
             .eq('user_id', designer.user_id)
             .single();
           
@@ -112,8 +109,23 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
         })
       );
       
-      // Apply client-side filters for skills
+      // Apply client-side filters
       let filteredData = designersWithProfiles;
+      
+      // Apply search filter client-side
+      if (filters.searchTerm) {
+        filteredData = filteredData.filter(designer => {
+          const searchLower = filters.searchTerm.toLowerCase();
+          return (
+            designer.specialty?.toLowerCase().includes(searchLower) ||
+            designer.bio?.toLowerCase().includes(searchLower) ||
+            designer.profiles?.first_name?.toLowerCase().includes(searchLower) ||
+            designer.profiles?.last_name?.toLowerCase().includes(searchLower) ||
+            designer.profiles?.email?.toLowerCase().includes(searchLower) ||
+            designer.skills?.some(skill => skill.toLowerCase().includes(searchLower))
+          );
+        });
+      }
       
       if (filters.selectedSkills.length > 0) {
         filteredData = filteredData.filter(designer => 
@@ -219,7 +231,10 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
                     <h3 className="text-xl font-semibold text-foreground group-hover:text-green-600 transition-colors duration-200 mb-1">
                       {designer.profiles?.first_name} {designer.profiles?.last_name}
                     </h3>
-                    <p className="text-green-600 font-medium text-sm mb-2">{designer.specialty}</p>
+                    <p className="text-green-600 font-medium text-sm mb-1">{designer.specialty}</p>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      {designer.profiles?.email || 'Email not available'}
+                    </p>
                     
                     {/* Rating */}
                     <div className="flex items-center space-x-2 mb-3">
