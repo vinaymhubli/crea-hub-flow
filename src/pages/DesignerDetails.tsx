@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { BookingDialog } from '@/components/BookingDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Star, MapPin, Clock, MessageCircle, Calendar } from 'lucide-react';
+import { Star, MapPin, Clock, MessageCircle, Calendar, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
@@ -43,6 +43,7 @@ interface Service {
 
 const DesignerDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [designer, setDesigner] = useState<DesignerProfile | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
@@ -131,6 +132,16 @@ const DesignerDetails: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
+        {/* Back Navigation */}
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/designers')}
+          className="mb-6"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Designers
+        </Button>
+
         {/* Header Section */}
         <div className="bg-card rounded-3xl p-8 mb-8 shadow-lg border border-border">
           <div className="flex flex-col lg:flex-row gap-8">
