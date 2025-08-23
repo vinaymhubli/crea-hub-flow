@@ -146,13 +146,15 @@ export default function DesignerMessages() {
   }, [designerId]);
 
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+    
     if (selectedConversation) {
       fetchMessages(selectedConversation.booking_id);
-      setupRealtimeSubscription(selectedConversation.booking_id);
+      cleanup = setupRealtimeSubscription(selectedConversation.booking_id);
     }
+    
     return () => {
-      // Cleanup subscription
-      supabase.removeAllChannels();
+      if (cleanup) cleanup();
     };
   }, [selectedConversation]);
 
@@ -193,30 +195,46 @@ export default function DesignerMessages() {
     try {
       setLoading(true);
       
-      // Get bookings for this designer with customer profiles
-      const { data: bookings, error } = await supabase
+      // First, get all bookings for this designer
+      const { data: bookings, error: bookingsError } = await supabase
         .from('bookings')
-        .select(`
-          id,
-          customer_id,
-          service,
-          status,
-          updated_at,
-          customer:profiles!bookings_customer_id_fkey(
-            first_name,
-            last_name
-          )
-        `)
+        .select('id, customer_id, service, status, updated_at')
         .eq('designer_id', designerId)
         .order('updated_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching bookings:', error);
+      if (bookingsError) {
+        console.error('Error fetching bookings:', bookingsError);
+        toast.error('Failed to load conversations');
         return;
       }
 
-      // For each booking, get the latest message and unread count
-      const conversationPromises = bookings?.map(async (booking) => {
+      if (!bookings || bookings.length === 0) {
+        setConversations([]);
+        return;
+      }
+
+      // Get customer profiles for all unique customer IDs
+      const customerIds = [...new Set(bookings.map(b => b.customer_id))];
+      const { data: customerProfiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('user_id, first_name, last_name')
+        .in('user_id', customerIds);
+
+      if (profilesError) {
+        console.error('Error fetching customer profiles:', profilesError);
+      }
+
+      // Build conversations with customer info and message data
+      const conversationPromises = bookings.map(async (booking) => {
+        // Find customer profile
+        const customerProfile = customerProfiles?.find(p => p.user_id === booking.customer_id);
+        const customerName = customerProfile 
+          ? `${customerProfile.first_name || ''} ${customerProfile.last_name || ''}`.trim() || 'Customer'
+          : 'Customer';
+        const customerInitials = customerProfile 
+          ? `${customerProfile.first_name?.[0] || ''}${customerProfile.last_name?.[0] || ''}` || 'C'
+          : 'C';
+
         // Get latest message
         const { data: latestMessage } = await supabase
           .from('messages')
@@ -224,26 +242,20 @@ export default function DesignerMessages() {
           .eq('booking_id', booking.id)
           .order('created_at', { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
 
-        // Get unread count (messages from customer)
+        // Get unread count (messages from customer that I haven't seen)
         const { count: unreadCount } = await supabase
           .from('messages')
           .select('*', { count: 'exact', head: true })
           .eq('booking_id', booking.id)
           .eq('sender_id', booking.customer_id);
 
-        const customerName = booking.customer 
-          ? `${booking.customer.first_name || ''} ${booking.customer.last_name || ''}`.trim()
-          : 'Unknown Customer';
-
         return {
           booking_id: booking.id,
           customer_id: booking.customer_id,
           customer_name: customerName,
-          customer_initials: booking.customer 
-            ? `${booking.customer.first_name?.[0] || ''}${booking.customer.last_name?.[0] || ''}`
-            : 'UC',
+          customer_initials: customerInitials,
           service: booking.service,
           status: booking.status,
           last_message: latestMessage?.content || 'No messages yet',
@@ -254,10 +266,11 @@ export default function DesignerMessages() {
         };
       });
 
-      const conversationsList = await Promise.all(conversationPromises || []);
+      const conversationsList = await Promise.all(conversationPromises);
       setConversations(conversationsList);
     } catch (error) {
       console.error('Error:', error);
+      toast.error('Failed to load conversations');
     } finally {
       setLoading(false);
     }

@@ -64,13 +64,15 @@ export default function CustomerMessages() {
   }, [user]);
 
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+    
     if (selectedConversation) {
       fetchMessages(selectedConversation.booking_id);
-      setupRealtimeSubscription(selectedConversation.booking_id);
+      cleanup = setupRealtimeSubscription(selectedConversation.booking_id);
     }
+    
     return () => {
-      // Cleanup subscription
-      supabase.removeAllChannels();
+      if (cleanup) cleanup();
     };
   }, [selectedConversation]);
 
@@ -78,75 +80,102 @@ export default function CustomerMessages() {
     try {
       setLoading(true);
       
-      // Get bookings with messages
-      const { data: bookings, error } = await supabase
+      // First, get all bookings for this customer
+      const { data: bookings, error: bookingsError } = await supabase
         .from('bookings')
-        .select(`
-          id,
-          designer_id,
-          designer:designers!inner(
-            rating,
-            is_online,
-            profile:profiles!designers_user_id_fkey(
-              first_name,
-              last_name
-            )
-          ),
-          messages!inner(
-            content,
-            created_at,
-            sender_id
-          )
-        `)
+        .select('id, designer_id')
         .eq('customer_id', user?.id)
-        .order('created_at', { ascending: false });
+        .order('updated_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching conversations:', error);
+      if (bookingsError) {
+        console.error('Error fetching bookings:', bookingsError);
         return;
       }
 
-      // Process bookings to create conversations
-      const conversationMap = new Map<string, Conversation>();
-      
-      bookings?.forEach(booking => {
-        const bookingId = booking.id;
-        const designer = booking.designer;
-        const designerName = designer?.profile 
-          ? `${designer.profile.first_name} ${designer.profile.last_name}`
-          : 'Unknown Designer';
-        
-        if (!conversationMap.has(bookingId)) {
-          // Find the latest message for this booking
-          const latestMessage = booking.messages?.sort((a, b) => 
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-          )[0];
-          
-          // Count unread messages (messages from designer that are newer than user's last read)
-          const unreadCount = booking.messages?.filter(msg => 
-            msg.sender_id !== user?.id
-          ).length || 0;
+      if (!bookings || bookings.length === 0) {
+        setConversations([]);
+        return;
+      }
 
-          conversationMap.set(bookingId, {
-            booking_id: bookingId,
-            designer_id: booking.designer_id,
-            designer_name: designerName,
-            designer_rating: designer?.rating || 0,
-            designer_initials: designer?.profile 
-              ? `${designer.profile.first_name?.[0] || ''}${designer.profile.last_name?.[0] || ''}`
-              : 'UD',
-            designer_online: designer?.is_online || false,
-            last_message: latestMessage?.content || 'No messages yet',
-            last_message_time: latestMessage?.created_at 
-              ? new Date(latestMessage.created_at).toLocaleDateString()
-              : '',
-            unread_count: Math.min(unreadCount, 9) // Cap at 9 for display
-          });
-        }
+      // Get designer info for all unique designer IDs
+      const designerIds = [...new Set(bookings.map(b => b.designer_id))];
+      const { data: designers, error: designersError } = await supabase
+        .from('designers')
+        .select('id, user_id, rating, is_online')
+        .in('id', designerIds);
+
+      if (designersError) {
+        console.error('Error fetching designers:', designersError);
+      }
+
+      // Get designer profiles
+      const designerUserIds = designers?.map(d => d.user_id) || [];
+      const { data: designerProfiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('user_id, first_name, last_name')
+        .in('user_id', designerUserIds);
+
+      if (profilesError) {
+        console.error('Error fetching designer profiles:', profilesError);
+      }
+
+      // Build conversations with designer info and message data
+      const conversationPromises = bookings.map(async (booking) => {
+        // Find designer and profile
+        const designer = designers?.find(d => d.id === booking.designer_id);
+        const designerProfile = designerProfiles?.find(p => p.user_id === designer?.user_id);
+        
+        const designerName = designerProfile 
+          ? `${designerProfile.first_name || ''} ${designerProfile.last_name || ''}`.trim() || 'Designer'
+          : 'Designer';
+        const designerInitials = designerProfile 
+          ? `${designerProfile.first_name?.[0] || ''}${designerProfile.last_name?.[0] || ''}` || 'D'
+          : 'D';
+
+        // Get latest message
+        const { data: latestMessage } = await supabase
+          .from('messages')
+          .select('content, created_at, sender_id')
+          .eq('booking_id', booking.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        // Get unread count (messages from designer that I haven't seen)
+        const { count: unreadCount } = await supabase
+          .from('messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('booking_id', booking.id)
+          .neq('sender_id', user?.id);
+
+        return {
+          booking_id: booking.id,
+          designer_id: booking.designer_id,
+          designer_name: designerName,
+          designer_rating: designer?.rating || 0,
+          designer_initials: designerInitials,
+          designer_online: designer?.is_online || false,
+          last_message: latestMessage?.content || 'No messages yet',
+          last_message_time: latestMessage?.created_at 
+            ? new Date(latestMessage.created_at).toLocaleDateString()
+            : '',
+          unread_count: Math.min(unreadCount || 0, 9)
+        };
       });
 
-      const conversationsList = Array.from(conversationMap.values());
+      const conversationsList = await Promise.all(conversationPromises);
       setConversations(conversationsList);
+      
+      // Check for booking_id in URL params to auto-select conversation
+      const urlParams = new URLSearchParams(window.location.search);
+      const bookingId = urlParams.get('booking_id');
+      if (bookingId) {
+        const conversation = conversationsList.find(c => c.booking_id === bookingId);
+        if (conversation) {
+          setSelectedConversation(conversation);
+          return;
+        }
+      }
       
       if (conversationsList.length > 0 && !selectedConversation) {
         setSelectedConversation(conversationsList[0]);
