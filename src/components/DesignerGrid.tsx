@@ -53,14 +53,7 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
 
       let query = supabase
         .from('designers')
-        .select(`
-          *,
-          profiles!inner(
-            first_name,
-            last_name,
-            avatar_url
-          )
-        `);
+        .select('*');
 
       // Filter by designers who have services in selected categories
       if (designerIds.length > 0) {
@@ -103,8 +96,24 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
       
       if (error) throw error;
       
+      // Fetch profiles for each designer
+      const designersWithProfiles = await Promise.all(
+        (data || []).map(async (designer) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('first_name, last_name, avatar_url')
+            .eq('user_id', designer.user_id)
+            .single();
+          
+          return {
+            ...designer,
+            profiles: profile
+          };
+        })
+      );
+      
       // Apply client-side filters for skills
-      let filteredData = data || [];
+      let filteredData = designersWithProfiles;
       
       if (filters.selectedSkills.length > 0) {
         filteredData = filteredData.filter(designer => 
