@@ -147,7 +147,11 @@ function BookingCard({ booking }: { booking: Booking }) {
           <div className="flex space-x-3 pt-3 border-t">
             {booking.status === 'pending' && (
               <>
-                <Button variant="outline" className="flex-1">
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => window.location.href = `/customer-dashboard/messages?booking_id=${booking.id}`}
+                >
                   <MessageCircle className="w-4 h-4 mr-2" />
                   Message Designer
                 </Button>
@@ -165,7 +169,11 @@ function BookingCard({ booking }: { booking: Booking }) {
                   <Video className="w-4 h-4 mr-2" />
                   Join Session
                 </Button>
-                <Button variant="outline" className="flex-1">
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => window.location.href = `/customer-dashboard/messages?booking_id=${booking.id}`}
+                >
                   <MessageCircle className="w-4 h-4 mr-2" />
                   Message
                 </Button>

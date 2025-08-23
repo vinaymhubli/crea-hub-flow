@@ -157,6 +157,44 @@ export default function ServiceDetail() {
     }
   };
 
+  const handleContactDesigner = async () => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+
+    try {
+      // Check for existing booking with this designer
+      const { data: existingBooking, error } = await supabase
+        .from('bookings')
+        .select('id')
+        .eq('customer_id', user.id)
+        .eq('designer_id', service?.designer.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error checking for existing booking:', error);
+        toast.error('Failed to check existing conversations');
+        return;
+      }
+
+      if (existingBooking) {
+        // Navigate to existing conversation
+        navigate(`/customer-dashboard/messages?booking_id=${existingBooking.id}`);
+      } else {
+        // Prompt user to book first
+        toast.error('Please book a session first to start messaging this designer');
+        // Optionally scroll to booking section
+        document.querySelector('[data-booking-section]')?.scrollIntoView({ behavior: 'smooth' });
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Failed to initiate conversation');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -405,7 +443,11 @@ export default function ServiceDetail() {
                   <div>Hourly rate: ${service.designer.hourly_rate}/hour</div>
                 </div>
                 <Separator className="my-4" />
-                <Button variant="outline" className="w-full">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={handleContactDesigner}
+                >
                   <MessageCircle className="w-4 h-4 mr-2" />
                   Contact Designer
                 </Button>
@@ -413,7 +455,7 @@ export default function ServiceDetail() {
             </Card>
 
             {/* Quick booking */}
-            <Card>
+            <Card data-booking-section>
               <CardHeader>
                 <CardTitle>Quick Order</CardTitle>
               </CardHeader>

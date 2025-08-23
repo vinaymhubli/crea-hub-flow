@@ -66,7 +66,12 @@ export default function CustomerMessages() {
   useEffect(() => {
     if (selectedConversation) {
       fetchMessages(selectedConversation.booking_id);
+      setupRealtimeSubscription(selectedConversation.booking_id);
     }
+    return () => {
+      // Cleanup subscription
+      supabase.removeAllChannels();
+    };
   }, [selectedConversation]);
 
   const fetchConversations = async () => {
@@ -198,6 +203,30 @@ export default function CustomerMessages() {
     } catch (error) {
       console.error('Error:', error);
     }
+  };
+
+  const setupRealtimeSubscription = (bookingId: string) => {
+    const channel = supabase
+      .channel('customer-messages')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `booking_id=eq.${bookingId}`
+        },
+        (payload) => {
+          setMessages(prev => [...prev, payload.new as Message]);
+          // Update conversation list
+          fetchConversations();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   };
 
   const filteredConversations = conversations.filter(conv =>
