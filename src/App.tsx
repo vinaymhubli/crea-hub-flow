@@ -54,7 +54,7 @@ function App() {
       <AuthProvider>
         <TooltipProvider>
           <BrowserRouter>
-            <div className="min-h-screen flex flex-col">
+            <div className="min-h-screen w-full flex flex-col">
               <Header />
               <main className="flex-1">
                 <Routes>
