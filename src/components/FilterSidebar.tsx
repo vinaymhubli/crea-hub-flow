@@ -5,26 +5,13 @@ import { FilterState } from '../pages/Designers';
 interface FilterSidebarProps {
   filters: FilterState;
   onFiltersChange: (filters: FilterState) => void;
+  categories: Array<{ name: string; count: number }>;
+  skills: string[];
 }
 
 const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFiltersChange }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  const categories = [
-    { name: 'UI/UX Design', count: 45 },
-    { name: 'Web Design', count: 38 },
-    { name: 'Mobile App Design', count: 32 },
-    { name: 'Brand Identity', count: 28 },
-    { name: 'Graphic Design', count: 41 },
-    { name: 'Product Design', count: 25 },
-    { name: 'Illustration', count: 19 },
-    { name: 'Animation', count: 15 }
-  ];
-
-  const skills = [
-    'Figma', 'Sketch', 'Adobe XD', 'Photoshop', 'Illustrator', 
-    'InDesign', 'Webflow', 'Framer', 'After Effects', 'Prototyping'
-  ];
 
   const toggleSkill = (skill: string) => {
     const newSkills = filters.selectedSkills.includes(skill)

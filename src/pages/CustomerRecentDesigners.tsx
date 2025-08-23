@@ -1,233 +1,93 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
-  LayoutDashboard, 
-  User, 
-  Calendar, 
-  MessageCircle, 
-  CreditCard,
-  Bell,
-  Settings,
   Search,
   Users,
-  Wallet,
-  ChevronRight,
   Star,
-  LogOut,
-  Filter,
   MapPin,
-  Clock,
+  MessageCircle,
+  Calendar,
   Badge as BadgeIcon,
   Heart,
-  Bookmark
+  Bell,
+  LogOut
 } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CustomerSidebar } from "@/components/CustomerSidebar";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
-const sidebarItems = [
-  { title: "Dashboard", url: "/customer-dashboard", icon: LayoutDashboard },
-  { title: "Find Designer", url: "/designers", icon: Search },
-  { title: "My Bookings", url: "/customer-dashboard/bookings", icon: Calendar },
-  { title: "Messages", url: "/customer-dashboard/messages", icon: MessageCircle },
-  { title: "Recent Designers", url: "/customer-dashboard/recent-designers", icon: Users },
-  { title: "Wallet", url: "/customer-dashboard/wallet", icon: Wallet },
-  { title: "Notifications", url: "/customer-dashboard/notifications", icon: Bell },
-  { title: "Profile", url: "/customer-dashboard/profile", icon: User },
-  { title: "Settings", url: "/customer-dashboard/settings", icon: Settings },
-];
-
-const mockRecentDesigners = [
-  {
-    id: 1,
-    name: "Emma Thompson",
-    specialty: "Logo & Brand Identity",
-    rating: 4.9,
-    reviewsCount: 127,
-    hourlyRate: "$75",
-    location: "San Francisco, CA",
-    avatar: "EM",
-    color: "bg-blue-500",
-    online: true,
-    lastWorked: "2 days ago",
-    projectsCompleted: 3,
-    totalSpent: "$450",
-    skills: ["Logo Design", "Brand Identity", "Print Design"],
-    bio: "Creative designer with 8+ years of experience in brand identity and logo design.",
-    completionRate: 100,
-    responseTime: "1 hour"
-  },
-  {
-    id: 2,
-    name: "Marcus Chen",
-    specialty: "UI/UX Design",
-    rating: 4.7,
-    reviewsCount: 89,
-    hourlyRate: "$85",
-    location: "New York, NY",
-    avatar: "MC",
-    color: "bg-purple-500",
-    online: false,
-    lastWorked: "1 week ago",
-    projectsCompleted: 2,
-    totalSpent: "$340",
-    skills: ["UI Design", "UX Research", "Prototyping"],
-    bio: "Senior UX designer specializing in web and mobile applications.",
-    completionRate: 98,
-    responseTime: "2 hours"
-  },
-  {
-    id: 3,
-    name: "Sophie Williams",
-    specialty: "Illustration",
-    rating: 4.8,
-    reviewsCount: 156,
-    hourlyRate: "$65",
-    location: "Austin, TX",
-    avatar: "SW",
-    color: "bg-green-500",
-    online: true,
-    lastWorked: "3 weeks ago",
-    projectsCompleted: 1,
-    totalSpent: "$195",
-    skills: ["Digital Illustration", "Character Design", "Concept Art"],
-    bio: "Passionate illustrator creating unique visual stories for brands.",
-    completionRate: 100,
-    responseTime: "30 minutes"
-  },
-  {
-    id: 4,
-    name: "Alex Johnson",
-    specialty: "Web Design",
-    rating: 4.6,
-    reviewsCount: 73,
-    hourlyRate: "$70",
-    location: "Seattle, WA",
-    avatar: "AJ",
-    color: "bg-orange-500",
-    online: false,
-    lastWorked: "1 month ago",
-    projectsCompleted: 1,
-    totalSpent: "$280",
-    skills: ["Web Design", "Frontend Development", "Responsive Design"],
-    bio: "Full-stack designer who brings ideas to life through code and design.",
-    completionRate: 95,
-    responseTime: "4 hours"
-  },
-  {
-    id: 5,
-    name: "Rachel Davis",
-    specialty: "Graphic Design",
-    rating: 4.9,
-    reviewsCount: 203,
-    hourlyRate: "$60",
-    location: "Los Angeles, CA",
-    avatar: "RD",
-    color: "bg-pink-500",
-    online: true,
-    lastWorked: "2 months ago",
-    projectsCompleted: 2,
-    totalSpent: "$360",
-    skills: ["Graphic Design", "Social Media Design", "Marketing Materials"],
-    bio: "Creative graphic designer with expertise in marketing and social media.",
-    completionRate: 100,
-    responseTime: "1 hour"
-  }
-];
-
-function CustomerSidebar() {
-  const location = useLocation();
-  const currentPath = location.pathname;
-
-  const isActive = (path: string) => currentPath === path;
-
-  return (
-    <Sidebar collapsible="icon">
-      <SidebarContent className="bg-white border-r border-gray-200">
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-white font-semibold text-sm">VB</span>
-            </div>
-            <div>
-              <p className="font-semibold text-gray-900">Viaan Bindra</p>
-              <p className="text-sm text-gray-500">Customer</p>
-            </div>
-          </div>
-        </div>
-        
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {sidebarItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <Link 
-                      to={item.url} 
-                      className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
-                        isActive(item.url) 
-                          ? 'bg-gradient-to-r from-green-50 to-blue-50 text-green-600 border-r-2 border-green-500' 
-                          : 'text-gray-700 hover:bg-gray-50'
-                      }`}
-                    >
-                      <item.icon className="w-5 h-5" />
-                      <span className="font-medium">{item.title}</span>
-                      {isActive(item.url) && <ChevronRight className="w-4 h-4 ml-auto" />}
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
-  );
+interface RecentDesigner {
+  id: string;
+  user_id: string;
+  specialty: string;
+  hourly_rate: number;
+  location: string;
+  skills: string[];
+  bio: string;
+  is_online: boolean;
+  completion_rate: number;
+  reviews_count: number;
+  rating: number;
+  response_time: string;
+  profile?: {
+    first_name: string;
+    last_name: string;
+    avatar_url: string;
+  };
+  lastWorked?: string;
+  projectsCompleted?: number;
+  totalSpent?: number;
 }
 
-function DesignerCard({ designer }: { designer: any }) {
+function DesignerCard({ designer }: { designer: RecentDesigner }) {
+  const designerName = designer.profile 
+    ? `${designer.profile.first_name} ${designer.profile.last_name}`
+    : 'Unknown Designer';
+
+  const designerInitials = designer.profile 
+    ? `${designer.profile.first_name?.[0] || ''}${designer.profile.last_name?.[0] || ''}`
+    : 'UD';
+
   return (
     <Card className="hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-white via-gray-50 to-green-50/30 backdrop-blur-sm hover:scale-[1.02]">
       <CardContent className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center space-x-4">
             <div className="w-16 h-16 bg-gradient-to-br from-green-400 via-teal-500 to-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-lg relative shadow-lg">
-              {designer.avatar}
-              {designer.online && (
+              {designerInitials}
+              {designer.is_online && (
                 <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow-sm animate-pulse"></div>
               )}
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900 text-lg">{designer.name}</h3>
+              <h3 className="font-semibold text-gray-900 text-lg">{designerName}</h3>
               <p className="text-gray-600 font-medium">{designer.specialty}</p>
               <div className="flex items-center space-x-1 mt-1">
                 <Star className="w-4 h-4 text-yellow-400 fill-current" />
                 <span className="text-sm font-medium text-gray-700">{designer.rating}</span>
-                <span className="text-sm text-gray-500">({designer.reviewsCount} reviews)</span>
+                <span className="text-sm text-gray-500">({designer.reviews_count} reviews)</span>
               </div>
             </div>
           </div>
           <div className="text-right">
-            <p className="font-semibold text-gray-900 bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">{designer.hourlyRate}/hour</p>
-            <div className="flex items-center space-x-1 mt-1">
-              <MapPin className="w-3 h-3 text-gray-400" />
-              <span className="text-sm text-gray-500">{designer.location}</span>
-            </div>
+            <p className="font-semibold text-gray-900 bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">${designer.hourly_rate}/hour</p>
+            {designer.location && (
+              <div className="flex items-center space-x-1 mt-1">
+                <MapPin className="w-3 h-3 text-gray-400" />
+                <span className="text-sm text-gray-500">{designer.location}</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -235,38 +95,43 @@ function DesignerCard({ designer }: { designer: any }) {
           <p className="text-sm text-gray-600">{designer.bio}</p>
           
           <div className="flex flex-wrap gap-2">
-            {designer.skills.map((skill, index) => (
+            {designer.skills?.slice(0, 3).map((skill, index) => (
               <Badge key={index} variant="secondary" className="text-xs">
                 {skill}
               </Badge>
             ))}
+            {designer.skills?.length > 3 && (
+              <Badge variant="outline" className="text-xs">
+                +{designer.skills.length - 3} more
+              </Badge>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-gray-500">Last worked</p>
-              <p className="font-medium text-gray-900">{designer.lastWorked}</p>
+              <p className="font-medium text-gray-900">{designer.lastWorked || 'N/A'}</p>
             </div>
             <div>
               <p className="text-gray-500">Projects completed</p>
-              <p className="font-medium text-gray-900">{designer.projectsCompleted}</p>
+              <p className="font-medium text-gray-900">{designer.projectsCompleted || 0}</p>
             </div>
             <div>
               <p className="text-gray-500">Total spent</p>
-              <p className="font-medium text-gray-900">{designer.totalSpent}</p>
+              <p className="font-medium text-gray-900">${designer.totalSpent || 0}</p>
             </div>
             <div>
               <p className="text-gray-500">Response time</p>
-              <p className="font-medium text-gray-900">{designer.responseTime}</p>
+              <p className="font-medium text-gray-900">{designer.response_time}</p>
             </div>
           </div>
 
           <div className="flex items-center space-x-4 text-sm">
             <div className="flex items-center space-x-1">
               <BadgeIcon className="w-4 h-4 text-green-500" />
-              <span className="text-gray-600">{designer.completionRate}% completion rate</span>
+              <span className="text-gray-600">{designer.completion_rate}% completion rate</span>
             </div>
-            {designer.online && (
+            {designer.is_online && (
               <div className="flex items-center space-x-1">
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                 <span className="text-green-600">Online now</span>
@@ -309,16 +174,91 @@ export default function CustomerRecentDesigners() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('recent');
   const [filterBy, setFilterBy] = useState('all');
+  const [recentDesigners, setRecentDesigners] = useState<RecentDesigner[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
-  const filteredDesigners = mockRecentDesigners
-    .filter(designer => 
-      designer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      designer.specialty.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      designer.skills.some(skill => skill.toLowerCase().includes(searchQuery.toLowerCase()))
-    )
+  useEffect(() => {
+    if (user) {
+      fetchRecentDesigners();
+    }
+  }, [user]);
+
+  const fetchRecentDesigners = async () => {
+    try {
+      setLoading(true);
+      
+      // Get distinct designers from user's bookings
+      const { data: bookings, error } = await supabase
+        .from('bookings')
+        .select(`
+          designer_id,
+          total_amount,
+          created_at,
+          status,
+          designer:designers!inner(
+            *,
+            profile:profiles!designers_user_id_fkey(
+              first_name,
+              last_name,
+              avatar_url
+            )
+          )
+        `)
+        .eq('customer_id', user?.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching recent designers:', error);
+        return;
+      }
+
+      // Process bookings to get unique designers with stats
+      const designerMap = new Map<string, RecentDesigner>();
+      
+      bookings?.forEach(booking => {
+        const designerId = booking.designer_id;
+        const designer = booking.designer;
+        
+        if (!designerMap.has(designerId)) {
+          designerMap.set(designerId, {
+            ...designer,
+            lastWorked: new Date(booking.created_at).toLocaleDateString(),
+            projectsCompleted: 0,
+            totalSpent: 0
+          });
+        }
+        
+        const existing = designerMap.get(designerId)!;
+        existing.projectsCompleted = (existing.projectsCompleted || 0) + 1;
+        existing.totalSpent = (existing.totalSpent || 0) + Number(booking.total_amount);
+        
+        // Update last worked to most recent
+        if (new Date(booking.created_at) > new Date(existing.lastWorked!)) {
+          existing.lastWorked = new Date(booking.created_at).toLocaleDateString();
+        }
+      });
+
+      setRecentDesigners(Array.from(designerMap.values()));
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredDesigners = recentDesigners
     .filter(designer => {
-      if (filterBy === 'online') return designer.online;
-      if (filterBy === 'favorites') return false; // Add favorites logic
+      const designerName = designer.profile 
+        ? `${designer.profile.first_name} ${designer.profile.last_name}`
+        : '';
+      return designerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+             designer.specialty.toLowerCase().includes(searchQuery.toLowerCase()) ||
+             designer.skills?.some(skill => skill.toLowerCase().includes(searchQuery.toLowerCase()));
+    })
+    .filter(designer => {
+      if (filterBy === 'online') return designer.is_online;
+      if (filterBy === 'favorites') return false; // Add favorites logic later
       return true;
     })
     .sort((a, b) => {
@@ -326,13 +266,29 @@ export default function CustomerRecentDesigners() {
         case 'rating':
           return b.rating - a.rating;
         case 'price':
-          return parseInt(a.hourlyRate.replace('$', '')) - parseInt(b.hourlyRate.replace('$', ''));
+          return a.hourly_rate - b.hourly_rate;
         case 'projects':
-          return b.projectsCompleted - a.projectsCompleted;
+          return (b.projectsCompleted || 0) - (a.projectsCompleted || 0);
         default:
           return 0; // Keep original order for 'recent'
       }
     });
+
+  if (loading) {
+    return (
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full bg-gray-50">
+          <CustomerSidebar />
+          <main className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+              <p className="mt-4 text-muted-foreground">Loading recent designers...</p>
+            </div>
+          </main>
+        </div>
+      </SidebarProvider>
+    );
+  }
 
   return (
     <SidebarProvider>
@@ -355,18 +311,18 @@ export default function CustomerRecentDesigners() {
                 <Popover>
                   <PopoverTrigger asChild>
                     <button className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-all duration-200 ring-2 ring-white/30">
-                      <span className="text-white font-semibold text-sm">VB</span>
+                      <span className="text-white font-semibold text-sm">U</span>
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-64 p-0" align="end">
                     <div className="p-4">
                       <div className="flex items-center space-x-3 mb-3">
                         <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-                          <span className="text-white font-semibold text-sm">VB</span>
+                          <span className="text-white font-semibold text-sm">U</span>
                         </div>
                         <div>
-                          <p className="font-semibold text-gray-900">Viaan Bindra</p>
-                          <p className="text-sm text-gray-500">customer@example.com</p>
+                          <p className="font-semibold text-gray-900">User</p>
+                          <p className="text-sm text-gray-500">{user?.email}</p>
                         </div>
                       </div>
                       <Separator className="my-3" />
@@ -375,24 +331,8 @@ export default function CustomerRecentDesigners() {
                           to="/customer-dashboard" 
                           className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 rounded-md transition-colors"
                         >
-                          <LayoutDashboard className="w-4 h-4 mr-3" />
                           Dashboard
                         </Link>
-                        <Link 
-                          to="/customer-dashboard/wallet" 
-                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 rounded-md transition-colors"
-                        >
-                          <Wallet className="w-4 h-4 mr-3" />
-                          Wallet
-                        </Link>
-                        <Link 
-                          to="/customer-dashboard/profile" 
-                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 rounded-md transition-colors"
-                        >
-                          <User className="w-4 h-4 mr-3" />
-                          Profile
-                        </Link>
-                        <Separator className="my-2" />
                         <button className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-red-50 rounded-md transition-colors">
                           <LogOut className="w-4 h-4 mr-3" />
                           Log out
@@ -446,59 +386,66 @@ export default function CustomerRecentDesigners() {
               </div>
             </div>
 
-            {/* Statistics */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <Card className="border-0 bg-gradient-to-br from-green-400/10 via-teal-500/10 to-blue-500/10 backdrop-blur-sm">
-                <CardContent className="p-4 text-center">
-                  <p className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">{mockRecentDesigners.length}</p>
-                  <p className="text-sm text-gray-600">Total Designers</p>
+            {/* Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-0 shadow-lg">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Total Designers</p>
+                      <p className="text-3xl font-bold text-green-600">{recentDesigners.length}</p>
+                    </div>
+                    <Users className="w-12 h-12 text-green-500" />
+                  </div>
                 </CardContent>
               </Card>
-              <Card className="border-0 bg-gradient-to-br from-green-400/10 via-teal-500/10 to-blue-500/10 backdrop-blur-sm">
-                <CardContent className="p-4 text-center">
-                  <p className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">{mockRecentDesigners.reduce((sum, d) => sum + d.projectsCompleted, 0)}</p>
-                  <p className="text-sm text-gray-600">Projects Completed</p>
+
+              <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-0 shadow-lg">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Online Now</p>
+                      <p className="text-3xl font-bold text-blue-600">
+                        {recentDesigners.filter(d => d.is_online).length}
+                      </p>
+                    </div>
+                    <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                      <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
-              <Card className="border-0 bg-gradient-to-br from-green-400/10 via-teal-500/10 to-blue-500/10 backdrop-blur-sm">
-                <CardContent className="p-4 text-center">
-                  <p className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-                    ${mockRecentDesigners.reduce((sum, d) => sum + parseInt(d.totalSpent.replace('$', '')), 0)}
-                  </p>
-                  <p className="text-sm text-gray-600">Total Spent</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4 text-center">
-                  <p className="text-2xl font-bold text-gray-900">
-                    {(mockRecentDesigners.reduce((sum, d) => sum + d.rating, 0) / mockRecentDesigners.length).toFixed(1)}
-                  </p>
-                  <p className="text-sm text-gray-600">Average Rating</p>
+
+              <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-0 shadow-lg">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Avg Rating</p>
+                      <p className="text-3xl font-bold text-purple-600">
+                        {recentDesigners.length > 0 
+                          ? (recentDesigners.reduce((sum, d) => sum + d.rating, 0) / recentDesigners.length).toFixed(1)
+                          : '0.0'
+                        }
+                      </p>
+                    </div>
+                    <Star className="w-12 h-12 text-yellow-500 fill-current" />
+                  </div>
                 </CardContent>
               </Card>
             </div>
 
             {/* Designers Grid */}
             {filteredDesigners.length === 0 ? (
-              <Card>
-                <CardContent className="py-12 text-center">
-                  <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="font-semibold text-gray-900 mb-2">No designers found</h3>
-                  <p className="text-sm text-gray-500 mb-4">
-                    {searchQuery 
-                      ? "Try adjusting your search or filters" 
-                      : "You haven't worked with any designers yet"
-                    }
-                  </p>
-                  <Link to="/designers">
-                    <Button className="bg-blue-600 hover:bg-blue-700">
-                      Find Designers
-                    </Button>
-                  </Link>
-                </CardContent>
+              <Card className="p-12 text-center">
+                <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No recent designers</h3>
+                <p className="text-gray-600 mb-6">Start working with designers to see them here</p>
+                <Link to="/designers">
+                  <Button>Find Designers</Button>
+                </Link>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {filteredDesigners.map((designer) => (
                   <DesignerCard key={designer.id} designer={designer} />
                 ))}
