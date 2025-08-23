@@ -31,6 +31,26 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
   const fetchDesigners = async () => {
     try {
       setLoading(true);
+      
+      // If categories are selected, first get designers who have services in those categories
+      let designerIds: string[] = [];
+      if (filters.selectedCategories.length > 0) {
+        const { data: services, error: servicesError } = await supabase
+          .from('services')
+          .select('designer_id')
+          .in('category', filters.selectedCategories)
+          .eq('is_active', true);
+
+        if (servicesError) throw servicesError;
+        designerIds = [...new Set(services?.map(s => s.designer_id) || [])];
+        
+        // If no services found in selected categories, return empty results
+        if (designerIds.length === 0) {
+          setDesigners([]);
+          return;
+        }
+      }
+
       let query = supabase
         .from('designers')
         .select(`
@@ -41,6 +61,11 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
             avatar_url
           )
         `);
+
+      // Filter by designers who have services in selected categories
+      if (designerIds.length > 0) {
+        query = query.in('id', designerIds);
+      }
 
       // Apply search filter
       if (filters.searchTerm) {
@@ -78,21 +103,13 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
       
       if (error) throw error;
       
-      // Apply client-side filters for skills and categories
+      // Apply client-side filters for skills
       let filteredData = data || [];
       
       if (filters.selectedSkills.length > 0) {
         filteredData = filteredData.filter(designer => 
           designer.skills && filters.selectedSkills.some(skill => 
             designer.skills.includes(skill)
-          )
-        );
-      }
-      
-      if (filters.selectedCategories.length > 0) {
-        filteredData = filteredData.filter(designer => 
-          filters.selectedCategories.some(category => 
-            designer.specialty?.toLowerCase().includes(category.toLowerCase())
           )
         );
       }

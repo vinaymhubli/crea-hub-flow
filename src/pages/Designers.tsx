@@ -37,25 +37,39 @@ const Designers = () => {
 
   const fetchFiltersData = async () => {
     try {
-      const { data: designers, error } = await supabase
-        .from('designers')
-        .select('specialty, skills');
+      // Fetch categories from services table
+      const { data: services, error: servicesError } = await supabase
+        .from('services')
+        .select('category')
+        .eq('is_active', true);
 
-      if (error) {
-        console.error('Error fetching designers:', error);
+      if (servicesError) {
+        console.error('Error fetching services:', servicesError);
         return;
       }
 
-      // Extract categories from specialty
-      const categoryMap = new Map<string, number>();
-      const allSkills = new Set<string>();
+      // Fetch skills from designers table
+      const { data: designers, error: designersError } = await supabase
+        .from('designers')
+        .select('skills');
 
-      designers?.forEach(designer => {
-        if (designer.specialty) {
-          const current = categoryMap.get(designer.specialty) || 0;
-          categoryMap.set(designer.specialty, current + 1);
+      if (designersError) {
+        console.error('Error fetching designers:', designersError);
+        return;
+      }
+
+      // Extract categories with counts
+      const categoryMap = new Map<string, number>();
+      services?.forEach(service => {
+        if (service.category) {
+          const current = categoryMap.get(service.category) || 0;
+          categoryMap.set(service.category, current + 1);
         }
-        
+      });
+
+      // Extract unique skills
+      const allSkills = new Set<string>();
+      designers?.forEach(designer => {
         if (designer.skills && Array.isArray(designer.skills)) {
           designer.skills.forEach(skill => allSkills.add(skill));
         }
