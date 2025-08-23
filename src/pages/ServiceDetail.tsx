@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { Star, Clock, RefreshCw, Check, ArrowLeft, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -211,11 +212,74 @@ export default function ServiceDetail() {
                 </div>
               </CardHeader>
               <CardContent>
-                <img
-                  src={service.cover_image_url || "/placeholder.svg"}
-                  alt={service.title}
-                  className="w-full h-64 object-cover rounded-lg"
-                />
+                {/* Image Gallery with Carousel */}
+                {(() => {
+                  const allImages = [
+                    ...(service.cover_image_url ? [service.cover_image_url] : []),
+                    ...(service.gallery_urls || [])
+                  ].filter(Boolean);
+
+                  if (allImages.length === 0) {
+                    return (
+                      <div className="w-full h-64 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <p className="text-gray-500">No images available</p>
+                      </div>
+                    );
+                  }
+
+                  if (allImages.length === 1) {
+                    return (
+                      <img
+                        src={allImages[0]}
+                        alt={service.title}
+                        className="w-full h-64 object-cover rounded-lg"
+                        onError={(e) => {
+                          e.currentTarget.src = "/placeholder.svg";
+                        }}
+                      />
+                    );
+                  }
+
+                  return (
+                    <div className="space-y-4">
+                      <Carousel className="w-full">
+                        <CarouselContent>
+                          {allImages.map((imageUrl, index) => (
+                            <CarouselItem key={index}>
+                              <div className="relative">
+                                <img
+                                  src={imageUrl}
+                                  alt={`${service.title} - Image ${index + 1}`}
+                                  className="w-full h-64 object-cover rounded-lg"
+                                  onError={(e) => {
+                                    e.currentTarget.src = "/placeholder.svg";
+                                  }}
+                                />
+                              </div>
+                            </CarouselItem>
+                          ))}
+                        </CarouselContent>
+                        <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2" />
+                        <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2" />
+                      </Carousel>
+                      
+                      {/* Thumbnail navigation */}
+                      <div className="flex space-x-2 overflow-x-auto pb-2">
+                        {allImages.map((imageUrl, index) => (
+                          <img
+                            key={index}
+                            src={imageUrl}
+                            alt={`Thumbnail ${index + 1}`}
+                            className="w-16 h-16 object-cover rounded-md cursor-pointer border-2 border-transparent hover:border-primary transition-colors flex-shrink-0"
+                            onError={(e) => {
+                              e.currentTarget.src = "/placeholder.svg";
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
               </CardContent>
             </Card>
 
