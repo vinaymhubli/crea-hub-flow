@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { useRealtimeBookings } from '@/hooks/useRealtimeBookings';
+import { useAuth } from '@/hooks/useAuth';
+import { format } from 'date-fns';
 import { 
   LayoutDashboard, 
   User, 
@@ -106,65 +109,32 @@ function DesignerSidebar() {
 export default function DesignerBookings() {
   const [activeTab, setActiveTab] = useState("upcoming");
   const [searchQuery, setSearchQuery] = useState("");
+  const { profile } = useAuth();
+  const { bookings: allBookings, loading } = useRealtimeBookings();
 
-  // Sample booking data
-  const bookings = {
-    upcoming: [
-      {
-        id: 1,
-        client: { name: "Sarah Johnson", avatar: "", email: "sarah@company.com" },
-        project: "E-commerce Website Redesign",
-        date: "Aug 15, 2025",
-        time: "2:00 PM - 3:30 PM",
-        type: "Video Call",
-        duration: "1.5 hours",
-        price: "$150",
-        status: "confirmed",
-        notes: "Focus on mobile responsiveness and user experience improvements"
-      },
-      {
-        id: 2,
-        client: { name: "Mike Chen", avatar: "", email: "mike@startup.io" },
-        project: "Logo Design Consultation",
-        date: "Aug 16, 2025",
-        time: "10:00 AM - 11:00 AM",
-        type: "In Person",
-        duration: "1 hour",
-        price: "$100",
-        status: "confirmed",
-        notes: "Logo concepts for tech startup, modern and minimalist style preferred"
-      }
-    ],
-    pending: [
-      {
-        id: 3,
-        client: { name: "Lisa Brown", avatar: "", email: "lisa@agency.com" },
-        project: "Brand Identity Package",
-        date: "Aug 18, 2025",
-        time: "3:00 PM - 5:00 PM",
-        type: "Video Call",
-        duration: "2 hours",
-        price: "$300",
-        status: "pending",
-        notes: "Complete brand identity including logo, colors, and guidelines"
-      }
-    ],
-    completed: [
-      {
-        id: 4,
-        client: { name: "David Wilson", avatar: "", email: "david@corp.com" },
-        project: "Mobile App UI Design",
-        date: "Aug 10, 2025",
-        time: "1:00 PM - 2:30 PM",
-        type: "Video Call",
-        duration: "1.5 hours",
-        price: "$200",
-        status: "completed",
-        rating: 5,
-        feedback: "Excellent work! Very professional and creative approach."
-      }
-    ]
+  // Filter bookings by status
+  const getBookingsByStatus = (status: string) => {
+    switch (status) {
+      case 'upcoming':
+        return allBookings.filter(booking => 
+          booking.status === 'confirmed' && 
+          new Date(booking.scheduled_date) > new Date()
+        );
+      case 'pending':
+        return allBookings.filter(booking => booking.status === 'pending');
+      case 'completed':
+        return allBookings.filter(booking => booking.status === 'completed');
+      case 'cancelled':
+        return allBookings.filter(booking => booking.status === 'cancelled');
+      default:
+        return [];
+    }
   };
+
+  const upcomingBookings = getBookingsByStatus('upcoming');
+  const pendingBookings = getBookingsByStatus('pending');
+  const completedBookings = getBookingsByStatus('completed');
+  const cancelledBookings = getBookingsByStatus('cancelled');
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -181,23 +151,45 @@ export default function DesignerBookings() {
     }
   };
 
-  const renderBookingCard = (booking: any) => (
-    <Card key={booking.id} className="hover:shadow-lg transition-all duration-300 border border-gray-200">
-      <CardContent className="p-6">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-start space-x-4">
-            <Avatar className="w-12 h-12">
-              <AvatarImage src={booking.client.avatar} />
-              <AvatarFallback className="bg-gradient-to-r from-green-400 to-blue-500 text-white font-semibold">
-                {booking.client.name.split(' ').map((n: string) => n[0]).join('')}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <h3 className="font-bold text-gray-900 mb-1">{booking.project}</h3>
-              <p className="text-gray-600 font-medium">{booking.client.name}</p>
-              <p className="text-sm text-gray-500">{booking.client.email}</p>
+  const renderBookingCard = (booking: any) => {
+    const customerName = booking.customer 
+      ? `${booking.customer.first_name || ''} ${booking.customer.last_name || ''}`.trim()
+      : 'Unknown Customer';
+    
+    const formatDate = (dateString: string) => {
+      try {
+        return format(new Date(dateString), 'MMM dd, yyyy');
+      } catch {
+        return 'Invalid Date';
+      }
+    };
+
+    const formatTime = (dateString: string, duration: number) => {
+      try {
+        const startTime = format(new Date(dateString), 'h:mm a');
+        const endTime = format(new Date(new Date(dateString).getTime() + duration * 60 * 60 * 1000), 'h:mm a');
+        return `${startTime} - ${endTime}`;
+      } catch {
+        return 'Invalid Time';
+      }
+    };
+
+    return (
+      <Card key={booking.id} className="hover:shadow-lg transition-all duration-300 border border-gray-200">
+        <CardContent className="p-6">
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-start space-x-4">
+              <Avatar className="w-12 h-12">
+                <AvatarFallback className="bg-gradient-to-r from-green-400 to-blue-500 text-white font-semibold">
+                  {customerName.split(' ').map((n: string) => n[0]).join('') || 'C'}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <h3 className="font-bold text-gray-900 mb-1">{booking.service}</h3>
+                <p className="text-gray-600 font-medium">{customerName}</p>
+                <p className="text-sm text-gray-500">Customer</p>
+              </div>
             </div>
-          </div>
           <div className="flex items-center space-x-2">
             {getStatusBadge(booking.status)}
             <DropdownMenu>
@@ -244,34 +236,30 @@ export default function DesignerBookings() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-          <div className="flex items-center space-x-2">
-            <Calendar className="w-4 h-4 text-gray-400" />
-            <span className="text-sm text-gray-600">{booking.date}</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Clock className="w-4 h-4 text-gray-400" />
-            <span className="text-sm text-gray-600">{booking.time}</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            {booking.type === 'Video Call' ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            <div className="flex items-center space-x-2">
+              <Calendar className="w-4 h-4 text-gray-400" />
+              <span className="text-sm text-gray-600">{formatDate(booking.scheduled_date)}</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Clock className="w-4 h-4 text-gray-400" />
+              <span className="text-sm text-gray-600">{formatTime(booking.scheduled_date, booking.duration_hours)}</span>
+            </div>
+            <div className="flex items-center space-x-2">
               <Video className="w-4 h-4 text-gray-400" />
-            ) : (
-              <MapPin className="w-4 h-4 text-gray-400" />
-            )}
-            <span className="text-sm text-gray-600">{booking.type}</span>
+              <span className="text-sm text-gray-600">Video Call</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <DollarSign className="w-4 h-4 text-gray-400" />
+              <span className="text-sm font-semibold text-green-600">${booking.total_amount}</span>
+            </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <DollarSign className="w-4 h-4 text-gray-400" />
-            <span className="text-sm font-semibold text-green-600">{booking.price}</span>
-          </div>
-        </div>
 
-        {booking.notes && (
-          <div className="bg-gray-50 rounded-lg p-3 mb-4">
-            <p className="text-sm text-gray-700">{booking.notes}</p>
-          </div>
-        )}
+          {booking.description && (
+            <div className="bg-gray-50 rounded-lg p-3 mb-4">
+              <p className="text-sm text-gray-700">{booking.description}</p>
+            </div>
+          )}
 
         {booking.rating && (
           <div className="flex items-center space-x-2 mb-4">
@@ -295,11 +283,11 @@ export default function DesignerBookings() {
           </div>
         )}
 
-        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-500">Duration:</span>
-            <span className="text-sm font-medium text-gray-700">{booking.duration}</span>
-          </div>
+          <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-500">Duration:</span>
+              <span className="text-sm font-medium text-gray-700">{booking.duration_hours} hour{booking.duration_hours !== 1 ? 's' : ''}</span>
+            </div>
           <div className="flex space-x-2">
             <Button variant="outline" size="sm">
               <MessageCircle className="w-4 h-4 mr-1" />
@@ -315,11 +303,12 @@ export default function DesignerBookings() {
                 Join Session
               </Button>
             )}
+            </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <SidebarProvider>
@@ -342,11 +331,11 @@ export default function DesignerBookings() {
                     <p className="text-white/90 text-lg">Manage your design sessions and client appointments</p>
                     <div className="flex items-center space-x-4 mt-2">
                       <span className="text-white/90 font-medium">
-                        {bookings.upcoming.length} Upcoming
+                        {upcomingBookings.length} Upcoming
                       </span>
                       <span className="text-white/60">•</span>
                       <span className="text-white/90 font-medium">
-                        {bookings.pending.length} Pending
+                        {pendingBookings.length} Pending
                       </span>
                     </div>
                   </div>
@@ -368,25 +357,25 @@ export default function DesignerBookings() {
                       value="upcoming"
                       className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-xl py-3 px-6 font-semibold"
                     >
-                      Upcoming ({bookings.upcoming.length})
+                      Upcoming ({upcomingBookings.length})
                     </TabsTrigger>
                     <TabsTrigger 
                       value="pending"
                       className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-xl py-3 px-6 font-semibold"
                     >
-                      Pending ({bookings.pending.length})
+                      Pending ({pendingBookings.length})
                     </TabsTrigger>
                     <TabsTrigger 
                       value="completed"
                       className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-xl py-3 px-6 font-semibold"
                     >
-                      Completed ({bookings.completed.length})
+                      Completed ({completedBookings.length})
                     </TabsTrigger>
                     <TabsTrigger 
                       value="cancelled"
                       className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-xl py-3 px-6 font-semibold"
                     >
-                      Cancelled
+                      Cancelled ({cancelledBookings.length})
                     </TabsTrigger>
                   </TabsList>
                 </div>
@@ -409,27 +398,63 @@ export default function DesignerBookings() {
               </div>
 
               <TabsContent value="upcoming" className="space-y-6">
-                {bookings.upcoming.map(renderBookingCard)}
+                {loading ? (
+                  <div className="text-center py-12">Loading bookings...</div>
+                ) : upcomingBookings.length > 0 ? (
+                  upcomingBookings.map(renderBookingCard)
+                ) : (
+                  <div className="text-center py-20">
+                    <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No upcoming bookings</h3>
+                    <p className="text-gray-500">Your upcoming sessions will appear here.</p>
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="pending" className="space-y-6">
-                {bookings.pending.map(renderBookingCard)}
+                {loading ? (
+                  <div className="text-center py-12">Loading bookings...</div>
+                ) : pendingBookings.length > 0 ? (
+                  pendingBookings.map(renderBookingCard)
+                ) : (
+                  <div className="text-center py-20">
+                    <Clock className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No pending bookings</h3>
+                    <p className="text-gray-500">Pending booking requests will appear here.</p>
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="completed" className="space-y-6">
-                {bookings.completed.map(renderBookingCard)}
+                {loading ? (
+                  <div className="text-center py-12">Loading bookings...</div>
+                ) : completedBookings.length > 0 ? (
+                  completedBookings.map(renderBookingCard)
+                ) : (
+                  <div className="text-center py-20">
+                    <CheckCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No completed bookings</h3>
+                    <p className="text-gray-500">Your completed sessions will appear here.</p>
+                  </div>
+                )}
               </TabsContent>
 
-              <TabsContent value="cancelled" className="mt-6">
-                <div className="text-center py-20">
-                  <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl">
-                    <XCircle className="w-10 h-10 text-white" />
+              <TabsContent value="cancelled" className="space-y-6">
+                {loading ? (
+                  <div className="text-center py-12">Loading bookings...</div>
+                ) : cancelledBookings.length > 0 ? (
+                  cancelledBookings.map(renderBookingCard)
+                ) : (
+                  <div className="text-center py-20">
+                    <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl">
+                      <XCircle className="w-10 h-10 text-white" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-3">No cancelled bookings</h3>
+                    <p className="text-gray-600 mb-8 max-w-md mx-auto text-lg">
+                      You don't have any cancelled bookings.
+                    </p>
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-3">No cancelled bookings</h3>
-                  <p className="text-gray-600 mb-8 max-w-md mx-auto text-lg">
-                    You don't have any cancelled bookings.
-                  </p>
-                </div>
+                )}
               </TabsContent>
             </Tabs>
           </div>

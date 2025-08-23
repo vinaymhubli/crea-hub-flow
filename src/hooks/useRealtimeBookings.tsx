@@ -38,29 +38,64 @@ export const useRealtimeBookings = () => {
 
     fetchBookings();
     
-    // Set up real-time subscription
-    const channel = supabase
-      .channel('bookings-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'bookings',
-          filter: profile.user_type === 'designer' 
-            ? `designer_id=eq.${profile.user_id}`
-            : `customer_id=eq.${profile.user_id}`
-        },
-        (payload) => {
-          console.log('Booking change detected:', payload);
-          handleRealtimeChange(payload);
-        }
-      )
-      .subscribe();
+    // Set up real-time subscription after fetching bookings
+    let filterValue = '';
+    if (profile.user_type === 'designer') {
+      // For designers, we need to get their designer ID first
+      const getDesignerFilter = async () => {
+        const { data: designerData } = await supabase
+          .from('designers')
+          .select('id')
+          .eq('user_id', profile.user_id)
+          .single();
+        
+        if (designerData) {
+          const channel = supabase
+            .channel('bookings-changes')
+            .on(
+              'postgres_changes',
+              {
+                event: '*',
+                schema: 'public',
+                table: 'bookings',
+                filter: `designer_id=eq.${designerData.id}`
+              },
+              (payload) => {
+                console.log('Booking change detected:', payload);
+                handleRealtimeChange(payload);
+              }
+            )
+            .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+          return () => {
+            supabase.removeChannel(channel);
+          };
+        }
+      };
+      getDesignerFilter();
+    } else {
+      // For customers, use customer_id directly
+      const channel = supabase
+        .channel('bookings-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'bookings',
+            filter: `customer_id=eq.${profile.user_id}`
+          },
+          (payload) => {
+            console.log('Booking change detected:', payload);
+            handleRealtimeChange(payload);
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
   }, [profile]);
 
   const fetchBookings = async () => {
@@ -84,7 +119,21 @@ export const useRealtimeBookings = () => {
 
       // Filter based on user type
       if (profile.user_type === 'designer') {
-        query = query.eq('designer_id', profile.user_id);
+        // For designers, first get their designer ID
+        const { data: designerData } = await supabase
+          .from('designers')
+          .select('id')
+          .eq('user_id', profile.user_id)
+          .single();
+        
+        if (designerData) {
+          query = query.eq('designer_id', designerData.id);
+        } else {
+          // No designer profile found, return empty
+          setBookings([]);
+          setLoading(false);
+          return;
+        }
       } else {
         query = query.eq('customer_id', profile.user_id);
       }
