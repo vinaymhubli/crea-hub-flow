@@ -43,59 +43,6 @@ export default function Services() {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('newest');
 
-  // Mock data for demonstration
-  const mockServices: Service[] = [
-    {
-      id: '1',
-      title: 'Professional Logo Design',
-      description: 'I will create a unique and memorable logo for your business',
-      category: 'Logo Design',
-      tags: ['logo', 'branding', 'design'],
-      price: 50,
-      delivery_time_days: 3,
-      revisions: 3,
-      is_active: true,
-      rating: 4.9,
-      reviews_count: 127,
-      cover_image_url: '/placeholder.svg',
-      gallery_urls: [],
-      designer_id: '1',
-      designer: {
-        id: '1',
-        user_id: '1',
-        profiles: {
-          first_name: 'Sarah',
-          last_name: 'Johnson',
-          avatar_url: '/placeholder.svg'
-        }
-      }
-    },
-    {
-      id: '2',
-      title: 'Modern Website Design',
-      description: 'Complete website design with modern UI/UX principles',
-      category: 'Web Design',
-      tags: ['website', 'ui', 'ux'],
-      price: 200,
-      delivery_time_days: 7,
-      revisions: 5,
-      is_active: true,
-      rating: 4.8,
-      reviews_count: 89,
-      cover_image_url: '/placeholder.svg',
-      gallery_urls: [],
-      designer_id: '2',
-      designer: {
-        id: '2',
-        user_id: '2',
-        profiles: {
-          first_name: 'Michael',
-          last_name: 'Chen',
-          avatar_url: '/placeholder.svg'
-        }
-      }
-    }
-  ];
 
   useEffect(() => {
     fetchServices();
@@ -122,16 +69,14 @@ export default function Services() {
 
       if (error) {
         console.error('Error fetching services:', error);
-        // Use mock data if there's an error or no data
-        setServices(mockServices);
+        setServices([]);
         return;
       }
 
-      // Use real data if available, otherwise fall back to mock data
-      setServices(data.length > 0 ? data : mockServices);
+      setServices(data || []);
     } catch (error) {
       console.error('Error fetching services:', error);
-      setServices(mockServices);
+      setServices([]);
     } finally {
       setLoading(false);
     }
@@ -279,17 +224,29 @@ export default function Services() {
 
         {sortedServices.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-500">No services found matching your criteria.</p>
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setSearchTerm('');
-                setSelectedCategory('');
-              }}
-              className="mt-4"
-            >
-              Clear Filters
-            </Button>
+            {searchTerm || selectedCategory ? (
+              <>
+                <p className="text-gray-500">No services found matching your criteria.</p>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setSearchTerm('');
+                    setSelectedCategory('');
+                  }}
+                  className="mt-4"
+                >
+                  Clear Filters
+                </Button>
+              </>
+            ) : (
+              <>
+                <div className="mb-4">
+                  <Search className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-600 mb-2">No Services Available</h3>
+                  <p className="text-gray-500">No designers have created services yet. Check back later!</p>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>

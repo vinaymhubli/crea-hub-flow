@@ -57,45 +57,6 @@ interface ServicePackage {
   features: string[];
 }
 
-// Dummy data for rich UI experience
-const dummyServices: Service[] = [
-  {
-    id: 'dummy-1',
-    title: 'Professional Logo Design',
-    description: 'I will create a stunning professional logo for your brand with unlimited revisions',
-    category: 'Logo Design',
-    tags: ['logo', 'branding', 'business'],
-    price: 25.00,
-    currency: 'USD',
-    delivery_time_days: 3,
-    revisions: 3,
-    is_active: true,
-    rating: 4.8,
-    reviews_count: 47,
-    cover_image_url: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400',
-    gallery_urls: ['https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400'],
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 'dummy-2',
-    title: 'Modern Website Design',
-    description: 'Complete website design with modern UI/UX principles and responsive layout',
-    category: 'Web Design',
-    tags: ['website', 'ui/ux', 'responsive'],
-    price: 150.00,
-    currency: 'USD',
-    delivery_time_days: 7,
-    revisions: 2,
-    is_active: true,
-    rating: 4.9,
-    reviews_count: 23,
-    cover_image_url: 'https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?w=400',
-    gallery_urls: ['https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?w=400'],
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  }
-];
 
 const categories = [
   'Logo Design', 'Web Design', 'UI/UX Design', 'Mobile App Design', 
@@ -139,7 +100,7 @@ export default function DesignerServices() {
         .from('designers')
         .select('id')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (designer) {
         const { data: servicesData, error } = await supabase
@@ -154,13 +115,12 @@ export default function DesignerServices() {
         if (error) throw error;
         setServices(servicesData || []);
       } else {
-        // Show dummy data if no designer profile exists yet
-        setServices(dummyServices);
+        // No designer profile yet, show empty state
+        setServices([]);
       }
     } catch (error) {
       console.error('Error fetching services:', error);
-      // Fallback to dummy data for rich UI
-      setServices(dummyServices);
+      setServices([]);
     } finally {
       setLoading(false);
     }
@@ -173,16 +133,30 @@ export default function DesignerServices() {
     }
 
     try {
-      // Get designer ID first
-      const { data: designer } = await supabase
+      // Get or create designer profile
+      let { data: designer } = await supabase
         .from('designers')
         .select('id')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (!designer) {
-        toast.error('Designer profile not found');
-        return;
+        // Create designer profile with default values
+        const { data: newDesigner, error: designerError } = await supabase
+          .from('designers')
+          .insert({
+            user_id: user.id,
+            specialty: 'General',
+            hourly_rate: 50.00,
+            bio: 'Professional designer ready to help with your projects',
+            skills: ['Design'],
+            location: 'Remote'
+          })
+          .select()
+          .single();
+
+        if (designerError) throw designerError;
+        designer = newDesigner;
       }
 
       const { data: service, error } = await supabase
@@ -236,10 +210,6 @@ export default function DesignerServices() {
   };
 
   const handleToggleActive = async (service: Service) => {
-    if (service.id.startsWith('dummy-')) {
-      toast.info('This is demo data - create a real service to enable this feature');
-      return;
-    }
 
     try {
       const { error } = await supabase
@@ -622,13 +592,6 @@ export default function DesignerServices() {
                     {service.is_active ? "Active" : "Inactive"}
                   </Badge>
                 </div>
-                {service.id.startsWith('dummy-') && (
-                  <div className="absolute top-3 left-3">
-                    <Badge variant="outline" className="bg-white/90">
-                      Demo
-                    </Badge>
-                  </div>
-                )}
               </div>
               
               <CardContent className="p-6">
