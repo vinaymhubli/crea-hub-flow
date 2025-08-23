@@ -2,8 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import DesignerGrid from '../components/DesignerGrid';
 import FilterSidebar from '../components/FilterSidebar';
-import { CustomerSidebar } from '../components/CustomerSidebar';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface FilterState {
@@ -83,31 +81,24 @@ const Designers = () => {
   };
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gradient-to-br from-background to-muted">
-        <CustomerSidebar />
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted">
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-green-600/5 to-blue-600/5 pointer-events-none"></div>
         
-        <main className="flex-1">
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-green-600/5 to-blue-600/5 pointer-events-none"></div>
-            
-            <div className="relative max-w-7xl mx-auto px-6 py-16">
-              <div className="flex items-center space-x-4 mb-12">
-                <SidebarTrigger />
-                <div className="text-center flex-1">
-                  <div className="inline-flex items-center space-x-2 bg-green-100 text-green-700 px-4 py-2 rounded-full text-sm font-medium mb-6">
-                    <span>🔥</span>
-                    <span>247 Designers Available</span>
-                  </div>
-                  <h1 className="text-5xl font-bold text-foreground mb-6 leading-tight">
-                    Find Your Perfect
-                    <span className="bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent"> Designer</span>
-                  </h1>
-                  <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                    Connect with talented designers from around the world. Browse portfolios, compare rates, and hire the perfect match for your project.
-                  </p>
-                </div>
-              </div>
+        <div className="relative max-w-7xl mx-auto px-6 py-16">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center space-x-2 bg-green-100 text-green-700 px-4 py-2 rounded-full text-sm font-medium mb-6">
+              <span>🔥</span>
+              <span>247 Designers Available</span>
+            </div>
+            <h1 className="text-5xl font-bold text-foreground mb-6 leading-tight">
+              Find Your Perfect
+              <span className="bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent"> Designer</span>
+            </h1>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+              Connect with talented designers from around the world. Browse portfolios, compare rates, and hire the perfect match for your project.
+            </p>
+          </div>
 
               <div className="bg-card rounded-2xl shadow-sm border border-border p-6 mb-8">
                 <div className="flex flex-col lg:flex-row gap-4">
@@ -157,11 +148,10 @@ const Designers = () => {
                   <DesignerGrid filters={filters} />
                 </div>
               </div>
-            </div>
           </div>
-        </main>
+        </div>
       </div>
-    </SidebarProvider>
+    </div>
   );
 };
 

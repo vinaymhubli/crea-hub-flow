@@ -58,8 +58,6 @@ function AppContent() {
                           location.pathname.startsWith('/admin') ||
                           location.pathname === '/admin-dashboard' ||
                           location.pathname.startsWith('/session/') ||
-                          location.pathname === '/designers' ||
-                          location.pathname.startsWith('/designer/') ||
                           location.pathname.startsWith('/services/');
   
   return (
