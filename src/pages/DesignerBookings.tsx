@@ -80,17 +80,22 @@ export default function DesignerBookings() {
         filtered = allBookings.filter(booking => {
           const bookingDate = new Date(booking.scheduled_date);
           const now = new Date();
-          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
           
           return (booking.status === 'confirmed' || booking.status === 'in_progress') && 
-                 bookingDate >= today;
+                 bookingDate >= now;
         });
         break;
       case 'pending':
         filtered = allBookings.filter(booking => booking.status === 'pending');
         break;
       case 'completed':
-        filtered = allBookings.filter(booking => booking.status === 'completed');
+        filtered = allBookings.filter(booking => {
+          const bookingDate = new Date(booking.scheduled_date);
+          const now = new Date();
+          
+          return booking.status === 'completed' || 
+                 (booking.status === 'confirmed' && bookingDate < now);
+        });
         break;
       case 'cancelled':
         filtered = allBookings.filter(booking => booking.status === 'cancelled');
