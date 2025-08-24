@@ -77,25 +77,17 @@ export default function DesignerBookings() {
     
     switch (status) {
       case 'upcoming':
-        filtered = allBookings.filter(booking => {
-          const bookingDate = new Date(booking.scheduled_date);
-          const now = new Date();
-          
-          return (booking.status === 'confirmed' || booking.status === 'in_progress') && 
-                 bookingDate >= now;
-        });
+        // Include all confirmed or in_progress bookings (no date restriction)
+        filtered = allBookings.filter(booking => 
+          booking.status === 'confirmed' || booking.status === 'in_progress'
+        );
         break;
       case 'pending':
         filtered = allBookings.filter(booking => booking.status === 'pending');
         break;
       case 'completed':
-        filtered = allBookings.filter(booking => {
-          const bookingDate = new Date(booking.scheduled_date);
-          const now = new Date();
-          
-          return booking.status === 'completed' || 
-                 (booking.status === 'confirmed' && bookingDate < now);
-        });
+        // Only include bookings explicitly marked as completed
+        filtered = allBookings.filter(booking => booking.status === 'completed');
         break;
       case 'cancelled':
         filtered = allBookings.filter(booking => booking.status === 'cancelled');
@@ -143,6 +135,8 @@ export default function DesignerBookings() {
     await acceptBooking(booking.id);
     await refetch(); // Refetch to see updated status
     setShowDetailsDialog(false);
+    // Switch to upcoming tab after accepting
+    setActiveTab('upcoming');
   };
 
   const handleDeclineBooking = (booking: any) => {
