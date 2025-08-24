@@ -28,78 +28,53 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { useDesignerEarnings } from '@/hooks/useDesignerEarnings';
 
 
 export default function DesignerEarnings() {
   const [activeTab, setActiveTab] = useState("this-month");
   const [hideAmount, setHideAmount] = useState(false);
+  const { loading, earningsData, transactions, monthlyData } = useDesignerEarnings();
 
-  // Sample earnings data
-  // Chart data
-  const monthlyData = [
-    { month: 'Jan', earnings: 1800 },
-    { month: 'Feb', earnings: 2100 },
-    { month: 'Mar', earnings: 1950 },
-    { month: 'Apr', earnings: 2300 },
-    { month: 'May', earnings: 2450 },
-    { month: 'Jun', earnings: 2600 },
-  ];
-
-  const dailyData = [
-    { day: 'Mon', amount: 120 },
-    { day: 'Tue', amount: 200 },
-    { day: 'Wed', amount: 150 },
-    { day: 'Thu', amount: 300 },
-    { day: 'Fri', amount: 180 },
-    { day: 'Sat', amount: 250 },
-    { day: 'Sun', amount: 100 },
-  ];
-
-  const categoryData = [
-    { name: 'Logo Design', value: 35, color: '#10B981' },
-    { name: 'Web Design', value: 45, color: '#3B82F6' },
-    { name: 'Branding', value: 20, color: '#8B5CF6' },
-  ];
-
-  const earningsData = {
-    thisMonth: {
-      total: 2450,
-      completed: 2100,
-      pending: 350,
-      sessions: 12,
-      avgHourly: 85,
-      growth: 15.3
-    },
-    transactions: [
-      {
-        id: 1,
-        client: "Sarah Johnson",
-        project: "E-commerce Redesign",
-        amount: 300,
-        date: "Aug 14, 2025",
-        status: "completed",
-        type: "project"
-      },
-      {
-        id: 2,
-        client: "Mike Chen",
-        project: "Logo Design Session",
-        amount: 150,
-        date: "Aug 13, 2025", 
-        status: "completed",
-        type: "hourly"
-      },
-      {
-        id: 3,
-        client: "Lisa Brown",
-        project: "Brand Identity Package",
-        amount: 500,
-        date: "Aug 12, 2025",
-        status: "pending",
-        type: "project"
-      }
-    ]
+  // Calculate weekly data from recent transactions
+  const getWeeklyData = () => {
+    const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const weeklyEarnings = weekDays.map((day, index) => {
+      const dayEarnings = transactions
+        .filter(transaction => {
+          const transactionDate = new Date(transaction.created_at);
+          return transactionDate.getDay() === index;
+        })
+        .reduce((sum, transaction) => sum + transaction.total_amount, 0);
+      
+      return { day, amount: dayEarnings };
+    });
+    
+    return weeklyEarnings;
   };
+
+  const weeklyData = getWeeklyData();
+
+  // Service breakdown - calculate from transactions
+  const getServiceBreakdown = () => {
+    const serviceTypes: { [key: string]: number } = {};
+    let total = 0;
+
+    transactions.forEach(transaction => {
+      const service = transaction.service || 'Other';
+      serviceTypes[service] = (serviceTypes[service] || 0) + transaction.total_amount;
+      total += transaction.total_amount;
+    });
+
+    const colors = ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444'];
+    return Object.entries(serviceTypes).map(([name, value], index) => ({
+      name,
+      value: total > 0 ? Math.round((value / total) * 100) : 0,
+      color: colors[index % colors.length]
+    }));
+  };
+
+  const serviceBreakdown = getServiceBreakdown();
 
   const formatAmount = (amount: number) => {
     return hideAmount ? "••••" : `$${amount.toLocaleString()}`;
@@ -138,9 +113,9 @@ export default function DesignerEarnings() {
                     <h1 className="text-3xl font-bold text-white">Earnings</h1>
                     <p className="text-white/90 text-lg">Track your income and financial performance</p>
                     <div className="flex items-center space-x-4 mt-2">
-                      <span className="text-white/90 font-medium">{formatAmount(earningsData.thisMonth.total)} this month</span>
+                      <span className="text-white/90 font-medium">{formatAmount(earningsData.totalEarnings)} total</span>
                       <span className="text-white/60">•</span>
-                      <span className="text-white/90 font-medium">+{earningsData.thisMonth.growth}% growth</span>
+                      <span className="text-white/90 font-medium">+{earningsData.monthlyGrowth.toFixed(1)}% growth</span>
                     </div>
                   </div>
                 </div>
@@ -164,63 +139,67 @@ export default function DesignerEarnings() {
 
           <div className="p-8 max-w-7xl mx-auto space-y-8">
             {/* Enhanced Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-12 h-12 bg-gradient-to-r from-green-400 to-green-500 rounded-xl flex items-center justify-center">
-                      <TrendingUp className="w-6 h-6 text-white" />
+            {loading ? (
+              <div className="text-center py-8">Loading earnings data...</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="w-12 h-12 bg-gradient-to-r from-green-400 to-green-500 rounded-xl flex items-center justify-center">
+                        <TrendingUp className="w-6 h-6 text-white" />
+                      </div>
+                      <ArrowUpRight className="w-5 h-5 text-green-500" />
                     </div>
-                    <ArrowUpRight className="w-5 h-5 text-green-500" />
-                  </div>
-                  <h3 className="text-sm font-medium text-gray-600 mb-1">Total Earnings</h3>
-                  <p className="text-3xl font-bold text-gray-900">{formatAmount(earningsData.thisMonth.total)}</p>
-                  <p className="text-sm text-green-600 mt-2">+{earningsData.thisMonth.growth}% from last month</p>
-                </CardContent>
-              </Card>
+                    <h3 className="text-sm font-medium text-gray-600 mb-1">Total Earnings</h3>
+                    <p className="text-3xl font-bold text-gray-900">{formatAmount(earningsData.totalEarnings)}</p>
+                    <p className="text-sm text-green-600 mt-2">+{earningsData.monthlyGrowth.toFixed(1)}% from last month</p>
+                  </CardContent>
+                </Card>
 
-              <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-blue-500 rounded-xl flex items-center justify-center">
-                      <Wallet className="w-6 h-6 text-white" />
+                <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-blue-500 rounded-xl flex items-center justify-center">
+                        <Wallet className="w-6 h-6 text-white" />
+                      </div>
+                      <Clock className="w-5 h-5 text-yellow-500" />
                     </div>
-                    <Clock className="w-5 h-5 text-yellow-500" />
-                  </div>
-                  <h3 className="text-sm font-medium text-gray-600 mb-1">Available Balance</h3>
-                  <p className="text-3xl font-bold text-gray-900">{formatAmount(earningsData.thisMonth.completed)}</p>
-                  <p className="text-sm text-gray-500 mt-2">Ready for withdrawal</p>
-                </CardContent>
-              </Card>
+                    <h3 className="text-sm font-medium text-gray-600 mb-1">Available Balance</h3>
+                    <p className="text-3xl font-bold text-gray-900">{formatAmount(earningsData.availableBalance)}</p>
+                    <p className="text-sm text-gray-500 mt-2">Ready for withdrawal</p>
+                  </CardContent>
+                </Card>
 
-              <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-12 h-12 bg-gradient-to-r from-purple-400 to-purple-500 rounded-xl flex items-center justify-center">
-                      <Calendar className="w-6 h-6 text-white" />
+                <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="w-12 h-12 bg-gradient-to-r from-purple-400 to-purple-500 rounded-xl flex items-center justify-center">
+                        <Calendar className="w-6 h-6 text-white" />
+                      </div>
+                      <BarChart3 className="w-5 h-5 text-purple-500" />
                     </div>
-                    <BarChart3 className="w-5 h-5 text-purple-500" />
-                  </div>
-                  <h3 className="text-sm font-medium text-gray-600 mb-1">Sessions Completed</h3>
-                  <p className="text-3xl font-bold text-gray-900">{earningsData.thisMonth.sessions}</p>
-                  <p className="text-sm text-gray-500 mt-2">This month</p>
-                </CardContent>
-              </Card>
+                    <h3 className="text-sm font-medium text-gray-600 mb-1">Sessions Completed</h3>
+                    <p className="text-3xl font-bold text-gray-900">{earningsData.completedSessions}</p>
+                    <p className="text-sm text-gray-500 mt-2">All time</p>
+                  </CardContent>
+                </Card>
 
-              <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-12 h-12 bg-gradient-to-r from-orange-400 to-orange-500 rounded-xl flex items-center justify-center">
-                      <PieChart className="w-6 h-6 text-white" />
+                <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="w-12 h-12 bg-gradient-to-r from-orange-400 to-orange-500 rounded-xl flex items-center justify-center">
+                        <PieChart className="w-6 h-6 text-white" />
+                      </div>
+                      <TrendingUp className="w-5 h-5 text-orange-500" />
                     </div>
-                    <TrendingUp className="w-5 h-5 text-orange-500" />
-                  </div>
-                  <h3 className="text-sm font-medium text-gray-600 mb-1">Avg. Hourly Rate</h3>
-                  <p className="text-3xl font-bold text-gray-900">{formatAmount(earningsData.thisMonth.avgHourly)}</p>
-                  <p className="text-sm text-gray-500 mt-2">Per hour</p>
-                </CardContent>
-              </Card>
-            </div>
+                    <h3 className="text-sm font-medium text-gray-600 mb-1">Avg. Hourly Rate</h3>
+                    <p className="text-3xl font-bold text-gray-900">{formatAmount(earningsData.avgHourlyRate)}</p>
+                    <p className="text-sm text-gray-500 mt-2">Per hour</p>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
 
             {/* Enhanced Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -285,16 +264,19 @@ export default function DesignerEarnings() {
                     </CardHeader>
                     <CardContent>
                       <div className="h-80 bg-gradient-to-br from-blue-50 to-green-50 rounded-xl p-6 flex items-end justify-center space-x-3">
-                        {dailyData.map((item) => (
-                          <div key={item.day} className="flex flex-col items-center space-y-2">
-                            <div 
-                              className="w-10 bg-gradient-to-t from-blue-400 to-green-500 rounded-t-lg"
-                              style={{ height: `${(item.amount / 300) * 200}px` }}
-                            ></div>
-                            <span className="text-xs text-gray-600 font-medium">{item.day}</span>
-                            <span className="text-xs text-gray-500">${item.amount}</span>
-                          </div>
-                        ))}
+                        {weeklyData.map((item) => {
+                          const maxAmount = Math.max(...weeklyData.map(d => d.amount), 1);
+                          return (
+                            <div key={item.day} className="flex flex-col items-center space-y-2">
+                              <div 
+                                className="w-10 bg-gradient-to-t from-blue-400 to-green-500 rounded-t-lg"
+                                style={{ height: `${Math.max((item.amount / maxAmount) * 200, 10)}px` }}
+                              ></div>
+                              <span className="text-xs text-gray-600 font-medium">{item.day}</span>
+                              <span className="text-xs text-gray-500">${item.amount}</span>
+                            </div>
+                          );
+                        })}
                       </div>
                     </CardContent>
                   </Card>
@@ -323,15 +305,21 @@ export default function DesignerEarnings() {
                         </div>
                       </div>
                       <div className="space-y-3">
-                        {categoryData.map((item) => (
-                          <div key={item.name} className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
-                              <span className="text-sm text-gray-600">{item.name}</span>
+                        {serviceBreakdown.length > 0 ? (
+                          serviceBreakdown.map((item) => (
+                            <div key={item.name} className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
+                                <span className="text-sm text-gray-600">{item.name}</span>
+                              </div>
+                              <span className="text-sm font-medium">{item.value}%</span>
                             </div>
-                            <span className="text-sm font-medium">{item.value}%</span>
+                          ))
+                        ) : (
+                          <div className="text-center text-gray-500 py-4">
+                            No service data available
                           </div>
-                        ))}
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -365,10 +353,12 @@ export default function DesignerEarnings() {
                         <div className="space-y-4">
                           <div className="flex justify-between">
                             <span className="text-sm text-gray-600">Progress</span>
-                            <span className="text-sm font-medium">{formatAmount(earningsData.thisMonth.total)} / $3000</span>
+                            <span className="text-sm font-medium">{formatAmount(earningsData.totalEarnings)} / $5000</span>
                           </div>
-                          <Progress value={(earningsData.thisMonth.total / 3000) * 100} className="h-2" />
-                          <p className="text-sm text-gray-500">82% of monthly goal achieved</p>
+                          <Progress value={Math.min((earningsData.totalEarnings / 5000) * 100, 100)} className="h-2" />
+                          <p className="text-sm text-gray-500">
+                            {Math.min(Math.round((earningsData.totalEarnings / 5000) * 100), 100)}% of total goal achieved
+                          </p>
                         </div>
                       </CardContent>
                     </Card>
@@ -377,31 +367,53 @@ export default function DesignerEarnings() {
               </TabsContent>
 
               <TabsContent value="transactions" className="space-y-6">
-                {earningsData.transactions.map((transaction) => (
-                  <Card key={transaction.id} className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-12 h-12 bg-gradient-to-r from-green-400 to-blue-500 rounded-xl flex items-center justify-center">
-                            <DollarSign className="w-6 h-6 text-white" />
+                <Card className="bg-white border-0 shadow-xl">
+                  <CardHeader>
+                    <CardTitle>Recent Transactions</CardTitle>
+                    <CardDescription>Your latest earnings and payments</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {loading ? (
+                      <div className="text-center py-8">Loading transactions...</div>
+                    ) : (
+                      <div className="space-y-4">
+                        {transactions.length === 0 ? (
+                          <div className="text-center py-12 text-gray-500">
+                            No transactions found. Complete some bookings to see your earnings here.
                           </div>
-                          <div>
-                            <h3 className="font-bold text-gray-900">{transaction.project}</h3>
-                            <p className="text-gray-600">{transaction.client}</p>
-                            <p className="text-sm text-gray-500">{transaction.date}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-4">
-                          <div className="text-right">
-                            <p className="text-2xl font-bold text-gray-900">{formatAmount(transaction.amount)}</p>
-                            <p className="text-sm text-gray-500 capitalize">{transaction.type}</p>
-                          </div>
-                          {getStatusBadge(transaction.status)}
-                        </div>
+                        ) : (
+                          transactions.map((transaction) => (
+                            <div key={transaction.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                              <div className="flex items-center space-x-4">
+                                <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-lg flex items-center justify-center">
+                                  <FileText className="w-5 h-5 text-white" />
+                                </div>
+                                <div>
+                                  <h4 className="font-medium text-gray-900">{transaction.client_name}</h4>
+                                  <p className="text-sm text-gray-600">{transaction.service}</p>
+                                  <p className="text-xs text-gray-500">
+                                    {new Date(transaction.created_at).toLocaleDateString('en-US', {
+                                      year: 'numeric',
+                                      month: 'short',
+                                      day: 'numeric'
+                                    })}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-3">
+                                <div className="text-right">
+                                  <p className="font-semibold text-gray-900">{formatAmount(transaction.total_amount)}</p>
+                                  <p className="text-xs text-gray-500">{transaction.duration_hours}h session</p>
+                                </div>
+                                {getStatusBadge(transaction.status)}
+                              </div>
+                            </div>
+                          ))
+                        )}
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                    )}
+                  </CardContent>
+                </Card>
               </TabsContent>
 
 

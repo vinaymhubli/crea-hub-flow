@@ -74,6 +74,108 @@ export type Database = {
           },
         ]
       }
+      designer_availability_settings: {
+        Row: {
+          auto_accept_bookings: boolean
+          buffer_time_minutes: number
+          created_at: string
+          designer_id: string
+          id: string
+          updated_at: string
+          working_hours_end: string | null
+          working_hours_start: string | null
+        }
+        Insert: {
+          auto_accept_bookings?: boolean
+          buffer_time_minutes?: number
+          created_at?: string
+          designer_id: string
+          id?: string
+          updated_at?: string
+          working_hours_end?: string | null
+          working_hours_start?: string | null
+        }
+        Update: {
+          auto_accept_bookings?: boolean
+          buffer_time_minutes?: number
+          created_at?: string
+          designer_id?: string
+          id?: string
+          updated_at?: string
+          working_hours_end?: string | null
+          working_hours_start?: string | null
+        }
+        Relationships: []
+      }
+      designer_special_days: {
+        Row: {
+          created_at: string
+          date: string
+          designer_id: string
+          end_time: string | null
+          id: string
+          is_available: boolean
+          reason: string | null
+          start_time: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          designer_id: string
+          end_time?: string | null
+          id?: string
+          is_available?: boolean
+          reason?: string | null
+          start_time?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          designer_id?: string
+          end_time?: string | null
+          id?: string
+          is_available?: boolean
+          reason?: string | null
+          start_time?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      designer_weekly_schedule: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          designer_id: string
+          end_time: string
+          id: string
+          is_available: boolean
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          designer_id: string
+          end_time?: string
+          id?: string
+          is_available?: boolean
+          start_time?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          designer_id?: string
+          end_time?: string
+          id?: string
+          is_available?: boolean
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       designers: {
         Row: {
           available_for_urgent: boolean | null

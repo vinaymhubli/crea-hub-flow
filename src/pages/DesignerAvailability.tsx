@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   User, 
@@ -29,19 +29,41 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useDesignerAvailability } from '@/hooks/useDesignerAvailability';
+import { useToast } from '@/hooks/use-toast';
 
-function AddTimeSlotDialog() {
+interface AddTimeSlotDialogProps {
+  onAddTimeSlot: (dayOfWeek: number, startTime: string, endTime: string) => void;
+}
+
+function AddTimeSlotDialog({ onAddTimeSlot }: AddTimeSlotDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<string>("");
+  const [startTime, setStartTime] = useState<string>("09:00");
+  const [endTime, setEndTime] = useState<string>("17:00");
 
   const daysOfWeek = [
-    "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
+    { label: "Monday", value: 1 },
+    { label: "Tuesday", value: 2 },
+    { label: "Wednesday", value: 3 },
+    { label: "Thursday", value: 4 },
+    { label: "Friday", value: 5 },
+    { label: "Saturday", value: 6 },
+    { label: "Sunday", value: 0 }
   ];
 
-  const timeSlots = [
-    "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30",
-    "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30",
-    "17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00"
-  ];
+  const handleAddSlot = () => {
+    if (selectedDay && startTime && endTime) {
+      const dayValue = daysOfWeek.find(d => d.label.toLowerCase() === selectedDay)?.value;
+      if (dayValue !== undefined) {
+        onAddTimeSlot(dayValue, startTime, endTime);
+        setIsOpen(false);
+        setSelectedDay("");
+        setStartTime("09:00");
+        setEndTime("17:00");
+      }
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -67,14 +89,14 @@ function AddTimeSlotDialog() {
           
           <div className="space-y-2">
             <Label htmlFor="dayOfWeek">Day of Week</Label>
-            <Select>
+            <Select value={selectedDay} onValueChange={setSelectedDay}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a day" />
               </SelectTrigger>
               <SelectContent>
                 {daysOfWeek.map((day) => (
-                  <SelectItem key={day} value={day.toLowerCase()}>
-                    {day}
+                  <SelectItem key={day.label} value={day.label.toLowerCase()}>
+                    {day.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -84,33 +106,19 @@ function AddTimeSlotDialog() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="startTime">Start Time</Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Start time" />
-                </SelectTrigger>
-                <SelectContent>
-                  {timeSlots.map((time) => (
-                    <SelectItem key={time} value={time}>
-                      {time}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="endTime">End Time</Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="End time" />
-                </SelectTrigger>
-                <SelectContent>
-                  {timeSlots.map((time) => (
-                    <SelectItem key={time} value={time}>
-                      {time}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+              />
             </div>
           </div>
 
@@ -122,7 +130,8 @@ function AddTimeSlotDialog() {
               Cancel
             </Button>
             <Button 
-              onClick={() => setIsOpen(false)}
+              onClick={handleAddSlot}
+              disabled={!selectedDay || !startTime || !endTime}
               className="bg-gradient-to-r from-green-400 to-blue-500 text-white"
             >
               Add Slot
@@ -134,9 +143,35 @@ function AddTimeSlotDialog() {
   );
 }
 
-function AddSpecialDayDialog() {
+interface AddSpecialDayDialogProps {
+  onAddSpecialDay: (date: string, isAvailable: boolean, startTime?: string, endTime?: string, reason?: string) => void;
+}
+
+function AddSpecialDayDialog({ onAddSpecialDay }: AddSpecialDayDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isAvailable, setIsAvailable] = useState(true);
+  const [date, setDate] = useState("");
+  const [startTime, setStartTime] = useState("09:00");
+  const [endTime, setEndTime] = useState("17:00");
+  const [reason, setReason] = useState("");
+
+  const handleAddSpecialDay = () => {
+    if (date) {
+      onAddSpecialDay(
+        date,
+        isAvailable,
+        isAvailable ? startTime : undefined,
+        isAvailable ? endTime : undefined,
+        reason || undefined
+      );
+      setIsOpen(false);
+      setDate("");
+      setIsAvailable(true);
+      setStartTime("09:00");
+      setEndTime("17:00");
+      setReason("");
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -155,7 +190,11 @@ function AddSpecialDayDialog() {
         <div className="space-y-6 mt-4">
           <div className="space-y-2">
             <Label>Date</Label>
-            <Input type="date" />
+            <Input 
+              type="date" 
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+            />
           </div>
 
           <div className="flex items-center justify-between">
@@ -170,11 +209,19 @@ function AddSpecialDayDialog() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="startTime">Start Time</Label>
-                <Input type="time" defaultValue="09:00" />
+                <Input 
+                  type="time" 
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="endTime">End Time</Label>
-                <Input type="time" defaultValue="17:00" />
+                <Input 
+                  type="time" 
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                />
               </div>
             </div>
           )}
@@ -183,6 +230,8 @@ function AddSpecialDayDialog() {
             <Label htmlFor="reason">Reason (Optional)</Label>
             <Input 
               id="reason" 
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
               placeholder="e.g., Holiday, Personal time, etc."
             />
           </div>
@@ -195,7 +244,8 @@ function AddSpecialDayDialog() {
               Cancel
             </Button>
             <Button 
-              onClick={() => setIsOpen(false)}
+              onClick={handleAddSpecialDay}
+              disabled={!date}
               className="bg-gradient-to-r from-purple-400 to-pink-500 text-white"
             >
               Add Special Day
@@ -209,49 +259,77 @@ function AddSpecialDayDialog() {
 
 export default function DesignerAvailability() {
   const [activeTab, setActiveTab] = useState("weekly");
-  const [workingHours, setWorkingHours] = useState({
-    start: "09:00",
-    end: "17:00"
-  });
-  const [bufferTime, setBufferTime] = useState("15");
-  const [autoAcceptBookings, setAutoAcceptBookings] = useState(false);
+  const { toast } = useToast();
+  const {
+    loading,
+    settings,
+    weeklySchedule,
+    specialDays,
+    updateSettings,
+    updateWeeklySchedule,
+    addSpecialDay,
+    deleteSpecialDay,
+  } = useDesignerAvailability();
 
   const weekDays = [
-    "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
+    { name: "Monday", value: 1 },
+    { name: "Tuesday", value: 2 },
+    { name: "Wednesday", value: 3 },
+    { name: "Thursday", value: 4 },
+    { name: "Friday", value: 5 },
+    { name: "Saturday", value: 6 },
+    { name: "Sunday", value: 0 }
   ];
 
-  const [weeklySchedule, setWeeklySchedule] = useState({
-    monday: { enabled: true, start: "09:00", end: "17:00" },
-    tuesday: { enabled: true, start: "09:00", end: "17:00" },
-    wednesday: { enabled: true, start: "09:00", end: "17:00" },
-    thursday: { enabled: true, start: "09:00", end: "17:00" },
-    friday: { enabled: true, start: "09:00", end: "17:00" },
-    saturday: { enabled: false, start: "10:00", end: "16:00" },
-    sunday: { enabled: false, start: "10:00", end: "16:00" }
-  });
-
-  const specialDays = [
-    {
-      date: "Aug 20, 2025",
-      type: "unavailable",
-      reason: "Personal Day",
-      color: "bg-red-100 text-red-800"
-    },
-    {
-      date: "Aug 25, 2025", 
-      type: "custom",
-      hours: "10:00 AM - 2:00 PM",
-      reason: "Limited availability",
-      color: "bg-yellow-100 text-yellow-800"
-    }
-  ];
-
-  const toggleDayAvailability = (day: string) => {
-    setWeeklySchedule(prev => ({
-      ...prev,
-      [day]: { ...prev[day as keyof typeof prev], enabled: !prev[day as keyof typeof prev].enabled }
-    }));
+  // Get schedule for a specific day
+  const getScheduleForDay = (dayOfWeek: number) => {
+    return weeklySchedule.find(schedule => schedule.day_of_week === dayOfWeek) || {
+      is_available: true,
+      start_time: "09:00",
+      end_time: "17:00"
+    };
   };
+
+  const handleSettingsUpdate = async (field: string, value: any) => {
+    await updateSettings({ [field]: value });
+  };
+
+  const handleTimeSlotAdd = async (dayOfWeek: number, startTime: string, endTime: string) => {
+    await updateWeeklySchedule(dayOfWeek, {
+      is_available: true,
+      start_time: startTime,
+      end_time: endTime
+    });
+  };
+
+  const handleSpecialDayAdd = async (date: string, isAvailable: boolean, startTime?: string, endTime?: string, reason?: string) => {
+    await addSpecialDay({
+      date,
+      is_available: isAvailable,
+      start_time: startTime,
+      end_time: endTime,
+      reason
+    });
+  };
+
+  const toggleDayAvailability = async (dayOfWeek: number) => {
+    const currentSchedule = getScheduleForDay(dayOfWeek);
+    await updateWeeklySchedule(dayOfWeek, {
+      ...currentSchedule,
+      is_available: !currentSchedule.is_available
+    });
+  };
+
+  // Calculate total hours and active days
+  const totalHours = weeklySchedule
+    .filter(schedule => schedule.is_available)
+    .reduce((total, schedule) => {
+      const start = new Date(`1970-01-01T${schedule.start_time}`);
+      const end = new Date(`1970-01-01T${schedule.end_time}`);
+      return total + (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+    }, 0);
+
+  const activeDays = weeklySchedule.filter(schedule => schedule.is_available).length;
 
   return (
     <SidebarProvider>
@@ -273,9 +351,9 @@ export default function DesignerAvailability() {
                     <h1 className="text-3xl font-bold text-white">Availability Management</h1>
                     <p className="text-white/90 text-lg">Manage your weekly schedule and special day exceptions</p>
                     <div className="flex items-center space-x-4 mt-2">
-                      <span className="text-white/90 font-medium">40 hours/week</span>
+                      <span className="text-white/90 font-medium">{Math.round(totalHours)} hours/week</span>
                       <span className="text-white/60">•</span>
-                      <span className="text-white/90 font-medium">5 days active</span>
+                      <span className="text-white/90 font-medium">{activeDays} days active</span>
                     </div>
                   </div>
                 </div>
@@ -285,7 +363,7 @@ export default function DesignerAvailability() {
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Sync Calendar
                 </Button>
-                <AddTimeSlotDialog />
+                <AddTimeSlotDialog onAddTimeSlot={handleTimeSlotAdd} />
               </div>
             </div>
           </header>
@@ -301,27 +379,33 @@ export default function DesignerAvailability() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label className="font-semibold text-gray-700">Auto-accept bookings</Label>
-                      <p className="text-sm text-gray-500">Automatically confirm new bookings</p>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="font-semibold text-gray-700">Auto-accept bookings</Label>
+                        <p className="text-sm text-gray-500">Automatically confirm new bookings</p>
+                      </div>
+                      <Switch 
+                        checked={settings?.auto_accept_bookings || false} 
+                        onCheckedChange={(checked) => handleSettingsUpdate('auto_accept_bookings', checked)} 
+                      />
                     </div>
-                    <Switch checked={autoAcceptBookings} onCheckedChange={setAutoAcceptBookings} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="font-semibold text-gray-700">Buffer time between sessions</Label>
-                    <Select value={bufferTime} onValueChange={setBufferTime}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="0">No buffer</SelectItem>
-                        <SelectItem value="15">15 minutes</SelectItem>
-                        <SelectItem value="30">30 minutes</SelectItem>
-                        <SelectItem value="60">1 hour</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                    <div className="space-y-2">
+                      <Label className="font-semibold text-gray-700">Buffer time between sessions</Label>
+                      <Select 
+                        value={settings?.buffer_time_minutes?.toString() || "15"} 
+                        onValueChange={(value) => handleSettingsUpdate('buffer_time_minutes', parseInt(value))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="0">No buffer</SelectItem>
+                          <SelectItem value="15">15 minutes</SelectItem>
+                          <SelectItem value="30">30 minutes</SelectItem>
+                          <SelectItem value="60">1 hour</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                 </CardContent>
               </Card>
 
@@ -333,27 +417,39 @@ export default function DesignerAvailability() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="font-semibold text-gray-700">Start Time</Label>
-                      <Input 
-                        type="time" 
-                        value={workingHours.start}
-                        onChange={(e) => setWorkingHours(prev => ({ ...prev, start: e.target.value }))}
-                      />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="font-semibold text-gray-700">Start Time</Label>
+                        <Input 
+                          type="time" 
+                          value={settings?.working_hours_start || "09:00"}
+                          onChange={(e) => handleSettingsUpdate('working_hours_start', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="font-semibold text-gray-700">End Time</Label>
+                        <Input 
+                          type="time" 
+                          value={settings?.working_hours_end || "17:00"}
+                          onChange={(e) => handleSettingsUpdate('working_hours_end', e.target.value)}
+                        />
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label className="font-semibold text-gray-700">End Time</Label>
-                      <Input 
-                        type="time" 
-                        value={workingHours.end}
-                        onChange={(e) => setWorkingHours(prev => ({ ...prev, end: e.target.value }))}
-                      />
-                    </div>
-                  </div>
-                  <Button className="w-full bg-gradient-to-r from-blue-400 to-purple-500 text-white">
-                    Apply to All Days
-                  </Button>
+                    <Button 
+                      className="w-full bg-gradient-to-r from-blue-400 to-purple-500 text-white"
+                      onClick={() => {
+                        // Apply to all days
+                        weekDays.forEach(day => {
+                          updateWeeklySchedule(day.value, {
+                            is_available: true,
+                            start_time: settings?.working_hours_start || "09:00",
+                            end_time: settings?.working_hours_end || "17:00"
+                          });
+                        });
+                      }}
+                    >
+                      Apply to All Days
+                    </Button>
                 </CardContent>
               </Card>
 
@@ -365,23 +461,23 @@ export default function DesignerAvailability() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6">
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Total hours:</span>
-                      <span className="font-semibold text-gray-900">40 hours</span>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Total hours:</span>
+                        <span className="font-semibold text-gray-900">{Math.round(totalHours)} hours</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Active days:</span>
+                        <span className="font-semibold text-green-600">{activeDays} days</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Special days:</span>
+                        <span className="font-semibold text-blue-600">{specialDays.length} days</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="bg-gradient-to-r from-green-400 to-blue-500 h-2 rounded-full" style={{ width: `${(activeDays / 7) * 100}%` }}></div>
+                      </div>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Booked:</span>
-                      <span className="font-semibold text-green-600">8 hours</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Available:</span>
-                      <span className="font-semibold text-blue-600">32 hours</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-gradient-to-r from-green-400 to-blue-500 h-2 rounded-full" style={{ width: '20%' }}></div>
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -408,136 +504,143 @@ export default function DesignerAvailability() {
               </div>
 
               <TabsContent value="weekly" className="space-y-6">
-                <div className="grid gap-4">
-                  {weekDays.map((day) => {
-                    const dayKey = day.toLowerCase() as keyof typeof weeklySchedule;
-                    const dayData = weeklySchedule[dayKey];
-                    
-                    return (
-                      <Card key={day} className="bg-white border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300">
-                        <CardContent className="p-6">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-4">
-                              <div className="flex items-center space-x-3">
-                                <Switch 
-                                  checked={dayData.enabled}
-                                  onCheckedChange={() => toggleDayAvailability(dayKey)}
-                                />
+                {loading ? (
+                  <div className="text-center py-8">Loading availability data...</div>
+                ) : (
+                  <div className="grid gap-4">
+                    {weekDays.map((day) => {
+                      const dayData = getScheduleForDay(day.value);
+                      
+                      return (
+                        <Card key={day.name} className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
+                          <CardContent className="p-6">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-4">
+                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                                  dayData.is_available 
+                                    ? 'bg-gradient-to-r from-green-400 to-blue-500' 
+                                    : 'bg-gray-200'
+                                }`}>
+                                  <Calendar className={`w-6 h-6 ${dayData.is_available ? 'text-white' : 'text-gray-400'}`} />
+                                </div>
                                 <div>
-                                  <h3 className="font-bold text-gray-900">{day}</h3>
+                                  <h3 className="text-lg font-semibold text-gray-900">{day.name}</h3>
                                   <p className="text-sm text-gray-500">
-                                    {dayData.enabled ? `${dayData.start} - ${dayData.end}` : 'Unavailable'}
+                                    {dayData.is_available 
+                                      ? `Available ${dayData.start_time} - ${dayData.end_time}` 
+                                      : 'Not available'}
                                   </p>
                                 </div>
                               </div>
-                            </div>
-                            
-                            {dayData.enabled && (
                               <div className="flex items-center space-x-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div className="space-y-1">
-                                    <Label className="text-xs text-gray-500">Start</Label>
-                                    <Input 
-                                      type="time" 
-                                      value={dayData.start}
-                                      onChange={(e) => setWeeklySchedule(prev => ({
-                                        ...prev,
-                                        [dayKey]: { ...prev[dayKey], start: e.target.value }
-                                      }))}
-                                      className="w-24 text-sm"
-                                    />
-                                  </div>
-                                  <div className="space-y-1">
-                                    <Label className="text-xs text-gray-500">End</Label>
-                                    <Input 
-                                      type="time" 
-                                      value={dayData.end}
-                                      onChange={(e) => setWeeklySchedule(prev => ({
-                                        ...prev,
-                                        [dayKey]: { ...prev[dayKey], end: e.target.value }
-                                      }))}
-                                      className="w-24 text-sm"
-                                    />
-                                  </div>
-                                </div>
-                                <Button variant="outline" size="sm">
-                                  <Copy className="w-4 h-4" />
-                                </Button>
+                                <Switch 
+                                  checked={dayData.is_available} 
+                                  onCheckedChange={() => toggleDayAvailability(day.value)}
+                                />
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="sm">
+                                      <MoreVertical className="w-4 h-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent>
+                                    <DropdownMenuItem 
+                                      onClick={() => {
+                                        const startTime = prompt("Start time (HH:MM):", dayData.start_time);
+                                        const endTime = prompt("End time (HH:MM):", dayData.end_time);
+                                        if (startTime && endTime) {
+                                          updateWeeklySchedule(day.value, {
+                                            ...dayData,
+                                            start_time: startTime,
+                                            end_time: endTime
+                                          });
+                                        }
+                                      }}
+                                    >
+                                      Edit Hours
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
                               </div>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-                
-                <div className="flex justify-end space-x-3">
-                  <Button variant="outline" className="px-6">Reset to Default</Button>
-                  <Button className="bg-gradient-to-r from-green-400 to-blue-500 text-white px-6">
-                    Save Changes
-                  </Button>
-                </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="special" className="space-y-6">
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center mb-6">
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900">Special Days & Exceptions</h3>
+                    <h3 className="text-xl font-semibold text-gray-900">Special Days</h3>
                     <p className="text-gray-600">Override your regular schedule for specific dates</p>
                   </div>
-                  <AddSpecialDayDialog />
+                  <AddSpecialDayDialog onAddSpecialDay={handleSpecialDayAdd} />
                 </div>
 
-                <div className="grid gap-4">
-                  {specialDays.map((specialDay, index) => (
-                    <Card key={index} className="bg-white border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300">
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4">
-                            <div className="w-12 h-12 bg-gradient-to-r from-purple-400 to-pink-500 rounded-xl flex items-center justify-center">
-                              <Calendar className="w-6 h-6 text-white" />
+                {loading ? (
+                  <div className="text-center py-8">Loading special days...</div>
+                ) : (
+                  <div className="grid gap-4">
+                    {specialDays.length === 0 ? (
+                      <div className="text-center py-12 text-gray-500">
+                        No special days configured. Add exceptions to your regular schedule.
+                      </div>
+                    ) : (
+                      specialDays.map((day) => (
+                        <Card key={day.id} className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
+                          <CardContent className="p-6">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-4">
+                                <div className="w-12 h-12 bg-gradient-to-r from-purple-400 to-pink-500 rounded-xl flex items-center justify-center">
+                                  <Calendar className="w-6 h-6 text-white" />
+                                </div>
+                                <div>
+                                  <h4 className="text-lg font-semibold text-gray-900">
+                                    {new Date(day.date).toLocaleDateString('en-US', { 
+                                      year: 'numeric', 
+                                      month: 'short', 
+                                      day: 'numeric' 
+                                    })}
+                                  </h4>
+                                  <p className="text-sm text-gray-500">
+                                    {day.is_available 
+                                      ? `Available ${day.start_time} - ${day.end_time}` 
+                                      : 'Unavailable'
+                                    }
+                                  </p>
+                                  {day.reason && (
+                                    <p className="text-xs text-gray-400 mt-1">{day.reason}</p>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-3">
+                                <Badge className={day.is_available ? "bg-yellow-100 text-yellow-800" : "bg-red-100 text-red-800"}>
+                                  {day.is_available ? 'Custom Hours' : 'Unavailable'}
+                                </Badge>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="sm">
+                                      <MoreVertical className="w-4 h-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent>
+                                    <DropdownMenuItem 
+                                      className="text-red-600"
+                                      onClick={() => day.id && deleteSpecialDay(day.id)}
+                                    >
+                                      Remove
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
                             </div>
-                            <div>
-                              <h4 className="font-bold text-gray-900">{specialDay.date}</h4>
-                              <p className="text-sm text-gray-600">{specialDay.reason}</p>
-                              {specialDay.hours && (
-                                <p className="text-sm text-gray-500">{specialDay.hours}</p>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-3">
-                            <Badge className={specialDay.color}>
-                              {specialDay.type === 'unavailable' ? 'Unavailable' : 'Custom Hours'}
-                            </Badge>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm">
-                                  <MoreVertical className="w-4 h-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem>Edit</DropdownMenuItem>
-                                <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-
-                {specialDays.length === 0 && (
-                  <div className="text-center py-16">
-                    <div className="w-20 h-20 bg-gradient-to-br from-purple-400 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl">
-                      <Calendar className="w-10 h-10 text-white" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-3">No special days set</h3>
-                    <p className="text-gray-600 mb-8 max-w-md mx-auto text-lg">
-                      Add special days to override your regular schedule for holidays, vacations, or custom hours.
-                    </p>
-                    <AddSpecialDayDialog />
+                          </CardContent>
+                        </Card>
+                      ))
+                    )}
                   </div>
                 )}
               </TabsContent>
