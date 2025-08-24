@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { toast } from '@/hooks/use-toast';
 
 interface Booking {
   id: string;
@@ -32,6 +33,8 @@ export const useRealtimeBookings = () => {
   const [activeSession, setActiveSession] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
   const { profile } = useAuth();
+  const channelRef = useRef<any>(null);
+  const [onNewBooking, setOnNewBooking] = useState<((booking: Booking) => void) | null>(null);
 
   useEffect(() => {
     if (!profile) return;
@@ -39,10 +42,14 @@ export const useRealtimeBookings = () => {
     fetchBookings();
     
     // Set up real-time subscription after fetching bookings
-    let filterValue = '';
-    if (profile.user_type === 'designer') {
-      // For designers, we need to get their designer ID first
-      const getDesignerFilter = async () => {
+    const setupRealtimeSubscription = async () => {
+      // Clean up existing channel
+      if (channelRef.current) {
+        await supabase.removeChannel(channelRef.current);
+      }
+
+      if (profile.user_type === 'designer') {
+        // For designers, we need to get their designer ID first
         const { data: designerData } = await supabase
           .from('designers')
           .select('id')
@@ -50,7 +57,7 @@ export const useRealtimeBookings = () => {
           .single();
         
         if (designerData) {
-          const channel = supabase
+          channelRef.current = supabase
             .channel('bookings-changes')
             .on(
               'postgres_changes',
@@ -66,36 +73,35 @@ export const useRealtimeBookings = () => {
               }
             )
             .subscribe();
-
-          return () => {
-            supabase.removeChannel(channel);
-          };
         }
-      };
-      getDesignerFilter();
-    } else {
-      // For customers, use customer_id directly
-      const channel = supabase
-        .channel('bookings-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'bookings',
-            filter: `customer_id=eq.${profile.user_id}`
-          },
-          (payload) => {
-            console.log('Booking change detected:', payload);
-            handleRealtimeChange(payload);
-          }
-        )
-        .subscribe();
+      } else {
+        // For customers, use customer_id directly
+        channelRef.current = supabase
+          .channel('bookings-changes')
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'bookings',
+              filter: `customer_id=eq.${profile.user_id}`
+            },
+            (payload) => {
+              console.log('Booking change detected:', payload);
+              handleRealtimeChange(payload);
+            }
+          )
+          .subscribe();
+      }
+    };
 
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
+    setupRealtimeSubscription();
+
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+      }
+    };
   }, [profile]);
 
   const fetchBookings = async () => {
@@ -162,25 +168,79 @@ export const useRealtimeBookings = () => {
     }
   };
 
-  const handleRealtimeChange = (payload: any) => {
+  const handleRealtimeChange = async (payload: any) => {
     const { eventType, new: newRecord, old: oldRecord } = payload;
 
     switch (eventType) {
       case 'INSERT':
-        setBookings(prev => [...prev, newRecord]);
+        // Fetch full booking details with relations
+        const { data: fullBooking } = await supabase
+          .from('bookings')
+          .select(`
+            *,
+            customer:profiles!customer_id(first_name, last_name),
+            designer:designers!designer_id(
+              user_id,
+              specialty,
+              rating,
+              user:profiles!user_id(first_name, last_name)
+            )
+          `)
+          .eq('id', newRecord.id)
+          .single();
+
+        if (fullBooking) {
+          setBookings(prev => [...prev, fullBooking]);
+          
+          // For designers, show notification for new pending bookings
+          if (profile?.user_type === 'designer' && fullBooking.status === 'pending') {
+            const customerName = fullBooking.customer 
+              ? `${fullBooking.customer.first_name || ''} ${fullBooking.customer.last_name || ''}`.trim()
+              : 'A customer';
+            
+            toast({
+              title: "New Booking Request!",
+              description: `${customerName} wants to book ${fullBooking.service}`,
+              duration: 10000,
+            });
+
+            // Call the callback if provided
+            if (onNewBooking) {
+              onNewBooking(fullBooking);
+            }
+          }
+        }
         break;
       case 'UPDATE':
-        setBookings(prev => 
-          prev.map(booking => 
-            booking.id === newRecord.id ? newRecord : booking
-          )
-        );
-        
-        // Check if this is a session status change
-        if (newRecord.status === 'in_progress' && oldRecord?.status !== 'in_progress') {
-          setActiveSession(newRecord);
-        } else if (newRecord.status !== 'in_progress' && oldRecord?.status === 'in_progress') {
-          setActiveSession(null);
+        // Fetch updated booking with relations
+        const { data: updatedBooking } = await supabase
+          .from('bookings')
+          .select(`
+            *,
+            customer:profiles!customer_id(first_name, last_name),
+            designer:designers!designer_id(
+              user_id,
+              specialty,
+              rating,
+              user:profiles!user_id(first_name, last_name)
+            )
+          `)
+          .eq('id', newRecord.id)
+          .single();
+
+        if (updatedBooking) {
+          setBookings(prev => 
+            prev.map(booking => 
+              booking.id === updatedBooking.id ? updatedBooking : booking
+            )
+          );
+          
+          // Check if this is a session status change
+          if (updatedBooking.status === 'in_progress' && oldRecord?.status !== 'in_progress') {
+            setActiveSession(updatedBooking);
+          } else if (updatedBooking.status !== 'in_progress' && oldRecord?.status === 'in_progress') {
+            setActiveSession(null);
+          }
         }
         break;
       case 'DELETE':
@@ -239,14 +299,148 @@ export const useRealtimeBookings = () => {
     return bookings.filter(booking => booking.status === 'completed');
   };
 
+  const acceptBooking = async (bookingId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .update({ status: 'confirmed' })
+        .eq('id', bookingId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Create notification for customer
+      const booking = bookings.find(b => b.id === bookingId);
+      if (booking) {
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: booking.customer_id,
+            title: 'Booking Confirmed',
+            message: `Your booking for ${booking.service} has been confirmed!`,
+            type: 'booking_confirmed',
+            related_id: bookingId
+          });
+      }
+
+      toast({
+        title: "Booking Accepted",
+        description: "The booking has been confirmed successfully.",
+      });
+
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error accepting booking:', error);
+      toast({
+        title: "Error",
+        description: "Failed to accept booking. Please try again.",
+        variant: "destructive",
+      });
+      return { success: false, error };
+    }
+  };
+
+  const declineBooking = async (bookingId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .update({ status: 'cancelled' })
+        .eq('id', bookingId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Create notification for customer
+      const booking = bookings.find(b => b.id === bookingId);
+      if (booking) {
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: booking.customer_id,
+            title: 'Booking Declined',
+            message: `Your booking for ${booking.service} has been declined.`,
+            type: 'booking_cancelled',
+            related_id: bookingId
+          });
+      }
+
+      toast({
+        title: "Booking Declined",
+        description: "The booking has been declined.",
+      });
+
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error declining booking:', error);
+      toast({
+        title: "Error",
+        description: "Failed to decline booking. Please try again.",
+        variant: "destructive",
+      });
+      return { success: false, error };
+    }
+  };
+
+  const rescheduleBooking = async (bookingId: string, newDate: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .update({ scheduled_date: newDate })
+        .eq('id', bookingId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Create notification for customer
+      const booking = bookings.find(b => b.id === bookingId);
+      if (booking) {
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: booking.customer_id,
+            title: 'Booking Rescheduled',
+            message: `Your booking for ${booking.service} has been rescheduled.`,
+            type: 'booking_rescheduled',
+            related_id: bookingId
+          });
+      }
+
+      toast({
+        title: "Booking Rescheduled",
+        description: "The booking has been rescheduled successfully.",
+      });
+
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error rescheduling booking:', error);
+      toast({
+        title: "Error",
+        description: "Failed to reschedule booking. Please try again.",
+        variant: "destructive",
+      });
+      return { success: false, error };
+    }
+  };
+
+  const setNewBookingCallback = (callback: (booking: Booking) => void) => {
+    setOnNewBooking(() => callback);
+  };
+
   return {
     bookings,
     activeSession,
     loading,
     startSession,
     endSession,
+    acceptBooking,
+    declineBooking,
+    rescheduleBooking,
     getUpcomingBookings,
     getCompletedBookings,
+    setNewBookingCallback,
     refetch: fetchBookings
   };
 };

@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRealtimeBookings } from '@/hooks/useRealtimeBookings';
 import { useAuth } from '@/hooks/useAuth';
 import { format } from 'date-fns';
+import { BookingDetailsDialog } from '@/components/BookingDetailsDialog';
+import { RescheduleDialog } from '@/components/RescheduleDialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { 
   LayoutDashboard, 
   User, 
@@ -40,32 +43,133 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 export default function DesignerBookings() {
   const [activeTab, setActiveTab] = useState("upcoming");
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [showRescheduleDialog, setShowRescheduleDialog] = useState(false);
+  const [showDeclineDialog, setShowDeclineDialog] = useState(false);
+  const [bookingToDecline, setBookingToDecline] = useState<any>(null);
   const { profile } = useAuth();
-  const { bookings: allBookings, loading } = useRealtimeBookings();
+  const { 
+    bookings: allBookings, 
+    loading, 
+    acceptBooking, 
+    declineBooking, 
+    rescheduleBooking, 
+    startSession,
+    setNewBookingCallback 
+  } = useRealtimeBookings();
 
-  // Filter bookings by status
-  const getBookingsByStatus = (status: string) => {
+  // Set up new booking notification callback
+  useEffect(() => {
+    setNewBookingCallback((booking) => {
+      // Auto-switch to pending tab when new booking arrives
+      if (booking.status === 'pending') {
+        setActiveTab('pending');
+      }
+    });
+  }, [setNewBookingCallback]);
+
+  // Filter bookings by status and search query
+  const getFilteredBookings = (status: string) => {
+    let filtered = [];
+    
     switch (status) {
       case 'upcoming':
-        return allBookings.filter(booking => 
+        filtered = allBookings.filter(booking => 
           booking.status === 'confirmed' && 
           new Date(booking.scheduled_date) > new Date()
         );
+        break;
       case 'pending':
-        return allBookings.filter(booking => booking.status === 'pending');
+        filtered = allBookings.filter(booking => booking.status === 'pending');
+        break;
       case 'completed':
-        return allBookings.filter(booking => booking.status === 'completed');
+        filtered = allBookings.filter(booking => booking.status === 'completed');
+        break;
       case 'cancelled':
-        return allBookings.filter(booking => booking.status === 'cancelled');
+        filtered = allBookings.filter(booking => booking.status === 'cancelled');
+        break;
       default:
-        return [];
+        filtered = [];
+    }
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(booking => {
+        const customerName = booking.customer 
+          ? `${booking.customer.first_name || ''} ${booking.customer.last_name || ''}`.toLowerCase()
+          : '';
+        const service = booking.service?.toLowerCase() || '';
+        const description = booking.description?.toLowerCase() || '';
+        
+        return customerName.includes(query) || 
+               service.includes(query) || 
+               description.includes(query);
+      });
+    }
+
+    // Sort by date (earliest first for upcoming/pending, latest first for completed/cancelled)
+    return filtered.sort((a, b) => {
+      const dateA = new Date(a.scheduled_date);
+      const dateB = new Date(b.scheduled_date);
+      
+      if (status === 'upcoming' || status === 'pending') {
+        return dateA.getTime() - dateB.getTime(); // earliest first
+      } else {
+        return dateB.getTime() - dateA.getTime(); // latest first
+      }
+    });
+  };
+
+  const upcomingBookings = getFilteredBookings('upcoming');
+  const pendingBookings = getFilteredBookings('pending');
+  const completedBookings = getFilteredBookings('completed');
+  const cancelledBookings = getFilteredBookings('cancelled');
+
+  // Action handlers
+  const handleAcceptBooking = async (booking: any) => {
+    await acceptBooking(booking.id);
+    setShowDetailsDialog(false);
+  };
+
+  const handleDeclineBooking = (booking: any) => {
+    setBookingToDecline(booking);
+    setShowDeclineDialog(true);
+  };
+
+  const confirmDeclineBooking = async () => {
+    if (bookingToDecline) {
+      await declineBooking(bookingToDecline.id);
+      setShowDeclineDialog(false);
+      setShowDetailsDialog(false);
+      setBookingToDecline(null);
     }
   };
 
-  const upcomingBookings = getBookingsByStatus('upcoming');
-  const pendingBookings = getBookingsByStatus('pending');
-  const completedBookings = getBookingsByStatus('completed');
-  const cancelledBookings = getBookingsByStatus('cancelled');
+  const handleRescheduleBooking = async (newDateTime: string) => {
+    if (selectedBooking) {
+      await rescheduleBooking(selectedBooking.id, newDateTime);
+      setShowRescheduleDialog(false);
+      setShowDetailsDialog(false);
+    }
+  };
+
+  const handleJoinSession = async (booking: any) => {
+    const result = await startSession(booking.id);
+    if (result.success) {
+      window.location.href = `/session/${booking.id}`;
+    }
+  };
+
+  const handleMessageClient = (booking: any) => {
+    window.location.href = `/designer-dashboard/messages?booking_id=${booking.id}`;
+  };
+
+  const handleViewDetails = (booking: any) => {
+    setSelectedBooking(booking);
+    setShowDetailsDialog(true);
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -130,21 +234,21 @@ export default function DesignerBookings() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleViewDetails(booking)}>
                   <Eye className="w-4 h-4 mr-2" />
                   View Details
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleMessageClient(booking)}>
                   <MessageCircle className="w-4 h-4 mr-2" />
                   Message Client
                 </DropdownMenuItem>
                 {booking.status === 'pending' && (
                   <>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleAcceptBooking(booking)}>
                       <CheckCircle className="w-4 h-4 mr-2" />
                       Accept Booking
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDeclineBooking(booking)}>
                       <XCircle className="w-4 h-4 mr-2" />
                       Decline Booking
                     </DropdownMenuItem>
@@ -152,11 +256,11 @@ export default function DesignerBookings() {
                 )}
                 {booking.status === 'confirmed' && (
                   <>
-                    <DropdownMenuItem onClick={() => window.location.href = `/session/${booking.id}`}>
+                    <DropdownMenuItem onClick={() => handleJoinSession(booking)}>
                       <Video className="w-4 h-4 mr-2" />
                       Join Session
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShowRescheduleDialog(true)}>
                       <CalendarDays className="w-4 h-4 mr-2" />
                       Reschedule
                     </DropdownMenuItem>
@@ -220,7 +324,11 @@ export default function DesignerBookings() {
               <span className="text-sm font-medium text-gray-700">{booking.duration_hours} hour{booking.duration_hours !== 1 ? 's' : ''}</span>
             </div>
           <div className="flex space-x-2">
-            <Button variant="outline" size="sm">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => handleMessageClient(booking)}
+            >
               <MessageCircle className="w-4 h-4 mr-1" />
               Chat
             </Button>
@@ -228,7 +336,7 @@ export default function DesignerBookings() {
               <Button 
                 size="sm" 
                 className="bg-gradient-to-r from-green-400 to-blue-500 text-white"
-                onClick={() => window.location.href = `/session/${booking.id}`}
+                onClick={() => handleJoinSession(booking)}
               >
                 <Video className="w-4 h-4 mr-1" />
                 Join Session
@@ -391,6 +499,45 @@ export default function DesignerBookings() {
           </div>
         </main>
       </div>
+      
+      {/* Dialogs */}
+      <BookingDetailsDialog
+        booking={selectedBooking}
+        open={showDetailsDialog}
+        onOpenChange={setShowDetailsDialog}
+        onAccept={() => selectedBooking && handleAcceptBooking(selectedBooking)}
+        onDecline={() => selectedBooking && handleDeclineBooking(selectedBooking)}
+        onReschedule={() => setShowRescheduleDialog(true)}
+        onJoinSession={() => selectedBooking && handleJoinSession(selectedBooking)}
+        onMessageClient={() => selectedBooking && handleMessageClient(selectedBooking)}
+      />
+
+      <RescheduleDialog
+        open={showRescheduleDialog}
+        onOpenChange={setShowRescheduleDialog}
+        onReschedule={handleRescheduleBooking}
+        currentDate={selectedBooking?.scheduled_date || ''}
+      />
+
+      <AlertDialog open={showDeclineDialog} onOpenChange={setShowDeclineDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Decline Booking</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to decline this booking? This action cannot be undone and the customer will be notified.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDeclineBooking}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              Decline Booking
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </SidebarProvider>
   );
 }
