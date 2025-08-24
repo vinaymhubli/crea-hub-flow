@@ -590,6 +590,69 @@ export type Database = {
           },
         ]
       }
+      user_settings: {
+        Row: {
+          created_at: string
+          currency: string
+          date_format: string
+          id: string
+          language: string
+          notifications_email: boolean
+          notifications_marketing: boolean
+          notifications_push: boolean
+          notifications_sms: boolean
+          privacy_activity_status: boolean
+          privacy_contact_info_visible: boolean
+          privacy_profile_visible: boolean
+          security_login_alerts: boolean
+          security_two_factor: boolean
+          time_format: string
+          timezone: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          date_format?: string
+          id?: string
+          language?: string
+          notifications_email?: boolean
+          notifications_marketing?: boolean
+          notifications_push?: boolean
+          notifications_sms?: boolean
+          privacy_activity_status?: boolean
+          privacy_contact_info_visible?: boolean
+          privacy_profile_visible?: boolean
+          security_login_alerts?: boolean
+          security_two_factor?: boolean
+          time_format?: string
+          timezone?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          date_format?: string
+          id?: string
+          language?: string
+          notifications_email?: boolean
+          notifications_marketing?: boolean
+          notifications_push?: boolean
+          notifications_sms?: boolean
+          privacy_activity_status?: boolean
+          privacy_contact_info_visible?: boolean
+          privacy_profile_visible?: boolean
+          security_login_alerts?: boolean
+          security_two_factor?: boolean
+          time_format?: string
+          timezone?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       wallet_transactions: {
         Row: {
           amount: number

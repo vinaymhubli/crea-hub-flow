@@ -1,13 +1,9 @@
 import { useState } from 'react';
 import { 
-  LayoutDashboard, 
-  User, 
-  FolderOpen, 
   Calendar, 
   Clock, 
   DollarSign, 
   History, 
-  Settings,
   Download,
   Search,
   Filter,
@@ -20,7 +16,6 @@ import {
   MapPin,
   MoreVertical
 } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { DesignerSidebar } from "@/components/DesignerSidebar";
 import { Button } from "@/components/ui/button";
@@ -31,72 +26,45 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useSessionHistory } from "@/hooks/useSessionHistory";
 
 export default function DesignerSessionHistory() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [activeTab, setActiveTab] = useState("recent");
+  
+  const { sessions, stats, loading, error } = useSessionHistory();
 
-  // Sample session data
-  const sessions = [
-    {
-      id: 1,
-      client: { name: "Sarah Johnson", avatar: "", email: "sarah@company.com" },
-      project: "E-commerce Website Redesign",
-      date: "Aug 14, 2025",
-      duration: "2h 30m",
-      type: "Video Call",
-      status: "completed",
-      rating: 5,
-      feedback: "Excellent work! Very professional and creative approach to the redesign.",
-      earnings: 300,
-      hasRecording: true,
-      hasNotes: true,
-      tools: ["Figma", "Adobe XD"]
-    },
-    {
-      id: 2,
-      client: { name: "Mike Chen", avatar: "", email: "mike@startup.io" },
-      project: "Logo Design Consultation",
-      date: "Aug 13, 2025",
-      duration: "1h 15m",
-      type: "In Person",
-      status: "completed",
-      rating: 4,
-      feedback: "Great session, loved the creative process and final concepts.",
-      earnings: 150,
-      hasRecording: false,
-      hasNotes: true,
-      tools: ["Adobe Illustrator", "Sketch"]
-    },
-    {
-      id: 3,
-      client: { name: "Lisa Brown", avatar: "", email: "lisa@agency.com" },
-      project: "Brand Identity Workshop",
-      date: "Aug 12, 2025",
-      duration: "3h 00m",
-      type: "Video Call",
-      status: "completed",
-      rating: 5,
-      feedback: "Outstanding session! Lisa was very collaborative and insightful.",
-      earnings: 450,
-      hasRecording: true,
-      hasNotes: true,
-      tools: ["Figma", "Miro", "Adobe Creative Suite"]
-    }
-  ];
+  if (loading) {
+    return (
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 via-blue-50 to-green-50">
+          <DesignerSidebar />
+          <main className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading session history...</p>
+            </div>
+          </main>
+        </div>
+      </SidebarProvider>
+    );
+  }
 
-  const stats = {
-    totalSessions: sessions.length,
-    totalHours: sessions.reduce((acc, session) => {
-      const hours = parseFloat(session.duration.split('h')[0]);
-      const minutesPart = session.duration.split('h')[1]?.split('m')[0];
-      const minutes = minutesPart ? parseFloat(minutesPart) : 0;
-      return acc + hours + (minutes / 60);
-    }, 0),
-    avgRating: sessions.reduce((acc, session) => acc + session.rating, 0) / sessions.length,
-    totalEarnings: sessions.reduce((acc, session) => acc + session.earnings, 0)
-  };
+  if (error) {
+    return (
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 via-blue-50 to-green-50">
+          <DesignerSidebar />
+          <main className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <p className="text-red-600">Error: {error}</p>
+            </div>
+          </main>
+        </div>
+      </SidebarProvider>
+    );
+  }
 
   const getStatusBadge = (status: string) => {
     switch (status) {

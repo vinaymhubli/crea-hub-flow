@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Settings,
   Globe,
@@ -32,39 +32,36 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { useUserSettings } from "@/hooks/useUserSettings";
+import { useDesignerProfile } from "@/hooks/useDesignerProfile";
+import { useDesignerAvailability } from "@/hooks/useDesignerAvailability";
+import { useAuth } from "@/hooks/useAuth";
 
 
 export default function DesignerSettings() {
   const [activeTab, setActiveTab] = useState("general");
   const [showPassword, setShowPassword] = useState(false);
-  const [settings, setSettings] = useState({
-    // General settings
-    language: "english",
-    timezone: "est",
-    currency: "usd",
-    theme: "light",
-    // Notification settings
-    emailNotifications: true,
-    pushNotifications: true,
-    bookingAlerts: true,
-    paymentAlerts: true,
-    marketingEmails: false,
-    // Profile settings
-    publicProfile: true,
-    showOnlineStatus: true,
-    autoAcceptBookings: false,
-    // Security settings
-    twoFactorEnabled: false,
-    sessionTimeout: "30",
-    // Payment settings
-    hourlyRate: "85",
-    defaultCurrency: "USD",
-    payoutMethod: "bank"
-  });
+  
+  const { user } = useAuth();
+  const { settings: userSettings, loading: settingsLoading, updateSetting } = useUserSettings();
+  const { designerProfile, loading: profileLoading, updateDesignerProfile } = useDesignerProfile();
+  const { settings: availabilitySettings, loading: availabilityLoading, updateSettings: updateAvailabilitySettings } = useDesignerAvailability();
 
-  const handleSettingChange = (key: string, value: any) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
-  };
+  if (settingsLoading || profileLoading || availabilityLoading) {
+    return (
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 via-blue-50 to-green-50">
+          <DesignerSidebar />
+          <main className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading settings...</p>
+            </div>
+          </main>
+        </div>
+      </SidebarProvider>
+    );
+  }
 
   const devices = [
     { name: "MacBook Pro", type: "desktop", location: "San Francisco, CA", lastActive: "Current session", status: "active" },
@@ -163,46 +160,46 @@ export default function DesignerSettings() {
                     <CardContent className="p-6 space-y-4">
                       <div>
                         <Label className="font-semibold text-gray-700">Language</Label>
-                        <Select value={settings.language} onValueChange={(value) => handleSettingChange('language', value)}>
+                        <Select value={userSettings.language} onValueChange={(value) => updateSetting('language', value)}>
                           <SelectTrigger className="border-gray-200 focus:border-green-400">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="english">English</SelectItem>
-                            <SelectItem value="spanish">Spanish</SelectItem>
-                            <SelectItem value="french">French</SelectItem>
-                            <SelectItem value="german">German</SelectItem>
+                            <SelectItem value="en">English</SelectItem>
+                            <SelectItem value="es">Spanish</SelectItem>
+                            <SelectItem value="fr">French</SelectItem>
+                            <SelectItem value="de">German</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
 
                       <div>
                         <Label className="font-semibold text-gray-700">Timezone</Label>
-                        <Select value={settings.timezone} onValueChange={(value) => handleSettingChange('timezone', value)}>
+                        <Select value={userSettings.timezone} onValueChange={(value) => updateSetting('timezone', value)}>
                           <SelectTrigger className="border-gray-200 focus:border-green-400">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="est">Eastern Standard Time</SelectItem>
-                            <SelectItem value="cst">Central Standard Time</SelectItem>
-                            <SelectItem value="mst">Mountain Standard Time</SelectItem>
-                            <SelectItem value="pst">Pacific Standard Time</SelectItem>
-                            <SelectItem value="utc">UTC</SelectItem>
+                            <SelectItem value="America/New_York">Eastern Standard Time</SelectItem>
+                            <SelectItem value="America/Chicago">Central Standard Time</SelectItem>
+                            <SelectItem value="America/Denver">Mountain Standard Time</SelectItem>
+                            <SelectItem value="America/Los_Angeles">Pacific Standard Time</SelectItem>
+                            <SelectItem value="UTC">UTC</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
 
                       <div>
                         <Label className="font-semibold text-gray-700">Currency</Label>
-                        <Select value={settings.currency} onValueChange={(value) => handleSettingChange('currency', value)}>
+                        <Select value={userSettings.currency} onValueChange={(value) => updateSetting('currency', value)}>
                           <SelectTrigger className="border-gray-200 focus:border-green-400">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="usd">USD ($)</SelectItem>
-                            <SelectItem value="eur">EUR (€)</SelectItem>
-                            <SelectItem value="gbp">GBP (£)</SelectItem>
-                            <SelectItem value="cad">CAD (C$)</SelectItem>
+                            <SelectItem value="USD">USD ($)</SelectItem>
+                            <SelectItem value="EUR">EUR (€)</SelectItem>
+                            <SelectItem value="GBP">GBP (£)</SelectItem>
+                            <SelectItem value="CAD">CAD (C$)</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -219,15 +216,28 @@ export default function DesignerSettings() {
                     </CardHeader>
                     <CardContent className="p-6 space-y-4">
                       <div>
-                        <Label className="font-semibold text-gray-700">Theme</Label>
-                        <Select value={settings.theme} onValueChange={(value) => handleSettingChange('theme', value)}>
+                        <Label className="font-semibold text-gray-700">Date Format</Label>
+                        <Select value={userSettings.date_format} onValueChange={(value) => updateSetting('date_format', value)}>
                           <SelectTrigger className="border-gray-200 focus:border-green-400">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="light">Light</SelectItem>
-                            <SelectItem value="dark">Dark</SelectItem>
-                            <SelectItem value="auto">Auto (System)</SelectItem>
+                            <SelectItem value="MM/DD/YYYY">MM/DD/YYYY</SelectItem>
+                            <SelectItem value="DD/MM/YYYY">DD/MM/YYYY</SelectItem>
+                            <SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div>
+                        <Label className="font-semibold text-gray-700">Time Format</Label>
+                        <Select value={userSettings.time_format} onValueChange={(value) => updateSetting('time_format', value)}>
+                          <SelectTrigger className="border-gray-200 focus:border-green-400">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="12h">12 Hour</SelectItem>
+                            <SelectItem value="24h">24 Hour</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -267,18 +277,18 @@ export default function DesignerSettings() {
                       <h4 className="font-semibold text-gray-900 mb-4">Email Notifications</h4>
                       <div className="space-y-4">
                         {[
-                          { key: 'bookingAlerts', label: 'Booking requests and updates', desc: 'New bookings, cancellations, and changes' },
-                          { key: 'paymentAlerts', label: 'Payment notifications', desc: 'Payment confirmations and receipts' },
-                          { key: 'marketingEmails', label: 'Marketing and tips', desc: 'Designer tips and product updates' }
-                        ].map((item) => (
-                          <div key={item.key} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                          { key: 'notifications_email', label: 'Booking requests and updates', desc: 'New bookings, cancellations, and changes' },
+                          { key: 'notifications_email', label: 'Payment notifications', desc: 'Payment confirmations and receipts' },
+                          { key: 'notifications_marketing', label: 'Marketing and tips', desc: 'Designer tips and product updates' }
+                        ].map((item, index) => (
+                          <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                             <div>
                               <Label className="font-medium text-gray-700">{item.label}</Label>
                               <p className="text-sm text-gray-500">{item.desc}</p>
                             </div>
                             <Switch 
-                              checked={settings[item.key as keyof typeof settings] as boolean}
-                              onCheckedChange={(checked) => handleSettingChange(item.key, checked)}
+                              checked={userSettings[item.key as keyof typeof userSettings] as boolean}
+                              onCheckedChange={(checked) => updateSetting(item.key as any, checked)}
                             />
                           </div>
                         ))}
@@ -295,8 +305,8 @@ export default function DesignerSettings() {
                           <p className="text-sm text-gray-500">Real-time notifications in your browser</p>
                         </div>
                         <Switch 
-                          checked={settings.pushNotifications}
-                          onCheckedChange={(checked) => handleSettingChange('pushNotifications', checked)}
+                          checked={userSettings.notifications_push}
+                          onCheckedChange={(checked) => updateSetting('notifications_push', checked)}
                         />
                       </div>
                     </div>
@@ -322,8 +332,8 @@ export default function DesignerSettings() {
                           <p className="text-sm text-gray-500">Allow others to find and view your profile</p>
                         </div>
                         <Switch 
-                          checked={settings.publicProfile}
-                          onCheckedChange={(checked) => handleSettingChange('publicProfile', checked)}
+                          checked={userSettings.privacy_profile_visible}
+                          onCheckedChange={(checked) => updateSetting('privacy_profile_visible', checked)}
                         />
                       </div>
 
@@ -333,8 +343,8 @@ export default function DesignerSettings() {
                           <p className="text-sm text-gray-500">Let clients see when you're online</p>
                         </div>
                         <Switch 
-                          checked={settings.showOnlineStatus}
-                          onCheckedChange={(checked) => handleSettingChange('showOnlineStatus', checked)}
+                          checked={userSettings.privacy_activity_status}
+                          onCheckedChange={(checked) => updateSetting('privacy_activity_status', checked)}
                         />
                       </div>
 
@@ -344,8 +354,8 @@ export default function DesignerSettings() {
                           <p className="text-sm text-gray-500">Automatically accept booking requests</p>
                         </div>
                         <Switch 
-                          checked={settings.autoAcceptBookings}
-                          onCheckedChange={(checked) => handleSettingChange('autoAcceptBookings', checked)}
+                          checked={availabilitySettings?.auto_accept_bookings || false}
+                          onCheckedChange={(checked) => updateAvailabilitySettings({ auto_accept_bookings: checked })}
                         />
                       </div>
                     </CardContent>
@@ -366,8 +376,8 @@ export default function DesignerSettings() {
                           <span className="text-gray-500">$</span>
                           <Input 
                             type="number"
-                            value={settings.hourlyRate}
-                            onChange={(e) => handleSettingChange('hourlyRate', e.target.value)}
+                            value={designerProfile?.hourly_rate || 0}
+                            onChange={(e) => updateDesignerProfile({ hourly_rate: Number(e.target.value) })}
                             className="flex-1 border-gray-200 focus:border-green-400"
                           />
                           <span className="text-gray-500">/hour</span>
@@ -440,8 +450,8 @@ export default function DesignerSettings() {
                           <p className="text-sm text-gray-500">Add an extra layer of security</p>
                         </div>
                         <Switch 
-                          checked={settings.twoFactorEnabled}
-                          onCheckedChange={(checked) => handleSettingChange('twoFactorEnabled', checked)}
+                          checked={userSettings.security_two_factor}
+                          onCheckedChange={(checked) => updateSetting('security_two_factor', checked)}
                         />
                       </div>
 
@@ -510,7 +520,7 @@ export default function DesignerSettings() {
                     <CardContent className="p-6 space-y-4">
                       <div>
                         <Label className="font-semibold text-gray-700">Payout Method</Label>
-                        <Select value={settings.payoutMethod} onValueChange={(value) => handleSettingChange('payoutMethod', value)}>
+                        <Select defaultValue="bank">
                           <SelectTrigger className="border-gray-200 focus:border-green-400">
                             <SelectValue />
                           </SelectTrigger>
