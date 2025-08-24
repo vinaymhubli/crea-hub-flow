@@ -1,24 +1,15 @@
+
 import { useState } from 'react';
-import portfolioEcommerce from '@/assets/portfolio-ecommerce.jpg';
-import portfolioBranding from '@/assets/portfolio-branding.jpg';
-import portfolioLogos from '@/assets/portfolio-logos.jpg';
-import portfolioMobileApp from '@/assets/portfolio-mobile-app.jpg';
-import portfolioCorporate from '@/assets/portfolio-corporate.jpg';
-import portfolioIllustration from '@/assets/portfolio-illustration.jpg';
 import { 
-  LayoutDashboard, 
-  User, 
   FolderOpen, 
-  Calendar, 
-  Clock, 
-  DollarSign, 
-  History, 
-  Settings,
   Plus,
   X,
-  Eye
+  Eye,
+  Edit,
+  Trash2,
+  ToggleLeft,
+  ToggleRight
 } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { DesignerSidebar } from "@/components/DesignerSidebar";
 import { Button } from "@/components/ui/button";
@@ -27,9 +18,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { usePortfolio } from "@/hooks/usePortfolio";
 
 function AddPortfolioDialog() {
   const [isOpen, setIsOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    category: '',
+    year: new Date().getFullYear(),
+    client: '',
+    project_link: '',
+    image: null as File | null
+  });
+  const { createPortfolioItem } = usePortfolio();
 
   const portfolioCategories = [
     "Logo Design",
@@ -41,9 +44,24 @@ function AddPortfolioDialog() {
     "Other"
   ];
 
-  const handleSave = () => {
-    // Handle save logic here
-    setIsOpen(false);
+  const handleSave = async () => {
+    if (!formData.title || !formData.image) {
+      return;
+    }
+
+    const success = await createPortfolioItem(formData);
+    if (success) {
+      setIsOpen(false);
+      setFormData({
+        title: '',
+        description: '',
+        category: '',
+        year: new Date().getFullYear(),
+        client: '',
+        project_link: '',
+        image: null
+      });
+    }
   };
 
   return (
@@ -69,10 +87,12 @@ function AddPortfolioDialog() {
           <p className="text-gray-600 text-sm">Add your best work to showcase your skills and attract clients.</p>
           
           <div className="space-y-2">
-            <Label htmlFor="projectTitle">Project Title</Label>
+            <Label htmlFor="projectTitle">Project Title *</Label>
             <Input 
               id="projectTitle" 
               placeholder="E.g., Modern Logo for Tech Startup"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               className="w-full"
             />
           </div>
@@ -80,13 +100,13 @@ function AddPortfolioDialog() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="category">Category</Label>
-              <Select>
+              <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
                   {portfolioCategories.map((category) => (
-                    <SelectItem key={category} value={category.toLowerCase().replace(/\s+/g, '-')}>
+                    <SelectItem key={category} value={category}>
                       {category}
                     </SelectItem>
                   ))}
@@ -99,18 +119,22 @@ function AddPortfolioDialog() {
                 id="year" 
                 placeholder="2025"
                 type="number"
+                value={formData.year}
+                onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="imageUrl">Image URL</Label>
+            <Label htmlFor="image">Project Image *</Label>
             <Input 
-              id="imageUrl" 
-              placeholder="https://example.com/image.jpg"
+              id="image" 
+              type="file"
+              accept="image/*"
+              onChange={(e) => setFormData({ ...formData, image: e.target.files?.[0] || null })}
               className="w-full"
             />
-            <p className="text-sm text-gray-500">Provide a direct link to your image (preferred dimensions: 1200x800px)</p>
+            <p className="text-sm text-gray-500">Upload your best project image (preferred dimensions: 1200x800px)</p>
           </div>
 
           <div className="space-y-2">
@@ -118,6 +142,8 @@ function AddPortfolioDialog() {
             <Textarea 
               id="description" 
               placeholder="Describe your work, process, and results"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               className="min-h-24 resize-none"
             />
           </div>
@@ -128,6 +154,8 @@ function AddPortfolioDialog() {
               <Input 
                 id="client" 
                 placeholder="Client name"
+                value={formData.client}
+                onChange={(e) => setFormData({ ...formData, client: e.target.value })}
               />
             </div>
             <div className="space-y-2">
@@ -135,6 +163,8 @@ function AddPortfolioDialog() {
               <Input 
                 id="projectLink" 
                 placeholder="https://example.com"
+                value={formData.project_link}
+                onChange={(e) => setFormData({ ...formData, project_link: e.target.value })}
               />
             </div>
           </div>
@@ -148,6 +178,7 @@ function AddPortfolioDialog() {
             </Button>
             <Button 
               onClick={handleSave}
+              disabled={!formData.title || !formData.image}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               Save
@@ -159,19 +190,163 @@ function AddPortfolioDialog() {
   );
 }
 
-export default function DesignerPortfolio() {
-  const [activeCategory, setActiveCategory] = useState("All Works");
+function EditPortfolioDialog({ item, onClose }: { item: any; onClose: () => void }) {
+  const [formData, setFormData] = useState({
+    title: item.title || '',
+    description: item.description || '',
+    category: item.category || '',
+    year: item.year || new Date().getFullYear(),
+    client: item.client || '',
+    project_link: item.project_link || '',
+    image: null as File | null
+  });
+  const { updatePortfolioItem } = usePortfolio();
 
-  const categories = [
-    "All Works",
-    "Logo Design", 
-    "Branding",
+  const portfolioCategories = [
+    "Logo Design",
+    "Branding", 
     "UI/UX Design",
     "Print Design",
     "Illustration",
     "Web Design",
     "Other"
   ];
+
+  const handleSave = async () => {
+    const success = await updatePortfolioItem(item.id, formData);
+    if (success) {
+      onClose();
+    }
+  };
+
+  return (
+    <DialogContent className="max-w-lg mx-auto">
+      <DialogHeader className="flex flex-row items-center justify-between">
+        <DialogTitle className="text-lg font-semibold">Edit Portfolio Item</DialogTitle>
+        <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
+          <X className="w-5 h-5 text-gray-500" />
+        </button>
+      </DialogHeader>
+      
+      <div className="space-y-4 mt-4">
+        <div className="space-y-2">
+          <Label htmlFor="editTitle">Project Title</Label>
+          <Input 
+            id="editTitle" 
+            value={formData.title}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            className="w-full"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="editCategory">Category</Label>
+            <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                {portfolioCategories.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="editYear">Year</Label>
+            <Input 
+              id="editYear" 
+              type="number"
+              value={formData.year}
+              onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="editImage">Update Image (Optional)</Label>
+          <Input 
+            id="editImage" 
+            type="file"
+            accept="image/*"
+            onChange={(e) => setFormData({ ...formData, image: e.target.files?.[0] || null })}
+            className="w-full"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="editDescription">Description</Label>
+          <Textarea 
+            id="editDescription" 
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            className="min-h-24 resize-none"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="editClient">Client</Label>
+            <Input 
+              id="editClient" 
+              value={formData.client}
+              onChange={(e) => setFormData({ ...formData, client: e.target.value })}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="editProjectLink">Project Link</Label>
+            <Input 
+              id="editProjectLink" 
+              value={formData.project_link}
+              onChange={(e) => setFormData({ ...formData, project_link: e.target.value })}
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-end space-x-3 pt-4">
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSave}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            Update
+          </Button>
+        </div>
+      </div>
+    </DialogContent>
+  );
+}
+
+export default function DesignerPortfolio() {
+  const [activeCategory, setActiveCategory] = useState("All Works");
+  const [editingItem, setEditingItem] = useState<any>(null);
+  const { portfolioItems, loading, togglePortfolioItemActive, deletePortfolioItem } = usePortfolio();
+
+  // Get unique categories from portfolio items
+  const categories = ["All Works", ...Array.from(new Set(portfolioItems.map(item => item.category).filter(Boolean)))];
+
+  // Filter items based on active category
+  const filteredItems = activeCategory === "All Works" 
+    ? portfolioItems 
+    : portfolioItems.filter(item => item.category === activeCategory);
+
+  if (loading) {
+    return (
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 via-blue-50 to-green-50">
+          <DesignerSidebar />
+          <main className="flex-1 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+          </main>
+        </div>
+      </SidebarProvider>
+    );
+  }
 
   return (
     <SidebarProvider>
@@ -193,9 +368,9 @@ export default function DesignerPortfolio() {
                     <h1 className="text-3xl font-bold text-white">Portfolio</h1>
                     <p className="text-white/90 text-lg">Showcase your best design work to attract more clients</p>
                     <div className="flex items-center space-x-4 mt-2">
-                      <span className="text-white/90 font-medium">6 Projects</span>
+                      <span className="text-white/90 font-medium">{portfolioItems.length} Projects</span>
                       <span className="text-white/60">•</span>
-                      <span className="text-white/90 font-medium">3 Categories</span>
+                      <span className="text-white/90 font-medium">{categories.length - 1} Categories</span>
                     </div>
                   </div>
                 </div>
@@ -206,151 +381,170 @@ export default function DesignerPortfolio() {
 
           <div className="p-8 max-w-7xl mx-auto">
             {/* Enhanced Category Filter */}
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-2 mb-8">
-              <nav className="flex flex-wrap gap-2">
-                {categories.map((category) => (
-                  <button
-                    key={category}
-                    onClick={() => setActiveCategory(category)}
-                    className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 hover:scale-105 ${
-                      category === activeCategory
-                        ? "bg-gradient-to-r from-green-400 to-blue-500 text-white shadow-lg"
-                        : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
-                    }`}
-                  >
-                    {category}
-                  </button>
-                ))}
-              </nav>
-            </div>
+            {categories.length > 1 && (
+              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-2 mb-8">
+                <nav className="flex flex-wrap gap-2">
+                  {categories.map((category) => (
+                    <button
+                      key={category}
+                      onClick={() => setActiveCategory(category)}
+                      className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 hover:scale-105 ${
+                        category === activeCategory
+                          ? "bg-gradient-to-r from-green-400 to-blue-500 text-white shadow-lg"
+                          : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+                      }`}
+                    >
+                      {category}
+                    </button>
+                  ))}
+                </nav>
+              </div>
+            )}
 
             {/* Portfolio Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
-              {/* Real Portfolio Items */}
-              {[
-                { 
-                  id: 1, 
-                  title: "Modern E-commerce Platform", 
-                  category: "UI/UX Design", 
-                  year: "2024", 
-                  image: portfolioEcommerce,
-                  client: "TechStore Inc.",
-                  description: "Complete e-commerce redesign with improved user experience and conversion optimization."
-                },
-                { 
-                  id: 2, 
-                  title: "Tech Startup Branding", 
-                  category: "Branding", 
-                  year: "2024", 
-                  image: portfolioBranding,
-                  client: "InnovateTech",
-                  description: "Full brand identity package including logo, guidelines, and marketing materials."
-                },
-                { 
-                  id: 3, 
-                  title: "Logo Design Collection", 
-                  category: "Logo Design", 
-                  year: "2023", 
-                  image: portfolioLogos,
-                  client: "Various Clients",
-                  description: "Collection of minimalist and modern logos for different industries."
-                },
-                { 
-                  id: 4, 
-                  title: "Mobile Banking App", 
-                  category: "UI/UX Design", 
-                  year: "2024", 
-                  image: portfolioMobileApp,
-                  client: "FinanceApp",
-                  description: "User-friendly mobile banking interface with advanced security features."
-                },
-                { 
-                  id: 5, 
-                  title: "Corporate Identity System", 
-                  category: "Branding", 
-                  year: "2023", 
-                  image: portfolioCorporate,
-                  client: "GlobalCorp",
-                  description: "Complete corporate identity system for a multinational company."
-                },
-                { 
-                  id: 6, 
-                  title: "Creative Digital Art", 
-                  category: "Illustration", 
-                  year: "2024", 
-                  image: portfolioIllustration,
-                  client: "ArtStudio",
-                  description: "Digital illustration project featuring abstract and contemporary art styles."
-                }
-              ].map((item) => (
-                <div key={item.id} className="group cursor-pointer">
-                  <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-[1.03] hover:-rotate-1">
-                    <div className="aspect-[4/3] relative overflow-hidden">
-                      <img 
-                        src={item.image} 
-                        alt={item.title}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300">
-                        <div className="absolute bottom-4 left-4 right-4">
-                          <p className="text-white text-sm font-medium mb-2">{item.description}</p>
-                          <Button className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm shadow-lg w-full">
-                            <Eye className="w-4 h-4 mr-2" />
-                            View Project Details
+            {filteredItems.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+                {filteredItems.map((item) => (
+                  <div key={item.id} className="group cursor-pointer">
+                    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-[1.03] hover:-rotate-1">
+                      <div className="aspect-[4/3] relative overflow-hidden">
+                        <img 
+                          src={item.image_url} 
+                          alt={item.title}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300">
+                          <div className="absolute bottom-4 left-4 right-4">
+                            <p className="text-white text-sm font-medium mb-2">{item.description || 'No description'}</p>
+                          </div>
+                        </div>
+                        <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                          <span className="text-xs font-semibold text-gray-800">{item.year}</span>
+                        </div>
+                        <div className="absolute top-4 left-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingItem(item);
+                            }}
+                            className="bg-white/90 hover:bg-white text-gray-700"
+                          >
+                            <Edit className="w-3 h-3" />
                           </Button>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              togglePortfolioItemActive(item.id, !item.is_active);
+                            }}
+                            className="bg-white/90 hover:bg-white text-gray-700"
+                          >
+                            {item.is_active ? <ToggleRight className="w-3 h-3" /> : <ToggleLeft className="w-3 h-3" />}
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                onClick={(e) => e.stopPropagation()}
+                                className="bg-red-100 hover:bg-red-200 text-red-700"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Portfolio Item</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete "{item.title}"? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => deletePortfolioItem(item.id)}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       </div>
-                      <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                        <span className="text-xs font-semibold text-gray-800">{item.year}</span>
-                      </div>
-                    </div>
-                    <div className="p-6">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h3 className="font-bold text-gray-900 mb-1 text-lg leading-tight">{item.title}</h3>
-                          <p className="text-sm text-gray-500 font-medium">{item.client}</p>
+                      <div className="p-6">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h3 className="font-bold text-gray-900 mb-1 text-lg leading-tight">{item.title}</h3>
+                            <p className="text-sm text-gray-500 font-medium">{item.client || 'Personal Project'}</p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            {item.category && (
+                              <div className="flex items-center space-x-1 bg-gradient-to-r from-green-400 to-blue-500 text-white px-3 py-1 rounded-full">
+                                <span className="text-xs font-semibold">{item.category}</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex items-center space-x-1 bg-gradient-to-r from-green-400 to-blue-500 text-white px-3 py-1 rounded-full">
-                          <span className="text-xs font-semibold">{item.category}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                        <div className="flex items-center space-x-2">
-                          <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                          <span className="text-xs text-gray-600 font-medium">Live Project</span>
-                        </div>
-                        <div className="flex items-center space-x-1 text-gray-400">
-                          <Eye className="w-4 h-4" />
-                          <span className="text-xs">{Math.floor(Math.random() * 500 + 100)} views</span>
+                        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                          <div className="flex items-center space-x-2">
+                            <div className={`w-2 h-2 rounded-full ${item.is_active ? 'bg-green-400' : 'bg-gray-400'}`}></div>
+                            <span className="text-xs text-gray-600 font-medium">
+                              {item.is_active ? 'Active' : 'Hidden'}
+                            </span>
+                          </div>
+                          {item.project_link && (
+                            <a 
+                              href={item.project_link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 text-xs"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Eye className="w-3 h-3" />
+                              <span>View Live</span>
+                            </a>
+                          )}
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Empty State for when no items (hidden when we have sample data) */}
-            <div className="text-center py-16 hidden">
-              <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl">
-                <FolderOpen className="w-10 h-10 text-white" />
+                ))}
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">No portfolio items</h3>
-              <p className="text-gray-600 mb-8 max-w-md mx-auto text-lg">
-                Get started by adding your first portfolio item to showcase your work.
-              </p>
-              <AddPortfolioDialog />
-            </div>
-
-            {/* Load More Button */}
-            <div className="text-center">
-              <Button className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 px-8 py-3 text-lg font-semibold">
-                Load More Projects
-              </Button>
-            </div>
+            ) : (
+              /* Empty State */
+              <div className="text-center py-16">
+                <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl">
+                  <FolderOpen className="w-10 h-10 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                  {activeCategory === "All Works" ? "No portfolio items" : `No ${activeCategory} projects`}
+                </h3>
+                <p className="text-gray-600 mb-8 max-w-md mx-auto text-lg">
+                  {activeCategory === "All Works" 
+                    ? "Get started by adding your first portfolio item to showcase your work."
+                    : `Add some ${activeCategory} projects to showcase your expertise in this category.`
+                  }
+                </p>
+                <AddPortfolioDialog />
+              </div>
+            )}
           </div>
         </main>
       </div>
+
+      {/* Edit Dialog */}
+      {editingItem && (
+        <Dialog open={!!editingItem} onOpenChange={() => setEditingItem(null)}>
+          <EditPortfolioDialog 
+            item={editingItem} 
+            onClose={() => setEditingItem(null)} 
+          />
+        </Dialog>
+      )}
     </SidebarProvider>
   );
 }

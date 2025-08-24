@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Star, MapPin, Clock, MessageCircle, Calendar, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { usePortfolio } from '@/hooks/usePortfolio';
 
 interface DesignerProfile {
   id: string;
@@ -47,8 +48,10 @@ const DesignerDetails: React.FC = () => {
   const location = useLocation();
   const [designer, setDesigner] = useState<DesignerProfile | null>(null);
   const [services, setServices] = useState<Service[]>([]);
+  const [portfolioItems, setPortfolioItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('about');
+  const { fetchPublicPortfolioItems } = usePortfolio();
 
   useEffect(() => {
     if (id) {
@@ -100,6 +103,10 @@ const DesignerDetails: React.FC = () => {
 
       if (servicesError) throw servicesError;
       setServices(servicesData || []);
+
+      // Fetch designer's portfolio items
+      const portfolioData = await fetchPublicPortfolioItems(id);
+      setPortfolioItems(portfolioData);
 
     } catch (error) {
       console.error('Error fetching designer details:', error);
@@ -376,21 +383,31 @@ const DesignerDetails: React.FC = () => {
               <CardTitle>Portfolio</CardTitle>
             </CardHeader>
             <CardContent>
-              {designer.portfolio_images && designer.portfolio_images.length > 0 ? (
+              {portfolioItems && portfolioItems.length > 0 ? (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {designer.portfolio_images.map((image, index) => (
-                    <div key={index} className="aspect-square bg-muted rounded-lg overflow-hidden">
+                  {portfolioItems.map((item, index) => (
+                    <div key={item.id || index} className="group relative aspect-square bg-muted rounded-lg overflow-hidden">
                       <img
-                        src={image}
-                        alt={`Portfolio ${index + 1}`}
+                        src={item.image_url}
+                        alt={item.title || `Portfolio ${index + 1}`}
                         className="w-full h-full object-cover hover:scale-105 transition-transform"
                       />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300">
+                        <div className="absolute bottom-4 left-4 right-4">
+                          <h4 className="text-white font-semibold mb-1">{item.title}</h4>
+                          {item.category && (
+                            <span className="text-white/80 text-xs bg-white/20 px-2 py-1 rounded">
+                              {item.category}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <p className="text-muted-foreground">No portfolio images available</p>
+                  <p className="text-muted-foreground">No portfolio items available</p>
                 </div>
               )}
             </CardContent>
