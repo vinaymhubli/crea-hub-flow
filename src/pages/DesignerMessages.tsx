@@ -1,35 +1,25 @@
 import { useState, useEffect } from 'react';
 import { 
-  LayoutDashboard, 
-  User, 
-  FolderOpen, 
-  Calendar, 
-  Clock, 
-  DollarSign, 
-  History, 
-  Settings,
   MessageSquare,
   Send, 
   Search, 
   MoreVertical, 
   Bell,
-  LogOut
+  LogOut,
+  LayoutDashboard,
+  User,
+  DollarSign,
+  Clock
 } from 'lucide-react';
-import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { DesignerSidebar } from '@/components/DesignerSidebar';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,66 +29,6 @@ import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 
-const sidebarItems = [
-  { title: "Dashboard", url: "/designer-dashboard", icon: LayoutDashboard },
-  { title: "Profile", url: "/designer-dashboard/profile", icon: User },
-  { title: "Portfolio", url: "/designer-dashboard/portfolio", icon: FolderOpen },
-  { title: "Bookings", url: "/designer-dashboard/bookings", icon: Calendar },
-  { title: "Messages", url: "/designer-dashboard/messages", icon: MessageSquare },
-  { title: "Availability", url: "/designer-dashboard/availability", icon: Clock },
-  { title: "Earnings", url: "/designer-dashboard/earnings", icon: DollarSign },
-  { title: "Session History", url: "/designer-dashboard/history", icon: History },
-  { title: "Settings", url: "/designer-dashboard/settings", icon: Settings },
-];
-
-function DesignerSidebar() {
-  const location = useLocation();
-  const currentPath = location.pathname;
-
-  const isActive = (path: string) => currentPath === path;
-
-  return (
-    <Sidebar collapsible="icon">
-      <SidebarContent className="bg-white border-r border-gray-200">
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-white font-semibold text-sm">VB</span>
-            </div>
-            <div>
-              <p className="font-semibold text-gray-900">Vb Bn</p>
-              <p className="text-sm text-gray-500">Designer</p>
-            </div>
-          </div>
-        </div>
-        
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {sidebarItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                      <Link 
-                        to={item.url} 
-                        className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
-                          isActive(item.url) 
-                            ? 'bg-gradient-to-r from-green-50 to-blue-50 text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-blue-600 border-r-2 border-gradient-to-b from-green-500 to-blue-500' 
-                            : 'text-gray-700 hover:bg-gray-50'
-                        }`}
-                        >
-                        <item.icon className={`w-5 h-5 ${isActive(item.url) ? 'text-green-600' : ''}`} />
-                        <span className="font-medium">{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarContent>
-    </Sidebar>
-  );
-}
 
 interface Message {
   id: string;
