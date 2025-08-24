@@ -76,9 +76,12 @@ export type Database = {
       }
       designers: {
         Row: {
+          available_for_urgent: boolean | null
           bio: string | null
           completion_rate: number | null
           created_at: string
+          display_hourly_rate: boolean | null
+          experience_years: number | null
           hourly_rate: number
           id: string
           is_online: boolean | null
@@ -93,9 +96,12 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          available_for_urgent?: boolean | null
           bio?: string | null
           completion_rate?: number | null
           created_at?: string
+          display_hourly_rate?: boolean | null
+          experience_years?: number | null
           hourly_rate?: number
           id?: string
           is_online?: boolean | null
@@ -110,9 +116,12 @@ export type Database = {
           user_id: string
         }
         Update: {
+          available_for_urgent?: boolean | null
           bio?: string | null
           completion_rate?: number | null
           created_at?: string
+          display_hourly_rate?: boolean | null
+          experience_years?: number | null
           hourly_rate?: number
           id?: string
           is_online?: boolean | null
@@ -226,11 +235,13 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          display_name: string | null
           email: string | null
           first_name: string | null
           id: string
           is_admin: boolean | null
           last_name: string | null
+          phone: string | null
           rate_per_minute: number | null
           role: string | null
           specialization: string | null
@@ -241,11 +252,13 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          display_name?: string | null
           email?: string | null
           first_name?: string | null
           id?: string
           is_admin?: boolean | null
           last_name?: string | null
+          phone?: string | null
           rate_per_minute?: number | null
           role?: string | null
           specialization?: string | null
@@ -256,11 +269,13 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string
+          display_name?: string | null
           email?: string | null
           first_name?: string | null
           id?: string
           is_admin?: boolean | null
           last_name?: string | null
+          phone?: string | null
           rate_per_minute?: number | null
           role?: string | null
           specialization?: string | null

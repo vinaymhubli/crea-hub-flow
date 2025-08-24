@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   LayoutDashboard, 
   User, 
@@ -11,7 +11,9 @@ import {
   Eye,
   Star,
   Camera,
-  ChevronRight
+  ChevronRight,
+  Upload,
+  X
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import {
@@ -35,6 +37,9 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useDesignerProfile } from '@/hooks/useDesignerProfile';
+import { useProfile } from '@/hooks/useProfile';
+import { useAuth } from '@/hooks/useAuth';
 
 const sidebarItems = [
   { title: "Dashboard", url: "/designer-dashboard", icon: LayoutDashboard },
@@ -47,22 +52,46 @@ const sidebarItems = [
   { title: "Settings", url: "/designer-dashboard/settings", icon: Settings },
 ];
 
-function DesignerSidebar() {
+function DesignerSidebar({ profile, designerProfile }: { profile: any, designerProfile: any }) {
   const location = useLocation();
   const currentPath = location.pathname;
 
   const isActive = (path: string) => currentPath === path;
+
+  const getInitials = () => {
+    if (profile?.display_name) {
+      return profile.display_name.split(' ').map((n: string) => n[0]).join('').toUpperCase();
+    }
+    if (profile?.first_name && profile?.last_name) {
+      return `${profile.first_name[0]}${profile.last_name[0]}`.toUpperCase();
+    }
+    return 'D';
+  };
+
+  const getDisplayName = () => {
+    if (profile?.display_name) return profile.display_name;
+    if (profile?.first_name && profile?.last_name) return `${profile.first_name} ${profile.last_name}`;
+    return 'Designer';
+  };
 
   return (
     <Sidebar collapsible="icon">
       <SidebarContent className="bg-white border-r border-gray-200">
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-white font-semibold text-sm">VB</span>
-            </div>
+            {profile?.avatar_url ? (
+              <img 
+                src={profile.avatar_url} 
+                alt="Profile" 
+                className="w-10 h-10 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
+                <span className="text-white font-semibold text-sm">{getInitials()}</span>
+              </div>
+            )}
             <div>
-              <p className="font-semibold text-gray-900">Vb Bn</p>
+              <p className="font-semibold text-gray-900">{getDisplayName()}</p>
               <p className="text-sm text-gray-500">Designer</p>
             </div>
           </div>
@@ -97,12 +126,46 @@ function DesignerSidebar() {
 }
 
 export default function DesignerProfile() {
-  const [activeTab, setActiveTab] = useState("personal");
-  const [displayHourlyRate, setDisplayHourlyRate] = useState(true);
-  const [availableUrgent, setAvailableUrgent] = useState(false);
-  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const { user } = useAuth();
+  const { profile, loading: profileLoading } = useProfile();
+  const { 
+    designerProfile, 
+    loading: designerLoading, 
+    updateDesignerProfile, 
+    updateProfile,
+    uploadAvatar,
+    uploadPortfolioImage,
+    deletePortfolioImage
+  } = useDesignerProfile();
 
-  const skills = [
+  const [activeTab, setActiveTab] = useState("personal");
+  const [isSaving, setIsSaving] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const portfolioInputRef = useRef<HTMLInputElement>(null);
+
+  // Form state
+  const [formData, setFormData] = useState({
+    // Profile data
+    first_name: '',
+    last_name: '',
+    display_name: '',
+    email: '',
+    phone: '',
+    
+    // Designer data
+    bio: '',
+    location: '',
+    specialty: 'General Design',
+    hourly_rate: 50,
+    experience_years: 0,
+    display_hourly_rate: true,
+    available_for_urgent: false,
+    response_time: '1 hour',
+    skills: [] as string[],
+    portfolio_images: [] as string[]
+  });
+
+  const skillOptions = [
     "Adobe Photoshop",
     "Adobe Illustrator", 
     "Adobe InDesign",
@@ -114,18 +177,152 @@ export default function DesignerProfile() {
     "Typography"
   ];
 
-  const handleSkillChange = (skill: string, checked: boolean) => {
-    if (checked) {
-      setSelectedSkills([...selectedSkills, skill]);
-    } else {
-      setSelectedSkills(selectedSkills.filter(s => s !== skill));
+  // Load data when profile/designer data changes
+  useEffect(() => {
+    if (profile) {
+      setFormData(prev => ({
+        ...prev,
+        first_name: profile.first_name || '',
+        last_name: profile.last_name || '',
+        display_name: profile.display_name || '',
+        email: profile.email || '',
+        phone: profile.phone || ''
+      }));
+    }
+  }, [profile]);
+
+  useEffect(() => {
+    if (designerProfile) {
+      setFormData(prev => ({
+        ...prev,
+        bio: designerProfile.bio || '',
+        location: designerProfile.location || '',
+        specialty: designerProfile.specialty || 'General Design',
+        hourly_rate: designerProfile.hourly_rate || 50,
+        experience_years: designerProfile.experience_years || 0,
+        display_hourly_rate: designerProfile.display_hourly_rate ?? true,
+        available_for_urgent: designerProfile.available_for_urgent ?? false,
+        response_time: designerProfile.response_time || '1 hour',
+        skills: designerProfile.skills || [],
+        portfolio_images: designerProfile.portfolio_images || []
+      }));
+    }
+  }, [designerProfile]);
+
+  const handleInputChange = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSkillToggle = (skill: string) => {
+    const currentSkills = formData.skills;
+    const newSkills = currentSkills.includes(skill)
+      ? currentSkills.filter(s => s !== skill)
+      : [...currentSkills, skill];
+    handleInputChange('skills', newSkills);
+  };
+
+  const handleSavePersonal = async () => {
+    setIsSaving(true);
+    try {
+      // Update profile data
+      await updateProfile({
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        display_name: formData.display_name,
+        email: formData.email,
+        phone: formData.phone
+      });
+
+      // Update designer data
+      await updateDesignerProfile({
+        bio: formData.bio,
+        location: formData.location
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
+
+  const handleSaveProfessional = async () => {
+    setIsSaving(true);
+    try {
+      await updateDesignerProfile({
+        specialty: formData.specialty,
+        hourly_rate: formData.hourly_rate,
+        experience_years: formData.experience_years,
+        display_hourly_rate: formData.display_hourly_rate,
+        available_for_urgent: formData.available_for_urgent,
+        response_time: formData.response_time,
+        skills: formData.skills
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      await uploadAvatar(file);
+    }
+  };
+
+  const handlePortfolioUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const newImages: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const imageUrl = await uploadPortfolioImage(files[i]);
+        if (imageUrl) {
+          newImages.push(imageUrl);
+        }
+      }
+      
+      if (newImages.length > 0) {
+        const updatedImages = [...formData.portfolio_images, ...newImages];
+        handleInputChange('portfolio_images', updatedImages);
+        await updateDesignerProfile({ portfolio_images: updatedImages });
+      }
+    }
+  };
+
+  const handleRemovePortfolioImage = async (imageUrl: string) => {
+    const success = await deletePortfolioImage(imageUrl);
+    if (success) {
+      const updatedImages = formData.portfolio_images.filter(img => img !== imageUrl);
+      handleInputChange('portfolio_images', updatedImages);
+      await updateDesignerProfile({ portfolio_images: updatedImages });
+    }
+  };
+
+  const getInitials = () => {
+    if (formData.display_name) {
+      return formData.display_name.split(' ').map(n => n[0]).join('').toUpperCase();
+    }
+    if (formData.first_name && formData.last_name) {
+      return `${formData.first_name[0]}${formData.last_name[0]}`.toUpperCase();
+    }
+    return 'D';
+  };
+
+  const getDisplayName = () => {
+    if (formData.display_name) return formData.display_name;
+    if (formData.first_name && formData.last_name) return `${formData.first_name} ${formData.last_name}`;
+    return 'Designer';
+  };
+
+  if (profileLoading || designerLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-500"></div>
+      </div>
+    );
+  }
 
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 via-blue-50 to-green-50">
-        <DesignerSidebar />
+        <DesignerSidebar profile={profile} designerProfile={designerProfile} />
         
         <main className="flex-1">
           {/* Enhanced Header with Profile Preview */}
@@ -135,18 +332,30 @@ export default function DesignerProfile() {
               <div className="flex items-center space-x-6">
                 <SidebarTrigger className="text-white hover:bg-white/20 rounded-lg p-2" />
                 <div className="flex items-center space-x-4">
-                  <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/30 shadow-xl">
-                    <span className="text-white font-bold text-xl">VB</span>
-                  </div>
+                  {profile?.avatar_url ? (
+                    <img 
+                      src={profile.avatar_url} 
+                      alt="Profile" 
+                      className="w-16 h-16 rounded-2xl object-cover border border-white/30 shadow-xl"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/30 shadow-xl">
+                      <span className="text-white font-bold text-xl">{getInitials()}</span>
+                    </div>
+                  )}
                   <div>
                     <h1 className="text-3xl font-bold text-white">Designer Profile</h1>
-                    <p className="text-white/90 text-lg">Vb Bn • UI/UX Designer • 5+ years experience</p>
+                    <p className="text-white/90 text-lg">
+                      {getDisplayName()} • {formData.specialty} • {formData.experience_years}+ years experience
+                    </p>
                     <div className="flex items-center space-x-4 mt-2">
                       <div className="flex items-center space-x-1">
                         <Star className="w-4 h-4 fill-yellow-300 text-yellow-300" />
-                        <span className="text-white/90 font-medium">4.9</span>
+                        <span className="text-white/90 font-medium">{designerProfile?.rating?.toFixed(1) || '0.0'}</span>
                       </div>
-                      <Badge className="bg-white/20 text-white border-white/30">Available</Badge>
+                      <Badge className="bg-white/20 text-white border-white/30">
+                        {designerProfile?.is_online ? 'Available' : 'Offline'}
+                      </Badge>
                     </div>
                   </div>
                 </div>
@@ -205,14 +414,32 @@ export default function DesignerProfile() {
                       </CardHeader>
                       <CardContent className="p-8 text-center">
                         <div className="relative group">
-                          <div className="w-32 h-32 bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto shadow-2xl group-hover:scale-105 transition-transform duration-300">
-                            <span className="text-white font-bold text-3xl">VB</span>
-                          </div>
+                          {profile?.avatar_url ? (
+                            <img 
+                              src={profile.avatar_url} 
+                              alt="Profile" 
+                              className="w-32 h-32 rounded-full object-cover mx-auto shadow-2xl group-hover:scale-105 transition-transform duration-300"
+                            />
+                          ) : (
+                            <div className="w-32 h-32 bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto shadow-2xl group-hover:scale-105 transition-transform duration-300">
+                              <span className="text-white font-bold text-3xl">{getInitials()}</span>
+                            </div>
+                          )}
                           <div className="absolute inset-0 bg-black/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                             <Camera className="w-8 h-8 text-white" />
                           </div>
                         </div>
-                        <Button className="mt-6 bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 w-full">
+                        <input
+                          ref={avatarInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleAvatarUpload}
+                          className="hidden"
+                        />
+                        <Button 
+                          onClick={() => avatarInputRef.current?.click()}
+                          className="mt-6 bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 w-full"
+                        >
                           <Camera className="w-4 h-4 mr-2" />
                           Change Photo
                         </Button>
@@ -242,7 +469,8 @@ export default function DesignerProfile() {
                               id="firstName" 
                               placeholder="First name" 
                               className="border-gray-200 focus:border-green-400 focus:ring-green-200 hover:border-green-300 transition-colors"
-                              defaultValue="Vb"
+                              value={formData.first_name}
+                              onChange={(e) => handleInputChange('first_name', e.target.value)}
                             />
                           </div>
                           <div className="space-y-2">
@@ -254,7 +482,8 @@ export default function DesignerProfile() {
                               id="lastName" 
                               placeholder="Last name" 
                               className="border-gray-200 focus:border-green-400 focus:ring-green-200 hover:border-green-300 transition-colors"
-                              defaultValue="Bn"
+                              value={formData.last_name}
+                              onChange={(e) => handleInputChange('last_name', e.target.value)}
                             />
                           </div>
                           <div className="space-y-2">
@@ -266,7 +495,8 @@ export default function DesignerProfile() {
                               id="displayName" 
                               placeholder="Display name" 
                               className="border-gray-200 focus:border-green-400 focus:ring-green-200 hover:border-green-300 transition-colors"
-                              defaultValue="VB Design Studio"
+                              value={formData.display_name}
+                              onChange={(e) => handleInputChange('display_name', e.target.value)}
                             />
                             <p className="text-sm text-gray-500">This is how your name will appear publicly.</p>
                           </div>
@@ -280,7 +510,8 @@ export default function DesignerProfile() {
                               type="email" 
                               placeholder="your.email@example.com" 
                               className="border-gray-200 focus:border-green-400 focus:ring-green-200 hover:border-green-300 transition-colors"
-                              defaultValue="vb@designstudio.com"
+                              value={formData.email}
+                              onChange={(e) => handleInputChange('email', e.target.value)}
                             />
                           </div>
                           <div className="space-y-2">
@@ -292,6 +523,8 @@ export default function DesignerProfile() {
                               id="phone" 
                               placeholder="+91 1234567890" 
                               className="border-gray-200 focus:border-green-400 focus:ring-green-200 hover:border-green-300 transition-colors"
+                              value={formData.phone}
+                              onChange={(e) => handleInputChange('phone', e.target.value)}
                             />
                           </div>
                           <div className="space-y-2">
@@ -303,7 +536,8 @@ export default function DesignerProfile() {
                               id="location" 
                               placeholder="Delhi, India" 
                               className="border-gray-200 focus:border-green-400 focus:ring-green-200 hover:border-green-300 transition-colors"
-                              defaultValue="Mumbai, India"
+                              value={formData.location}
+                              onChange={(e) => handleInputChange('location', e.target.value)}
                             />
                             <p className="text-sm text-gray-500">City, Country where you're based</p>
                           </div>
@@ -318,15 +552,20 @@ export default function DesignerProfile() {
                             id="bio" 
                             placeholder="Tell potential clients about yourself..." 
                             className="min-h-32 border-gray-200 focus:border-green-400 focus:ring-green-200 hover:border-green-300 transition-colors"
-                            defaultValue="Experienced UI/UX designer with 5+ years in creating intuitive digital experiences. Specializing in user-centered design, prototyping, and design systems."
+                            value={formData.bio}
+                            onChange={(e) => handleInputChange('bio', e.target.value)}
                           />
                           <p className="text-sm text-gray-500">Describe your background, experience, and what makes you unique.</p>
                         </div>
 
                         <div className="flex justify-end space-x-3 md:col-span-2">
                           <Button variant="outline" className="border-gray-300 hover:border-gray-400 px-6">Cancel</Button>
-                          <Button className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 px-6">
-                            Save Changes
+                          <Button 
+                            onClick={handleSavePersonal}
+                            disabled={isSaving}
+                            className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 px-6"
+                          >
+                            {isSaving ? 'Saving...' : 'Save Changes'}
                           </Button>
                         </div>
                       </CardContent>
@@ -345,30 +584,45 @@ export default function DesignerProfile() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <Label htmlFor="specialization" className="text-sm font-semibold text-gray-700">Primary Specialization</Label>
-                        <Select>
+                        <Select value={formData.specialty} onValueChange={(value) => handleInputChange('specialty', value)}>
                           <SelectTrigger className="border-gray-200 focus:border-green-400 focus:ring-green-200">
                             <SelectValue placeholder="Select your primary design specialty" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="ui-ux">UI/UX Design</SelectItem>
-                            <SelectItem value="graphic">Graphic Design</SelectItem>
-                            <SelectItem value="web">Web Design</SelectItem>
-                            <SelectItem value="branding">Branding</SelectItem>
-                            <SelectItem value="illustration">Illustration</SelectItem>
-                            <SelectItem value="motion">Motion Graphics</SelectItem>
+                            <SelectItem value="UI/UX Design">UI/UX Design</SelectItem>
+                            <SelectItem value="Graphic Design">Graphic Design</SelectItem>
+                            <SelectItem value="Web Design">Web Design</SelectItem>
+                            <SelectItem value="Branding">Branding</SelectItem>
+                            <SelectItem value="Illustration">Illustration</SelectItem>
+                            <SelectItem value="Motion Graphics">Motion Graphics</SelectItem>
+                            <SelectItem value="General Design">General Design</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="experience" className="text-sm font-semibold text-gray-700">Years of Experience</Label>
-                        <Input id="experience" type="number" placeholder="0" className="border-gray-200 focus:border-green-400 focus:ring-green-200" />
+                        <Input 
+                          id="experience" 
+                          type="number" 
+                          placeholder="0" 
+                          className="border-gray-200 focus:border-green-400 focus:ring-green-200" 
+                          value={formData.experience_years}
+                          onChange={(e) => handleInputChange('experience_years', parseInt(e.target.value) || 0)}
+                        />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <Label htmlFor="hourlyRate" className="text-sm font-semibold text-gray-700">Hourly Rate (₹)</Label>
-                        <Input id="hourlyRate" type="number" placeholder="0" className="border-gray-200 focus:border-green-400 focus:ring-green-200" />
+                        <Input 
+                          id="hourlyRate" 
+                          type="number" 
+                          placeholder="0" 
+                          className="border-gray-200 focus:border-green-400 focus:ring-green-200" 
+                          value={formData.hourly_rate}
+                          onChange={(e) => handleInputChange('hourly_rate', parseFloat(e.target.value) || 0)}
+                        />
                         <p className="text-sm text-gray-500">The rate you charge per hour for your design services</p>
                       </div>
                       <div className="space-y-4">
@@ -377,27 +631,49 @@ export default function DesignerProfile() {
                             <Label className="font-semibold text-gray-700">Display Hourly Rate</Label>
                             <p className="text-sm text-gray-500">Show your hourly rate on your public profile</p>
                           </div>
-                          <Switch checked={displayHourlyRate} onCheckedChange={setDisplayHourlyRate} />
+                          <Switch 
+                            checked={formData.display_hourly_rate} 
+                            onCheckedChange={(checked) => handleInputChange('display_hourly_rate', checked)} 
+                          />
                         </div>
                         <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
                           <div>
                             <Label className="font-semibold text-gray-700">Available for Urgent Work</Label>
                             <p className="text-sm text-gray-500">Show that you're available for urgent/rush projects</p>
                           </div>
-                          <Switch checked={availableUrgent} onCheckedChange={setAvailableUrgent} />
+                          <Switch 
+                            checked={formData.available_for_urgent} 
+                            onCheckedChange={(checked) => handleInputChange('available_for_urgent', checked)} 
+                          />
                         </div>
                       </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="responseTime" className="text-sm font-semibold text-gray-700">Response Time</Label>
+                      <Select value={formData.response_time} onValueChange={(value) => handleInputChange('response_time', value)}>
+                        <SelectTrigger className="border-gray-200 focus:border-green-400 focus:ring-green-200">
+                          <SelectValue placeholder="Select your typical response time" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1 hour">Within 1 hour</SelectItem>
+                          <SelectItem value="2 hours">Within 2 hours</SelectItem>
+                          <SelectItem value="6 hours">Within 6 hours</SelectItem>
+                          <SelectItem value="12 hours">Within 12 hours</SelectItem>
+                          <SelectItem value="24 hours">Within 24 hours</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     <div className="space-y-4">
                       <Label className="text-sm font-semibold text-gray-700">Additional Skills</Label>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {skills.map((skill) => (
+                        {skillOptions.map((skill) => (
                           <div key={skill} className="flex items-center space-x-2 p-2 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-100 hover:border-green-200 transition-colors">
                             <Checkbox 
                               id={skill}
-                              checked={selectedSkills.includes(skill)}
-                              onCheckedChange={(checked) => handleSkillChange(skill, checked as boolean)}
+                              checked={formData.skills.includes(skill)}
+                              onCheckedChange={() => handleSkillToggle(skill)}
                               className="border-green-300"
                             />
                             <Label htmlFor={skill} className="text-sm font-medium text-gray-700">{skill}</Label>
@@ -408,7 +684,13 @@ export default function DesignerProfile() {
 
                     <div className="flex justify-end space-x-3">
                       <Button variant="outline" className="border-gray-300 hover:border-gray-400">Cancel</Button>
-                      <Button className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-200">Save Changes</Button>
+                      <Button 
+                        onClick={handleSaveProfessional}
+                        disabled={isSaving}
+                        className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                      >
+                        {isSaving ? 'Saving...' : 'Save Changes'}
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -422,41 +704,65 @@ export default function DesignerProfile() {
                         <CardTitle className="text-xl font-bold">Portfolio</CardTitle>
                         <CardDescription className="text-white/80">Showcase your best design work to attract more clients</CardDescription>
                       </div>
-                      <Button className="bg-white/20 hover:bg-white/30 text-white border-white/20 shadow-lg hover:shadow-xl transition-all duration-200">
-                        <span className="mr-2">+</span>
-                        Add Portfolio Item
-                      </Button>
+                      <div>
+                        <input
+                          ref={portfolioInputRef}
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={handlePortfolioUpload}
+                          className="hidden"
+                        />
+                        <Button 
+                          onClick={() => portfolioInputRef.current?.click()}
+                          className="bg-white/20 hover:bg-white/30 text-white border-white/20 shadow-lg hover:shadow-xl transition-all duration-200"
+                        >
+                          <Upload className="w-4 h-4 mr-2" />
+                          Add Images
+                        </Button>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="p-6">
-                    <div className="border-b border-gray-200 mb-6">
-                      <nav className="flex space-x-8">
-                        {["All Works", "Logo Design", "Branding", "UI/UX Design", "Print Design", "Illustration", "Web Design", "Other"].map((category) => (
-                          <button
-                            key={category}
-                            className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors hover:scale-105 ${
-                              category === "All Works"
-                                ? "border-green-500 text-green-600 bg-gradient-to-r from-green-50 to-blue-50 rounded-t-lg px-3"
-                                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                            }`}
-                          >
-                            {category}
-                          </button>
+                    {formData.portfolio_images.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {formData.portfolio_images.map((imageUrl, index) => (
+                          <div key={index} className="relative group">
+                            <img 
+                              src={imageUrl} 
+                              alt={`Portfolio ${index + 1}`}
+                              className="w-full h-48 object-cover rounded-lg shadow-md group-hover:shadow-xl transition-all duration-300"
+                            />
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center">
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleRemovePortfolioImage(imageUrl)}
+                                className="bg-red-500 hover:bg-red-600"
+                              >
+                                <X className="w-4 h-4 mr-1" />
+                                Remove
+                              </Button>
+                            </div>
+                          </div>
                         ))}
-                      </nav>
-                    </div>
-
-                    <div className="text-center py-16">
-                      <div className="w-20 h-20 bg-gradient-to-r from-green-100 to-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                        <FolderOpen className="w-10 h-10 text-green-600" />
                       </div>
-                      <h3 className="text-2xl font-bold text-gray-900 mb-3">No portfolio items</h3>
-                      <p className="text-gray-500 mb-8 text-lg">Get started by adding your first portfolio item.</p>
-                      <Button className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105">
-                        <span className="mr-2">+</span>
-                        Add Portfolio Item
-                      </Button>
-                    </div>
+                    ) : (
+                      <div className="text-center py-16">
+                        <div className="w-20 h-20 bg-gradient-to-r from-green-100 to-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                          <FolderOpen className="w-10 h-10 text-green-600" />
+                        </div>
+                        <h3 className="text-2xl font-bold text-gray-900 mb-3">No portfolio items</h3>
+                        <p className="text-gray-500 mb-8 text-lg">Get started by adding your first portfolio item.</p>
+                        <Button 
+                          onClick={() => portfolioInputRef.current?.click()}
+                          className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+                        >
+                          <Upload className="w-4 h-4 mr-2" />
+                          Add Portfolio Item
+                        </Button>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -465,7 +771,7 @@ export default function DesignerProfile() {
                 <Card className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
                   <CardHeader className="bg-gradient-to-r from-green-400 to-blue-500 text-white rounded-t-lg">
                     <CardTitle className="text-xl font-bold">Reviews</CardTitle>
-                    <CardDescription className="text-white/80">View and manage client reviews of your design services.</CardDescription>
+                    <CardDescription className="text-white/80">View client reviews of your design services.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6 p-6">
                     <div className="flex items-center justify-between">
@@ -475,79 +781,38 @@ export default function DesignerProfile() {
                         </div>
                         <div>
                           <div className="flex items-center space-x-2">
-                            <span className="text-4xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">4.9</span>
+                            <span className="text-4xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+                              {designerProfile?.rating?.toFixed(1) || '0.0'}
+                            </span>
                             <div className="flex space-x-1">
                               {[1, 2, 3, 4, 5].map((star) => (
                                 <Star key={star} className="w-6 h-6 fill-yellow-400 text-yellow-400 hover:scale-110 transition-transform" />
                               ))}
                             </div>
                           </div>
-                          <p className="text-sm text-gray-500 font-medium">Based on 12 reviews</p>
-                        </div>
-                      </div>
-                      <div className="text-right p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
-                        <p className="text-sm text-gray-600 font-semibold">Your response rate</p>
-                        <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">100%</p>
-                        <p className="text-sm text-green-600 font-medium">✓ All reviews responded</p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="border border-gray-200 rounded-lg p-6 bg-gradient-to-r from-green-50/50 to-blue-50/50 hover:shadow-md transition-all duration-200">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
-                            <div>
-                              <h4 className="font-semibold text-gray-900">Samantha Mehta</h4>
-                              <div className="flex items-center space-x-1">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <Star key={star} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm text-gray-500">2 weeks ago</p>
-                            <Badge variant="outline" className="mt-1">Logo Design</Badge>
-                          </div>
-                        </div>
-                        <p className="text-gray-700 mb-3">
-                          Absolutely amazing work! The designer understood our brand instantly and delivered a logo that perfectly captures our company's essence. The communication was excellent throughout the process, and they were very responsive to feedback. Would definitely hire again!
-                        </p>
-                        <div className="bg-gray-50 rounded-lg p-3">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-medium text-gray-700">Your Response</span>
-                            <span className="text-sm text-gray-500">1 week ago</span>
-                          </div>
-                          <p className="text-sm text-gray-600">
-                            Thank you so much for the kind words, Samantha! It was a pleasure working with you and I'm thrilled that you're happy with the final logo. Looking forward to collaborating on future projects!
+                          <p className="text-sm text-gray-500 font-medium">
+                            Based on {designerProfile?.reviews_count || 0} reviews
                           </p>
                         </div>
                       </div>
-
-                      <div className="border rounded-lg p-4">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
-                            <div>
-                              <h4 className="font-semibold text-gray-900">Vikram Patel</h4>
-                              <div className="flex items-center space-x-1">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <Star key={star} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm text-gray-500">1 month ago</p>
-                            <Badge variant="outline" className="mt-1">Web Design</Badge>
-                          </div>
-                        </div>
-                        <p className="text-gray-700">
-                          Outstanding web design work! The designer created a modern, user-friendly interface that exceeded our expectations. Great attention to detail and excellent communication.
+                      <div className="text-right p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+                        <p className="text-sm text-gray-600 font-semibold">Completion rate</p>
+                        <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+                          {designerProfile?.completion_rate || 0}%
                         </p>
+                        <p className="text-sm text-green-600 font-medium">✓ Projects completed</p>
                       </div>
                     </div>
+
+                    {designerProfile?.reviews_count === 0 && (
+                      <div className="text-center py-16">
+                        <div className="w-20 h-20 bg-gradient-to-r from-green-100 to-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                          <Star className="w-10 h-10 text-green-600" />
+                        </div>
+                        <h3 className="text-2xl font-bold text-gray-900 mb-3">No reviews yet</h3>
+                        <p className="text-gray-500 mb-8 text-lg">Complete your first project to start getting reviews!</p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
