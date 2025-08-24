@@ -49,6 +49,7 @@ export default function DesignerBookings() {
   const [showDeclineDialog, setShowDeclineDialog] = useState(false);
   const [bookingToDecline, setBookingToDecline] = useState<any>(null);
   const { profile } = useAuth();
+  const navigate = useNavigate();
   const { 
     bookings: allBookings, 
     loading, 
@@ -56,7 +57,8 @@ export default function DesignerBookings() {
     declineBooking, 
     rescheduleBooking, 
     startSession,
-    setNewBookingCallback 
+    setNewBookingCallback,
+    refetch
   } = useRealtimeBookings();
 
   // Set up new booking notification callback
@@ -75,10 +77,14 @@ export default function DesignerBookings() {
     
     switch (status) {
       case 'upcoming':
-        filtered = allBookings.filter(booking => 
-          booking.status === 'confirmed' && 
-          new Date(booking.scheduled_date) > new Date()
-        );
+        filtered = allBookings.filter(booking => {
+          const bookingDate = new Date(booking.scheduled_date);
+          const now = new Date();
+          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          
+          return (booking.status === 'confirmed' || booking.status === 'in_progress') && 
+                 bookingDate >= today;
+        });
         break;
       case 'pending':
         filtered = allBookings.filter(booking => booking.status === 'pending');
@@ -130,6 +136,7 @@ export default function DesignerBookings() {
   // Action handlers
   const handleAcceptBooking = async (booking: any) => {
     await acceptBooking(booking.id);
+    await refetch(); // Refetch to see updated status
     setShowDetailsDialog(false);
   };
 
@@ -141,6 +148,7 @@ export default function DesignerBookings() {
   const confirmDeclineBooking = async () => {
     if (bookingToDecline) {
       await declineBooking(bookingToDecline.id);
+      await refetch(); // Refetch to see updated status
       setShowDeclineDialog(false);
       setShowDetailsDialog(false);
       setBookingToDecline(null);
@@ -150,6 +158,7 @@ export default function DesignerBookings() {
   const handleRescheduleBooking = async (newDateTime: string) => {
     if (selectedBooking) {
       await rescheduleBooking(selectedBooking.id, newDateTime);
+      await refetch(); // Refetch to see updated date
       setShowRescheduleDialog(false);
       setShowDetailsDialog(false);
     }
@@ -158,12 +167,12 @@ export default function DesignerBookings() {
   const handleJoinSession = async (booking: any) => {
     const result = await startSession(booking.id);
     if (result.success) {
-      window.location.href = `/session/${booking.id}`;
+      navigate(`/session/${booking.id}`);
     }
   };
 
   const handleMessageClient = (booking: any) => {
-    window.location.href = `/designer-dashboard/messages?booking_id=${booking.id}`;
+    navigate(`/designer-dashboard/messages?booking_id=${booking.id}`);
   };
 
   const handleViewDetails = (booking: any) => {
@@ -175,6 +184,8 @@ export default function DesignerBookings() {
     switch (status) {
       case 'confirmed':
         return <Badge className="bg-green-100 text-green-800 border-green-200">Confirmed</Badge>;
+      case 'in_progress':
+        return <Badge className="bg-blue-100 text-blue-800 border-blue-200">In Progress</Badge>;
       case 'pending':
         return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">Pending</Badge>;
       case 'completed':
