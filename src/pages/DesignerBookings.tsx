@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { BookingDetailsDialog } from '@/components/BookingDetailsDialog';
 import { RescheduleDialog } from '@/components/RescheduleDialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 import { 
   LayoutDashboard, 
   User, 
@@ -29,7 +30,7 @@ import {
   Mail,
   Eye
 } from 'lucide-react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { DesignerSidebar } from "@/components/DesignerSidebar";
 import { Button } from "@/components/ui/button";
@@ -41,15 +42,26 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export default function DesignerBookings() {
-  const [activeTab, setActiveTab] = useState("upcoming");
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showRescheduleDialog, setShowRescheduleDialog] = useState(false);
   const [showDeclineDialog, setShowDeclineDialog] = useState(false);
   const [bookingToDecline, setBookingToDecline] = useState<any>(null);
+  const [recentlyAcceptedBookingId, setRecentlyAcceptedBookingId] = useState<string | null>(null);
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  // URL-driven tab state
+  const activeTab = searchParams.get('tab') || 'upcoming';
+  
+  const setActiveTab = (tab: string) => {
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.set('tab', tab);
+    setSearchParams(newSearchParams);
+  };
   const { 
     bookings: allBookings, 
     loading, 
@@ -130,13 +142,43 @@ export default function DesignerBookings() {
   const completedBookings = getFilteredBookings('completed');
   const cancelledBookings = getFilteredBookings('cancelled');
 
-  // Action handlers
+  // Action handlers with optimistic updates
   const handleAcceptBooking = async (booking: any) => {
-    await acceptBooking(booking.id);
-    await refetch(); // Refetch to see updated status
-    setShowDetailsDialog(false);
-    // Switch to upcoming tab after accepting
-    setActiveTab('upcoming');
+    try {
+      console.log(`Accepting booking ${booking.id} with current status: ${booking.status}`);
+      
+      // Set tab to upcoming immediately (optimistic UI)
+      setActiveTab('upcoming');
+      
+      // Mark this booking as recently accepted for highlighting
+      setRecentlyAcceptedBookingId(booking.id);
+      
+      // Accept the booking
+      await acceptBooking(booking.id);
+      
+      console.log(`Booking ${booking.id} accepted successfully`);
+      
+      // Show success toast
+      toast({
+        title: "Booking accepted",
+        description: "Booking moved to Upcoming — customer has been notified.",
+      });
+      
+      setShowDetailsDialog(false);
+      
+      // Clear highlighting after 3 seconds
+      setTimeout(() => {
+        setRecentlyAcceptedBookingId(null);
+      }, 3000);
+      
+    } catch (error) {
+      console.error(`Error accepting booking ${booking.id}:`, error);
+      toast({
+        title: "Error",
+        description: "Failed to accept booking. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDeclineBooking = (booking: any) => {
@@ -201,6 +243,9 @@ export default function DesignerBookings() {
       ? `${booking.customer.first_name || ''} ${booking.customer.last_name || ''}`.trim()
       : 'Unknown Customer';
     
+    // Check if this booking was recently accepted for highlighting
+    const isRecentlyAccepted = recentlyAcceptedBookingId === booking.id;
+    
     const formatDate = (dateString: string) => {
       try {
         return format(new Date(dateString), 'MMM dd, yyyy');
@@ -220,7 +265,14 @@ export default function DesignerBookings() {
     };
 
     return (
-      <Card key={booking.id} className="hover:shadow-lg transition-all duration-300 border border-gray-200">
+      <Card 
+        key={booking.id} 
+        className={`hover:shadow-lg transition-all duration-300 border ${
+          isRecentlyAccepted 
+            ? 'border-green-400 bg-green-50 shadow-lg ring-2 ring-green-200' 
+            : 'border-gray-200'
+        }`}
+      >
         <CardContent className="p-6">
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-start space-x-4">
