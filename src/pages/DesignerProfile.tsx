@@ -365,7 +365,10 @@ export default function DesignerProfile() {
                 className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-200"
                 disabled={!designerProfile?.id}
               >
-                <Link to={`/designer/${designerProfile?.id}`}>
+                <Link 
+                  to={`/designer/${designerProfile?.id}`}
+                  state={{ hideGlobalChrome: true, fromProfile: true }}
+                >
                   <Eye className="w-4 h-4" />
                   <span>View Public Profile</span>
                   <ChevronRight className="w-4 h-4" />

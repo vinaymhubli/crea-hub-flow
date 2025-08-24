@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { BookingDialog } from '@/components/BookingDialog';
 import { Button } from '@/components/ui/button';
@@ -44,6 +44,7 @@ interface Service {
 const DesignerDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [designer, setDesigner] = useState<DesignerProfile | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
@@ -135,11 +136,17 @@ const DesignerDetails: React.FC = () => {
         {/* Back Navigation */}
         <Button
           variant="ghost"
-          onClick={() => navigate('/designers')}
+          onClick={() => {
+            if (location.state?.fromProfile) {
+              navigate('/designer-dashboard/profile');
+            } else {
+              navigate('/designers');
+            }
+          }}
           className="mb-6"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Designers
+          {location.state?.fromProfile ? 'Back to Profile' : 'Back to Designers'}
         </Button>
 
         {/* Header Section */}
