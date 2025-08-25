@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+
+import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Navigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,56 +19,20 @@ import {
   Star, CreditCard, Wallet, Gift, Megaphone, FileText, Globe, 
   Eye, EyeOff, Download, Filter, Search, Trash2, Edit
 } from 'lucide-react';
-import { toast } from 'sonner';
-
-interface AdminStats {
-  total_users: number;
-  total_designers: number;
-  total_bookings: number;
-  pending_bookings: number;
-  completed_bookings: number;
-  total_revenue: number;
-}
-
-interface User {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  user_type: string;
-  created_at: string;
-  is_admin: boolean;
-}
-
-interface Booking {
-  id: string;
-  service: string;
-  status: string;
-  total_amount: number;
-  scheduled_date: string;
-  customer_id: string;
-  designer_id: string;
-}
-
-interface Designer {
-  id: string;
-  user_id: string;
-  specialty: string;
-  hourly_rate: number;
-  rating: number;
-  reviews_count: number;
-  is_online: boolean;
-  completion_rate: number;
-}
+import { useAdminStats } from '@/hooks/useAdminStats';
+import { useAdminUsers } from '@/hooks/useAdminUsers';
+import { useAdminBookings } from '@/hooks/useAdminBookings';
+import { useAdminPlatformSettings } from '@/hooks/useAdminPlatformSettings';
+import { useAdminAnnouncements } from '@/hooks/useAdminAnnouncements';
 
 export default function AdminDashboard() {
-  const { user, profile } = useAuth();
-  const [stats, setStats] = useState<AdminStats | null>(null);
-  const [users, setUsers] = useState<User[]>([]);
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [designers, setDesigners] = useState<Designer[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { user } = useAuth();
+  const { stats, loading: statsLoading } = useAdminStats();
+  const { users, loading: usersLoading, toggleAdminStatus } = useAdminUsers();
+  const { bookings, loading: bookingsLoading, updateBookingStatus } = useAdminBookings();
+  const { settings, loading: settingsLoading, updateSettings } = useAdminPlatformSettings();
+  const { announcements, loading: announcementsLoading, createAnnouncement } = useAdminAnnouncements();
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
 
@@ -76,165 +40,38 @@ export default function AdminDashboard() {
   const [newAnnouncement, setNewAnnouncement] = useState({
     title: '',
     message: '',
-    type: 'info' as 'info' | 'warning' | 'success'
+    type: 'info' as 'info' | 'warning' | 'success',
+    target: 'all'
   });
 
-  // Platform settings
-  const [platformSettings, setPlatformSettings] = useState({
-    maintenance_mode: false,
-    new_registrations: true,
-    commission_rate: 15,
-    featured_designers_limit: 6
-  });
-
-  useEffect(() => {
-    fetchAdminData();
-  }, []);
-
-  // Check admin status
-  useEffect(() => {
-    const checkAdminStatus = async () => {
-      if (!user) {
-        return;
-      }
-
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('is_admin')
-        .eq('user_id', user.id)
-        .single();
-
-      setIsAdmin(profileData?.is_admin || false);
-    };
-
-    if (user) {
-      checkAdminStatus();
-    }
-  }, [user]);
-
-  // Redirect if not logged in or not admin
   if (!user) {
-    return <Navigate to="/secret-admin-login" replace />;
+    return <Navigate to="/admin-login" replace />;
   }
 
-  if (user && !loading && !isAdmin) {
-    return <Navigate to="/secret-admin-login" replace />;
-  }
-
-  const fetchAdminData = async () => {
-    try {
-      // Fetch stats
-      const [usersCount, designersCount, bookingsData] = await Promise.all([
-        supabase.from('profiles').select('*', { count: 'exact', head: true }),
-        supabase.from('designers').select('*', { count: 'exact', head: true }),
-        supabase.from('bookings').select('status, total_amount')
-      ]);
-
-      const totalBookings = bookingsData.data?.length || 0;
-      const pendingBookings = bookingsData.data?.filter(b => b.status === 'pending').length || 0;
-      const completedBookings = bookingsData.data?.filter(b => b.status === 'completed').length || 0;
-      const totalRevenue = bookingsData.data?.filter(b => b.status === 'completed')
-        .reduce((sum, b) => sum + Number(b.total_amount), 0) || 0;
-
-      setStats({
-        total_users: usersCount.count || 0,
-        total_designers: designersCount.count || 0,
-        total_bookings: totalBookings,
-        pending_bookings: pendingBookings,
-        completed_bookings: completedBookings,
-        total_revenue: totalRevenue
-      });
-
-      // Fetch users
-      const { data: usersData } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
-      setUsers(usersData || []);
-
-      // Fetch bookings
-      const { data: allBookingsData } = await supabase
-        .from('bookings')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
-      setBookings(allBookingsData || []);
-
-      // Fetch designers
-      const { data: designersData } = await supabase
-        .from('designers')
-        .select('*')
-        .order('rating', { ascending: false });
-      setDesigners(designersData || []);
-
-    } catch (error) {
-      console.error('Error fetching admin data:', error);
-      toast.error('Failed to load admin data');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateBookingStatus = async (bookingId: string, status: string) => {
-    try {
-      const { error } = await supabase
-        .from('bookings')
-        .update({ status })
-        .eq('id', bookingId);
-
-      if (error) throw error;
-
-      setBookings(prev => 
-        prev.map(booking => 
-          booking.id === bookingId ? { ...booking, status } : booking
-        )
-      );
-      toast.success('Booking status updated');
-    } catch (error) {
-      console.error('Error updating booking:', error);
-      toast.error('Failed to update booking status');
-    }
-  };
-
-  const toggleAdminStatus = async (userId: string, currentStatus: boolean) => {
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ is_admin: !currentStatus })
-        .eq('user_id', userId);
-
-      if (error) throw error;
-
-      setUsers(prev => 
-        prev.map(user => 
-          user.id === userId ? { ...user, is_admin: !currentStatus } : user
-        )
-      );
-      toast.success('Admin status updated');
-    } catch (error) {
-      console.error('Error updating admin status:', error);
-      toast.error('Failed to update admin status');
-    }
-  };
-
-  const createAnnouncement = async () => {
+  const handleCreateAnnouncement = async () => {
     if (!newAnnouncement.title || !newAnnouncement.message) {
-      toast.error('Please fill in all fields');
       return;
     }
 
-    try {
-      // This would typically insert into an announcements table
-      toast.success('Announcement created successfully');
-      setNewAnnouncement({ title: '', message: '', type: 'info' });
-    } catch (error) {
-      toast.error('Failed to create announcement');
+    const result = await createAnnouncement({
+      ...newAnnouncement,
+      is_active: true
+    });
+    
+    if (result) {
+      setNewAnnouncement({ title: '', message: '', type: 'info', target: 'all' });
+    }
+  };
+
+  const handleSettingsUpdate = (key: string, value: any) => {
+    if (settings) {
+      updateSettings({ [key]: value });
     }
   };
 
   const exportData = (type: string) => {
-    toast.info(`Exporting ${type} data...`);
     // Implementation would generate and download CSV/Excel file
+    console.log(`Exporting ${type} data...`);
   };
 
   const filteredUsers = users.filter(user => {
@@ -249,6 +86,8 @@ export default function AdminDashboard() {
     
     return matchesSearch;
   });
+
+  const loading = statsLoading || usersLoading || bookingsLoading || settingsLoading || announcementsLoading;
 
   if (loading) {
     return (
@@ -347,7 +186,7 @@ export default function AdminDashboard() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="bookings">Bookings</TabsTrigger>
-          <TabsTrigger value="designers">Designers</TabsTrigger>
+          <TabsTrigger value="announcements">Announcements</TabsTrigger>
           <TabsTrigger value="communications">Communications</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
@@ -355,25 +194,6 @@ export default function AdminDashboard() {
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Analytics Charts */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5" />
-                  Revenue Analytics
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-64 flex items-center justify-center text-muted-foreground">
-                  <div className="text-center">
-                    <PieChart className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                    <p>Revenue chart visualization</p>
-                    <p className="text-sm">Integration with charting library needed</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
             {/* Recent Activity */}
             <Card>
               <CardHeader>
@@ -384,60 +204,58 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-sm">New designer registered</span>
-                    <span className="text-xs text-muted-foreground ml-auto">2 min ago</span>
+                  {announcements.slice(0, 4).map((announcement, index) => (
+                    <div key={announcement.id} className="flex items-center gap-3">
+                      <div className={`w-2 h-2 rounded-full ${
+                        announcement.type === 'success' ? 'bg-green-500' :
+                        announcement.type === 'warning' ? 'bg-orange-500' :
+                        'bg-blue-500'
+                      }`}></div>
+                      <span className="text-sm">{announcement.title}</span>
+                      <span className="text-xs text-muted-foreground ml-auto">
+                        {new Date(announcement.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                  ))}
+                  {announcements.length === 0 && (
+                    <p className="text-sm text-muted-foreground">No recent activity</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* System Health */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Database className="h-5 w-5" />
+                  System Health
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-500">
+                      {settings?.maintenance_mode ? '0%' : '99.9%'}
+                    </div>
+                    <p className="text-sm text-muted-foreground">Uptime</p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <span className="text-sm">Booking completed</span>
-                    <span className="text-xs text-muted-foreground ml-auto">5 min ago</span>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-500">245ms</div>
+                    <p className="text-sm text-muted-foreground">Response Time</p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                    <span className="text-sm">Payment processed</span>
-                    <span className="text-xs text-muted-foreground ml-auto">10 min ago</span>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-purple-500">{users.length}</div>
+                    <p className="text-sm text-muted-foreground">Total Users</p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                    <span className="text-sm">New message received</span>
-                    <span className="text-xs text-muted-foreground ml-auto">15 min ago</span>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-orange-500">0</div>
+                    <p className="text-sm text-muted-foreground">Errors</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </div>
-
-          {/* System Health */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Database className="h-5 w-5" />
-                System Health
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-500">99.9%</div>
-                  <p className="text-sm text-muted-foreground">Uptime</p>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-500">245ms</div>
-                  <p className="text-sm text-muted-foreground">Response Time</p>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-500">1.2k</div>
-                  <p className="text-sm text-muted-foreground">Active Sessions</p>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-orange-500">0</div>
-                  <p className="text-sm text-muted-foreground">Errors</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
 
         {/* Users Tab */}
@@ -530,6 +348,8 @@ export default function AdminDashboard() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Service</TableHead>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Designer</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Amount</TableHead>
                     <TableHead>Date</TableHead>
@@ -540,6 +360,16 @@ export default function AdminDashboard() {
                   {bookings.map((booking) => (
                     <TableRow key={booking.id}>
                       <TableCell className="font-medium">{booking.service}</TableCell>
+                      <TableCell>
+                        {booking.customer ? 
+                          `${booking.customer.first_name || ''} ${booking.customer.last_name || ''}`.trim() || 'Unknown' 
+                          : 'Unknown'}
+                      </TableCell>
+                      <TableCell>
+                        {booking.designer?.user ? 
+                          `${booking.designer.user.first_name || ''} ${booking.designer.user.last_name || ''}`.trim() || 'Unknown' 
+                          : 'Unknown'}
+                      </TableCell>
                       <TableCell>
                         <Badge 
                           variant={
@@ -583,45 +413,8 @@ export default function AdminDashboard() {
           </Card>
         </TabsContent>
 
-        {/* Designers Tab */}
-        <TabsContent value="designers" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Designer Management</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {designers.map((designer) => (
-                  <Card key={designer.id}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-medium">{designer.specialty}</h3>
-                        <div className="flex items-center gap-1">
-                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                          <span className="text-sm">{designer.rating}</span>
-                        </div>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        ${designer.hourly_rate}/hour
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <Badge variant={designer.is_online ? 'default' : 'secondary'}>
-                          {designer.is_online ? 'Online' : 'Offline'}
-                        </Badge>
-                        <span className="text-sm text-muted-foreground">
-                          {designer.completion_rate}% completion
-                        </span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Communications Tab */}
-        <TabsContent value="communications" className="space-y-4">
+        {/* Announcements Tab */}
+        <TabsContent value="announcements" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Send Announcement */}
             <Card>
@@ -664,132 +457,165 @@ export default function AdminDashboard() {
                     </SelectContent>
                   </Select>
                 </div>
-                <Button onClick={createAnnouncement} className="w-full">
+                <Button onClick={handleCreateAnnouncement} className="w-full">
                   <Bell className="h-4 w-4 mr-2" />
                   Send Announcement
                 </Button>
               </CardContent>
             </Card>
 
-            {/* Quick Actions */}
+            {/* Recent Announcements */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5" />
-                  Quick Actions
-                </CardTitle>
+                <CardTitle>Recent Announcements</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <Button variant="outline" className="w-full justify-start">
-                  <Mail className="h-4 w-4 mr-2" />
-                  Send Email to All Users
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  <Bell className="h-4 w-4 mr-2" />
-                  Push Notification
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  <Gift className="h-4 w-4 mr-2" />
-                  Create Promotion
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Generate Report
-                </Button>
+              <CardContent>
+                <div className="space-y-3">
+                  {announcements.slice(0, 5).map((announcement) => (
+                    <div key={announcement.id} className="border rounded p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium">{announcement.title}</h4>
+                        <Badge variant={announcement.type === 'success' ? 'default' : 
+                                      announcement.type === 'warning' ? 'destructive' : 'secondary'}>
+                          {announcement.type}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{announcement.message}</p>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        {new Date(announcement.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  ))}
+                  {announcements.length === 0 && (
+                    <p className="text-sm text-muted-foreground">No announcements yet</p>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </div>
         </TabsContent>
 
+        {/* Communications Tab */}
+        <TabsContent value="communications" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5" />
+                Quick Actions
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button variant="outline" className="w-full justify-start">
+                <Mail className="h-4 w-4 mr-2" />
+                Send Email to All Users
+              </Button>
+              <Button variant="outline" className="w-full justify-start">
+                <Bell className="h-4 w-4 mr-2" />
+                Push Notification
+              </Button>
+              <Button variant="outline" className="w-full justify-start">
+                <Gift className="h-4 w-4 mr-2" />
+                Create Promotion
+              </Button>
+              <Button variant="outline" className="w-full justify-start">
+                <FileText className="h-4 w-4 mr-2" />
+                Generate Report
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Settings Tab */}
         <TabsContent value="settings" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Platform Settings */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="h-5 w-5" />
-                  Platform Settings
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Maintenance Mode</Label>
-                    <p className="text-sm text-muted-foreground">Temporarily disable the platform</p>
+          {settings && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Platform Settings */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Settings className="h-5 w-5" />
+                    Platform Settings
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>Maintenance Mode</Label>
+                      <p className="text-sm text-muted-foreground">Temporarily disable the platform</p>
+                    </div>
+                    <Switch 
+                      checked={settings.maintenance_mode}
+                      onCheckedChange={(checked) => handleSettingsUpdate('maintenance_mode', checked)}
+                    />
                   </div>
-                  <Switch 
-                    checked={platformSettings.maintenance_mode}
-                    onCheckedChange={(checked) => setPlatformSettings(prev => ({ ...prev, maintenance_mode: checked }))}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>New Registrations</Label>
-                    <p className="text-sm text-muted-foreground">Allow new user signups</p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>New Registrations</Label>
+                      <p className="text-sm text-muted-foreground">Allow new user signups</p>
+                    </div>
+                    <Switch 
+                      checked={settings.new_registrations}
+                      onCheckedChange={(checked) => handleSettingsUpdate('new_registrations', checked)}
+                    />
                   </div>
-                  <Switch 
-                    checked={platformSettings.new_registrations}
-                    onCheckedChange={(checked) => setPlatformSettings(prev => ({ ...prev, new_registrations: checked }))}
-                  />
-                </div>
-                <div>
-                  <Label>Commission Rate (%)</Label>
-                  <Input 
-                    type="number"
-                    value={platformSettings.commission_rate}
-                    onChange={(e) => setPlatformSettings(prev => ({ ...prev, commission_rate: Number(e.target.value) }))}
-                  />
-                </div>
-                <div>
-                  <Label>Featured Designers Limit</Label>
-                  <Input 
-                    type="number"
-                    value={platformSettings.featured_designers_limit}
-                    onChange={(e) => setPlatformSettings(prev => ({ ...prev, featured_designers_limit: Number(e.target.value) }))}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+                  <div>
+                    <Label>Commission Rate (%)</Label>
+                    <Input 
+                      type="number"
+                      value={settings.commission_rate}
+                      onChange={(e) => handleSettingsUpdate('commission_rate', Number(e.target.value))}
+                    />
+                  </div>
+                  <div>
+                    <Label>Featured Designers Limit</Label>
+                    <Input 
+                      type="number"
+                      value={settings.featured_designers_limit}
+                      onChange={(e) => handleSettingsUpdate('featured_designers_limit', Number(e.target.value))}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
 
-            {/* System Status */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Activity className="h-5 w-5" />
-                  System Status
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span>Platform Status</span>
-                    <Badge variant="default">Online</Badge>
+              {/* System Status */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="h-5 w-5" />
+                    System Status
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span>Platform Status</span>
+                      <Badge variant={settings.maintenance_mode ? 'destructive' : 'default'}>
+                        {settings.maintenance_mode ? 'Maintenance' : 'Online'}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>New Registrations</span>
+                      <Badge variant={settings.new_registrations ? 'default' : 'secondary'}>
+                        {settings.new_registrations ? 'Enabled' : 'Disabled'}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Commission Rate</span>
+                      <Badge variant="outline">{settings.commission_rate}%</Badge>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Featured Limit</span>
+                      <Badge variant="outline">{settings.featured_designers_limit}</Badge>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Database</span>
-                    <Badge variant="default">Connected</Badge>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Payment Gateway</span>
-                    <Badge variant="default">Active</Badge>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Video Calls</span>
-                    <Badge variant="default">Operational</Badge>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Email Service</span>
-                    <Badge variant="default">Active</Badge>
-                  </div>
-                </div>
-                <Button variant="outline" className="w-full">
-                  <AlertTriangle className="h-4 w-4 mr-2" />
-                  Run System Diagnostics
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+                  <Button variant="outline" className="w-full">
+                    <AlertTriangle className="h-4 w-4 mr-2" />
+                    Run System Diagnostics
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>

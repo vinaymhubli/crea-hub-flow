@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      announcements: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          message: string
+          target: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          message: string
+          target?: string
+          title: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          message?: string
+          target?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           created_at: string
@@ -196,6 +232,7 @@ export type Database = {
           specialty: string
           updated_at: string
           user_id: string
+          verification_status: string
         }
         Insert: {
           available_for_urgent?: boolean | null
@@ -216,6 +253,7 @@ export type Database = {
           specialty: string
           updated_at?: string
           user_id: string
+          verification_status?: string
         }
         Update: {
           available_for_urgent?: boolean | null
@@ -236,6 +274,7 @@ export type Database = {
           specialty?: string
           updated_at?: string
           user_id?: string
+          verification_status?: string
         }
         Relationships: [
           {
@@ -332,6 +371,42 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      platform_settings: {
+        Row: {
+          commission_rate: number
+          created_at: string
+          featured_designers_limit: number
+          id: string
+          maintenance_mode: boolean
+          new_registrations: boolean
+          singleton: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          commission_rate?: number
+          created_at?: string
+          featured_designers_limit?: number
+          id?: string
+          maintenance_mode?: boolean
+          new_registrations?: boolean
+          singleton?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          commission_rate?: number
+          created_at?: string
+          featured_designers_limit?: number
+          id?: string
+          maintenance_mode?: boolean
+          new_registrations?: boolean
+          singleton?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
       }
       portfolio_items: {
         Row: {

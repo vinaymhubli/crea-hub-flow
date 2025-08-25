@@ -1,394 +1,331 @@
+
 import { useState } from 'react';
+import { AdminLayout } from '@/components/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { CheckCircle, XCircle, Clock, Search, Filter, Eye, FileText, Star, MapPin } from 'lucide-react';
-import { toast } from 'sonner';
+import { CheckCircle, XCircle, Clock, Search, Filter, Eye } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
-// Dummy data for designer applications
-const dummyApplications = [
-  {
-    id: '1',
-    name: 'Sarah Johnson',
-    email: 'sarah.johnson@email.com',
-    specialty: 'UI/UX Design',
-    experience: '5 years',
-    location: 'New York, USA',
-    portfolio: 'https://sarahjohnson.portfolio.com',
-    status: 'pending',
-    appliedDate: '2024-01-15',
-    avatar: '/lovable-uploads/33257a77-a6e4-46e6-ae77-b94b22a97d58.png',
-    bio: 'Passionate UI/UX designer with expertise in mobile and web applications.',
-    skills: ['Figma', 'Adobe XD', 'Sketch', 'Prototyping', 'User Research'],
-    portfolio_images: [
-      'https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=400',
-      'https://images.unsplash.com/photo-1558655146-9f40138edfeb?w=400'
-    ],
-    documents: ['Certificate of Design', 'Portfolio PDF', 'Resume'],
-    rating: 4.8,
-    hourlyRate: 85
-  },
-  {
-    id: '2',
-    name: 'Michael Chen',
-    email: 'michael.chen@email.com',
-    specialty: 'Graphic Design',
-    experience: '7 years',
-    location: 'San Francisco, USA',
-    portfolio: 'https://michaelchen.design',
-    status: 'approved',
-    appliedDate: '2024-01-10',
-    avatar: '/lovable-uploads/33257a77-a6e4-46e6-ae77-b94b22a97d58.png',
-    bio: 'Creative graphic designer specializing in brand identity and print design.',
-    skills: ['Adobe Creative Suite', 'Branding', 'Print Design', 'Logo Design'],
-    portfolio_images: [
-      'https://images.unsplash.com/photo-1626785774573-4b799315345d?w=400',
-      'https://images.unsplash.com/photo-1558655146-d09347e92766?w=400'
-    ],
-    documents: ['Design Degree', 'Portfolio', 'References'],
-    rating: 4.9,
-    hourlyRate: 95
-  },
-  {
-    id: '3',
-    name: 'Emma Williams',
-    email: 'emma.williams@email.com',
-    specialty: 'Web Design',
-    experience: '3 years',
-    location: 'London, UK',
-    portfolio: 'https://emmawilliams.dev',
-    status: 'rejected',
-    appliedDate: '2024-01-08',
-    avatar: '/lovable-uploads/33257a77-a6e4-46e6-ae77-b94b22a97d58.png',
-    bio: 'Modern web designer with a focus on responsive and accessible designs.',
-    skills: ['HTML/CSS', 'JavaScript', 'React', 'Responsive Design'],
-    portfolio_images: [
-      'https://images.unsplash.com/photo-1547658719-da2b51169166?w=400'
-    ],
-    documents: ['Web Design Certificate', 'Portfolio'],
-    rating: 4.2,
-    hourlyRate: 65
-  },
-  {
-    id: '4',
-    name: 'Alex Rodriguez',
-    email: 'alex.rodriguez@email.com',
-    specialty: 'Mobile App Design',
-    experience: '4 years',
-    location: 'Toronto, Canada',
-    portfolio: 'https://alexrodriguez.mobile',
-    status: 'pending',
-    appliedDate: '2024-01-12',
-    avatar: '/lovable-uploads/33257a77-a6e4-46e6-ae77-b94b22a97d58.png',
-    bio: 'Mobile app designer with extensive experience in iOS and Android platforms.',
-    skills: ['Figma', 'Sketch', 'Principle', 'Mobile UI', 'User Testing'],
-    portfolio_images: [
-      'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400',
-      'https://images.unsplash.com/photo-1551650975-87deedd944c3?w=400'
-    ],
-    documents: ['Mobile Design Portfolio', 'App Store Screenshots'],
-    rating: 4.6,
-    hourlyRate: 80
-  }
-];
+interface DesignerWithProfile {
+  id: string;
+  user_id: string;
+  specialty: string;
+  hourly_rate: number;
+  bio: string;
+  location: string;
+  skills: string[];
+  portfolio_images: string[];
+  verification_status: string;
+  experience_years: number;
+  created_at: string;
+  user: {
+    first_name: string;
+    last_name: string;
+    email: string;
+    avatar_url?: string;
+  };
+}
 
 export default function DesignerVerification() {
-  const [applications, setApplications] = useState(dummyApplications);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [selectedApplication, setSelectedApplication] = useState<any>(null);
+  const [statusFilter, setStatusFilter] = useState('pending');
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const handleStatusChange = (applicationId: string, newStatus: string) => {
-    setApplications(prev => 
-      prev.map(app => 
-        app.id === applicationId 
-          ? { ...app, status: newStatus }
-          : app
-      )
-    );
-    toast.success(`Application ${newStatus} successfully`);
-  };
+  const { data: designers = [], isLoading } = useQuery({
+    queryKey: ['admin-designers', statusFilter, searchTerm],
+    queryFn: async () => {
+      let query = supabase
+        .from('designers')
+        .select(`
+          *,
+          user:profiles!user_id(first_name, last_name, email, avatar_url)
+        `);
 
-  const filteredApplications = applications.filter(app => {
-    const matchesSearch = app.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         app.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         app.specialty.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
-    return matchesSearch && matchesStatus;
+      if (statusFilter !== 'all') {
+        query = query.eq('verification_status', statusFilter);
+      }
+
+      if (searchTerm) {
+        // This is a simplified search - in production you might want full-text search
+        query = query.or(`specialty.ilike.%${searchTerm}%,bio.ilike.%${searchTerm}%`);
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as DesignerWithProfile[];
+    },
   });
 
-  const getStatusColor = (status: string) => {
+  const updateVerificationMutation = useMutation({
+    mutationFn: async ({ designerId, status }: { designerId: string; status: string }) => {
+      const { error } = await supabase
+        .from('designers')
+        .update({ verification_status: status })
+        .eq('id', designerId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-designers'] });
+      toast({
+        title: "Success",
+        description: "Designer verification status updated",
+      });
+    },
+    onError: (error) => {
+      console.error('Error updating verification status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update verification status",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleApprove = (designerId: string) => {
+    updateVerificationMutation.mutate({ designerId, status: 'approved' });
+  };
+
+  const handleReject = (designerId: string) => {
+    updateVerificationMutation.mutate({ designerId, status: 'rejected' });
+  };
+
+  const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'approved': return 'bg-green-100 text-green-800 border-green-200';
-      case 'rejected': return 'bg-red-100 text-red-800 border-red-200';
-      case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'approved':
+        return <Badge className="bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1" />Approved</Badge>;
+      case 'rejected':
+        return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />Rejected</Badge>;
+      case 'pending':
+        return <Badge variant="secondary"><Clock className="w-3 h-3 mr-1" />Pending</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'approved': return <CheckCircle className="h-4 w-4" />;
-      case 'rejected': return <XCircle className="h-4 w-4" />;
-      case 'pending': return <Clock className="h-4 w-4" />;
-      default: return null;
-    }
-  };
+  const filteredDesigners = designers.filter(designer => {
+    const matchesSearch = designer.specialty.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         designer.bio?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         designer.user.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         designer.user.last_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
+  });
+
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Designer Verification</h1>
-          <p className="text-muted-foreground">Review and approve designer applications</p>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search applications..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-64"
-            />
+    <AdminLayout>
+      <div className="container mx-auto p-6 max-w-7xl">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold">Designer Verification</h1>
+            <p className="text-muted-foreground">Review and approve designer applications</p>
           </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-40">
-              <Filter className="h-4 w-4 mr-2" />
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-4">
+            <Badge variant="outline" className="px-4 py-2">
+              {filteredDesigners.length} designer{filteredDesigners.length !== 1 ? 's' : ''}
+            </Badge>
+          </div>
         </div>
-      </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="border-border/50">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Applications</p>
-                <p className="text-2xl font-bold text-foreground">{applications.length}</p>
-              </div>
-              <FileText className="h-8 w-8 text-primary" />
+        <Tabs value={statusFilter} onValueChange={setStatusFilter} className="space-y-6">
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <TabsList className="grid w-full grid-cols-4 lg:w-auto">
+              <TabsTrigger value="pending">Pending</TabsTrigger>
+              <TabsTrigger value="approved">Approved</TabsTrigger>
+              <TabsTrigger value="rejected">Rejected</TabsTrigger>
+              <TabsTrigger value="all">All</TabsTrigger>
+            </TabsList>
+            
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search designers..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8"
+              />
             </div>
-          </CardContent>
-        </Card>
-        <Card className="border-border/50">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Pending Review</p>
-                <p className="text-2xl font-bold text-yellow-600">
-                  {applications.filter(app => app.status === 'pending').length}
-                </p>
-              </div>
-              <Clock className="h-8 w-8 text-yellow-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-border/50">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Approved</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {applications.filter(app => app.status === 'approved').length}
-                </p>
-              </div>
-              <CheckCircle className="h-8 w-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-border/50">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Rejected</p>
-                <p className="text-2xl font-bold text-red-600">
-                  {applications.filter(app => app.status === 'rejected').length}
-                </p>
-              </div>
-              <XCircle className="h-8 w-8 text-red-600" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
 
-      {/* Applications Table */}
-      <Card className="border-border/50">
-        <CardHeader>
-          <CardTitle>Designer Applications</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {filteredApplications.map((application) => (
-              <div key={application.id} className="border border-border/50 rounded-lg p-4 hover:bg-muted/20 transition-colors">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={application.avatar} alt={application.name} />
-                      <AvatarFallback>{application.name.split(' ').map((n: string) => n[0]).join('')}</AvatarFallback>
-                    </Avatar>
+          <TabsContent value={statusFilter} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredDesigners.map((designer) => (
+                <Card key={designer.id} className="hover:shadow-lg transition-shadow">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarImage src={designer.user.avatar_url} />
+                          <AvatarFallback>
+                            {designer.user.first_name?.[0]}{designer.user.last_name?.[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <CardTitle className="text-lg">
+                            {designer.user.first_name} {designer.user.last_name}
+                          </CardTitle>
+                          <p className="text-sm text-muted-foreground">{designer.user.email}</p>
+                        </div>
+                      </div>
+                      {getStatusBadge(designer.verification_status)}
+                    </div>
+                  </CardHeader>
+                  
+                  <CardContent className="space-y-4">
                     <div>
-                      <h3 className="font-semibold text-foreground">{application.name}</h3>
-                      <p className="text-sm text-muted-foreground">{application.email}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="secondary">{application.specialty}</Badge>
-                        <span className="text-xs text-muted-foreground flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {application.location}
-                        </span>
-                      </div>
+                      <h4 className="font-medium text-sm text-muted-foreground mb-1">Specialty</h4>
+                      <p className="font-medium">{designer.specialty}</p>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-foreground">${application.hourlyRate}/hr</p>
-                      <div className="flex items-center gap-1">
-                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                        <span className="text-xs text-muted-foreground">{application.rating}</span>
-                      </div>
+                    
+                    <div>
+                      <h4 className="font-medium text-sm text-muted-foreground mb-1">Hourly Rate</h4>
+                      <p className="font-medium">${designer.hourly_rate}/hour</p>
                     </div>
-                    <Badge className={`${getStatusColor(application.status)} flex items-center gap-1`}>
-                      {getStatusIcon(application.status)}
-                      {application.status}
-                    </Badge>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => setSelectedApplication(application)}
-                        >
-                          <Eye className="h-4 w-4 mr-2" />
-                          Review
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                        <DialogHeader>
-                          <DialogTitle>Designer Application Review</DialogTitle>
-                        </DialogHeader>
-                        {selectedApplication && (
-                          <Tabs defaultValue="profile" className="w-full">
-                            <TabsList className="grid w-full grid-cols-3">
-                              <TabsTrigger value="profile">Profile</TabsTrigger>
-                              <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
-                              <TabsTrigger value="documents">Documents</TabsTrigger>
-                            </TabsList>
-                            <TabsContent value="profile" className="space-y-4">
-                              <div className="flex items-center gap-4">
-                                <Avatar className="h-16 w-16">
-                                  <AvatarImage src={selectedApplication.avatar} alt={selectedApplication.name} />
-                                  <AvatarFallback>{selectedApplication.name.split(' ').map((n: string) => n[0]).join('')}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <h3 className="text-xl font-semibold">{selectedApplication.name}</h3>
-                                  <p className="text-muted-foreground">{selectedApplication.email}</p>
-                                  <p className="text-sm text-muted-foreground">{selectedApplication.location}</p>
-                                </div>
-                              </div>
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <label className="text-sm font-medium">Specialty</label>
-                                  <p className="text-muted-foreground">{selectedApplication.specialty}</p>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium">Experience</label>
-                                  <p className="text-muted-foreground">{selectedApplication.experience}</p>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium">Hourly Rate</label>
-                                  <p className="text-muted-foreground">${selectedApplication.hourlyRate}/hr</p>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium">Applied Date</label>
-                                  <p className="text-muted-foreground">{selectedApplication.appliedDate}</p>
-                                </div>
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium">Bio</label>
-                                <p className="text-muted-foreground">{selectedApplication.bio}</p>
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium">Skills</label>
-                                <div className="flex flex-wrap gap-2 mt-2">
-                                  {selectedApplication.skills.map((skill: string, index: number) => (
-                                    <Badge key={index} variant="outline">{skill}</Badge>
-                                  ))}
-                                </div>
-                              </div>
-                            </TabsContent>
-                            <TabsContent value="portfolio" className="space-y-4">
-                              <div className="grid grid-cols-2 gap-4">
-                                {selectedApplication.portfolio_images.map((image: string, index: number) => (
-                                  <div key={index} className="aspect-video bg-muted rounded-lg overflow-hidden">
-                                    <img 
-                                      src={image} 
-                                      alt={`Portfolio ${index + 1}`}
-                                      className="w-full h-full object-cover"
-                                    />
-                                  </div>
-                                ))}
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium">Portfolio Website</label>
-                                <p className="text-primary hover:underline cursor-pointer">{selectedApplication.portfolio}</p>
-                              </div>
-                            </TabsContent>
-                            <TabsContent value="documents" className="space-y-4">
-                              <div className="space-y-2">
-                                {selectedApplication.documents.map((doc: string, index: number) => (
-                                  <div key={index} className="flex items-center justify-between p-3 border border-border/50 rounded-lg">
-                                    <div className="flex items-center gap-2">
-                                      <FileText className="h-4 w-4 text-muted-foreground" />
-                                      <span>{doc}</span>
-                                    </div>
-                                    <Button variant="outline" size="sm">
-                                      <Eye className="h-4 w-4 mr-2" />
-                                      View
-                                    </Button>
-                                  </div>
-                                ))}
-                              </div>
-                            </TabsContent>
-                          </Tabs>
-                        )}
-                        <div className="flex justify-end gap-2 mt-6">
-                          <Button 
-                            variant="outline"
-                            onClick={() => handleStatusChange(selectedApplication.id, 'rejected')}
+                    
+                    <div>
+                      <h4 className="font-medium text-sm text-muted-foreground mb-1">Experience</h4>
+                      <p className="font-medium">{designer.experience_years || 0} years</p>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-medium text-sm text-muted-foreground mb-1">Location</h4>
+                      <p className="font-medium">{designer.location || 'Not specified'}</p>
+                    </div>
+
+                    {designer.skills && designer.skills.length > 0 && (
+                      <div>
+                        <h4 className="font-medium text-sm text-muted-foreground mb-2">Skills</h4>
+                        <div className="flex flex-wrap gap-1">
+                          {designer.skills.slice(0, 3).map((skill, index) => (
+                            <Badge key={index} variant="outline" className="text-xs">
+                              {skill}
+                            </Badge>
+                          ))}
+                          {designer.skills.length > 3 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{designer.skills.length - 3} more
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {designer.bio && (
+                      <div>
+                        <h4 className="font-medium text-sm text-muted-foreground mb-1">Bio</h4>
+                        <p className="text-sm line-clamp-3">{designer.bio}</p>
+                      </div>
+                    )}
+
+                    {designer.portfolio_images && designer.portfolio_images.length > 0 && (
+                      <div>
+                        <h4 className="font-medium text-sm text-muted-foreground mb-2">Portfolio</h4>
+                        <div className="grid grid-cols-3 gap-2">
+                          {designer.portfolio_images.slice(0, 3).map((image, index) => (
+                            <img
+                              key={index}
+                              src={image}
+                              alt={`Portfolio ${index + 1}`}
+                              className="w-full h-16 object-cover rounded border"
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="pt-4 space-y-2">
+                      {designer.verification_status === 'pending' && (
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => handleApprove(designer.id)}
+                            disabled={updateVerificationMutation.isPending}
+                            className="flex-1"
                           >
-                            <XCircle className="h-4 w-4 mr-2" />
-                            Reject
-                          </Button>
-                          <Button 
-                            onClick={() => handleStatusChange(selectedApplication.id, 'approved')}
-                          >
-                            <CheckCircle className="h-4 w-4 mr-2" />
+                            <CheckCircle className="w-4 h-4 mr-1" />
                             Approve
                           </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleReject(designer.id)}
+                            disabled={updateVerificationMutation.isPending}
+                            className="flex-1"
+                          >
+                            <XCircle className="w-4 h-4 mr-1" />
+                            Reject
+                          </Button>
                         </div>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
+                      )}
+                      
+                      {designer.verification_status !== 'pending' && (
+                        <div className="flex gap-2">
+                          {designer.verification_status === 'approved' && (
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleReject(designer.id)}
+                              disabled={updateVerificationMutation.isPending}
+                              className="flex-1"
+                            >
+                              <XCircle className="w-4 h-4 mr-1" />
+                              Reject
+                            </Button>
+                          )}
+                          
+                          {designer.verification_status === 'rejected' && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleApprove(designer.id)}
+                              disabled={updateVerificationMutation.isPending}
+                              className="flex-1"
+                            >
+                              <CheckCircle className="w-4 h-4 mr-1" />
+                              Approve
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                      
+                      <Button variant="outline" size="sm" className="w-full">
+                        <Eye className="w-4 h-4 mr-1" />
+                        View Full Profile
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {filteredDesigners.length === 0 && (
+              <div className="text-center py-12">
+                <div className="text-muted-foreground mb-4">
+                  <Filter className="w-12 h-12 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium">No designers found</h3>
+                  <p>No designers match your current filters.</p>
                 </div>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
+    </AdminLayout>
   );
 }
