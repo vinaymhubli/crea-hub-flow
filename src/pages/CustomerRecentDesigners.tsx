@@ -11,7 +11,7 @@ import {
   Bell,
   LogOut
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   SidebarProvider,
   SidebarTrigger,
@@ -50,12 +50,15 @@ interface RecentDesigner {
   projectsCompleted?: number;
   ongoingCount?: number;
   totalSpent?: number;
+  latestBookingId?: string;
 }
 
-function DesignerCard({ designer, favorites, onToggleFavorite }: { 
+function DesignerCard({ designer, favorites, onToggleFavorite, onMessage, onBookAgain }: { 
   designer: RecentDesigner; 
   favorites: Set<string>;
   onToggleFavorite: (designerId: string) => void;
+  onMessage: (designerId: string, bookingId?: string) => void;
+  onBookAgain: (designerId: string) => void;
 }) {
   const designerName = designer.profile 
     ? `${designer.profile.first_name} ${designer.profile.last_name}`
@@ -170,21 +173,24 @@ function DesignerCard({ designer, favorites, onToggleFavorite }: {
 
         <div className="flex space-x-3">
           <Button 
+            type="button"
             className="flex-1 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white shadow-lg"
-            onClick={() => window.location.href = '/customer-dashboard/messages'}
+            onClick={() => onMessage(designer.id, designer.latestBookingId)}
           >
             <MessageCircle className="w-4 h-4 mr-2" />
             Message
           </Button>
           <Button 
+            type="button"
             variant="outline" 
             className="flex-1 border-2 border-gradient-to-r from-green-400 to-blue-400 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50"
-            onClick={() => window.location.href = '/designers'}
+            onClick={() => onBookAgain(designer.id)}
           >
             <Calendar className="w-4 h-4 mr-2" />
             Book Again
           </Button>
           <Button 
+            type="button"
             variant="outline" 
             size="icon" 
             className={`border-2 transition-all duration-200 ${
@@ -210,6 +216,7 @@ export default function CustomerRecentDesigners() {
   const [loading, setLoading] = useState(true);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Load favorites from localStorage
   useEffect(() => {
@@ -249,6 +256,7 @@ export default function CustomerRecentDesigners() {
       const { data: bookings, error } = await supabase
         .from('bookings')
         .select(`
+          id,
           designer_id,
           total_amount,
           created_at,
@@ -296,7 +304,8 @@ export default function CustomerRecentDesigners() {
             lastWorkedAt: bookingDate,
             projectsCompleted: 0,
             ongoingCount: 0,
-            totalSpent: 0
+            totalSpent: 0,
+            latestBookingId: booking.id
           });
         }
         
@@ -311,9 +320,10 @@ export default function CustomerRecentDesigners() {
         
         existing.totalSpent = (existing.totalSpent || 0) + Number(booking.total_amount);
         
-        // Update last worked to most recent
+        // Update last worked to most recent and track latest booking
         if (bookingDate > existing.lastWorkedAt!) {
           existing.lastWorkedAt = bookingDate;
+          existing.latestBookingId = booking.id;
         }
       });
 
@@ -328,6 +338,17 @@ export default function CustomerRecentDesigners() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleMessage = (designerId: string, bookingId?: string) => {
+    const path = bookingId 
+      ? `/customer-dashboard/messages?booking=${bookingId}`
+      : '/customer-dashboard/messages';
+    navigate(path);
+  };
+
+  const handleBookAgain = (designerId: string) => {
+    navigate(`/designer/${designerId}`);
   };
 
   const filteredDesigners = recentDesigners
@@ -531,14 +552,16 @@ export default function CustomerRecentDesigners() {
               </Card>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {filteredDesigners.map((designer) => (
-                  <DesignerCard 
-                    key={designer.id} 
-                    designer={designer} 
-                    favorites={favorites}
-                    onToggleFavorite={toggleFavorite}
-                  />
-                ))}
+                 {filteredDesigners.map((designer) => (
+                   <DesignerCard 
+                     key={designer.id} 
+                     designer={designer} 
+                     favorites={favorites}
+                     onToggleFavorite={toggleFavorite}
+                     onMessage={handleMessage}
+                     onBookAgain={handleBookAgain}
+                   />
+                 ))}
               </div>
             )}
           </div>
