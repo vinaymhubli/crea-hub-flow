@@ -13,6 +13,8 @@ interface UserSettings {
   notifications_push: boolean;
   notifications_sms: boolean;
   notifications_marketing: boolean;
+  booking_reminders: boolean;
+  message_notifications: boolean;
   privacy_profile_visible: boolean;
   privacy_contact_info_visible: boolean;
   privacy_activity_status: boolean;
@@ -32,6 +34,8 @@ export const useUserSettings = () => {
     notifications_push: true,
     notifications_sms: false,
     notifications_marketing: false,
+    booking_reminders: true,
+    message_notifications: true,
     privacy_profile_visible: true,
     privacy_contact_info_visible: false,
     privacy_activity_status: true,
@@ -71,6 +75,8 @@ export const useUserSettings = () => {
           notifications_push: data.notifications_push,
           notifications_sms: data.notifications_sms,
           notifications_marketing: data.notifications_marketing,
+          booking_reminders: data.booking_reminders,
+          message_notifications: data.message_notifications,
           privacy_profile_visible: data.privacy_profile_visible,
           privacy_contact_info_visible: data.privacy_contact_info_visible,
           privacy_activity_status: data.privacy_activity_status,

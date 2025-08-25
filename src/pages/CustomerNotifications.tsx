@@ -14,7 +14,7 @@ import {
   Archive,
   MessageCircle
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   SidebarProvider,
   SidebarTrigger,
@@ -29,6 +29,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserSettings } from "@/hooks/useUserSettings";
+import { toast } from "sonner";
 
 interface Notification {
   id: string;
@@ -41,10 +43,11 @@ interface Notification {
   is_read: boolean;
 }
 
-function NotificationCard({ notification, onMarkAsRead, onDelete }: { 
+function NotificationCard({ notification, onMarkAsRead, onDelete, onViewDetails }: { 
   notification: Notification, 
   onMarkAsRead: (id: string) => void,
-  onDelete: (id: string) => void 
+  onDelete: (id: string) => void,
+  onViewDetails: (notification: Notification) => void
 }) {
   const getIcon = (type: string) => {
     switch (type) {
@@ -161,6 +164,7 @@ function NotificationCard({ notification, onMarkAsRead, onDelete }: {
                 size="sm" 
                 variant={!notification.is_read ? "default" : "outline"} 
                 className={!notification.is_read ? "bg-gradient-to-r from-green-400 to-blue-500 text-white" : ""}
+                onClick={() => onViewDetails(notification)}
               >
                 View Details
               </Button>
@@ -175,19 +179,34 @@ function NotificationCard({ notification, onMarkAsRead, onDelete }: {
 export default function CustomerNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
-  const [notificationSettings, setNotificationSettings] = useState({
-    emailNotifications: true,
-    pushNotifications: true,
-    smsNotifications: false,
-    bookingReminders: true,
-    messageNotifications: true,
-    marketingEmails: false,
-  });
   const { user } = useAuth();
+  const { settings, updateSetting, saving } = useUserSettings();
+  const navigate = useNavigate();
   
   useEffect(() => {
     if (user) {
       fetchNotifications();
+      
+      // Set up realtime subscription
+      const channel = supabase
+        .channel('notifications-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`
+          },
+          () => {
+            fetchNotifications();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [user]);
 
@@ -271,12 +290,15 @@ export default function CustomerNotifications() {
 
       if (error) {
         console.error('Error deleting notification:', error);
+        toast.error('Failed to delete notification');
         return;
       }
 
       setNotifications(prev => prev.filter(notification => notification.id !== id));
+      toast.success('Notification deleted');
     } catch (error) {
       console.error('Error:', error);
+      toast.error('Failed to delete notification');
     }
   };
 
@@ -289,12 +311,39 @@ export default function CustomerNotifications() {
 
       if (error) {
         console.error('Error clearing all notifications:', error);
+        toast.error('Failed to clear all notifications');
         return;
       }
 
       setNotifications([]);
+      toast.success('All notifications cleared');
     } catch (error) {
       console.error('Error:', error);
+      toast.error('Failed to clear all notifications');
+    }
+  };
+
+  const handleViewDetails = (notification: Notification) => {
+    // Navigate based on notification type
+    switch (notification.type) {
+      case 'booking_confirmed':
+      case 'booking_cancelled':
+        navigate('/customer-dashboard/bookings');
+        break;
+      case 'message':
+        navigate('/customer-dashboard/messages');
+        break;
+      case 'payment':
+        navigate('/customer-dashboard/wallet');
+        break;
+      case 'project_completed':
+        navigate('/customer-dashboard/session-history');
+        break;
+      default:
+        // For other types, just mark as read
+        if (!notification.is_read) {
+          handleMarkAsRead(notification.id);
+        }
     }
   };
 
@@ -493,12 +542,13 @@ export default function CustomerNotifications() {
                 ) : (
                   <div className="space-y-4">
                     {notifications.map((notification) => (
-                      <NotificationCard 
-                        key={notification.id} 
-                        notification={notification} 
-                        onMarkAsRead={handleMarkAsRead}
-                        onDelete={handleDeleteNotification}
-                      />
+                       <NotificationCard 
+                         key={notification.id} 
+                         notification={notification} 
+                         onMarkAsRead={handleMarkAsRead}
+                         onDelete={handleDeleteNotification}
+                         onViewDetails={handleViewDetails}
+                       />
                     ))}
                   </div>
                 )}
@@ -514,12 +564,13 @@ export default function CustomerNotifications() {
                 ) : (
                   <div className="space-y-4">
                     {unreadNotifications.map((notification) => (
-                      <NotificationCard 
-                        key={notification.id} 
-                        notification={notification} 
-                        onMarkAsRead={handleMarkAsRead}
-                        onDelete={handleDeleteNotification}
-                      />
+                       <NotificationCard 
+                         key={notification.id} 
+                         notification={notification} 
+                         onMarkAsRead={handleMarkAsRead}
+                         onDelete={handleDeleteNotification}
+                         onViewDetails={handleViewDetails}
+                       />
                     ))}
                   </div>
                 )}
@@ -536,12 +587,12 @@ export default function CustomerNotifications() {
                             <p className="font-medium">Email Notifications</p>
                             <p className="text-sm text-gray-600">Receive notifications via email</p>
                           </div>
-                          <Switch
-                            checked={notificationSettings.emailNotifications}
-                            onCheckedChange={(checked) => 
-                              setNotificationSettings(prev => ({...prev, emailNotifications: checked}))
-                            }
-                          />
+                           <Switch
+                             checked={settings.notifications_email}
+                             onCheckedChange={(checked) => 
+                               updateSetting('notifications_email', checked)
+                             }
+                           />
                         </div>
                         
                         <div className="flex items-center justify-between">
@@ -549,12 +600,12 @@ export default function CustomerNotifications() {
                             <p className="font-medium">Push Notifications</p>
                             <p className="text-sm text-gray-600">Receive browser push notifications</p>
                           </div>
-                          <Switch
-                            checked={notificationSettings.pushNotifications}
-                            onCheckedChange={(checked) => 
-                              setNotificationSettings(prev => ({...prev, pushNotifications: checked}))
-                            }
-                          />
+                           <Switch
+                             checked={settings.notifications_push}
+                             onCheckedChange={(checked) => 
+                               updateSetting('notifications_push', checked)
+                             }
+                           />
                         </div>
                         
                         <div className="flex items-center justify-between">
@@ -562,12 +613,12 @@ export default function CustomerNotifications() {
                             <p className="font-medium">Booking Reminders</p>
                             <p className="text-sm text-gray-600">Get reminded about upcoming sessions</p>
                           </div>
-                          <Switch
-                            checked={notificationSettings.bookingReminders}
-                            onCheckedChange={(checked) => 
-                              setNotificationSettings(prev => ({...prev, bookingReminders: checked}))
-                            }
-                          />
+                           <Switch
+                             checked={settings.booking_reminders}
+                             onCheckedChange={(checked) => 
+                               updateSetting('booking_reminders', checked)
+                             }
+                           />
                         </div>
                         
                         <div className="flex items-center justify-between">
@@ -575,12 +626,12 @@ export default function CustomerNotifications() {
                             <p className="font-medium">Message Notifications</p>
                             <p className="text-sm text-gray-600">Get notified of new messages</p>
                           </div>
-                          <Switch
-                            checked={notificationSettings.messageNotifications}
-                            onCheckedChange={(checked) => 
-                              setNotificationSettings(prev => ({...prev, messageNotifications: checked}))
-                            }
-                          />
+                           <Switch
+                             checked={settings.message_notifications}
+                             onCheckedChange={(checked) => 
+                               updateSetting('message_notifications', checked)
+                             }
+                           />
                         </div>
                         
                         <div className="flex items-center justify-between">
@@ -588,21 +639,24 @@ export default function CustomerNotifications() {
                             <p className="font-medium">Marketing Emails</p>
                             <p className="text-sm text-gray-600">Receive promotional content and updates</p>
                           </div>
-                          <Switch
-                            checked={notificationSettings.marketingEmails}
-                            onCheckedChange={(checked) => 
-                              setNotificationSettings(prev => ({...prev, marketingEmails: checked}))
-                            }
-                          />
+                           <Switch
+                             checked={settings.notifications_marketing}
+                             onCheckedChange={(checked) => 
+                               updateSetting('notifications_marketing', checked)
+                             }
+                           />
                         </div>
                       </div>
                     </div>
                     
-                    <div className="flex justify-end">
-                      <Button className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600">
-                        Save Preferences
-                      </Button>
-                    </div>
+                     <div className="flex justify-end">
+                       <Button 
+                         className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600"
+                         disabled={saving}
+                       >
+                         {saving ? 'Saving...' : 'Preferences Auto-Saved'}
+                       </Button>
+                     </div>
                   </CardContent>
                 </Card>
               </TabsContent>
