@@ -106,7 +106,12 @@ export function CustomerBookingDetailsDialog({
 
   const handleViewDesigner = () => {
     if (booking.designer_id) {
-      navigate(`/designer/${booking.designer_id}`);
+      navigate(`/designer/${booking.designer_id}`, { 
+        state: { 
+          hideGlobalChrome: true,
+          fromPath: '/customer-dashboard/bookings'
+        }
+      });
       onOpenChange(false);
     }
   };

@@ -144,16 +144,16 @@ const DesignerDetails: React.FC = () => {
         <Button
           variant="ghost"
           onClick={() => {
-            if (location.state?.fromProfile) {
-              navigate('/designer-dashboard/profile');
+            if (location.state?.fromPath) {
+              navigate(location.state.fromPath);
             } else {
-              navigate('/designers');
+              navigate(-1);
             }
           }}
           className="mb-6"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          {location.state?.fromProfile ? 'Back to Profile' : 'Back to Designers'}
+          Back
         </Button>
 
         {/* Header Section */}

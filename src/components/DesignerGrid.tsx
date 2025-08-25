@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { BookingDialog } from './BookingDialog';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ interface DesignerGridProps {
 }
 
 const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
+  const location = useLocation();
   const [sortBy, setSortBy] = useState('rating');
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [designers, setDesigners] = useState([]);
@@ -366,7 +367,14 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
 
                     {/* Action Buttons */}
                     <div className="flex flex-col space-y-2 lg:w-48">
-                      <Link to={`/designer/${designer.id}`} className="bg-green-600 text-white py-2 px-4 rounded-xl text-sm font-medium hover:bg-green-700 transition-all duration-200 text-center">
+                      <Link 
+                        to={`/designer/${designer.id}`} 
+                        state={{ 
+                          hideGlobalChrome: location.pathname.includes('/customer-dashboard'),
+                          fromPath: location.pathname 
+                        }}
+                        className="bg-green-600 text-white py-2 px-4 rounded-xl text-sm font-medium hover:bg-green-700 transition-all duration-200 text-center"
+                      >
                         View Profile
                       </Link>
                       <button className="bg-background border border-green-600 text-green-600 py-2 px-4 rounded-xl text-sm font-medium hover:bg-green-50 transition-all duration-200">
