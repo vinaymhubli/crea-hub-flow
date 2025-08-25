@@ -592,11 +592,13 @@ export type Database = {
       }
       user_settings: {
         Row: {
+          booking_reminders: boolean
           created_at: string
           currency: string
           date_format: string
           id: string
           language: string
+          message_notifications: boolean
           notifications_email: boolean
           notifications_marketing: boolean
           notifications_push: boolean
@@ -612,11 +614,13 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          booking_reminders?: boolean
           created_at?: string
           currency?: string
           date_format?: string
           id?: string
           language?: string
+          message_notifications?: boolean
           notifications_email?: boolean
           notifications_marketing?: boolean
           notifications_push?: boolean
@@ -632,11 +636,13 @@ export type Database = {
           user_id: string
         }
         Update: {
+          booking_reminders?: boolean
           created_at?: string
           currency?: string
           date_format?: string
           id?: string
           language?: string
+          message_notifications?: boolean
           notifications_email?: boolean
           notifications_marketing?: boolean
           notifications_push?: boolean
