@@ -20,6 +20,7 @@ import { CustomerSidebar } from "@/components/CustomerSidebar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
@@ -45,12 +46,17 @@ interface RecentDesigner {
     last_name: string;
     avatar_url: string;
   };
-  lastWorked?: string;
+  lastWorkedAt?: Date;
   projectsCompleted?: number;
+  ongoingCount?: number;
   totalSpent?: number;
 }
 
-function DesignerCard({ designer }: { designer: RecentDesigner }) {
+function DesignerCard({ designer, favorites, onToggleFavorite }: { 
+  designer: RecentDesigner; 
+  favorites: Set<string>;
+  onToggleFavorite: (designerId: string) => void;
+}) {
   const designerName = designer.profile 
     ? `${designer.profile.first_name} ${designer.profile.last_name}`
     : 'Unknown Designer';
@@ -59,13 +65,20 @@ function DesignerCard({ designer }: { designer: RecentDesigner }) {
     ? `${designer.profile.first_name?.[0] || ''}${designer.profile.last_name?.[0] || ''}`
     : 'UD';
 
+  const isFavorite = favorites.has(designer.id);
+
   return (
     <Card className="hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-white via-gray-50 to-green-50/30 backdrop-blur-sm hover:scale-[1.02]">
       <CardContent className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center space-x-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-green-400 via-teal-500 to-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-lg relative shadow-lg">
-              {designerInitials}
+            <div className="relative">
+              <Avatar className="w-16 h-16">
+                <AvatarImage src={designer.profile?.avatar_url} alt={designerName} />
+                <AvatarFallback className="bg-gradient-to-br from-green-400 via-teal-500 to-blue-500 text-white font-semibold text-lg">
+                  {designerInitials}
+                </AvatarFallback>
+              </Avatar>
               {designer.is_online && (
                 <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow-sm animate-pulse"></div>
               )}
@@ -110,11 +123,26 @@ function DesignerCard({ designer }: { designer: RecentDesigner }) {
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-gray-500">Last worked</p>
-              <p className="font-medium text-gray-900">{designer.lastWorked || 'N/A'}</p>
+              <p className="font-medium text-gray-900">
+                {designer.lastWorkedAt 
+                  ? designer.lastWorkedAt.toLocaleDateString()
+                  : 'N/A'
+                }
+              </p>
             </div>
             <div>
-              <p className="text-gray-500">Projects completed</p>
-              <p className="font-medium text-gray-900">{designer.projectsCompleted || 0}</p>
+              <p className="text-gray-500">
+                {(designer.projectsCompleted || 0) === 0 && (designer.ongoingCount || 0) > 0 
+                  ? 'Ongoing projects' 
+                  : 'Projects completed'
+                }
+              </p>
+              <p className="font-medium text-gray-900">
+                {(designer.projectsCompleted || 0) === 0 && (designer.ongoingCount || 0) > 0 
+                  ? designer.ongoingCount 
+                  : designer.projectsCompleted || 0
+                }
+              </p>
             </div>
             <div>
               <p className="text-gray-500">Total spent</p>
@@ -159,10 +187,14 @@ function DesignerCard({ designer }: { designer: RecentDesigner }) {
           <Button 
             variant="outline" 
             size="icon" 
-            className="border-2 border-gradient-to-r from-green-400 to-blue-400 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50"
-            onClick={() => console.log('Added to favorites')}
+            className={`border-2 transition-all duration-200 ${
+              isFavorite 
+                ? 'border-red-400 bg-red-50 hover:bg-red-100' 
+                : 'border-gradient-to-r from-green-400 to-blue-400 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50'
+            }`}
+            onClick={() => onToggleFavorite(designer.id)}
           >
-            <Heart className="w-4 h-4" />
+            <Heart className={`w-4 h-4 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
           </Button>
         </div>
       </CardContent>
@@ -176,7 +208,32 @@ export default function CustomerRecentDesigners() {
   const [filterBy, setFilterBy] = useState('all');
   const [recentDesigners, setRecentDesigners] = useState<RecentDesigner[]>([]);
   const [loading, setLoading] = useState(true);
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const { user } = useAuth();
+
+  // Load favorites from localStorage
+  useEffect(() => {
+    if (user?.id) {
+      const storedFavorites = localStorage.getItem(`recent_favorites:${user.id}`);
+      if (storedFavorites) {
+        setFavorites(new Set(JSON.parse(storedFavorites)));
+      }
+    }
+  }, [user?.id]);
+
+  const toggleFavorite = (designerId: string) => {
+    const newFavorites = new Set(favorites);
+    if (newFavorites.has(designerId)) {
+      newFavorites.delete(designerId);
+    } else {
+      newFavorites.add(designerId);
+    }
+    setFavorites(newFavorites);
+    
+    if (user?.id) {
+      localStorage.setItem(`recent_favorites:${user.id}`, JSON.stringify(Array.from(newFavorites)));
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -188,7 +245,7 @@ export default function CustomerRecentDesigners() {
     try {
       setLoading(true);
       
-      // Get distinct designers from user's bookings
+      // Get distinct designers from user's bookings with proper profile data
       const { data: bookings, error } = await supabase
         .from('bookings')
         .select(`
@@ -197,8 +254,19 @@ export default function CustomerRecentDesigners() {
           created_at,
           status,
           designer:designers!inner(
-            *,
-            profile:profiles!designers_user_id_fkey(
+            id,
+            user_id,
+            specialty,
+            hourly_rate,
+            location,
+            skills,
+            bio,
+            is_online,
+            completion_rate,
+            reviews_count,
+            rating,
+            response_time,
+            user:profiles!user_id(
               first_name,
               last_name,
               avatar_url
@@ -213,33 +281,48 @@ export default function CustomerRecentDesigners() {
         return;
       }
 
-      // Process bookings to get unique designers with stats
+      // Process bookings to get unique designers with correct stats
       const designerMap = new Map<string, RecentDesigner>();
       
       bookings?.forEach(booking => {
         const designerId = booking.designer_id;
         const designer = booking.designer;
+        const bookingDate = new Date(booking.created_at);
         
         if (!designerMap.has(designerId)) {
           designerMap.set(designerId, {
             ...designer,
-            lastWorked: new Date(booking.created_at).toLocaleDateString(),
+            profile: designer.user, // Set profile from user data
+            lastWorkedAt: bookingDate,
             projectsCompleted: 0,
+            ongoingCount: 0,
             totalSpent: 0
           });
         }
         
         const existing = designerMap.get(designerId)!;
-        existing.projectsCompleted = (existing.projectsCompleted || 0) + 1;
+        
+        // Count projects by status
+        if (booking.status === 'completed') {
+          existing.projectsCompleted = (existing.projectsCompleted || 0) + 1;
+        } else {
+          existing.ongoingCount = (existing.ongoingCount || 0) + 1;
+        }
+        
         existing.totalSpent = (existing.totalSpent || 0) + Number(booking.total_amount);
         
         // Update last worked to most recent
-        if (new Date(booking.created_at) > new Date(existing.lastWorked!)) {
-          existing.lastWorked = new Date(booking.created_at).toLocaleDateString();
+        if (bookingDate > existing.lastWorkedAt!) {
+          existing.lastWorkedAt = bookingDate;
         }
       });
 
-      setRecentDesigners(Array.from(designerMap.values()));
+      // Sort by most recent first
+      const designersArray = Array.from(designerMap.values()).sort((a, b) => 
+        (b.lastWorkedAt?.getTime() || 0) - (a.lastWorkedAt?.getTime() || 0)
+      );
+
+      setRecentDesigners(designersArray);
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -258,7 +341,7 @@ export default function CustomerRecentDesigners() {
     })
     .filter(designer => {
       if (filterBy === 'online') return designer.is_online;
-      if (filterBy === 'favorites') return false; // Add favorites logic later
+      if (filterBy === 'favorites') return favorites.has(designer.id);
       return true;
     })
     .sort((a, b) => {
@@ -269,8 +352,10 @@ export default function CustomerRecentDesigners() {
           return a.hourly_rate - b.hourly_rate;
         case 'projects':
           return (b.projectsCompleted || 0) - (a.projectsCompleted || 0);
+        case 'recent':
+          return (b.lastWorkedAt?.getTime() || 0) - (a.lastWorkedAt?.getTime() || 0);
         default:
-          return 0; // Keep original order for 'recent'
+          return 0;
       }
     });
 
@@ -391,46 +476,46 @@ export default function CustomerRecentDesigners() {
               <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-0 shadow-lg">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Total Designers</p>
-                      <p className="text-3xl font-bold text-green-600">{recentDesigners.length}</p>
-                    </div>
-                    <Users className="w-12 h-12 text-green-500" />
-                  </div>
-                </CardContent>
-              </Card>
+                     <div>
+                       <p className="text-sm text-gray-600 mb-1">Total Designers</p>
+                       <p className="text-3xl font-bold text-green-600">{filteredDesigners.length}</p>
+                     </div>
+                     <Users className="w-12 h-12 text-green-500" />
+                   </div>
+                 </CardContent>
+               </Card>
 
-              <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-0 shadow-lg">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Online Now</p>
-                      <p className="text-3xl font-bold text-blue-600">
-                        {recentDesigners.filter(d => d.is_online).length}
-                      </p>
-                    </div>
-                    <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
-                      <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+               <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-0 shadow-lg">
+                 <CardContent className="p-6">
+                   <div className="flex items-center justify-between">
+                     <div>
+                       <p className="text-sm text-gray-600 mb-1">Online Now</p>
+                       <p className="text-3xl font-bold text-blue-600">
+                         {filteredDesigners.filter(d => d.is_online).length}
+                       </p>
+                     </div>
+                     <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                       <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+                     </div>
+                   </div>
+                 </CardContent>
+               </Card>
 
-              <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-0 shadow-lg">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Avg Rating</p>
-                      <p className="text-3xl font-bold text-purple-600">
-                        {recentDesigners.length > 0 
-                          ? (recentDesigners.reduce((sum, d) => sum + d.rating, 0) / recentDesigners.length).toFixed(1)
-                          : '0.0'
-                        }
-                      </p>
-                    </div>
-                    <Star className="w-12 h-12 text-yellow-500 fill-current" />
-                  </div>
-                </CardContent>
+               <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-0 shadow-lg">
+                 <CardContent className="p-6">
+                   <div className="flex items-center justify-between">
+                     <div>
+                       <p className="text-sm text-gray-600 mb-1">Avg Rating</p>
+                       <p className="text-3xl font-bold text-purple-600">
+                         {filteredDesigners.length > 0 
+                           ? (filteredDesigners.reduce((sum, d) => sum + d.rating, 0) / filteredDesigners.length).toFixed(1)
+                           : '0.0'
+                         }
+                       </p>
+                     </div>
+                     <Star className="w-12 h-12 text-yellow-500 fill-current" />
+                   </div>
+                 </CardContent>
               </Card>
             </div>
 
@@ -447,7 +532,12 @@ export default function CustomerRecentDesigners() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {filteredDesigners.map((designer) => (
-                  <DesignerCard key={designer.id} designer={designer} />
+                  <DesignerCard 
+                    key={designer.id} 
+                    designer={designer} 
+                    favorites={favorites}
+                    onToggleFavorite={toggleFavorite}
+                  />
                 ))}
               </div>
             )}
