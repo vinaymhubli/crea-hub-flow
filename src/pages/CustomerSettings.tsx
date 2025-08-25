@@ -38,14 +38,10 @@ import {
   Languages
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { useUserSettings } from '@/hooks/useUserSettings';
+import { CustomerSidebar } from '@/components/CustomerSidebar';
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
@@ -59,101 +55,54 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-const sidebarItems = [
-  { title: "Dashboard", url: "/customer-dashboard", icon: LayoutDashboard },
-  { title: "Find Designer", url: "/designers", icon: Search },
-  { title: "My Bookings", url: "/customer-dashboard/bookings", icon: Calendar },
-  { title: "Messages", url: "/customer-dashboard/messages", icon: MessageCircle },
-  { title: "Recent Designers", url: "/customer-dashboard/recent-designers", icon: Users },
-  { title: "Wallet", url: "/customer-dashboard/wallet", icon: Wallet },
-  { title: "Notifications", url: "/customer-dashboard/notifications", icon: Bell },
-  { title: "Profile", url: "/customer-dashboard/profile", icon: User },
-  { title: "Settings", url: "/customer-dashboard/settings", icon: Settings },
-];
-
-function CustomerSidebar() {
-  const location = useLocation();
-  const currentPath = location.pathname;
-
-  const isActive = (path: string) => currentPath === path;
-
-  return (
-    <Sidebar collapsible="icon">
-      <SidebarContent className="bg-white border-r border-gray-200">
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-white font-semibold text-sm">VB</span>
-            </div>
-            <div>
-              <p className="font-semibold text-gray-900">Viaan Bindra</p>
-              <p className="text-sm text-gray-500">Customer</p>
-            </div>
-          </div>
-        </div>
-        
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {sidebarItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <Link 
-                      to={item.url} 
-                      className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
-                        isActive(item.url) 
-                          ? 'bg-gradient-to-r from-green-50 to-blue-50 text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-blue-600 border-r-2 border-gradient-to-b from-green-500 to-blue-500' 
-                          : 'text-gray-700 hover:bg-gray-50'
-                      }`}
-                    >
-                      <item.icon className={`w-5 h-5 ${isActive(item.url) ? 'text-green-600' : ''}`} />
-                      <span className="font-medium">{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
-  );
-}
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function CustomerSettings() {
-  const [settings, setSettings] = useState({
-    // Notification Settings
-    emailNotifications: true,
-    pushNotifications: true,
-    smsNotifications: false,
-    bookingReminders: true,
-    messageNotifications: true,
-    marketingEmails: false,
-    
-    // Privacy Settings
-    profileVisibility: 'public',
-    showOnlineStatus: true,
-    allowDesignerContact: true,
-    showProjectHistory: false,
-    
-    // Security Settings
-    twoFactorAuth: false,
-    loginAlerts: true,
-    
-    // General Settings
-    language: 'english',
-    timezone: 'pst',
-    theme: 'light',
-    currency: 'usd'
-  });
+  const { user, profile, signOut } = useAuth();
+  const { settings, loading, saving, updateSetting } = useUserSettings();
+  const [theme, setTheme] = useState('light');
 
-  const handleSettingChange = (key: string, value: boolean | string) => {
-    setSettings(prev => ({
-      ...prev,
-      [key]: value
-    }));
+  const getInitials = () => {
+    const displayName = profile?.display_name;
+    const firstName = profile?.first_name;
+    const lastName = profile?.last_name;
+    const email = user?.email;
+    
+    if (displayName) {
+      const words = displayName.trim().split(' ');
+      return words.length >= 2 
+        ? `${words[0][0]}${words[1][0]}`.toUpperCase()
+        : `${words[0][0]}${words[0][1] || ''}`.toUpperCase();
+    }
+    
+    if (firstName && lastName) {
+      return `${firstName[0]}${lastName[0]}`.toUpperCase();
+    }
+    
+    if (email) {
+      return email.substring(0, 2).toUpperCase();
+    }
+    
+    return 'U';
   };
+
+  const getDisplayName = () => {
+    if (profile?.display_name) return profile.display_name;
+    if (profile?.first_name && profile?.last_name) {
+      return `${profile.first_name} ${profile.last_name}`;
+    }
+    if (profile?.first_name) return profile.first_name;
+    if (user?.email) return user.email.split('@')[0];
+    return 'User';
+  };
+
+  const handleLogout = async () => {
+    await signOut();
+  };
+
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
 
   return (
     <SidebarProvider>
@@ -180,18 +129,23 @@ export default function CustomerSettings() {
                 <Popover>
                   <PopoverTrigger asChild>
                     <button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
-                      <span className="text-white font-semibold text-sm">VB</span>
+                      {profile?.avatar_url ? (
+                        <img src={profile.avatar_url} alt="Avatar" className="w-full h-full rounded-full object-cover" />
+                      ) : (
+                        <span className="text-white font-semibold text-sm">{getInitials()}</span>
+                      )}
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-64 p-0" align="end">
                     <div className="p-4">
                       <div className="flex items-center space-x-3 mb-3">
-                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                          <span className="text-primary font-semibold text-sm">VB</span>
-                        </div>
+                        <Avatar>
+                          <AvatarImage src={profile?.avatar_url} />
+                          <AvatarFallback>{getInitials()}</AvatarFallback>
+                        </Avatar>
                         <div>
-                          <p className="font-semibold text-foreground">Viaan Bindra</p>
-                          <p className="text-sm text-muted-foreground">customer@example.com</p>
+                          <p className="font-semibold text-foreground">{getDisplayName()}</p>
+                          <p className="text-sm text-muted-foreground">{user?.email}</p>
                         </div>
                       </div>
                       <Separator className="my-3" />
@@ -218,7 +172,7 @@ export default function CustomerSettings() {
                           Profile
                         </Link>
                         <Separator className="my-2" />
-                        <button className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
+                        <button onClick={handleLogout} className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
                           <LogOut className="w-4 h-4 mr-3" />
                           Log out
                         </button>
@@ -238,7 +192,9 @@ export default function CustomerSettings() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-600 mb-1 font-medium">Security Score</p>
-                      <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">85%</p>
+                      <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                        {settings.security_two_factor ? '95%' : '85%'}
+                      </p>
                       <p className="text-sm text-green-600 mt-3 font-medium">Good security</p>
                     </div>
                     <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg">
@@ -253,7 +209,9 @@ export default function CustomerSettings() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-600 mb-1 font-medium">Active Notifications</p>
-                      <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">7</p>
+                      <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                        {[settings.notifications_email, settings.notifications_push, settings.notifications_sms, settings.booking_reminders, settings.message_notifications].filter(Boolean).length}
+                      </p>
                       <p className="text-sm text-blue-600 mt-3 font-medium">Enabled types</p>
                     </div>
                     <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
@@ -268,7 +226,9 @@ export default function CustomerSettings() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-600 mb-1 font-medium">Privacy Level</p>
-                      <p className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Public</p>
+                      <p className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                        {settings.privacy_profile_visible ? 'Public' : 'Private'}
+                      </p>
                       <p className="text-sm text-purple-600 mt-3 font-medium">Profile visibility</p>
                     </div>
                     <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
@@ -282,12 +242,14 @@ export default function CustomerSettings() {
                 <CardContent className="p-6 bg-gradient-to-br from-yellow-50 to-orange-50">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600 mb-1 font-medium">Data Usage</p>
-                      <p className="text-2xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">2.4GB</p>
-                      <p className="text-sm text-yellow-600 mt-3 font-medium">This month</p>
+                      <p className="text-sm text-gray-600 mb-1 font-medium">Language</p>
+                      <p className="text-2xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
+                        {settings.language === 'en' ? 'English' : settings.language}
+                      </p>
+                      <p className="text-sm text-yellow-600 mt-3 font-medium">Current setting</p>
                     </div>
                     <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
-                      <Database className="w-8 h-8 text-white" />
+                      <Languages className="w-8 h-8 text-white" />
                     </div>
                   </div>
                 </CardContent>
@@ -325,8 +287,9 @@ export default function CustomerSettings() {
                               </div>
                             </div>
                             <Switch 
-                              checked={settings.emailNotifications}
-                              onCheckedChange={(checked) => handleSettingChange('emailNotifications', checked)}
+                              checked={settings.notifications_email}
+                              onCheckedChange={(checked) => updateSetting('notifications_email', checked)}
+                              disabled={saving}
                             />
                           </div>
 
@@ -339,8 +302,9 @@ export default function CustomerSettings() {
                               </div>
                             </div>
                             <Switch 
-                              checked={settings.pushNotifications}
-                              onCheckedChange={(checked) => handleSettingChange('pushNotifications', checked)}
+                              checked={settings.notifications_push}
+                              onCheckedChange={(checked) => updateSetting('notifications_push', checked)}
+                              disabled={saving}
                             />
                           </div>
 
@@ -353,8 +317,9 @@ export default function CustomerSettings() {
                               </div>
                             </div>
                             <Switch 
-                              checked={settings.smsNotifications}
-                              onCheckedChange={(checked) => handleSettingChange('smsNotifications', checked)}
+                              checked={settings.notifications_sms}
+                              onCheckedChange={(checked) => updateSetting('notifications_sms', checked)}
+                              disabled={saving}
                             />
                           </div>
 
@@ -366,8 +331,9 @@ export default function CustomerSettings() {
                               <p className="text-sm text-gray-500">Reminders for upcoming sessions</p>
                             </div>
                             <Switch 
-                              checked={settings.bookingReminders}
-                              onCheckedChange={(checked) => handleSettingChange('bookingReminders', checked)}
+                              checked={settings.booking_reminders}
+                              onCheckedChange={(checked) => updateSetting('booking_reminders', checked)}
+                              disabled={saving}
                             />
                           </div>
 
@@ -377,19 +343,21 @@ export default function CustomerSettings() {
                               <p className="text-sm text-gray-500">New messages from designers</p>
                             </div>
                             <Switch 
-                              checked={settings.messageNotifications}
-                              onCheckedChange={(checked) => handleSettingChange('messageNotifications', checked)}
+                              checked={settings.message_notifications}
+                              onCheckedChange={(checked) => updateSetting('message_notifications', checked)}
+                              disabled={saving}
                             />
                           </div>
 
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="font-medium">Marketing Emails</p>
-                              <p className="text-sm text-gray-500">Promotional content and offers</p>
+                              <p className="text-sm text-gray-500">Promotional emails and updates</p>
                             </div>
                             <Switch 
-                              checked={settings.marketingEmails}
-                              onCheckedChange={(checked) => handleSettingChange('marketingEmails', checked)}
+                              checked={settings.notifications_marketing}
+                              onCheckedChange={(checked) => updateSetting('notifications_marketing', checked)}
+                              disabled={saving}
                             />
                           </div>
                         </div>
@@ -401,52 +369,41 @@ export default function CustomerSettings() {
                   <TabsContent value="privacy">
                     <div className="space-y-6">
                       <div>
-                        <h3 className="text-lg font-medium mb-4">Privacy Settings</h3>
+                        <h3 className="text-lg font-medium mb-4">Privacy Controls</h3>
                         <div className="space-y-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="profileVisibility">Profile Visibility</Label>
-                            <Select value={settings.profileVisibility} onValueChange={(value) => handleSettingChange('profileVisibility', value)}>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="public">Public - Anyone can view</SelectItem>
-                                <SelectItem value="designers">Designers Only</SelectItem>
-                                <SelectItem value="private">Private - Hidden</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="font-medium">Show Online Status</p>
-                              <p className="text-sm text-gray-500">Let others see when you're online</p>
+                              <p className="font-medium">Profile Visibility</p>
+                              <p className="text-sm text-gray-500">Make your profile visible to other users</p>
                             </div>
                             <Switch 
-                              checked={settings.showOnlineStatus}
-                              onCheckedChange={(checked) => handleSettingChange('showOnlineStatus', checked)}
+                              checked={settings.privacy_profile_visible}
+                              onCheckedChange={(checked) => updateSetting('privacy_profile_visible', checked)}
+                              disabled={saving}
                             />
                           </div>
 
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="font-medium">Allow Designer Contact</p>
-                              <p className="text-sm text-gray-500">Let designers message you directly</p>
+                              <p className="font-medium">Show Contact Information</p>
+                              <p className="text-sm text-gray-500">Allow designers to see your contact details</p>
                             </div>
                             <Switch 
-                              checked={settings.allowDesignerContact}
-                              onCheckedChange={(checked) => handleSettingChange('allowDesignerContact', checked)}
+                              checked={settings.privacy_contact_info_visible}
+                              onCheckedChange={(checked) => updateSetting('privacy_contact_info_visible', checked)}
+                              disabled={saving}
                             />
                           </div>
 
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="font-medium">Show Project History</p>
-                              <p className="text-sm text-gray-500">Display your past projects on profile</p>
+                              <p className="font-medium">Activity Status</p>
+                              <p className="text-sm text-gray-500">Show when you're online</p>
                             </div>
                             <Switch 
-                              checked={settings.showProjectHistory}
-                              onCheckedChange={(checked) => handleSettingChange('showProjectHistory', checked)}
+                              checked={settings.privacy_activity_status}
+                              onCheckedChange={(checked) => updateSetting('privacy_activity_status', checked)}
+                              disabled={saving}
                             />
                           </div>
                         </div>
@@ -468,48 +425,26 @@ export default function CustomerSettings() {
                                 <p className="text-sm text-gray-500">Add an extra layer of security</p>
                               </div>
                             </div>
-                            <div className="flex items-center space-x-2">
-                              <Switch 
-                                checked={settings.twoFactorAuth}
-                                onCheckedChange={(checked) => handleSettingChange('twoFactorAuth', checked)}
-                              />
-                              {settings.twoFactorAuth ? (
-                                <Badge variant="outline" className="text-green-600 border-green-200">Enabled</Badge>
-                              ) : (
-                                <Badge variant="outline" className="text-orange-600 border-orange-200">Disabled</Badge>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="font-medium">Login Alerts</p>
-                              <p className="text-sm text-gray-500">Get notified of new logins</p>
-                            </div>
                             <Switch 
-                              checked={settings.loginAlerts}
-                              onCheckedChange={(checked) => handleSettingChange('loginAlerts', checked)}
+                              checked={settings.security_two_factor}
+                              onCheckedChange={(checked) => updateSetting('security_two_factor', checked)}
+                              disabled={saving}
                             />
                           </div>
 
-                          <Separator />
-
-                          <div className="space-y-4">
-                            <h4 className="font-medium">Password Management</h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div className="space-y-2">
-                                <Label htmlFor="currentPassword">Current Password</Label>
-                                <Input id="currentPassword" type="password" placeholder="Enter current password" />
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor="newPassword">New Password</Label>
-                                <Input id="newPassword" type="password" placeholder="Enter new password" />
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <AlertCircle className="w-4 h-4 text-gray-500" />
+                              <div>
+                                <p className="font-medium">Login Alerts</p>
+                                <p className="text-sm text-gray-500">Get notified of new login attempts</p>
                               </div>
                             </div>
-                            <Button className="bg-gradient-to-r from-green-500 to-blue-500 text-white">
-                              <Lock className="w-4 h-4 mr-2" />
-                              Update Password
-                            </Button>
+                            <Switch 
+                              checked={settings.security_login_alerts}
+                              onCheckedChange={(checked) => updateSetting('security_login_alerts', checked)}
+                              disabled={saving}
+                            />
                           </div>
                         </div>
                       </div>
@@ -521,68 +456,83 @@ export default function CustomerSettings() {
                     <div className="space-y-6">
                       <div>
                         <h3 className="text-lg font-medium mb-4">General Preferences</h3>
-                        <div className="space-y-4">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="language">Language</Label>
-                              <Select value={settings.language} onValueChange={(value) => handleSettingChange('language', value)}>
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="english">English</SelectItem>
-                                  <SelectItem value="spanish">Spanish</SelectItem>
-                                  <SelectItem value="french">French</SelectItem>
-                                  <SelectItem value="german">German</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-
-                            <div className="space-y-2">
-                              <Label htmlFor="timezone">Timezone</Label>
-                              <Select value={settings.timezone} onValueChange={(value) => handleSettingChange('timezone', value)}>
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="pst">Pacific Standard Time</SelectItem>
-                                  <SelectItem value="est">Eastern Standard Time</SelectItem>
-                                  <SelectItem value="cst">Central Standard Time</SelectItem>
-                                  <SelectItem value="mst">Mountain Standard Time</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-2">
+                            <Label>Language</Label>
+                            <Select value={settings.language} onValueChange={(value) => updateSetting('language', value)}>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="en">English</SelectItem>
+                                <SelectItem value="es">Spanish</SelectItem>
+                                <SelectItem value="fr">French</SelectItem>
+                                <SelectItem value="de">German</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="theme">Theme</Label>
-                              <Select value={settings.theme} onValueChange={(value) => handleSettingChange('theme', value)}>
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="light">Light</SelectItem>
-                                  <SelectItem value="dark">Dark</SelectItem>
-                                  <SelectItem value="auto">Auto</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
+                          <div className="space-y-2">
+                            <Label>Timezone</Label>
+                            <Select value={settings.timezone} onValueChange={(value) => updateSetting('timezone', value)}>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="UTC">UTC</SelectItem>
+                                <SelectItem value="EST">Eastern Time</SelectItem>
+                                <SelectItem value="CST">Central Time</SelectItem>
+                                <SelectItem value="MST">Mountain Time</SelectItem>
+                                <SelectItem value="PST">Pacific Time</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
 
-                            <div className="space-y-2">
-                              <Label htmlFor="currency">Currency</Label>
-                              <Select value={settings.currency} onValueChange={(value) => handleSettingChange('currency', value)}>
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="usd">USD ($)</SelectItem>
-                                  <SelectItem value="eur">EUR (€)</SelectItem>
-                                  <SelectItem value="gbp">GBP (£)</SelectItem>
-                                  <SelectItem value="cad">CAD ($)</SelectItem>
-                                </SelectContent>
-                              </Select>
+                          <div className="space-y-2">
+                            <Label>Currency</Label>
+                            <Select value={settings.currency} onValueChange={(value) => updateSetting('currency', value)}>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="USD">USD ($)</SelectItem>
+                                <SelectItem value="EUR">EUR (€)</SelectItem>
+                                <SelectItem value="GBP">GBP (£)</SelectItem>
+                                <SelectItem value="CAD">CAD (C$)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Time Format</Label>
+                            <Select value={settings.time_format} onValueChange={(value) => updateSetting('time_format', value)}>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="12h">12 Hour</SelectItem>
+                                <SelectItem value="24h">24 Hour</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+
+                        <div className="mt-6">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium">Theme</p>
+                              <p className="text-sm text-gray-500">Choose your preferred theme</p>
                             </div>
+                            <Select value={theme} onValueChange={setTheme}>
+                              <SelectTrigger className="w-32">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="light">Light</SelectItem>
+                                <SelectItem value="dark">Dark</SelectItem>
+                                <SelectItem value="system">System</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
                         </div>
                       </div>
@@ -595,55 +545,29 @@ export default function CustomerSettings() {
                       <div>
                         <h3 className="text-lg font-medium mb-4">Account Management</h3>
                         <div className="space-y-4">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <Card className="p-4">
-                              <div className="flex items-center space-x-3 mb-3">
-                                <Download className="w-5 h-5 text-blue-500" />
-                                <div>
-                                  <h4 className="font-medium">Export Data</h4>
-                                  <p className="text-sm text-gray-500">Download your account data</p>
-                                </div>
+                          <div className="border rounded-lg p-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-medium">Download Data</p>
+                                <p className="text-sm text-gray-500">Download a copy of your account data</p>
                               </div>
-                              <Button variant="outline" className="w-full">
-                                <Download className="w-4 h-4 mr-2" />
-                                Export
+                              <Button variant="outline" className="flex items-center space-x-2">
+                                <Download className="w-4 h-4" />
+                                <span>Download</span>
                               </Button>
-                            </Card>
-
-                            <Card className="p-4">
-                              <div className="flex items-center space-x-3 mb-3">
-                                <RefreshCw className="w-5 h-5 text-green-500" />
-                                <div>
-                                  <h4 className="font-medium">Sync Data</h4>
-                                  <p className="text-sm text-gray-500">Sync across devices</p>
-                                </div>
-                              </div>
-                              <Button variant="outline" className="w-full">
-                                <RefreshCw className="w-4 h-4 mr-2" />
-                                Sync Now
-                              </Button>
-                            </Card>
+                            </div>
                           </div>
 
-                          <Separator />
-
-                          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                            <div className="flex items-start space-x-3">
-                              <AlertCircle className="w-5 h-5 text-red-500 mt-0.5" />
-                              <div className="flex-1">
-                                <h4 className="font-medium text-red-900">Danger Zone</h4>
-                                <p className="text-sm text-red-700 mb-3">These actions cannot be undone</p>
-                                <div className="space-y-2">
-                                  <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50">
-                                    <Trash2 className="w-4 h-4 mr-2" />
-                                    Delete All Data
-                                  </Button>
-                                  <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50">
-                                    <X className="w-4 h-4 mr-2" />
-                                    Close Account
-                                  </Button>
-                                </div>
+                          <div className="border rounded-lg p-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-medium">Delete Account</p>
+                                <p className="text-sm text-gray-500">Permanently delete your account and all data</p>
                               </div>
+                              <Button variant="destructive" className="flex items-center space-x-2">
+                                <Trash2 className="w-4 h-4" />
+                                <span>Delete</span>
+                              </Button>
                             </div>
                           </div>
                         </div>

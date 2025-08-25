@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 import { 
   LayoutDashboard, 
   User, 
@@ -20,7 +21,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { useAuth } from '@/hooks/useAuth';
 
 const sidebarItems = [
   { title: "Dashboard", url: "/customer-dashboard", icon: LayoutDashboard },
@@ -41,25 +41,54 @@ export function CustomerSidebar() {
 
   const isActive = (path: string) => currentPath === path;
 
-  const userDisplayName = profile?.first_name && profile?.last_name 
-    ? `${profile.first_name} ${profile.last_name}`
-    : user?.email || 'Customer';
+  const getInitials = () => {
+    const displayName = profile?.display_name;
+    const firstName = profile?.first_name;
+    const lastName = profile?.last_name;
+    const email = user?.email;
+    
+    if (displayName) {
+      const words = displayName.trim().split(' ');
+      return words.length >= 2 
+        ? `${words[0][0]}${words[1][0]}`.toUpperCase()
+        : `${words[0][0]}${words[0][1] || ''}`.toUpperCase();
+    }
+    
+    if (firstName && lastName) {
+      return `${firstName[0]}${lastName[0]}`.toUpperCase();
+    }
+    
+    if (email) {
+      return email.substring(0, 2).toUpperCase();
+    }
+    
+    return 'U';
+  };
 
-  const userInitials = profile?.first_name && profile?.last_name 
-    ? `${profile.first_name[0]}${profile.last_name[0]}`
-    : user?.email ? user.email.substring(0, 2).toUpperCase()
-    : 'CU';
+  const getDisplayName = () => {
+    if (profile?.display_name) return profile.display_name;
+    if (profile?.first_name && profile?.last_name) {
+      return `${profile.first_name} ${profile.last_name}`;
+    }
+    if (profile?.first_name) return profile.first_name;
+    if (user?.email) return user.email.split('@')[0];
+    return 'User';
+  };
 
   return (
     <Sidebar collapsible="icon">
       <SidebarContent className="bg-white border-r border-gray-200">
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-white font-semibold text-sm">{userInitials}</span>
+            <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center overflow-hidden">
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-white font-semibold text-sm">{getInitials()}</span>
+              )}
             </div>
             <div>
-              <p className="font-semibold text-gray-900">{userDisplayName}</p>
+              <p className="font-semibold text-gray-900">{getDisplayName()}</p>
               <p className="text-sm text-gray-500">Customer</p>
             </div>
           </div>

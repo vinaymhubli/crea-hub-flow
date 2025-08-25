@@ -1,19 +1,27 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Profile {
   id: string;
   user_id: string;
-  user_type: 'client' | 'designer';
   first_name?: string;
   last_name?: string;
+  email?: string;
+  display_name?: string;
+  phone?: string;
+  avatar_url?: string;
   specialization?: string;
   rate_per_minute?: number;
+  user_type: string;
+  role?: string;
+  is_admin?: boolean;
+  bio?: string;
+  company?: string;
+  location?: string;
+  website?: string;
   created_at: string;
   updated_at: string;
-  is_admin?: boolean;
-  role?: string;
 }
 
 interface AuthContextType {
@@ -21,9 +29,10 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
-  signUp: (email: string, password: string, userData: any) => Promise<{ error: any }>;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, metadata?: any) => Promise<{ error: AuthError | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
+  refetchProfile: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -48,7 +57,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const fetchProfile = async (userId: string) => {
     try {
-      const { data: profile, error } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', userId)
@@ -59,34 +68,22 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         return;
       }
 
-      setProfile(profile as Profile);
+      if (data) {
+        setProfile(data as Profile);
+      }
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.error('Error in fetchProfile:', error);
+    }
+  };
+
+  const refetchProfile = () => {
+    if (user?.id) {
+      fetchProfile(user.id);
     }
   };
 
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          // Defer profile fetching to prevent deadlocks
-          setTimeout(() => {
-            fetchProfile(session.user.id);
-          }, 0);
-        } else {
-          setProfile(null);
-        }
-        
-        setLoading(false);
-      }
-    );
-
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -94,15 +91,56 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setTimeout(() => {
           fetchProfile(session.user.id);
         }, 0);
+      } else {
+        setProfile(null);
       }
       
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      }
+      
+      setLoading(false);
+    });
 
-  const signUp = async (email: string, password: string, userData: any) => {
+    // Set up realtime subscription for profile updates
+    let profileSubscription: any = null;
+    if (user?.id) {
+      profileSubscription = supabase
+        .channel('profile-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'profiles',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            if (payload.new) {
+              setProfile(payload.new as Profile);
+            }
+          }
+        )
+        .subscribe();
+    }
+
+    return () => {
+      subscription.unsubscribe();
+      if (profileSubscription) {
+        supabase.removeChannel(profileSubscription);
+      }
+    };
+  }, [user?.id]);
+
+  const signUp = async (email: string, password: string, metadata?: any) => {
     try {
       const redirectUrl = `${window.location.origin}/`;
       
@@ -111,13 +149,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         password,
         options: {
           emailRedirectTo: redirectUrl,
-          data: userData
+          data: metadata
         }
       });
-      
+
       return { error };
     } catch (error) {
-      return { error };
+      return { error: error as AuthError };
     }
   };
 
@@ -142,7 +180,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       // Let the auth state change handler take care of redirects
       return { error: null };
     } catch (error) {
-      return { error };
+      return { error: error as AuthError };
     }
   };
 
@@ -167,6 +205,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     signUp,
     signIn,
     signOut,
+    refetchProfile
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

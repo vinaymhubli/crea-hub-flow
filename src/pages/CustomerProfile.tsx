@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   User, 
   Calendar, 
@@ -42,48 +42,37 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export default function CustomerProfile() {
-  const { user, profile } = useAuth();
+  const { user, profile, signOut, refetchProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [profileData, setProfileData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
+  const [uploading, setUploading] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  const [formData, setFormData] = useState({
+    display_name: '',
+    first_name: '',
+    last_name: '',
     phone: '',
+    bio: '',
     company: '',
     location: '',
-    website: '',
-    bio: '',
-    timezone: 'Pacific Standard Time (PST)',
-    language: 'English',
-    joinedDate: ''
+    website: ''
   });
 
-  const [formData, setFormData] = useState(profileData);
-
   useEffect(() => {
-    if (profile && user) {
-      const data = {
-        firstName: profile.first_name || '',
-        lastName: profile.last_name || '',
-        email: user.email || '',
-        phone: '',
-        company: '',
-        location: '',
-        website: '',
-        bio: '',
-        timezone: 'Pacific Standard Time (PST)',
-        language: 'English',
-        joinedDate: new Date(user.created_at || Date.now()).toLocaleDateString('en-US', { 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
-        })
-      };
-      setProfileData(data);
-      setFormData(data);
+    if (profile) {
+      setFormData({
+        display_name: profile.display_name || '',
+        first_name: profile.first_name || '',
+        last_name: profile.last_name || '',
+        phone: profile.phone || '',
+        bio: profile.bio || '',
+        company: profile.company || '',
+        location: profile.location || '',
+        website: profile.website || ''
+      });
     }
-  }, [profile, user]);
+  }, [profile]);
 
   const handleSave = async () => {
     if (!user?.id) return;
@@ -93,16 +82,21 @@ export default function CustomerProfile() {
       const { error } = await supabase
         .from('profiles')
         .update({
-          first_name: formData.firstName,
-          last_name: formData.lastName,
-          email: formData.email,
+          display_name: formData.display_name,
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          phone: formData.phone,
+          bio: formData.bio,
+          company: formData.company,
+          location: formData.location,
+          website: formData.website
         })
         .eq('user_id', user.id);
 
       if (error) throw error;
 
-      setProfileData(formData);
       setIsEditing(false);
+      refetchProfile();
       toast.success('Profile updated successfully');
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -113,17 +107,94 @@ export default function CustomerProfile() {
   };
 
   const handleCancel = () => {
-    setFormData(profileData);
+    if (profile) {
+      setFormData({
+        display_name: profile.display_name || '',
+        first_name: profile.first_name || '',
+        last_name: profile.last_name || '',
+        phone: profile.phone || '',
+        bio: profile.bio || '',
+        company: profile.company || '',
+        location: profile.location || '',
+        website: profile.website || ''
+      });
+    }
     setIsEditing(false);
   };
 
-  const getInitials = () => {
-    const firstName = profileData.firstName || profile?.first_name || '';
-    const lastName = profileData.lastName || profile?.last_name || '';
-    return `${firstName[0] || ''}${lastName[0] || ''}`.toUpperCase() || 'U';
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user?.id) return;
+
+    setUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('user_id', user.id);
+
+      if (updateError) throw updateError;
+
+      refetchProfile();
+      toast.success('Avatar updated successfully');
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      toast.error('Failed to upload avatar');
+    } finally {
+      setUploading(false);
+    }
   };
 
-  const displayName = `${profileData.firstName || profile?.first_name || ''} ${profileData.lastName || profile?.last_name || ''}`.trim() || 'User';
+  const getInitials = () => {
+    const displayName = profile?.display_name;
+    const firstName = profile?.first_name;
+    const lastName = profile?.last_name;
+    const email = user?.email;
+    
+    if (displayName) {
+      const words = displayName.trim().split(' ');
+      return words.length >= 2 
+        ? `${words[0][0]}${words[1][0]}`.toUpperCase()
+        : `${words[0][0]}${words[0][1] || ''}`.toUpperCase();
+    }
+    
+    if (firstName && lastName) {
+      return `${firstName[0]}${lastName[0]}`.toUpperCase();
+    }
+    
+    if (email) {
+      return email.substring(0, 2).toUpperCase();
+    }
+    
+    return 'U';
+  };
+
+  const getDisplayName = () => {
+    if (profile?.display_name) return profile.display_name;
+    if (profile?.first_name && profile?.last_name) {
+      return `${profile.first_name} ${profile.last_name}`;
+    }
+    if (profile?.first_name) return profile.first_name;
+    if (user?.email) return user.email.split('@')[0];
+    return 'User';
+  };
+
+  const handleLogout = async () => {
+    await signOut();
+  };
 
   return (
     <SidebarProvider>
@@ -150,22 +221,27 @@ export default function CustomerProfile() {
                 <Popover>
                   <PopoverTrigger asChild>
                     <button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
-                      <span className="text-white font-semibold text-sm">{getInitials()}</span>
+                      {profile?.avatar_url ? (
+                        <img src={profile.avatar_url} alt="Avatar" className="w-full h-full rounded-full object-cover" />
+                      ) : (
+                        <span className="text-white font-semibold text-sm">{getInitials()}</span>
+                      )}
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-64 p-0" align="end">
                     <div className="p-4">
                       <div className="flex items-center space-x-3 mb-3">
                         <Avatar>
+                          <AvatarImage src={profile?.avatar_url} />
                           <AvatarFallback>{getInitials()}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-semibold text-foreground">{displayName}</p>
-                          <p className="text-sm text-muted-foreground">{profileData.email}</p>
+                          <p className="font-semibold text-foreground">{getDisplayName()}</p>
+                          <p className="text-sm text-muted-foreground">{user?.email}</p>
                         </div>
                       </div>
                       <Separator className="my-3" />
-                      <button className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
+                      <button onClick={handleLogout} className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
                         <LogOut className="w-4 h-4 mr-3" />
                         Log out
                       </button>
@@ -215,7 +291,11 @@ export default function CustomerProfile() {
                     <div>
                       <p className="text-sm text-gray-600 mb-1 font-medium">Member Since</p>
                       <p className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                        {profileData.joinedDate}
+                        {new Date(user?.created_at || Date.now()).toLocaleDateString('en-US', { 
+                          year: 'numeric', 
+                          month: 'long', 
+                          day: 'numeric' 
+                        })}
                       </p>
                       <p className="text-sm text-purple-600 mt-3 font-medium">Welcome!</p>
                     </div>
@@ -254,18 +334,30 @@ export default function CustomerProfile() {
                     <div className="flex items-center justify-center mb-6">
                       <div className="relative">
                         <Avatar className="w-24 h-24 shadow-xl ring-4 ring-white/50">
+                          <AvatarImage src={profile?.avatar_url} />
                           <AvatarFallback className="bg-gradient-to-br from-green-400 via-teal-500 to-blue-500 text-white font-semibold text-2xl">
                             {getInitials()}
                           </AvatarFallback>
                         </Avatar>
-                        <button className="absolute -bottom-2 -right-2 w-8 h-8 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center text-white hover:from-green-600 hover:to-blue-600 transition-all duration-200 shadow-lg">
+                        <button 
+                          onClick={() => avatarInputRef.current?.click()}
+                          disabled={uploading}
+                          className="absolute -bottom-2 -right-2 w-8 h-8 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center text-white hover:from-green-600 hover:to-blue-600 transition-all duration-200 shadow-lg disabled:opacity-50"
+                        >
                           <Camera className="w-4 h-4" />
                         </button>
+                        <input
+                          ref={avatarInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleAvatarUpload}
+                          className="hidden"
+                        />
                       </div>
                     </div>
                     <div className="text-center">
-                      <h2 className="text-2xl font-semibold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">{displayName}</h2>
-                      <p className="text-muted-foreground">{profileData.company || 'Customer'}</p>
+                      <h2 className="text-2xl font-semibold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">{getDisplayName()}</h2>
+                      <p className="text-muted-foreground">{profile?.company || 'Customer'}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -296,44 +388,106 @@ export default function CustomerProfile() {
                     )}
                   </CardHeader>
                   <CardContent className="space-y-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="display_name">Display Name</Label>
+                      {isEditing ? (
+                        <Input
+                          id="display_name"
+                          value={formData.display_name}
+                          onChange={(e) => setFormData({...formData, display_name: e.target.value})}
+                          placeholder="How you'd like to be called"
+                        />
+                      ) : (
+                        <Input value={formData.display_name || 'Not set'} readOnly className="bg-gray-50" />
+                      )}
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <Label htmlFor="firstName">First Name</Label>
+                        <Label htmlFor="first_name">First Name</Label>
                         {isEditing ? (
                           <Input
-                            id="firstName"
-                            value={formData.firstName}
-                            onChange={(e) => setFormData({...formData, firstName: e.target.value})}
+                            id="first_name"
+                            value={formData.first_name}
+                            onChange={(e) => setFormData({...formData, first_name: e.target.value})}
                           />
                         ) : (
-                          <Input value={profileData.firstName} readOnly className="bg-gray-50" />
+                          <Input value={formData.first_name || 'Not set'} readOnly className="bg-gray-50" />
                         )}
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="lastName">Last Name</Label>
+                        <Label htmlFor="last_name">Last Name</Label>
                         {isEditing ? (
                           <Input
-                            id="lastName"
-                            value={formData.lastName}
-                            onChange={(e) => setFormData({...formData, lastName: e.target.value})}
+                            id="last_name"
+                            value={formData.last_name}
+                            onChange={(e) => setFormData({...formData, last_name: e.target.value})}
                           />
                         ) : (
-                          <Input value={profileData.lastName} readOnly className="bg-gray-50" />
+                          <Input value={formData.last_name || 'Not set'} readOnly className="bg-gray-50" />
                         )}
                       </div>
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
+                      <Input value={user?.email || ''} readOnly className="bg-gray-50" />
+                      <p className="text-xs text-muted-foreground">Email cannot be changed from the profile page</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Phone</Label>
                       {isEditing ? (
                         <Input
-                          id="email"
-                          type="email"
-                          value={formData.email}
-                          onChange={(e) => setFormData({...formData, email: e.target.value})}
+                          id="phone"
+                          value={formData.phone}
+                          onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                          placeholder="+1 (555) 123-4567"
                         />
                       ) : (
-                        <Input value={profileData.email} readOnly className="bg-gray-50" />
+                        <Input value={formData.phone || 'Not provided'} readOnly className="bg-gray-50" />
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="company">Company</Label>
+                      {isEditing ? (
+                        <Input
+                          id="company"
+                          value={formData.company}
+                          onChange={(e) => setFormData({...formData, company: e.target.value})}
+                          placeholder="Your company name"
+                        />
+                      ) : (
+                        <Input value={formData.company || 'Not provided'} readOnly className="bg-gray-50" />
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="location">Location</Label>
+                      {isEditing ? (
+                        <Input
+                          id="location"
+                          value={formData.location}
+                          onChange={(e) => setFormData({...formData, location: e.target.value})}
+                          placeholder="City, Country"
+                        />
+                      ) : (
+                        <Input value={formData.location || 'Not provided'} readOnly className="bg-gray-50" />
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="website">Website</Label>
+                      {isEditing ? (
+                        <Input
+                          id="website"
+                          value={formData.website}
+                          onChange={(e) => setFormData({...formData, website: e.target.value})}
+                          placeholder="https://your-website.com"
+                        />
+                      ) : (
+                        <Input value={formData.website || 'Not provided'} readOnly className="bg-gray-50" />
                       )}
                     </div>
 
@@ -348,7 +502,7 @@ export default function CustomerProfile() {
                           rows={4}
                         />
                       ) : (
-                        <Textarea value={profileData.bio || 'No bio added yet.'} readOnly className="bg-gray-50" rows={4} />
+                        <Textarea value={formData.bio || 'No bio added yet.'} readOnly className="bg-gray-50" rows={4} />
                       )}
                     </div>
                   </CardContent>
@@ -368,16 +522,24 @@ export default function CustomerProfile() {
                   <CardContent className="space-y-4">
                     <div className="flex items-center space-x-3 text-sm">
                       <Mail className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">{profileData.email}</span>
+                      <span className="text-muted-foreground">{user?.email}</span>
                     </div>
                     <div className="flex items-center space-x-3 text-sm">
                       <Phone className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">{profileData.phone || 'Not provided'}</span>
+                      <span className="text-muted-foreground">{formData.phone || 'Not provided'}</span>
                     </div>
                     <div className="flex items-center space-x-3 text-sm">
                       <MapPin className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">{profileData.location || 'Not provided'}</span>
+                      <span className="text-muted-foreground">{formData.location || 'Not provided'}</span>
                     </div>
+                    {formData.website && (
+                      <div className="flex items-center space-x-3 text-sm">
+                        <Globe className="w-4 h-4 text-muted-foreground" />
+                        <a href={formData.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                          {formData.website}
+                        </a>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -390,21 +552,26 @@ export default function CustomerProfile() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Account Type</p>
-                      <p className="text-sm font-medium">Customer</p>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Account Type</span>
+                      <span className="font-medium">Customer</span>
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Member Since</p>
-                      <p className="text-sm font-medium">{profileData.joinedDate}</p>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Member Since</span>
+                      <span className="font-medium">
+                        {new Date(user?.created_at || Date.now()).toLocaleDateString('en-US', { 
+                          year: 'numeric', 
+                          month: 'short'
+                        })}
+                      </span>
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Language</p>
-                      <p className="text-sm font-medium">{profileData.language}</p>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Language</span>
+                      <span className="font-medium">English</span>
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Timezone</p>
-                      <p className="text-sm font-medium">{profileData.timezone}</p>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Timezone</span>
+                      <span className="font-medium">UTC</span>
                     </div>
                   </CardContent>
                 </Card>

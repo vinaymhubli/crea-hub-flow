@@ -389,6 +389,8 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          bio: string | null
+          company: string | null
           created_at: string
           display_name: string | null
           email: string | null
@@ -396,6 +398,7 @@ export type Database = {
           id: string
           is_admin: boolean | null
           last_name: string | null
+          location: string | null
           phone: string | null
           rate_per_minute: number | null
           role: string | null
@@ -403,9 +406,12 @@ export type Database = {
           updated_at: string
           user_id: string
           user_type: string
+          website: string | null
         }
         Insert: {
           avatar_url?: string | null
+          bio?: string | null
+          company?: string | null
           created_at?: string
           display_name?: string | null
           email?: string | null
@@ -413,6 +419,7 @@ export type Database = {
           id?: string
           is_admin?: boolean | null
           last_name?: string | null
+          location?: string | null
           phone?: string | null
           rate_per_minute?: number | null
           role?: string | null
@@ -420,9 +427,12 @@ export type Database = {
           updated_at?: string
           user_id: string
           user_type: string
+          website?: string | null
         }
         Update: {
           avatar_url?: string | null
+          bio?: string | null
+          company?: string | null
           created_at?: string
           display_name?: string | null
           email?: string | null
@@ -430,6 +440,7 @@ export type Database = {
           id?: string
           is_admin?: boolean | null
           last_name?: string | null
+          location?: string | null
           phone?: string | null
           rate_per_minute?: number | null
           role?: string | null
@@ -437,6 +448,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           user_type?: string
+          website?: string | null
         }
         Relationships: []
       }
