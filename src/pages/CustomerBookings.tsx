@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { 
   Calendar, 
   MessageCircle, 
@@ -11,9 +11,10 @@ import {
   AlertCircle,
   Plus,
   History,
-  Star
+  Star,
+  Search
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   SidebarProvider,
   SidebarTrigger,
@@ -26,46 +27,17 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { supabase } from "@/integrations/supabase/client";
+import { CustomerBookingDetailsDialog } from "@/components/CustomerBookingDetailsDialog";
+import { RescheduleDialog } from "@/components/RescheduleDialog";
+import { useRealtimeBookings } from "@/hooks/useRealtimeBookings";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
-interface Booking {
-  id: string;
-  service: string;
-  status: string;
-  description: string;
-  requirements: string;
-  created_at: string;
-  total_amount: number;
-  scheduled_date: string;
-  duration_hours: number;
-  customer_id: string;
-  designer_id: string;
-  designer?: {
-    user_id: string;
-    specialty: string;
-    hourly_rate: number;
-    portfolio_images: string[];
-    response_time: string;
-    location: string;
-    skills: string[];
-    bio: string;
-    is_online: boolean;
-    completion_rate: number;
-    reviews_count: number;
-    rating: number;
-    profile?: {
-      first_name: string;
-      last_name: string;
-      avatar_url: string;
-    };
-  };
-}
-
-function BookingCard({ booking }: { booking: Booking }) {
+function BookingCard({ booking, onClick }: { booking: any; onClick: () => void }) {
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'upcoming':
+      case 'confirmed':
         return <Clock className="w-4 h-4 text-blue-500" />;
       case 'completed':
         return <CheckCircle className="w-4 h-4 text-green-500" />;
@@ -73,6 +45,8 @@ function BookingCard({ booking }: { booking: Booking }) {
         return <AlertCircle className="w-4 h-4 text-yellow-500" />;
       case 'cancelled':
         return <XCircle className="w-4 h-4 text-red-500" />;
+      case 'in_progress':
+        return <Video className="w-4 h-4 text-purple-500" />;
       default:
         return <Clock className="w-4 h-4 text-gray-500" />;
     }
@@ -80,29 +54,31 @@ function BookingCard({ booking }: { booking: Booking }) {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'upcoming':
-        return <Badge className="bg-gradient-to-r from-green-100 to-teal-100 text-teal-700 border-teal-200">Upcoming</Badge>;
+      case 'confirmed':
+        return <Badge className="bg-gradient-to-r from-green-100 to-teal-100 text-teal-700 border-teal-200">Confirmed</Badge>;
       case 'completed':
-        return <Badge className="bg-gradient-to-r from-teal-100 to-blue-100 text-blue-700 border-blue-200">Completed</Badge>;
+        return <Badge className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700 border-blue-200">Completed</Badge>;
       case 'pending':
-        return <Badge className="bg-yellow-100 text-yellow-700">Pending</Badge>;
+        return <Badge className="bg-gradient-to-r from-yellow-100 to-orange-100 text-yellow-700 border-yellow-200">Pending</Badge>;
       case 'cancelled':
-        return <Badge className="bg-red-100 text-red-700">Cancelled</Badge>;
+        return <Badge className="bg-gradient-to-r from-red-100 to-pink-100 text-red-700 border-red-200">Cancelled</Badge>;
+      case 'in_progress':
+        return <Badge className="bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-700 border-purple-200">In Progress</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
   };
 
-  const designerName = booking.designer?.profile 
-    ? `${booking.designer.profile.first_name} ${booking.designer.profile.last_name}`
+  const designerName = booking.designer?.user?.first_name && booking.designer?.user?.last_name
+    ? `${booking.designer.user.first_name} ${booking.designer.user.last_name}`
     : 'Unknown Designer';
 
-  const designerInitials = booking.designer?.profile 
-    ? `${booking.designer.profile.first_name?.[0] || ''}${booking.designer.profile.last_name?.[0] || ''}`
+  const designerInitials = booking.designer?.user?.first_name && booking.designer?.user?.last_name
+    ? `${booking.designer.user.first_name[0] || ''}${booking.designer.user.last_name[0] || ''}`
     : 'UD';
 
   return (
-    <Card className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105">
+    <Card className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 cursor-pointer" onClick={onClick}>
       <CardContent className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center space-x-4">
@@ -144,52 +120,18 @@ function BookingCard({ booking }: { booking: Booking }) {
             <span className="font-semibold text-foreground">${booking.total_amount}</span>
           </div>
 
-          <div className="flex space-x-3 pt-3 border-t">
-            {booking.status === 'pending' && (
-              <>
-                <Button 
-                  variant="outline" 
-                  className="flex-1"
-                  onClick={() => window.location.href = `/customer-dashboard/messages?booking_id=${booking.id}`}
-                >
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  Message Designer
-                </Button>
-                <Button variant="outline" className="flex-1 text-red-600 hover:text-red-700">
-                  Cancel
-                </Button>
-              </>
-            )}
-            {booking.status === 'upcoming' && (
-              <>
-                <Button 
-                  className="flex-1 bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 text-white hover:shadow-lg transition-all duration-300"
-                  onClick={() => window.location.href = `/session/${booking.id}`}
-                >
-                  <Video className="w-4 h-4 mr-2" />
-                  Join Session
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="flex-1"
-                  onClick={() => window.location.href = `/customer-dashboard/messages?booking_id=${booking.id}`}
-                >
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  Message
-                </Button>
-              </>
-            )}
-            {booking.status === 'completed' && (
-              <>
-                <Button variant="outline" className="flex-1">
-                  <Star className="w-4 h-4 mr-2" />
-                  Rate Designer
-                </Button>
-                <Button variant="outline" className="flex-1">
-                  View Files
-                </Button>
-              </>
-            )}
+          <div className="flex justify-center pt-3 border-t">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="text-primary hover:text-primary/80"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClick();
+              }}
+            >
+              View Details & Actions
+            </Button>
           </div>
         </div>
       </CardContent>
@@ -199,65 +141,100 @@ function BookingCard({ booking }: { booking: Booking }) {
 
 export default function CustomerBookings() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [showRescheduleDialog, setShowRescheduleDialog] = useState(false);
+  
   const { user } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  
+  const { 
+    bookings, 
+    loading, 
+    rescheduleBooking,
+    refetch 
+  } = useRealtimeBookings();
 
-  useEffect(() => {
-    if (user) {
-      fetchBookings();
-    }
-  }, [user]);
+  const handleBookingClick = (booking: any) => {
+    setSelectedBooking(booking);
+    setShowDetailsDialog(true);
+  };
 
-  const fetchBookings = async () => {
+  const handleCancelBooking = async (bookingId: string) => {
     try {
-      setLoading(true);
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('bookings')
-        .select(`
-          *,
-          designer:designers!inner(
-            *,
-            profile:profiles!designers_user_id_fkey(
-              first_name,
-              last_name,
-              avatar_url
-            )
-          )
-        `)
-        .eq('customer_id', user?.id)
-        .order('scheduled_date', { ascending: false });
+        .update({ status: 'cancelled' })
+        .eq('id', bookingId);
 
-      if (error) {
-        console.error('Error fetching bookings:', error);
-        return;
-      }
+      if (error) throw error;
 
-      setBookings(data || []);
+      toast({
+        title: "Booking Cancelled",
+        description: "Your booking has been cancelled successfully.",
+      });
+      
+      refetch();
     } catch (error) {
-      console.error('Error:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error cancelling booking:', error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel booking. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRescheduleBooking = async (bookingId: string, newDate: string) => {
+    try {
+      await rescheduleBooking(bookingId, newDate);
+      toast({
+        title: "Booking Rescheduled",
+        description: "Your booking has been rescheduled successfully.",
+      });
+    } catch (error) {
+      console.error('Error rescheduling booking:', error);
+      toast({
+        title: "Error",
+        description: "Failed to reschedule booking. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
   const filterBookings = (status: string) => {
-    return bookings
-      .filter(booking => {
-        if (status === 'upcoming') {
-          return booking.status === 'pending' || 
-                 (booking.status === 'confirmed' && new Date(booking.scheduled_date) > new Date());
-        }
-        return booking.status === status;
-      })
-      .filter(booking => {
-        const designerName = booking.designer?.profile 
-          ? `${booking.designer.profile.first_name} ${booking.designer.profile.last_name}`
-          : '';
-        return designerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-               booking.service.toLowerCase().includes(searchQuery.toLowerCase());
-      });
+    const filtered = bookings.filter(booking => {
+      // Normalize status mapping
+      if (status === 'upcoming') {
+        return booking.status === 'pending' || booking.status === 'confirmed';
+      }
+      if (status === 'all') {
+        return true;
+      }
+      return booking.status === status;
+    });
+
+    // Apply search filter
+    return filtered.filter(booking => {
+      const designerName = booking.designer?.user?.first_name && booking.designer?.user?.last_name
+        ? `${booking.designer.user.first_name} ${booking.designer.user.last_name}`
+        : '';
+      return designerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+             booking.service.toLowerCase().includes(searchQuery.toLowerCase());
+    }).sort((a, b) => new Date(b.scheduled_date).getTime() - new Date(a.scheduled_date).getTime());
   };
+
+  const getBookingStats = () => {
+    return {
+      upcoming: filterBookings('upcoming').length,
+      total: bookings.length,
+      completed: filterBookings('completed').length,
+      totalSpent: bookings.reduce((sum, booking) => sum + Number(booking.total_amount), 0)
+    };
+  };
+
+  const stats = getBookingStats();
 
   if (loading) {
     return (
@@ -342,7 +319,7 @@ export default function CustomerBookings() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-600 mb-1 font-medium">Upcoming Sessions</p>
-                      <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">{filterBookings('upcoming').length}</p>
+                      <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">{stats.upcoming}</p>
                       <Link to="/designers" className="text-sm text-green-600 hover:text-green-700 flex items-center mt-3 font-medium group">
                         Book new session
                         <Plus className="w-3 h-3 ml-1 transition-transform group-hover:translate-x-1" />
@@ -356,14 +333,14 @@ export default function CustomerBookings() {
               </Card>
 
               <Card className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in" style={{animationDelay: '0.1s'}}>
-                <CardContent className="p-6 bg-gradient-to-br from-blue-50 to-cyan-50">
+                <CardContent className="p-6 bg-gradient-to-br from-blue-50 via-indigo-50 to-cyan-50">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-600 mb-1 font-medium">Total Sessions</p>
-                      <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">{bookings.length}</p>
-                      <p className="text-sm text-blue-600 mt-3 font-medium">{filterBookings('completed').length} completed</p>
+                      <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 bg-clip-text text-transparent">{stats.total}</p>
+                      <p className="text-sm text-blue-600 mt-3 font-medium">{stats.completed} completed</p>
                     </div>
-                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 via-indigo-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
                       <History className="w-8 h-8 text-white" />
                     </div>
                   </div>
@@ -371,16 +348,16 @@ export default function CustomerBookings() {
               </Card>
 
               <Card className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in" style={{animationDelay: '0.2s'}}>
-                <CardContent className="p-6 bg-gradient-to-br from-purple-50 to-pink-50">
+                <CardContent className="p-6 bg-gradient-to-br from-purple-50 via-violet-50 to-pink-50">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-600 mb-1 font-medium">Total Spent</p>
-                      <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                        ${bookings.reduce((sum, booking) => sum + Number(booking.total_amount), 0)}
+                      <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 via-violet-600 to-pink-600 bg-clip-text text-transparent">
+                        ${stats.totalSpent}
                       </p>
                       <p className="text-sm text-purple-600 mt-3 font-medium">This year</p>
                     </div>
-                    <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
+                    <div className="w-16 h-16 bg-gradient-to-br from-purple-500 via-violet-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
                       <span className="text-white font-bold text-lg">$</span>
                     </div>
                   </div>
@@ -393,7 +370,7 @@ export default function CustomerBookings() {
                     <div>
                       <p className="text-sm text-gray-600 mb-1 font-medium">Pending Reviews</p>
                       <p className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-yellow-600 bg-clip-text text-transparent">
-                        {filterBookings('completed').length}
+                        {stats.completed}
                       </p>
                       <p className="text-sm text-orange-600 mt-3 font-medium">Rate designers</p>
                     </div>
@@ -408,11 +385,13 @@ export default function CustomerBookings() {
             {/* Search and Tabs */}
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                   <Input
                     placeholder="Search bookings by designer name or service..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
                   />
                 </div>
               </div>
@@ -441,43 +420,91 @@ export default function CustomerBookings() {
                         .filter(booking => 
                           searchQuery === '' || 
                           booking.service.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          (booking.designer?.profile?.first_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          (booking.designer?.profile?.last_name || '').toLowerCase().includes(searchQuery.toLowerCase())
+                           (booking.designer?.user?.first_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           (booking.designer?.user?.last_name || '').toLowerCase().includes(searchQuery.toLowerCase())
                         )
                         .map((booking) => (
-                          <BookingCard key={booking.id} booking={booking} />
+                          <BookingCard key={booking.id} booking={booking} onClick={() => handleBookingClick(booking)} />
                         ))}
                     </div>
                   )}
                 </TabsContent>
 
                 <TabsContent value="upcoming" className="space-y-4 mt-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {filterBookings('upcoming').map((booking) => (
-                      <BookingCard key={booking.id} booking={booking} />
-                    ))}
-                  </div>
+                  {filterBookings('upcoming').length === 0 ? (
+                    <Card className="p-12 text-center">
+                      <Clock className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No upcoming sessions</h3>
+                      <p className="text-gray-600">Your next sessions will appear here</p>
+                    </Card>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {filterBookings('upcoming').map((booking) => (
+                        <BookingCard key={booking.id} booking={booking} onClick={() => handleBookingClick(booking)} />
+                      ))}
+                    </div>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="completed" className="space-y-4 mt-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {filterBookings('completed').map((booking) => (
-                      <BookingCard key={booking.id} booking={booking} />
-                    ))}
-                  </div>
+                  {filterBookings('completed').length === 0 ? (
+                    <Card className="p-12 text-center">
+                      <CheckCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No completed sessions</h3>
+                      <p className="text-gray-600">Your completed sessions will appear here</p>
+                    </Card>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {filterBookings('completed').map((booking) => (
+                        <BookingCard key={booking.id} booking={booking} onClick={() => handleBookingClick(booking)} />
+                      ))}
+                    </div>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="pending" className="space-y-4 mt-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {filterBookings('pending').map((booking) => (
-                      <BookingCard key={booking.id} booking={booking} />
-                    ))}
-                  </div>
+                  {filterBookings('pending').length === 0 ? (
+                    <Card className="p-12 text-center">
+                      <AlertCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No pending sessions</h3>
+                      <p className="text-gray-600">Sessions awaiting designer confirmation will appear here</p>
+                    </Card>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {filterBookings('pending').map((booking) => (
+                        <BookingCard key={booking.id} booking={booking} onClick={() => handleBookingClick(booking)} />
+                      ))}
+                    </div>
+                  )}
                 </TabsContent>
               </Tabs>
             </div>
           </div>
         </main>
+
+        {/* Dialogs */}
+        <CustomerBookingDetailsDialog
+          booking={selectedBooking}
+          open={showDetailsDialog}
+          onOpenChange={setShowDetailsDialog}
+          onCancelBooking={handleCancelBooking}
+          onRescheduleBooking={() => {
+            setShowDetailsDialog(false);
+            setShowRescheduleDialog(true);
+          }}
+        />
+
+        <RescheduleDialog
+          open={showRescheduleDialog}
+          onOpenChange={setShowRescheduleDialog}
+          onReschedule={(newDate: string) => {
+            if (selectedBooking) {
+              handleRescheduleBooking(selectedBooking.id, newDate);
+            }
+            setShowRescheduleDialog(false);
+          }}
+          currentDate={selectedBooking?.scheduled_date || ''}
+        />
       </div>
     </SidebarProvider>
   );
