@@ -12,6 +12,7 @@ interface Announcement {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  created_by?: string;
 }
 
 export const useAdminAnnouncements = () => {
@@ -30,7 +31,13 @@ export const useAdminAnnouncements = () => {
 
       if (error) throw error;
       
-      setAnnouncements(data || []);
+      // Type assertion to ensure the type field is correctly typed
+      const typedAnnouncements = (data || []).map(announcement => ({
+        ...announcement,
+        type: announcement.type as 'info' | 'warning' | 'success'
+      }));
+      
+      setAnnouncements(typedAnnouncements);
     } catch (error) {
       console.error('Error fetching announcements:', error);
       toast({
@@ -53,13 +60,18 @@ export const useAdminAnnouncements = () => {
 
       if (error) throw error;
       
-      setAnnouncements(prev => [data, ...prev]);
+      const typedAnnouncement = {
+        ...data,
+        type: data.type as 'info' | 'warning' | 'success'
+      };
+      
+      setAnnouncements(prev => [typedAnnouncement, ...prev]);
       toast({
         title: "Success",
         description: "Announcement created successfully",
       });
       
-      return data;
+      return typedAnnouncement;
     } catch (error) {
       console.error('Error creating announcement:', error);
       toast({
@@ -82,9 +94,14 @@ export const useAdminAnnouncements = () => {
 
       if (error) throw error;
       
+      const typedAnnouncement = {
+        ...data,
+        type: data.type as 'info' | 'warning' | 'success'
+      };
+      
       setAnnouncements(prev => 
         prev.map(announcement => 
-          announcement.id === id ? data : announcement
+          announcement.id === id ? typedAnnouncement : announcement
         )
       );
       

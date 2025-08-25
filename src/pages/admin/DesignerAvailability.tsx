@@ -15,18 +15,29 @@ interface DesignerWithAvailability {
   id: string;
   user_id: string;
   specialty: string;
-  is_online: boolean;
+  is_online: boolean | null;
+  bio: string | null;
+  hourly_rate: number;
+  rating: number | null;
+  reviews_count: number | null;
+  completion_rate: number | null;
+  available_for_urgent: boolean | null;
+  display_hourly_rate: boolean | null;
+  experience_years: number | null;
+  location: string | null;
+  verification_status: string;
+  created_at: string;
   user: {
-    first_name: string;
-    last_name: string;
-    avatar_url?: string;
-  };
+    first_name: string | null;
+    last_name: string | null;
+    avatar_url?: string | null;
+  } | null;
   availability_settings?: {
     auto_accept_bookings: boolean;
     buffer_time_minutes: number;
     working_hours_start: string;
     working_hours_end: string;
-  };
+  } | null;
   upcoming_bookings_count?: number;
 }
 
@@ -42,13 +53,7 @@ export default function DesignerAvailability() {
         .from('designers')
         .select(`
           *,
-          user:profiles!user_id(first_name, last_name, avatar_url),
-          availability_settings:designer_availability_settings(
-            auto_accept_bookings,
-            buffer_time_minutes,
-            working_hours_start,
-            working_hours_end
-          )
+          user:profiles!user_id(first_name, last_name, avatar_url)
         `);
 
       if (searchTerm) {
@@ -59,9 +64,17 @@ export default function DesignerAvailability() {
       
       if (error) throw error;
 
-      // Get upcoming bookings count for each designer
-      const designersWithBookings = await Promise.all(
+      // Get availability settings and upcoming bookings for each designer
+      const designersWithData = await Promise.all(
         (data || []).map(async (designer) => {
+          // Get availability settings
+          const { data: settings } = await supabase
+            .from('designer_availability_settings')
+            .select('*')
+            .eq('designer_id', designer.id)
+            .maybeSingle();
+
+          // Get upcoming bookings count
           const { count } = await supabase
             .from('bookings')
             .select('*', { count: 'exact', head: true })
@@ -71,12 +84,13 @@ export default function DesignerAvailability() {
 
           return {
             ...designer,
+            availability_settings: settings,
             upcoming_bookings_count: count || 0
           };
         })
       );
 
-      return designersWithBookings as DesignerWithAvailability[];
+      return designersWithData as DesignerWithAvailability[];
     },
   });
 
@@ -108,7 +122,7 @@ export default function DesignerAvailability() {
     },
   });
 
-  const toggleDesignerOnlineStatus = async (designerId: string, currentStatus: boolean) => {
+  const toggleDesignerOnlineStatus = async (designerId: string, currentStatus: boolean | null) => {
     try {
       const { error } = await supabase
         .from('designers')
@@ -133,7 +147,7 @@ export default function DesignerAvailability() {
   };
 
   const filteredDesigners = designers.filter(designer => {
-    const fullName = `${designer.user.first_name} ${designer.user.last_name}`.toLowerCase();
+    const fullName = `${designer.user?.first_name || ''} ${designer.user?.last_name || ''}`.toLowerCase();
     return fullName.includes(searchTerm.toLowerCase()) ||
            designer.specialty.toLowerCase().includes(searchTerm.toLowerCase());
   });
@@ -187,14 +201,14 @@ export default function DesignerAvailability() {
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
                       <Avatar>
-                        <AvatarImage src={designer.user.avatar_url} />
+                        <AvatarImage src={designer.user?.avatar_url || undefined} />
                         <AvatarFallback>
-                          {designer.user.first_name?.[0]}{designer.user.last_name?.[0]}
+                          {designer.user?.first_name?.[0]}{designer.user?.last_name?.[0]}
                         </AvatarFallback>
                       </Avatar>
                       <div>
                         <CardTitle className="text-lg">
-                          {designer.user.first_name} {designer.user.last_name}
+                          {designer.user?.first_name} {designer.user?.last_name}
                         </CardTitle>
                         <p className="text-sm text-muted-foreground">{designer.specialty}</p>
                       </div>
@@ -204,7 +218,7 @@ export default function DesignerAvailability() {
                         {designer.is_online ? 'Online' : 'Offline'}
                       </Badge>
                       <Switch
-                        checked={designer.is_online}
+                        checked={designer.is_online || false}
                         onCheckedChange={() => toggleDesignerOnlineStatus(designer.id, designer.is_online)}
                       />
                     </div>

@@ -26,7 +26,9 @@ export const useAdminStats = () => {
       
       if (error) throw error;
       
-      setStats(data);
+      // Parse the JSON response and type it properly
+      const parsedStats = typeof data === 'string' ? JSON.parse(data) : data;
+      setStats(parsedStats as AdminStats);
     } catch (error) {
       console.error('Error fetching admin stats:', error);
       toast({
