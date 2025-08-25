@@ -105,8 +105,8 @@ export function CustomerBookingDetailsDialog({
   };
 
   const handleViewDesigner = () => {
-    if (booking.designer?.user_id) {
-      navigate(`/designers/${booking.designer.user_id}`);
+    if (booking.designer_id) {
+      navigate(`/designer/${booking.designer_id}`);
       onOpenChange(false);
     }
   };
@@ -117,7 +117,7 @@ export function CustomerBookingDetailsDialog({
   };
 
   const handleJoinSession = () => {
-    navigate(`/call-session/${booking.id}`);
+    navigate(`/session/${booking.id}`);
     onOpenChange(false);
   };
 

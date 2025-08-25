@@ -332,8 +332,8 @@ export default function CustomerBookings() {
                 </CardContent>
               </Card>
 
-              <Card className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in" style={{animationDelay: '0.1s'}}>
-                <CardContent className="p-6 bg-gradient-to-br from-blue-50 via-indigo-50 to-cyan-50">
+              <Card className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in bg-gradient-to-br from-blue-100 via-indigo-100 to-cyan-100" style={{animationDelay: '0.1s'}}>
+                <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-600 mb-1 font-medium">Total Sessions</p>
@@ -347,8 +347,8 @@ export default function CustomerBookings() {
                 </CardContent>
               </Card>
 
-              <Card className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in" style={{animationDelay: '0.2s'}}>
-                <CardContent className="p-6 bg-gradient-to-br from-purple-50 via-violet-50 to-pink-50">
+              <Card className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in bg-gradient-to-br from-purple-100 via-violet-100 to-pink-100" style={{animationDelay: '0.2s'}}>
+                <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-600 mb-1 font-medium">Total Spent</p>
@@ -405,7 +405,7 @@ export default function CustomerBookings() {
                 </TabsList>
 
                 <TabsContent value="all" className="space-y-4 mt-6">
-                  {bookings.length === 0 ? (
+                  {filterBookings('all').length === 0 ? (
                     <Card className="p-12 text-center">
                       <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                       <h3 className="text-lg font-semibold text-gray-900 mb-2">No bookings yet</h3>
@@ -416,16 +416,9 @@ export default function CustomerBookings() {
                     </Card>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {bookings
-                        .filter(booking => 
-                          searchQuery === '' || 
-                          booking.service.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           (booking.designer?.user?.first_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           (booking.designer?.user?.last_name || '').toLowerCase().includes(searchQuery.toLowerCase())
-                        )
-                        .map((booking) => (
-                          <BookingCard key={booking.id} booking={booking} onClick={() => handleBookingClick(booking)} />
-                        ))}
+                      {filterBookings('all').map((booking) => (
+                        <BookingCard key={booking.id} booking={booking} onClick={() => handleBookingClick(booking)} />
+                      ))}
                     </div>
                   )}
                 </TabsContent>
