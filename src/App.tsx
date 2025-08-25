@@ -44,6 +44,8 @@ import CallSession from "./pages/CallSession"
 import AIAssistant from "./pages/AIAssistant"
 import NotFound from "./pages/NotFound"
 import { ProtectedRoute } from "./components/ProtectedRoute"
+import { ProtectedAdminRoute } from "./components/ProtectedAdminRoute"
+import { AdminLayout } from "./components/AdminLayout"
 import Header from "./components/Header"
 import Footer from "./components/Footer"
 import "./App.css"
@@ -82,24 +84,32 @@ function AppContent() {
           
           {/* Protected Admin Routes */}
           <Route path="/admin-dashboard" element={
-            <ProtectedRoute>
-              <AdminDashboard />
-            </ProtectedRoute>
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <AdminDashboard />
+              </AdminLayout>
+            </ProtectedAdminRoute>
           } />
           <Route path="/admin/designer-verification" element={
-            <ProtectedRoute>
-              <DesignerVerification />
-            </ProtectedRoute>
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <DesignerVerification />
+              </AdminLayout>
+            </ProtectedAdminRoute>
           } />
           <Route path="/admin/session-control" element={
-            <ProtectedRoute>
-              <SessionControl />
-            </ProtectedRoute>
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <SessionControl />
+              </AdminLayout>
+            </ProtectedAdminRoute>
           } />
           <Route path="/admin/designer-availability" element={
-            <ProtectedRoute>
-              <AdminDesignerAvailability />
-            </ProtectedRoute>
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <AdminDesignerAvailability />
+              </AdminLayout>
+            </ProtectedAdminRoute>
           } />
           
           {/* Protected Customer Routes */}

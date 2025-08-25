@@ -30,7 +30,7 @@ export default function AdminLogin() {
           .single();
         
         if (profile?.is_admin) {
-          navigate('/secret-admin-panel');
+          navigate('/admin-dashboard');
         } else {
           navigate('/');
         }
@@ -51,7 +51,7 @@ export default function AdminLogin() {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/secret-admin-panel`,
+            emailRedirectTo: `${window.location.origin}/admin-dashboard`,
             data: {
               first_name: 'Demo',
               last_name: 'Admin',
@@ -108,7 +108,7 @@ export default function AdminLogin() {
 
               if (!updateError) {
                 toast.success('Welcome, Administrator');
-                navigate('/secret-admin-panel');
+                navigate('/admin-dashboard');
                 return;
               }
             }
@@ -119,7 +119,7 @@ export default function AdminLogin() {
           }
 
           toast.success('Welcome, Administrator');
-          navigate('/secret-admin-panel');
+          navigate('/admin-dashboard');
         }
       }
     } catch (error: any) {

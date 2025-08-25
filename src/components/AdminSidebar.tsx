@@ -32,82 +32,31 @@ import {
 const mainSections = [
   {
     title: "Dashboard",
-    url: "/secret-admin-panel",
+    url: "/admin-dashboard",
     icon: LayoutDashboard,
   },
   {
     title: "Designer Verification",
-    url: "/secret-admin-panel/designer-verification",
+    url: "/admin/designer-verification",
     icon: UserCheck,
   },
   {
     title: "Designer Availability",
-    url: "/secret-admin-panel/designer-availability",
+    url: "/admin/designer-availability",
     icon: Calendar,
   },
   {
     title: "Session Control",
-    url: "/secret-admin-panel/session-control",
+    url: "/admin/session-control",
     icon: PlayCircle,
   },
-  {
-    title: "Bookings",
-    url: "/secret-admin-panel/bookings",
-    icon: BookOpen,
-  },
 ];
 
-const generalSections = [
-  {
-    title: "Wallet Management",
-    url: "/secret-admin-panel/wallet-management",
-    icon: Wallet,
-  },
-  {
-    title: "Transactions",
-    url: "/secret-admin-panel/transactions",
-    icon: CreditCard,
-  },
-];
-
-const invoicingSections = [
-  {
-    title: "Invoice Settings",
-    url: "/secret-admin-panel/invoice-settings",
-    icon: Settings,
-  },
-  {
-    title: "Invoice Templates",
-    url: "/secret-admin-panel/invoice-templates",
-    icon: FileText,
-  },
-  {
-    title: "Invoice Features Demo",
-    url: "/secret-admin-panel/invoice-demo",
-    icon: Zap,
-  },
-];
-
-const analyticsSections = [
-  {
-    title: "Analytics Dashboard",
-    url: "/secret-admin-panel/analytics",
-    icon: BarChart3,
-  },
-];
-
-const communicationSections = [
-  {
-    title: "Support Messages",
-    url: "/secret-admin-panel/support-messages",
-    icon: MessageSquare,
-  },
-  {
-    title: "Notifications",
-    url: "/secret-admin-panel/notifications",
-    icon: Bell,
-  },
-];
+// Remove non-existent sections to avoid broken navigation
+const generalSections: any[] = [];
+const invoicingSections: any[] = [];
+const analyticsSections: any[] = [];
+const communicationSections: any[] = [];
 
 export function AdminSidebar() {
   const { state } = useSidebar();
