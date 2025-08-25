@@ -24,7 +24,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 const sidebarItems = [
   { title: "Dashboard", url: "/customer-dashboard", icon: LayoutDashboard },
-  { title: "Find Designer", url: "/designers", icon: Search },
+  { title: "Find Designer", url: "/customer-dashboard/designers", icon: Search },
   { title: "My Bookings", url: "/customer-dashboard/bookings", icon: Calendar },
   { title: "Messages", url: "/customer-dashboard/messages", icon: MessageCircle },
   { title: "Recent Designers", url: "/customer-dashboard/recent-designers", icon: Users },

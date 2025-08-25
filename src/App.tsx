@@ -29,6 +29,7 @@ import CustomerMessages from "./pages/CustomerMessages"
 import CustomerNotifications from "./pages/CustomerNotifications"
 import CustomerSettings from "./pages/CustomerSettings"
 import CustomerRecentDesigners from "./pages/CustomerRecentDesigners"
+import CustomerDesigners from "./pages/CustomerDesigners"
 import DesignerDashboard from "./pages/DesignerDashboard"
 import DesignerProfile from "./pages/DesignerProfile"
 import DesignerPortfolio from "./pages/DesignerPortfolio"
@@ -140,6 +141,11 @@ function AppContent() {
           <Route path="/customer-dashboard/recent-designers" element={
             <ProtectedRoute requireUserType="client">
               <CustomerRecentDesigners />
+            </ProtectedRoute>
+          } />
+          <Route path="/customer-dashboard/designers" element={
+            <ProtectedRoute requireUserType="client">
+              <CustomerDesigners />
             </ProtectedRoute>
           } />
           

@@ -243,7 +243,7 @@ export default function CustomerDashboard() {
           <div className="p-6 space-y-8">
             {/* Quick Actions */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Link to="/designers" className="group">
+              <Link to="/customer-dashboard/designers" className="group">
                 <div className="relative overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl p-6 h-32 transition-all duration-300 hover:scale-105 hover:shadow-xl animate-fade-in">
                   <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full"></div>
                   <div className="relative z-10 flex flex-col justify-between h-full text-white">
