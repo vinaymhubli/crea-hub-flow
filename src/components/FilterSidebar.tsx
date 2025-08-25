@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FilterState } from '../pages/Designers';
 
 interface FilterSidebarProps {
@@ -11,7 +11,6 @@ interface FilterSidebarProps {
 
 const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFiltersChange, categories, skills }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
-
 
   const toggleSkill = (skill: string) => {
     const newSkills = filters.selectedSkills.includes(skill)
@@ -46,6 +45,19 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFiltersChange,
                           filters.isOnlineOnly ||
                           filters.isAvailableNow;
 
+  const handlePriceRangeChange = (value: number) => {
+    onFiltersChange({ ...filters, priceRange: [filters.priceRange[0], value] });
+  };
+
+  const handleRatingChange = (rating: number) => {
+    const newRating = filters.selectedRating === rating ? null : rating;
+    onFiltersChange({ ...filters, selectedRating: newRating });
+  };
+
+  const handleAvailabilityChange = (type: 'isOnlineOnly' | 'isAvailableNow', checked: boolean) => {
+    onFiltersChange({ ...filters, [type]: checked });
+  };
+
   return (
     <div className="bg-card rounded-2xl shadow-sm border border-border sticky top-6 overflow-hidden">
       <div className="p-6 border-b border-border">
@@ -68,7 +80,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFiltersChange,
             </span>
             <button
               onClick={clearAllFilters}
-              className="text-sm text-muted-foreground hover:text-foreground"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Clear all
             </button>
@@ -78,6 +90,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFiltersChange,
       
       <div className={`${isCollapsed ? 'hidden' : 'block'} lg:block`}>
         <div className="p-6 space-y-8">
+          {/* Price Range */}
           <div>
             <h4 className="font-medium text-foreground mb-4 flex items-center space-x-2">
               <span>💰</span>
@@ -98,13 +111,17 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFiltersChange,
                   min="0"
                   max="200"
                   value={filters.priceRange[1]}
-                  onChange={(e) => onFiltersChange({ ...filters, priceRange: [filters.priceRange[0], parseInt(e.target.value)] })}
-                  className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer"
+                  onChange={(e) => handlePriceRangeChange(parseInt(e.target.value))}
+                  className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer slider"
+                  style={{
+                    background: `linear-gradient(to right, #10b981 0%, #10b981 ${(filters.priceRange[1] / 200) * 100}%, #e5e7eb ${(filters.priceRange[1] / 200) * 100}%, #e5e7eb 100%)`
+                  }}
                 />
               </div>
             </div>
           </div>
 
+          {/* Categories */}
           <div>
             <h4 className="font-medium text-foreground mb-4 flex items-center space-x-2">
               <span>📂</span>
@@ -130,6 +147,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFiltersChange,
             </div>
           </div>
 
+          {/* Skills */}
           <div>
             <h4 className="font-medium text-foreground mb-4 flex items-center space-x-2">
               <span>🛠️</span>
@@ -152,6 +170,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFiltersChange,
             </div>
           </div>
 
+          {/* Rating */}
           <div>
             <h4 className="font-medium text-foreground mb-4 flex items-center space-x-2">
               <span>⭐</span>
@@ -165,7 +184,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFiltersChange,
                     name="rating"
                     value={rating}
                     checked={filters.selectedRating === rating}
-                    onChange={() => onFiltersChange({ ...filters, selectedRating: rating })}
+                    onChange={() => handleRatingChange(rating)}
                     className="w-4 h-4 text-green-600 border-border focus:ring-green-500"
                   />
                   <div className="ml-3 flex items-center space-x-2">
@@ -181,13 +200,14 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFiltersChange,
                         </span>
                       ))}
                     </div>
-                    <span className="text-sm text-foreground">& up ({rating === 5 ? '12' : rating === 4 ? '28' : '45'} designers)</span>
+                    <span className="text-sm text-foreground">& up</span>
                   </div>
                 </label>
               ))}
             </div>
           </div>
 
+          {/* Availability */}
           <div>
             <h4 className="font-medium text-foreground mb-4 flex items-center space-x-2">
               <span>🟢</span>
@@ -198,7 +218,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFiltersChange,
                 <input 
                   type="checkbox" 
                   checked={filters.isAvailableNow}
-                  onChange={(e) => onFiltersChange({ ...filters, isAvailableNow: e.target.checked })}
+                  onChange={(e) => handleAvailabilityChange('isAvailableNow', e.target.checked)}
                   className="w-4 h-4 text-green-600 border-border rounded focus:ring-green-500" 
                 />
                 <div className="ml-3 flex items-center space-x-2">
@@ -210,27 +230,13 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFiltersChange,
                 <input 
                   type="checkbox" 
                   checked={filters.isOnlineOnly}
-                  onChange={(e) => onFiltersChange({ ...filters, isOnlineOnly: e.target.checked })}
+                  onChange={(e) => handleAvailabilityChange('isOnlineOnly', e.target.checked)}
                   className="w-4 h-4 text-green-600 border-border rounded focus:ring-green-500" 
                 />
                 <span className="ml-3 text-sm text-foreground">Online now</span>
               </label>
             </div>
           </div>
-        </div>
-
-        <div className="p-6 border-t border-border bg-muted">
-          <button className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-3 rounded-xl font-medium hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-sm">
-            Apply Filters
-          </button>
-          {hasActiveFilters && (
-            <button 
-              onClick={clearAllFilters}
-              className="w-full mt-3 text-muted-foreground py-2 font-medium hover:text-foreground transition-colors"
-            >
-              Reset All Filters
-            </button>
-          )}
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { BookingDialog } from './BookingDialog';
@@ -24,12 +24,18 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
     { value: 'created_at', label: 'Newest' }
   ];
 
-  useEffect(() => {
-    fetchDesigners();
-  }, [sortBy, filters]);
+  // Debounced filter function
+  const debounce = (func: Function, wait: number) => {
+    let timeout: NodeJS.Timeout;
+    return (...args: any[]) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(null, args), wait);
+    };
+  };
 
-  const fetchDesigners = async () => {
+  const fetchDesigners = useCallback(async () => {
     try {
+      console.log('Fetching designers with filters:', filters);
       setLoading(true);
       
       // If categories are selected, first get designers who have services in those categories
@@ -59,8 +65,6 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
       if (designerIds.length > 0) {
         query = query.in('id', designerIds);
       }
-
-      // Skip DB-side search filter for profiles - will apply client-side later
 
       // Apply price filter
       if (filters.priceRange[1] < 200) {
@@ -93,6 +97,8 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
       
       if (error) throw error;
       
+      console.log('Fetched designers:', data?.length || 0);
+      
       // Fetch profiles for each designer
       const designersWithProfiles = await Promise.all(
         (data || []).map(async (designer) => {
@@ -112,21 +118,22 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
       // Apply client-side filters
       let filteredData = designersWithProfiles;
       
-      // Apply search filter client-side
+      // Apply search filter client-side with improved matching
       if (filters.searchTerm) {
+        const searchLower = filters.searchTerm.toLowerCase();
         filteredData = filteredData.filter(designer => {
-          const searchLower = filters.searchTerm.toLowerCase();
+          const fullName = `${designer.profiles?.first_name || ''} ${designer.profiles?.last_name || ''}`.toLowerCase();
           return (
             designer.specialty?.toLowerCase().includes(searchLower) ||
             designer.bio?.toLowerCase().includes(searchLower) ||
-            designer.profiles?.first_name?.toLowerCase().includes(searchLower) ||
-            designer.profiles?.last_name?.toLowerCase().includes(searchLower) ||
+            fullName.includes(searchLower) ||
             designer.profiles?.email?.toLowerCase().includes(searchLower) ||
             designer.skills?.some(skill => skill.toLowerCase().includes(searchLower))
           );
         });
       }
       
+      // Apply skills filter
       if (filters.selectedSkills.length > 0) {
         filteredData = filteredData.filter(designer => 
           designer.skills && filters.selectedSkills.some(skill => 
@@ -135,6 +142,7 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
         );
       }
 
+      console.log('Filtered designers:', filteredData.length);
       setDesigners(filteredData);
     } catch (error) {
       console.error('Error fetching designers:', error);
@@ -142,12 +150,85 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, sortBy]);
+
+  // Debounced version of fetchDesigners
+  const debouncedFetchDesigners = useCallback(
+    debounce(fetchDesigners, 300),
+    [fetchDesigners]
+  );
+
+  // Initial load
+  useEffect(() => {
+    fetchDesigners();
+  }, []);
+
+  // Debounced updates for filter changes
+  useEffect(() => {
+    if (filters.searchTerm !== '') {
+      debouncedFetchDesigners();
+    } else {
+      fetchDesigners();
+    }
+  }, [filters, debouncedFetchDesigners, fetchDesigners]);
+
+  // Real-time updates
+  useEffect(() => {
+    console.log('Setting up real-time subscriptions...');
+    
+    const designersChannel = supabase
+      .channel('designers-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'designers'
+        },
+        (payload) => {
+          console.log('Designers table changed:', payload);
+          fetchDesigners();
+        }
+      )
+      .subscribe();
+
+    const servicesChannel = supabase
+      .channel('services-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'services'
+        },
+        (payload) => {
+          console.log('Services table changed:', payload);
+          fetchDesigners();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('Cleaning up real-time subscriptions...');
+      supabase.removeChannel(designersChannel);
+      supabase.removeChannel(servicesChannel);
+    };
+  }, [fetchDesigners]);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+      </div>
+    );
+  }
+
+  if (designers.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <div className="text-6xl mb-4">🔍</div>
+        <h3 className="text-xl font-semibold text-foreground mb-2">No designers found</h3>
+        <p className="text-muted-foreground">Try adjusting your filters or search terms</p>
       </div>
     );
   }
