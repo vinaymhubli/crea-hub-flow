@@ -19,10 +19,14 @@ export default function Header() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const getDesignersLink = () => {
+    return profile?.user_type === 'client' ? '/customer-dashboard/designers' : '/designers';
+  };
+
   const navigationItems = [
     { name: 'Home', href: '/' },
     { name: 'About', href: '/about' },
-    { name: 'Designers', href: '/designers' },
+    { name: 'Designers', href: getDesignersLink() },
     { name: 'Services', href: '/services' },
     { name: 'How It Works', href: '/how-to-use' },
     { name: 'Contact', href: '/contact' },

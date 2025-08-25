@@ -1,8 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
 import DesignerGrid from '../components/DesignerGrid';
 import FilterSidebar from '../components/FilterSidebar';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface FilterState {
   searchTerm: string;
@@ -15,6 +17,7 @@ export interface FilterState {
 }
 
 const Designers = () => {
+  const { user, profile, loading } = useAuth();
   const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<FilterState>({
@@ -28,6 +31,11 @@ const Designers = () => {
   });
   const [categories, setCategories] = useState<Array<{ name: string; count: number }>>([]);
   const [skills, setSkills] = useState<string[]>([]);
+
+  // Redirect clients to dashboard version
+  if (!loading && user && profile?.user_type === 'client') {
+    return <Navigate to="/customer-dashboard/designers" replace />;
+  }
 
   useEffect(() => {
     fetchFiltersData();
