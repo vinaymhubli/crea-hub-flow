@@ -320,17 +320,17 @@ export default function DesignerMessages() {
                 <Popover>
                   <PopoverTrigger asChild>
                     <button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
-                      <span className="text-white font-semibold text-sm">VB</span>
+                      <span className="text-white font-semibold text-xs">MD</span>
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-64 p-0" align="end">
                     <div className="p-4">
                       <div className="flex items-center space-x-3 mb-3">
                         <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                          <span className="text-primary font-semibold text-sm">VB</span>
+                          <span className="text-primary font-semibold text-xs">MD</span>
                         </div>
                         <div>
-                          <p className="font-semibold text-foreground">Vb Bn</p>
+                          <p className="font-semibold text-foreground">Meet My Designer</p>
                           <p className="text-sm text-muted-foreground">lvbn200@gmail.com</p>
                         </div>
                       </div>

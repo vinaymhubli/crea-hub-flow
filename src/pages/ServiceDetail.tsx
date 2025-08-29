@@ -88,6 +88,8 @@ export default function ServiceDetail() {
 
   const fetchService = async () => {
     try {
+      setLoading(true);
+      
       const { data, error } = await supabase
         .from('services')
         .select(`
@@ -114,6 +116,21 @@ export default function ServiceDetail() {
         .single();
 
       if (error) {
+        console.error('Error fetching service:', error);
+        if (error.code === 'PGRST116') {
+          // No rows returned - service not found
+          toast.error('Service not found');
+          navigate('/services');
+          return;
+        } else {
+          // Other database error
+          toast.error('Failed to load service details');
+          navigate('/services');
+          return;
+        }
+      }
+
+      if (!data) {
         toast.error('Service not found');
         navigate('/services');
         return;
@@ -122,11 +139,11 @@ export default function ServiceDetail() {
       // Transform the data to match our interface
       const transformedService: ServiceDetail = {
         ...data,
-        packages: data.service_packages.map((pkg: any) => ({
+        packages: data.service_packages?.map((pkg: any) => ({
           ...pkg,
           tier: pkg.tier as 'basic' | 'standard' | 'premium'
-        })),
-        service_faqs: data.service_faqs.map((faq: any) => ({
+        })) || [],
+        service_faqs: data.service_faqs?.map((faq: any) => ({
           ...faq,
           updated_at: faq.updated_at || faq.created_at // Fallback to created_at if updated_at is missing
         })) || [],

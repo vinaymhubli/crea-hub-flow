@@ -19,7 +19,7 @@ const AboutHero = () => {
           <span className="block text-green-600">Collaboration</span>
         </h1>
         <p className="text-xl md:text-2xl text-gray-600 mb-8 leading-relaxed">
-          We're building India's first real-time design platform that connects visionary clients with world-class designers for seamless creative collaboration.
+          We're building a revolutionary real-time design platform that connects visionary clients with world-class designers for seamless creative collaboration worldwide.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
           <div className="flex items-center space-x-2 text-green-600">

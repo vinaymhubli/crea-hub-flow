@@ -58,10 +58,10 @@ function DesignerSidebar() {
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-white font-semibold text-sm">VB</span>
+              <span className="text-white font-semibold text-xs">MD</span>
             </div>
             <div>
-              <p className="font-semibold text-gray-900">Vb Bn</p>
+              <p className="font-semibold text-gray-900">Meet My Designer</p>
               <p className="text-sm text-gray-500">Designer</p>
             </div>
           </div>

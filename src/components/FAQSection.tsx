@@ -16,7 +16,7 @@ export default function FAQSection() {
       {
         id: 'what-is-platform',
         question: 'What is our design platform?',
-        answer: 'We are India\'s first real-time design collaboration platform that connects customers with talented designers instantly. Our platform enables live collaboration, secure payments, and seamless project management all in one place.'
+        answer: 'We are a revolutionary real-time design collaboration platform that connects customers with talented designers instantly. Our platform enables live collaboration, secure payments, and seamless project management.',
       },
       {
         id: 'how-it-works',

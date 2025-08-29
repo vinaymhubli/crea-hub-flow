@@ -6,9 +6,11 @@ const StorySection = () => {
     <section className="py-20 bg-gradient-to-br from-gray-50 to-green-50">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-gray-900 mb-6">Our Story</h2>
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+            From a simple idea to a leading design collaboration platform
+          </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            From a simple idea to India's leading design collaboration platform
+            From a simple idea to a leading design collaboration platform
           </p>
         </div>
 
@@ -41,7 +43,7 @@ const StorySection = () => {
             </div>
             <h3 className="text-3xl font-bold text-gray-900 mb-6">Scaling New Heights</h3>
             <p className="text-lg text-gray-600 mb-6 leading-relaxed">
-              Today, we're proud to serve over 10,000 satisfied clients and work with more than 5,000 talented designers across India and beyond. Our platform has facilitated over 50,000 successful design projects, from simple logos to complex brand identities.
+              Today, we're proud to serve over 10,000 satisfied clients and work with more than 5,000 talented designers worldwide. Our platform has facilitated over 50,000 successful design projects, from simple logos to complex brand identities.
             </p>
             <p className="text-lg text-gray-600 leading-relaxed">
               We've built advanced collaboration tools, AI-powered matching algorithms, and quality assurance systems that make design collaboration seamless and efficient. But we're just getting started.
