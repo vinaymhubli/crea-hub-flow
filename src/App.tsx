@@ -46,6 +46,10 @@ import NotFound from "./pages/NotFound"
 import { ProtectedRoute } from "./components/ProtectedRoute"
 import { ProtectedAdminRoute } from "./components/ProtectedAdminRoute"
 import { AdminLayout } from "./components/AdminLayout"
+import GeneralSettings from "./pages/admin/GeneralSettings";
+import Invoicing from "./pages/admin/Invoicing";
+import Analytics from "./pages/admin/Analytics";
+import Communications from "./pages/admin/Communications";
 import Header from "./components/Header"
 import Footer from "./components/Footer"
 import "./App.css"
@@ -108,6 +112,42 @@ function AppContent() {
             <ProtectedAdminRoute>
               <AdminLayout>
                 <AdminDesignerAvailability />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          
+          {/* General Settings */}
+          <Route path="/admin/general-settings" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <GeneralSettings />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          
+          {/* Invoicing */}
+          <Route path="/admin/invoicing" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <Invoicing />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          
+          {/* Analytics */}
+          <Route path="/admin/analytics" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <Analytics />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          
+          {/* Communications */}
+          <Route path="/admin/communications" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <Communications />
               </AdminLayout>
             </ProtectedAdminRoute>
           } />

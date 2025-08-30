@@ -52,11 +52,41 @@ const mainSections = [
   },
 ];
 
-// Remove non-existent sections to avoid broken navigation
-const generalSections: any[] = [];
-const invoicingSections: any[] = [];
-const analyticsSections: any[] = [];
-const communicationSections: any[] = [];
+// General section items
+const generalSections = [
+  {
+    title: "General Settings",
+    url: "/admin/general-settings",
+    icon: Settings,
+  },
+];
+
+// Invoicing section items
+const invoicingSections = [
+  {
+    title: "Invoicing",
+    url: "/admin/invoicing",
+    icon: CreditCard,
+  },
+];
+
+// Analytics section items
+const analyticsSections = [
+  {
+    title: "Analytics",
+    url: "/admin/analytics",
+    icon: BarChart3,
+  },
+];
+
+// Communications section items
+const communicationSections = [
+  {
+    title: "Communications",
+    url: "/admin/communications",
+    icon: MessageSquare,
+  },
+];
 
 export function AdminSidebar() {
   const { state } = useSidebar();
