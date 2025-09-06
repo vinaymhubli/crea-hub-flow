@@ -10,7 +10,8 @@ import {
   Phone,
   Video,
   Info,
-  MoreVertical
+  MoreVertical,
+  Monitor
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
@@ -27,6 +28,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { ScreenShareModal } from "@/components/ScreenShareModal";
 
 interface Message {
   id: string;
@@ -62,6 +64,12 @@ export default function CustomerMessages() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
+  const [showScreenShare, setShowScreenShare] = useState(false);
+  const [screenShareNotification, setScreenShareNotification] = useState<{
+    show: boolean;
+    designerName: string;
+    roomId: string;
+  }>({ show: false, designerName: '', roomId: '' });
   const { user } = useAuth();
 
   const designerId = searchParams.get('designer_id');
@@ -79,6 +87,7 @@ export default function CustomerMessages() {
     if (selectedConversation) {
       fetchMessages(selectedConversation.conversation_id || selectedConversation.booking_id || '');
       cleanup = setupRealtimeSubscription(selectedConversation.conversation_id || selectedConversation.booking_id || '');
+      setupScreenShareNotification(selectedConversation.conversation_id || selectedConversation.booking_id || '');
     }
     
     return () => {
@@ -489,6 +498,40 @@ export default function CustomerMessages() {
     };
   };
 
+  const setupScreenShareNotification = (roomId: string) => {
+    if (!selectedConversation) return;
+
+    const channel = supabase
+      .channel(`screen-share-${roomId}`)
+      .on('broadcast', { event: 'offer' }, (payload) => {
+        if (payload.payload.roomId === roomId) {
+          console.log('Screen share started by designer');
+          setScreenShareNotification({
+            show: true,
+            designerName: selectedConversation.designer_name,
+            roomId: roomId
+          });
+        }
+      })
+      .on('broadcast', { event: 'screen-share-ended' }, (payload) => {
+        if (payload.payload.roomId === roomId) {
+          console.log('Screen share ended by designer');
+          setScreenShareNotification(prev => ({ ...prev, show: false }));
+          setShowScreenShare(false);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
+
+  const joinScreenShare = () => {
+    setShowScreenShare(true);
+    setScreenShareNotification(prev => ({ ...prev, show: false }));
+  };
+
   const filteredConversations = conversations.filter(conv =>
     conv.designer_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -763,6 +806,47 @@ export default function CustomerMessages() {
           </div>
         </main>
       </div>
+
+      {/* Screen Share Notification */}
+      {screenShareNotification.show && (
+        <div className="fixed top-4 right-4 z-50 bg-white border border-primary/20 rounded-lg shadow-lg p-4 max-w-sm">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Monitor className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="font-semibold text-sm">Screen Share Started</h4>
+              <p className="text-xs text-muted-foreground mt-1">
+                {screenShareNotification.designerName} is sharing their screen
+              </p>
+              <div className="flex gap-2 mt-3">
+                <Button size="sm" onClick={joinScreenShare} className="text-xs">
+                  View Screen
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  onClick={() => setScreenShareNotification(prev => ({ ...prev, show: false }))}
+                  className="text-xs"
+                >
+                  Dismiss
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Screen Share Modal */}
+      {selectedConversation && (
+        <ScreenShareModal
+          isOpen={showScreenShare}
+          onClose={() => setShowScreenShare(false)}
+          roomId={selectedConversation.conversation_id || selectedConversation.booking_id || ''}
+          isHost={false}
+          participantName={selectedConversation.designer_name}
+        />
+      )}
     </SidebarProvider>
   );
 }

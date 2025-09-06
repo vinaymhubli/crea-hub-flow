@@ -9,7 +9,8 @@ import {
   LayoutDashboard,
   User,
   DollarSign,
-  Clock
+  Clock,
+  Monitor
 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
@@ -28,6 +29,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
+import { ScreenShareModal } from "@/components/ScreenShareModal";
 
 
 interface Message {
@@ -63,6 +65,7 @@ export default function DesignerMessages() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [designerId, setDesignerId] = useState<string | null>(null);
+  const [showScreenShare, setShowScreenShare] = useState(false);
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
 
@@ -604,9 +607,20 @@ export default function DesignerMessages() {
                             <p className="text-white/80 text-sm">Project: {selectedConversation.service}</p>
                           </div>
                         </div>
-                        <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
-                          <MoreVertical className="w-4 h-4" />
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-white hover:bg-white/20 gap-2"
+                            onClick={() => setShowScreenShare(true)}
+                          >
+                            <Monitor className="w-4 h-4" />
+                            Share Screen
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     </CardHeader>
 
@@ -700,6 +714,16 @@ export default function DesignerMessages() {
           </div>
         </main>
       </div>
+      
+      {selectedConversation && (
+        <ScreenShareModal
+          isOpen={showScreenShare}
+          onClose={() => setShowScreenShare(false)}
+          roomId={selectedConversation.conversation_id || selectedConversation.booking_id || ''}
+          isHost={true}
+          participantName={selectedConversation.customer_name}
+        />
+      )}
     </SidebarProvider>
   );
 }
