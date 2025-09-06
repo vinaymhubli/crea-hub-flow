@@ -37,21 +37,21 @@ const Footer = () => {
             <h3 className="text-lg font-semibold mb-6">For Clients</h3>
             <ul className="space-y-4">
               <li><Link to="/designers" className="text-gray-400 hover:text-green-400 transition-colors">Browse Designers</Link></li>
-              <li><a href="/how-it-works" className="text-gray-400 hover:text-green-400 transition-colors">How It Works</a></li>
-              <li><a href="/pricing" className="text-gray-400 hover:text-green-400 transition-colors">Pricing</a></li>
-              <li><a href="/success-stories" className="text-gray-400 hover:text-green-400 transition-colors">Success Stories</a></li>
-              <li><a href="/support" className="text-gray-400 hover:text-green-400 transition-colors">Support</a></li>
+              <li><Link to="/how-to-use" className="text-gray-400 hover:text-green-400 transition-colors">How It Works</Link></li>
+              <li><Link to="/pricing" className="text-gray-400 hover:text-green-400 transition-colors">Pricing</Link></li>
+              <li><Link to="/success-stories" className="text-gray-400 hover:text-green-400 transition-colors">Success Stories</Link></li>
+              <li><Link to="/support" className="text-gray-400 hover:text-green-400 transition-colors">Support</Link></li>
             </ul>
           </div>
 
           <div>
             <h3 className="text-lg font-semibold mb-6">For Designers</h3>
             <ul className="space-y-4">
-              <li><a href="/for-designers" className="text-gray-400 hover:text-green-400 transition-colors">Join as Designer</a></li>
-              <li><a href="/designer-resources" className="text-gray-400 hover:text-green-400 transition-colors">Resources</a></li>
-              <li><a href="/designer-community" className="text-gray-400 hover:text-green-400 transition-colors">Community</a></li>
-              <li><a href="/designer-help" className="text-gray-400 hover:text-green-400 transition-colors">Help Center</a></li>
-              <li><a href="/designer-blog" className="text-gray-400 hover:text-green-400 transition-colors">Blog</a></li>
+              <li><Link to="/for-designers" className="text-gray-400 hover:text-green-400 transition-colors">Join as Designer</Link></li>
+              <li><Link to="/designer-resources" className="text-gray-400 hover:text-green-400 transition-colors">Resources</Link></li>
+              <li><Link to="/designer-community" className="text-gray-400 hover:text-green-400 transition-colors">Community</Link></li>
+              <li><Link to="/designer-help" className="text-gray-400 hover:text-green-400 transition-colors">Help Center</Link></li>
+              <li><Link to="/blog" className="text-gray-400 hover:text-green-400 transition-colors">Blog</Link></li>
             </ul>
           </div>
 
@@ -59,10 +59,10 @@ const Footer = () => {
             <h3 className="text-lg font-semibold mb-6">Company</h3>
             <ul className="space-y-4">
               <li><Link to="/about" className="text-gray-400 hover:text-green-400 transition-colors">About Us</Link></li>
-              <li><a href="/careers" className="text-gray-400 hover:text-green-400 transition-colors">Careers</a></li>
-              <li><a href="/contact" className="text-gray-400 hover:text-green-400 transition-colors">Contact</a></li>
-              <li><a href="/privacy" className="text-gray-400 hover:text-green-400 transition-colors">Privacy Policy</a></li>
-              <li><a href="/terms" className="text-gray-400 hover:text-green-400 transition-colors">Terms of Service</a></li>
+              <li><Link to="/careers" className="text-gray-400 hover:text-green-400 transition-colors">Careers</Link></li>
+              <li><Link to="/contact" className="text-gray-400 hover:text-green-400 transition-colors">Contact</Link></li>
+              <li><Link to="/privacy" className="text-gray-400 hover:text-green-400 transition-colors">Privacy Policy</Link></li>
+              <li><Link to="/terms" className="text-gray-400 hover:text-green-400 transition-colors">Terms of Service</Link></li>
             </ul>
           </div>
         </div>

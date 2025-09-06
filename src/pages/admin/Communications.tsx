@@ -64,11 +64,18 @@ export default function Communications() {
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
   const [showTemplates, setShowTemplates] = useState(false);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    title: string;
+    message: string;
+    type: 'info' | 'warning' | 'success' | 'error';
+    target: 'all' | 'designers' | 'clients' | 'admins';
+    is_active: boolean;
+    scheduled_for: string;
+  }>({
     title: '',
     message: '',
-    type: 'info' as const,
-    target: 'all' as const,
+    type: 'info',
+    target: 'all',
     is_active: true,
     scheduled_for: ''
   });
@@ -219,7 +226,14 @@ export default function Communications() {
         if (error) throw error;
 
         if (data) {
-          setAnnouncements([data, ...announcements]);
+          const newAnnouncement: Announcement = {
+            ...data,
+            type: data.type as 'info' | 'warning' | 'success' | 'error',
+            target: data.target as 'all' | 'designers' | 'clients' | 'admins',
+            sent_count: 0,
+            read_count: 0
+          };
+          setAnnouncements([newAnnouncement, ...announcements]);
           toast.success('Announcement created successfully!');
         }
       }

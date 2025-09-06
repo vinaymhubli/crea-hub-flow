@@ -43,6 +43,17 @@ import DesignerServices from "./pages/DesignerServices"
 import CallSession from "./pages/CallSession"
 import AIAssistant from "./pages/AIAssistant"
 import NotFound from "./pages/NotFound"
+import Pricing from "./pages/Pricing"
+import SuccessStories from "./pages/SuccessStories"
+import Support from "./pages/Support"
+import ForDesigners from "./pages/ForDesigners"
+import DesignerResources from "./pages/DesignerResources"
+import DesignerCommunity from "./pages/DesignerCommunity"
+import DesignerHelp from "./pages/DesignerHelp"
+import Blog from "./pages/Blog"
+import Careers from "./pages/Careers"
+import Privacy from "./pages/Privacy"
+import Terms from "./pages/Terms"
 import { ProtectedRoute } from "./components/ProtectedRoute"
 import { ProtectedAdminRoute } from "./components/ProtectedAdminRoute"
 import { AdminLayout } from "./components/AdminLayout"
@@ -85,6 +96,19 @@ function AppContent() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/admin-login" element={<AdminLogin />} />
           <Route path="/ai-assistant" element={<AIAssistant />} />
+          
+          {/* New Footer Pages */}
+          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/success-stories" element={<SuccessStories />} />
+          <Route path="/support" element={<Support />} />
+          <Route path="/for-designers" element={<ForDesigners />} />
+          <Route path="/designer-resources" element={<DesignerResources />} />
+          <Route path="/designer-community" element={<DesignerCommunity />} />
+          <Route path="/designer-help" element={<DesignerHelp />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/careers" element={<Careers />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
           
           {/* Protected Admin Routes */}
           <Route path="/admin-dashboard" element={
