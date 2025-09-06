@@ -18,11 +18,17 @@ export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Check if user is already logged in
+  // Check if user is already logged in - but allow manual override
   useEffect(() => {
+    // Only auto-redirect if coming from another page, not if directly visiting /auth
+    if (window.location.pathname === '/auth' && !document.referrer.includes(window.location.origin)) {
+      return; // Don't auto-redirect when directly visiting /auth
+    }
+    
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
+        console.log('User already logged in, redirecting...');
         // Redirect based on user role
         const { data: profile } = await supabase
           .from('profiles')
@@ -87,7 +93,13 @@ export default function Auth() {
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
+    console.log('Auth page sign in attempt for:', email);
+
     try {
+      // Clear any existing session first
+      await supabase.auth.signOut({ scope: 'global' });
+      localStorage.removeItem('sb-tndeiiosfbtyzmcwllbx-auth-token');
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -96,6 +108,7 @@ export default function Auth() {
       if (error) throw error;
 
       if (data.user) {
+        console.log('Sign in successful for:', data.user.email);
         // Get user role and redirect accordingly
         const { data: profile } = await supabase
           .from('profiles')
@@ -104,12 +117,13 @@ export default function Auth() {
           .single();
         
         if (profile?.role === 'designer' || profile?.user_type === 'designer') {
-          navigate('/designer-dashboard');
+          navigate('/designer-dashboard', { replace: true });
         } else {
-          navigate('/customer-dashboard');
+          navigate('/customer-dashboard', { replace: true });
         }
       }
     } catch (error: any) {
+      console.error('Auth page sign in error:', error);
       setError(error.message);
     } finally {
       setLoading(false);

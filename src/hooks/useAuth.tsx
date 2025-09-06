@@ -161,11 +161,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      // Clean up existing state
+      console.log('Starting sign in for:', email);
+      
+      // Clean up existing state first
+      setUser(null);
+      setSession(null);
+      setProfile(null);
+      
+      // Clear any existing session to prevent conflicts
       try {
         await supabase.auth.signOut({ scope: 'global' });
+        localStorage.removeItem('sb-tndeiiosfbtyzmcwllbx-auth-token');
       } catch (err) {
-        // Continue even if this fails
+        console.log('Cleanup error (continuing):', err);
       }
 
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -174,26 +182,45 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       });
 
       if (error) {
+        console.error('Sign in error:', error);
         return { error };
       }
 
-      // Let the auth state change handler take care of redirects
+      console.log('Sign in successful for user:', data.user?.email);
+      // Let the auth state change handler take care of the rest
       return { error: null };
     } catch (error) {
+      console.error('Unexpected sign in error:', error);
       return { error: error as AuthError };
     }
   };
 
   const signOut = async () => {
     try {
-      await supabase.auth.signOut({ scope: 'global' });
+      console.log('Starting sign out process...');
+      
+      // Clear local state first
       setUser(null);
       setSession(null);
       setProfile(null);
-      // Force page reload for clean state
+      
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      if (error) {
+        console.error('Supabase signOut error:', error);
+      }
+      
+      // Clear localStorage manually as backup
+      localStorage.removeItem('sb-tndeiiosfbtyzmcwllbx-auth-token');
+      
+      console.log('Sign out completed, redirecting to home...');
+      
+      // Use navigate instead of window.location for better UX
       window.location.href = '/';
     } catch (error) {
       console.error('Error signing out:', error);
+      // Still redirect even if signout fails
+      window.location.href = '/';
     }
   };
 

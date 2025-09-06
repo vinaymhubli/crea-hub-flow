@@ -34,10 +34,13 @@ export default function Header() {
 
   const handleSignOut = async () => {
     try {
+      console.log('Header sign out clicked');
       await signOut();
-      navigate('/');
+      // Don't navigate here, let signOut handle the redirect
     } catch (error) {
       console.error('Error signing out:', error);
+      // Fallback redirect
+      navigate('/');
     }
   };
 
