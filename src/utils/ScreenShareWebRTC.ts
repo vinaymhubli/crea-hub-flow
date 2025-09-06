@@ -38,6 +38,7 @@ export class ScreenShareManager {
       console.log('Received remote stream');
       if (this.remoteVideoElement && event.streams[0]) {
         this.remoteVideoElement.srcObject = event.streams[0];
+        this.remoteVideoElement.play().catch(console.error);
       }
     };
 
@@ -122,19 +123,6 @@ export class ScreenShareManager {
     this.remoteVideoElement = remoteVideoElement;
     this.setupRealtimeChannel();
 
-    // Request the host to send an offer (in case we joined late)
-    setTimeout(() => {
-      if (this.channel) {
-        console.log('Requesting offer from host...');
-        this.channel.send({
-          type: 'broadcast',
-          event: 'request-offer',
-          payload: {
-            roomId: this.roomId
-          }
-        });
-      }
-    }, 1000); // Small delay to ensure channel is subscribed
   }
 
   private setupRealtimeChannel() {
@@ -171,7 +159,15 @@ export class ScreenShareManager {
           await this.resendOffer();
         }
       })
-      .subscribe();
+      .subscribe(async (status) => {
+        console.log('Channel subscription status:', status);
+        
+        // If we're a viewer and channel is ready, request offer
+        if (!this.isHost && status === 'SUBSCRIBED') {
+          console.log('Channel subscribed, requesting offer from host...');
+          await this.requestOffer();
+        }
+      });
   }
 
   private async handleOffer(offer: RTCSessionDescriptionInit) {
@@ -210,6 +206,19 @@ export class ScreenShareManager {
     } catch (error) {
       console.error('Error adding ICE candidate:', error);
     }
+  }
+
+  private async requestOffer(): Promise<void> {
+    if (!this.channel) return;
+    
+    console.log('Requesting offer from host...');
+    this.channel.send({
+      type: 'broadcast',
+      event: 'request-offer',
+      payload: {
+        roomId: this.roomId
+      }
+    });
   }
 
   private async resendOffer(): Promise<void> {

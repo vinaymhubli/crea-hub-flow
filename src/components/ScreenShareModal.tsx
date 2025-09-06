@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Monitor, MonitorSpeaker, X, Users, Wifi, WifiOff } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -102,9 +102,9 @@ export function ScreenShareModal({
                 <DialogTitle className="text-xl">
                   {isHost ? 'Share Your Screen' : `${participantName}'s Screen`}
                 </DialogTitle>
-                <p className="text-sm text-muted-foreground">
+                <DialogDescription>
                   {isHost ? 'Share your screen with the participant' : 'Viewing shared screen'}
-                </p>
+                </DialogDescription>
               </div>
             </div>
             
@@ -168,6 +168,7 @@ export function ScreenShareModal({
                 ref={remoteVideoRef}
                 autoPlay
                 playsInline
+                muted
                 className="w-full h-full object-contain"
                 style={{ background: '#000' }}
               />
