@@ -506,11 +506,13 @@ export default function CustomerMessages() {
   const setupScreenShareNotification = (roomId: string) => {
     if (!selectedConversation) return;
 
+    console.log('🎬 Setting up screen share notification for room:', roomId);
+    
     const channel = supabase
       .channel(`screen-share-${roomId}`)
       .on('broadcast', { event: 'offer' }, (payload) => {
         if (payload.payload.roomId === roomId) {
-          console.log('Screen share started by designer');
+          console.log('📺 Screen share started by designer:', selectedConversation.designer_name);
           setIsScreenShareActive(true);
           setScreenShareNotification({
             show: true,
@@ -521,15 +523,18 @@ export default function CustomerMessages() {
       })
       .on('broadcast', { event: 'screen-share-ended' }, (payload) => {
         if (payload.payload.roomId === roomId) {
-          console.log('Screen share ended by designer');
+          console.log('📺 Screen share ended by designer');
           setIsScreenShareActive(false);
           setScreenShareNotification(prev => ({ ...prev, show: false }));
           setShowScreenShare(false);
         }
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log('🔌 Screen share notification channel status:', status);
+      });
 
     return () => {
+      console.log('🧹 Cleaning up screen share notification channel');
       supabase.removeChannel(channel);
     };
   };

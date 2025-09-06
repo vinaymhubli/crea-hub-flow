@@ -14,6 +14,8 @@ export class ScreenShareManager {
   private senderId: string;
   private offerRequestInterval: number | null = null;
   private bufferedStream: MediaStream | null = null;
+  private diagnosticsInterval?: NodeJS.Timeout;
+  private iceFailureTimeout?: NodeJS.Timeout;
 
   constructor(
     roomId: string,
@@ -24,8 +26,9 @@ export class ScreenShareManager {
     this.isHost = isHost;
     this.onConnectionStateChange = onConnectionStateChange;
     this.senderId = crypto.randomUUID();
-    console.log(`📱 ScreenShareManager created with ID: ${this.senderId}`);
+    console.log(`🆔 ScreenShareManager created - Room: ${roomId}, Host: ${isHost}, ID: ${this.senderId}`);
     this.setupPeerConnection();
+    this.startDiagnostics();
   }
 
   private setupPeerConnection() {
@@ -45,8 +48,16 @@ export class ScreenShareManager {
         username: turnUsername,
         credential: turnCredential
       });
-      console.log('TURN server configured');
+      console.log('🔄 TURN server configured:', turnUrl);
+    } else {
+      console.warn('⚠️ TURN server not configured - connection may fail on restrictive networks');
+      console.log('💡 To fix: Add TURN server credentials to .env:');
+      console.log('   VITE_TURN_URL=turn:your-server.com:3478');
+      console.log('   VITE_TURN_USERNAME=your-username');
+      console.log('   VITE_TURN_CREDENTIAL=your-credential');
     }
+
+    console.log('🌐 ICE servers configured:', iceServers.length, 'servers');
 
     const configuration: RTCConfiguration = { iceServers };
     this.peerConnection = new RTCPeerConnection(configuration);
@@ -72,6 +83,17 @@ export class ScreenShareManager {
     this.peerConnection.oniceconnectionstatechange = () => {
       const iceState = this.peerConnection?.iceConnectionState || 'disconnected';
       console.log('🧊 ICE connection state changed:', iceState);
+      
+      if (iceState === 'failed') {
+        console.warn('🔥 ICE connection failed - may need TURN servers');
+        this.handleIceConnectionFailure();
+      } else if (iceState === 'disconnected') {
+        console.warn('📡 ICE disconnected - starting recovery timer');
+        this.startIceFailureTimer();
+      } else if (iceState === 'connected' || iceState === 'completed') {
+        console.log('✅ ICE connection established');
+        this.clearIceFailureTimer();
+      }
     };
 
     this.peerConnection.onsignalingstatechange = () => {
@@ -95,7 +117,12 @@ export class ScreenShareManager {
 
     this.peerConnection.onicecandidate = (event) => {
       if (event.candidate) {
-        console.log('📡 Generated ICE candidate:', event.candidate.type);
+        console.log('🧊 Generated ICE candidate:', {
+          type: event.candidate.type,
+          protocol: event.candidate.protocol,
+          address: event.candidate.address?.substring(0, 10) + '...',
+          foundation: event.candidate.foundation
+        });
         this.sendSignalingMessage({
           type: 'broadcast',
           event: 'ice-candidate',
@@ -105,6 +132,8 @@ export class ScreenShareManager {
             senderId: this.senderId
           }
         });
+      } else {
+        console.log('🧊 ICE candidate gathering complete');
       }
     };
 
@@ -180,16 +209,18 @@ export class ScreenShareManager {
       throw new Error('Host cannot join their own screen share');
     }
 
-    console.log('👀 Joining screen share as viewer');
+    console.log('👀 Joining screen share as viewer - setting up video element');
     this.remoteVideoElement = remoteVideoElement;
     
     // Attach buffered stream if available
     if (this.bufferedStream) {
+      console.log('📦 Attaching buffered stream to video element');
       this.remoteVideoElement.srcObject = this.bufferedStream;
       this.remoteVideoElement.play().catch(console.error);
-      console.log('📺 Attached buffered stream to video element');
+      console.log('✅ Buffered stream attached successfully');
     }
     
+    console.log('🔌 Setting up realtime channel for viewer...');
     this.setupRealtimeChannel();
   }
 
@@ -455,8 +486,131 @@ export class ScreenShareManager {
     this.cleanup();
   }
 
+  private startDiagnostics() {
+    this.diagnosticsInterval = setInterval(() => {
+      if (this.peerConnection) {
+        console.log('📊 Connection Diagnostics:', {
+          connectionState: this.peerConnection.connectionState,
+          iceConnectionState: this.peerConnection.iceConnectionState,
+          signalingState: this.peerConnection.signalingState,
+          localDescription: !!this.peerConnection.localDescription,
+          remoteDescription: !!this.peerConnection.remoteDescription,
+          hasLocalStream: !!this.localStream,
+          hasRemoteVideo: !!this.remoteVideoElement,
+          channelReady: this.isChannelReady,
+          isHost: this.isHost
+        });
+        
+        // Run detailed stats every 30 seconds
+        if (Date.now() % 30000 < 5000) {
+          this.runConnectionStats();
+        }
+      }
+    }, 10000); // Every 10 seconds
+  }
+
+  private runConnectionStats() {
+    if (!this.peerConnection) return;
+    
+    this.peerConnection.getStats().then(stats => {
+      let localCandidates = 0;
+      let remoteCandidates = 0;
+      let candidatePairs = 0;
+      let activePairs = 0;
+      
+      stats.forEach(report => {
+        if (report.type === 'local-candidate') localCandidates++;
+        if (report.type === 'remote-candidate') remoteCandidates++;
+        if (report.type === 'candidate-pair') {
+          candidatePairs++;
+          if (report.state === 'succeeded') activePairs++;
+        }
+      });
+      
+      console.log('📈 ICE Statistics:', {
+        localCandidates,
+        remoteCandidates,
+        candidatePairs,
+        activePairs,
+        hasConnection: activePairs > 0
+      });
+      
+      if (localCandidates === 0) {
+        console.error('❌ No local ICE candidates - check network connectivity');
+      }
+      if (remoteCandidates === 0 && this.peerConnection.remoteDescription) {
+        console.error('❌ No remote ICE candidates - peer connection issue');
+      }
+      if (candidatePairs > 0 && activePairs === 0) {
+        console.warn('⚠️ ICE candidates found but no successful pairs - may need TURN server');
+      }
+    }).catch(err => {
+      console.error('❌ Failed to get connection stats:', err);
+    });
+  }
+
+  private handleIceConnectionFailure() {
+    console.log('🔄 Handling ICE connection failure...');
+    
+    if (this.isHost) {
+      console.log('🏠 Host attempting ICE restart...');
+      this.peerConnection?.createOffer({ iceRestart: true })
+        .then(offer => {
+          return this.peerConnection!.setLocalDescription(offer);
+        })
+        .then(() => {
+          this.sendSignalingMessage({
+            type: 'broadcast',
+            event: 'offer',
+            payload: {
+              offer: this.peerConnection!.localDescription,
+              roomId: this.roomId,
+              senderId: this.senderId
+            }
+          });
+          console.log('🔄 ICE restart offer sent');
+        })
+        .catch(err => {
+          console.error('❌ ICE restart failed:', err);
+        });
+    } else {
+      console.log('👤 Viewer requesting new offer after ICE failure...');
+      this.requestOffer();
+    }
+  }
+
+  private startIceFailureTimer() {
+    this.clearIceFailureTimer();
+    this.iceFailureTimeout = setTimeout(() => {
+      if (this.peerConnection?.iceConnectionState === 'disconnected') {
+        console.warn('⏰ ICE disconnected for >5s, treating as failure');
+        this.handleIceConnectionFailure();
+      }
+    }, 5000);
+  }
+
+  private clearIceFailureTimer() {
+    if (this.iceFailureTimeout) {
+      clearTimeout(this.iceFailureTimeout);
+      this.iceFailureTimeout = undefined;
+    }
+  }
+
   cleanup(): void {
     console.log('🧹 Cleaning up ScreenShareManager');
+    
+    // Clear all timers
+    if (this.diagnosticsInterval) {
+      clearInterval(this.diagnosticsInterval);
+      this.diagnosticsInterval = undefined;
+    }
+    
+    if (this.offerRequestInterval) {
+      clearInterval(this.offerRequestInterval);
+      this.offerRequestInterval = null;
+    }
+    
+    this.clearIceFailureTimer();
     
     if (this.localStream) {
       this.localStream.getTracks().forEach(track => track.stop());
@@ -478,16 +632,12 @@ export class ScreenShareManager {
       this.remoteVideoElement = null;
     }
 
-    // Clear intervals
-    if (this.offerRequestInterval) {
-      clearInterval(this.offerRequestInterval);
-      this.offerRequestInterval = null;
-    }
-
     // Reset state
     this.isChannelReady = false;
     this.messageQueue = [];
     this.pendingRemoteCandidates = [];
     this.bufferedStream = null;
+    
+    console.log('✅ Cleanup complete');
   }
 }
