@@ -321,7 +321,8 @@ export default function DesignerMessages() {
           },
           (payload) => {
             setMessages(prev => [...prev, payload.new as Message]);
-            fetchConversations();
+            // Throttle conversation refresh
+            setTimeout(() => fetchConversations(), 1000);
           }
         )
         .subscribe();
@@ -342,7 +343,8 @@ export default function DesignerMessages() {
           (payload) => {
             console.log('New booking message received:', payload.new);
             setMessages(prev => [...prev, payload.new as Message]);
-            fetchConversations();
+            // Throttle conversation refresh
+            setTimeout(() => fetchConversations(), 1000);
           }
         )
         .subscribe();
@@ -359,6 +361,24 @@ export default function DesignerMessages() {
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation || isSending) return;
 
+    const messageContent = newMessage.trim();
+    const tempId = `temp_${Date.now()}`;
+    
+    // Optimistic UI update
+    const optimisticMessage: Message = {
+      id: tempId,
+      sender_id: user?.id || '',
+      booking_id: selectedConversation.booking_id,
+      conversation_id: selectedConversation.conversation_id,
+      content: messageContent,
+      message_type: 'text',
+      file_url: null,
+      created_at: new Date().toISOString()
+    };
+
+    setMessages(prev => [...prev, optimisticMessage]);
+    setNewMessage('');
+
     try {
       setIsSending(true);
       let error;
@@ -369,7 +389,7 @@ export default function DesignerMessages() {
           .insert({
             conversation_id: selectedConversation.conversation_id,
             sender_id: user?.id,
-            content: newMessage.trim(),
+            content: messageContent,
             message_type: 'text'
           }));
       } else if (selectedConversation.booking_id) {
@@ -378,20 +398,27 @@ export default function DesignerMessages() {
           .insert({
             booking_id: selectedConversation.booking_id,
             sender_id: user?.id,
-            content: newMessage.trim(),
+            content: messageContent,
             message_type: 'text'
           }));
       }
 
       if (error) {
         console.error('Error sending message:', error);
+        // Remove optimistic message on error
+        setMessages(prev => prev.filter(m => m.id !== tempId));
+        setNewMessage(messageContent); // Restore message input
         toast.error('Failed to send message');
         return;
       }
 
-      setNewMessage('');
+      // Remove optimistic message - real message will come via realtime
+      setMessages(prev => prev.filter(m => m.id !== tempId));
     } catch (error) {
       console.error('Error:', error);
+      // Remove optimistic message on error
+      setMessages(prev => prev.filter(m => m.id !== tempId));
+      setNewMessage(messageContent); // Restore message input
       toast.error('Failed to send message');
     } finally {
       setIsSending(false);

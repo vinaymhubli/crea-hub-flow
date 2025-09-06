@@ -52,6 +52,7 @@ export type Database = {
       }
       bookings: {
         Row: {
+          channel_name: string | null
           created_at: string
           customer_id: string
           description: string | null
@@ -66,6 +67,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          channel_name?: string | null
           created_at?: string
           customer_id: string
           description?: string | null
@@ -80,6 +82,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          channel_name?: string | null
           created_at?: string
           customer_id?: string
           description?: string | null
@@ -412,6 +415,20 @@ export type Database = {
           status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_live_session_requests_customer"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "fk_live_session_requests_designer"
+            columns: ["designer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "live_session_requests_customer_id_fkey"
             columns: ["customer_id"]

@@ -410,6 +410,24 @@ export default function CustomerMessages() {
   const handleSendMessage = async () => {
     if (!messageInput.trim() || !selectedConversation || isSending) return;
 
+    const messageContent = messageInput.trim();
+    const tempId = `temp_${Date.now()}`;
+    
+    // Optimistic UI update
+    const optimisticMessage: Message = {
+      id: tempId,
+      sender_id: user?.id || '',
+      booking_id: selectedConversation.booking_id,
+      conversation_id: selectedConversation.conversation_id,
+      content: messageContent,
+      message_type: 'text',
+      file_url: null,
+      created_at: new Date().toISOString()
+    };
+
+    setMessages(prev => [...prev, optimisticMessage]);
+    setMessageInput('');
+
     try {
       setIsSending(true);
       let error;
@@ -420,7 +438,7 @@ export default function CustomerMessages() {
           .insert({
             conversation_id: selectedConversation.conversation_id,
             sender_id: user?.id,
-            content: messageInput.trim(),
+            content: messageContent,
             message_type: 'text'
           }));
       } else if (selectedConversation.booking_id) {
@@ -429,23 +447,27 @@ export default function CustomerMessages() {
           .insert({
             booking_id: selectedConversation.booking_id,
             sender_id: user?.id,
-            content: messageInput.trim(),
+            content: messageContent,
             message_type: 'text'
           }));
       }
 
       if (error) {
         console.error('Error sending message:', error);
+        // Remove optimistic message on error
+        setMessages(prev => prev.filter(m => m.id !== tempId));
+        setMessageInput(messageContent); // Restore message input
         toast.error('Failed to send message. Please try again.');
         return;
       }
 
-      setMessageInput('');
-      // Refresh messages and conversations
-      await fetchMessages(selectedConversation.conversation_id || selectedConversation.booking_id || '');
-      await fetchConversations();
+      // Remove optimistic message - real message will come via realtime
+      setMessages(prev => prev.filter(m => m.id !== tempId));
     } catch (error) {
       console.error('Error:', error);
+      // Remove optimistic message on error
+      setMessages(prev => prev.filter(m => m.id !== tempId));
+      setMessageInput(messageContent); // Restore message input
       toast.error('Failed to send message. Please try again.');
     } finally {
       setIsSending(false);
@@ -470,7 +492,8 @@ export default function CustomerMessages() {
           },
           (payload) => {
             setMessages(prev => [...prev, payload.new as Message]);
-            fetchConversations();
+            // Throttle conversation refresh
+            setTimeout(() => fetchConversations(), 1000);
           }
         )
         .subscribe();
@@ -488,10 +511,11 @@ export default function CustomerMessages() {
             table: 'messages',
             filter: `booking_id=eq.${selectedConversation.booking_id}`
           },
-          (payload) => {
+           (payload) => {
             console.log('New booking message received:', payload.new);
             setMessages(prev => [...prev, payload.new as Message]);
-            fetchConversations();
+            // Throttle conversation refresh
+            setTimeout(() => fetchConversations(), 1000);
           }
         )
         .subscribe();
