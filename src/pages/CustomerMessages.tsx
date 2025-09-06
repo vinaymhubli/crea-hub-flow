@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
   MessageCircle, 
   Bell,
@@ -53,19 +54,24 @@ interface Conversation {
 }
 
 export default function CustomerMessages() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [messageInput, setMessageInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isCreatingConversation, setIsCreatingConversation] = useState(false);
   const { user } = useAuth();
+
+  const designerId = searchParams.get('designer_id');
+  const bookingId = searchParams.get('booking_id');
 
   useEffect(() => {
     if (user) {
       fetchConversations();
     }
-  }, [user]);
+  }, [user, designerId, bookingId]);
 
   useEffect(() => {
     let cleanup: (() => void) | undefined;
@@ -93,14 +99,12 @@ export default function CustomerMessages() {
       const allConversations = [...directConversations, ...bookingConversations];
       setConversations(allConversations);
       
-      // Check for booking_id or designer_id in URL params to auto-select conversation
-      const urlParams = new URLSearchParams(window.location.search);
-      const bookingId = urlParams.get('booking_id');
-      const designerId = urlParams.get('designer_id');
+      console.log('URL params - designerId:', designerId, 'bookingId:', bookingId);
       
       if (bookingId) {
         const conversation = allConversations.find(c => c.type === 'booking' && c.booking_id === bookingId);
         if (conversation) {
+          console.log('Found existing booking conversation:', conversation);
           setSelectedConversation(conversation);
           return;
         }
@@ -110,10 +114,17 @@ export default function CustomerMessages() {
         // Find or create a direct conversation with this designer
         const designerConversation = allConversations.find(c => c.designer_id === designerId);
         if (designerConversation) {
+          console.log('Found existing direct conversation:', designerConversation);
           setSelectedConversation(designerConversation);
+          // Remove designer_id from URL after successful selection
+          setSearchParams(prev => {
+            prev.delete('designer_id');
+            return prev;
+          });
           return;
         } else {
           // Create a new conversation with this designer
+          console.log('Creating new conversation for designer:', designerId);
           await createDirectConversation(designerId);
           return;
         }
@@ -141,14 +152,22 @@ export default function CustomerMessages() {
     const designerIds = [...new Set(bookings.map(b => b.designer_id))];
     if (designerIds.length === 0) return [];
 
-    const [designers, designerProfiles] = await Promise.all([
-      supabase.from('designers').select('id, user_id, rating, is_online').in('id', designerIds),
-      supabase.from('profiles').select('user_id, first_name, last_name').in('user_id', designerIds.map(id => designers?.data?.find(d => d.id === id)?.user_id).filter(Boolean))
-    ]);
+    const { data: designers } = await supabase
+      .from('designers')
+      .select('id, user_id, rating, is_online')
+      .in('id', designerIds);
+
+    if (!designers) return [];
+
+    const userIds = designers.map(d => d.user_id);
+    const { data: designerProfiles } = await supabase
+      .from('profiles')
+      .select('user_id, first_name, last_name')
+      .in('user_id', userIds);
 
     const conversationPromises = bookings.map(async (booking) => {
-      const designer = designers.data?.find(d => d.id === booking.designer_id);
-      const designerProfile = designerProfiles.data?.find(p => p.user_id === designer?.user_id);
+      const designer = designers?.find(d => d.id === booking.designer_id);
+      const designerProfile = designerProfiles?.find(p => p.user_id === designer?.user_id);
       
       const designerName = designerProfile 
         ? `${designerProfile.first_name || ''} ${designerProfile.last_name || ''}`.trim() || 'Designer'
@@ -207,14 +226,22 @@ export default function CustomerMessages() {
     const designerIds = conversations.map(c => c.designer_id);
     if (designerIds.length === 0) return [];
 
-    const [designers, designerProfiles] = await Promise.all([
-      supabase.from('designers').select('id, user_id, rating, is_online').in('id', designerIds),
-      supabase.from('profiles').select('user_id, first_name, last_name').in('user_id', designerIds.map(id => designers?.data?.find(d => d.id === id)?.user_id).filter(Boolean))
-    ]);
+    const { data: designers } = await supabase
+      .from('designers')
+      .select('id, user_id, rating, is_online')
+      .in('id', designerIds);
+
+    if (!designers) return [];
+
+    const userIds = designers.map(d => d.user_id);
+    const { data: designerProfiles } = await supabase
+      .from('profiles')
+      .select('user_id, first_name, last_name')
+      .in('user_id', userIds);
 
     const conversationPromises = conversations.map(async (conversation) => {
-      const designer = designers.data?.find(d => d.id === conversation.designer_id);
-      const designerProfile = designerProfiles.data?.find(p => p.user_id === designer?.user_id);
+      const designer = designers?.find(d => d.id === conversation.designer_id);
+      const designerProfile = designerProfiles?.find(p => p.user_id === designer?.user_id);
       
       const designerName = designerProfile 
         ? `${designerProfile.first_name || ''} ${designerProfile.last_name || ''}`.trim() || 'Designer'
@@ -258,7 +285,10 @@ export default function CustomerMessages() {
 
   const createDirectConversation = async (designerId: string) => {
     try {
-      const { data, error } = await supabase
+      setIsCreatingConversation(true);
+      console.log('Creating conversation with designer:', designerId);
+      
+      const { data: conversationData, error } = await supabase
         .from('conversations')
         .insert({
           customer_id: user?.id,
@@ -273,15 +303,60 @@ export default function CustomerMessages() {
         return;
       }
 
-      // Refresh conversations and select the new one
-      await fetchConversations();
-      const newConversation = conversations.find(c => c.conversation_id === data.id);
-      if (newConversation) {
-        setSelectedConversation(newConversation);
-      }
+      console.log('Created conversation:', conversationData);
+
+      // Get designer info for optimistic UI update
+      const { data: designer } = await supabase
+        .from('designers')
+        .select('id, user_id, rating, is_online')
+        .eq('id', designerId)
+        .single();
+
+      const { data: designerProfile } = await supabase
+        .from('profiles')
+        .select('user_id, first_name, last_name')
+        .eq('user_id', designer?.user_id)
+        .single();
+
+      const designerName = designerProfile 
+        ? `${designerProfile.first_name || ''} ${designerProfile.last_name || ''}`.trim() || 'Designer'
+        : 'Designer';
+      const designerInitials = designerProfile 
+        ? `${designerProfile.first_name?.[0] || ''}${designerProfile.last_name?.[0] || ''}` || 'D'
+        : 'D';
+
+      // Create optimistic conversation object
+      const newConversation: Conversation = {
+        conversation_id: conversationData.id,
+        designer_id: designerId,
+        designer_name: designerName,
+        designer_rating: designer?.rating || 0,
+        designer_initials: designerInitials,
+        designer_online: designer?.is_online || false,
+        last_message: 'Start chatting...',
+        last_message_time: new Date().toLocaleDateString(),
+        unread_count: 0,
+        type: 'direct'
+      };
+
+      console.log('Optimistically selecting new conversation:', newConversation);
+      setSelectedConversation(newConversation);
+      
+      // Update conversations list
+      setConversations(prev => [newConversation, ...prev]);
+      
+      // Remove designer_id from URL after successful creation
+      setSearchParams(prev => {
+        prev.delete('designer_id');
+        return prev;
+      });
+
+      toast.success('Started conversation with designer');
     } catch (error) {
       console.error('Error:', error);
       toast.error('Failed to start conversation');
+    } finally {
+      setIsCreatingConversation(false);
     }
   };
 
@@ -426,7 +501,12 @@ export default function CustomerMessages() {
           <main className="flex-1 flex items-center justify-center">
             <div className="text-center">
               <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-              <p className="mt-4 text-muted-foreground">Loading messages...</p>
+              <p className="mt-4 text-muted-foreground">
+                {designerId && isCreatingConversation 
+                  ? 'Starting chat with designer...' 
+                  : 'Loading messages...'
+                }
+              </p>
             </div>
           </main>
         </div>
