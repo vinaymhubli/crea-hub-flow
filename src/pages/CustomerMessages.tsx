@@ -70,6 +70,7 @@ export default function CustomerMessages() {
     designerName: string;
     roomId: string;
   }>({ show: false, designerName: '', roomId: '' });
+  const [isScreenShareActive, setIsScreenShareActive] = useState(false);
   const { user } = useAuth();
 
   const designerId = searchParams.get('designer_id');
@@ -83,15 +84,19 @@ export default function CustomerMessages() {
 
   useEffect(() => {
     let cleanup: (() => void) | undefined;
+    let screenShareCleanup: (() => void) | undefined;
     
     if (selectedConversation) {
       fetchMessages(selectedConversation.conversation_id || selectedConversation.booking_id || '');
       cleanup = setupRealtimeSubscription(selectedConversation.conversation_id || selectedConversation.booking_id || '');
-      setupScreenShareNotification(selectedConversation.conversation_id || selectedConversation.booking_id || '');
+      screenShareCleanup = setupScreenShareNotification(selectedConversation.conversation_id || selectedConversation.booking_id || '');
     }
     
     return () => {
       if (cleanup) cleanup();
+      if (screenShareCleanup) screenShareCleanup();
+      setIsScreenShareActive(false);
+      setScreenShareNotification({ show: false, designerName: '', roomId: '' });
     };
   }, [selectedConversation]);
 
@@ -506,6 +511,7 @@ export default function CustomerMessages() {
       .on('broadcast', { event: 'offer' }, (payload) => {
         if (payload.payload.roomId === roomId) {
           console.log('Screen share started by designer');
+          setIsScreenShareActive(true);
           setScreenShareNotification({
             show: true,
             designerName: selectedConversation.designer_name,
@@ -516,6 +522,7 @@ export default function CustomerMessages() {
       .on('broadcast', { event: 'screen-share-ended' }, (payload) => {
         if (payload.payload.roomId === roomId) {
           console.log('Screen share ended by designer');
+          setIsScreenShareActive(false);
           setScreenShareNotification(prev => ({ ...prev, show: false }));
           setShowScreenShare(false);
         }
@@ -738,34 +745,62 @@ export default function CustomerMessages() {
                         <p className="text-gray-600">No messages yet. Start the conversation!</p>
                       </div>
                     ) : (
-                      messages.map((message) => (
-                        <div
-                          key={message.id}
-                          className={`flex ${
-                            message.sender_id === user?.id ? 'justify-end' : 'justify-start'
-                          }`}
-                        >
+                      <>
+                        {messages.map((message) => (
                           <div
-                            className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl shadow-lg ${
-                              message.sender_id === user?.id
-                                ? 'bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 text-white'
-                                : 'bg-white border border-teal-200/50 text-gray-900'
+                            key={message.id}
+                            className={`flex ${
+                              message.sender_id === user?.id ? 'justify-end' : 'justify-start'
                             }`}
                           >
-                            <p className="text-sm">{message.content}</p>
-                            <p className={`text-xs mt-2 ${
-                              message.sender_id === user?.id 
-                                ? 'text-white/70' 
-                                : 'text-gray-500'
-                            }`}>
-                              {new Date(message.created_at).toLocaleTimeString([], { 
-                                hour: '2-digit', 
-                                minute: '2-digit' 
-                              })}
-                            </p>
+                            <div
+                              className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl shadow-lg ${
+                                message.sender_id === user?.id
+                                  ? 'bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 text-white'
+                                  : 'bg-white border border-teal-200/50 text-gray-900'
+                              }`}
+                            >
+                              <p className="text-sm">{message.content}</p>
+                              <p className={`text-xs mt-2 ${
+                                message.sender_id === user?.id 
+                                  ? 'text-white/70' 
+                                  : 'text-gray-500'
+                              }`}>
+                                {new Date(message.created_at).toLocaleTimeString([], { 
+                                  hour: '2-digit', 
+                                  minute: '2-digit' 
+                                })}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      ))
+                        ))}
+                        
+                        {/* Live Design Callout */}
+                        {isScreenShareActive && (
+                          <div className="flex justify-center">
+                            <div className="bg-gradient-to-r from-blue-50 to-teal-50 border border-blue-200/50 rounded-xl p-4 max-w-md shadow-sm">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-gradient-to-r from-blue-400 to-teal-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                                  <Monitor className="w-5 h-5 text-white" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-semibold text-sm text-gray-900">Live design started</h4>
+                                  <p className="text-xs text-gray-600 mt-1">
+                                    {selectedConversation.designer_name} is sharing their screen live
+                                  </p>
+                                  <Button 
+                                    size="sm" 
+                                    onClick={joinScreenShare}
+                                    className="mt-2 bg-gradient-to-r from-blue-400 to-teal-500 hover:from-blue-500 hover:to-teal-600 text-white text-xs h-7"
+                                  >
+                                    Join Live Design
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
 
