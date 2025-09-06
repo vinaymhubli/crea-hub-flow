@@ -126,7 +126,7 @@ const Pricing = () => {
                     variant={plan.popular ? "default" : "outline"}
                     asChild
                   >
-                    <Link to="/signup">{plan.buttonText}</Link>
+                    <Link to="/auth">{plan.buttonText}</Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -163,7 +163,7 @@ const Pricing = () => {
                   ))}
                 </ul>
                 <Button className="w-full" asChild>
-                  <Link to="/signup">Join as Designer</Link>
+                  <Link to="/auth">Join as Designer</Link>
                 </Button>
               </CardContent>
             </Card>

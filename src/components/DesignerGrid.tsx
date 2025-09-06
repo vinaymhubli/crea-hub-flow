@@ -221,7 +221,7 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
 
   const handleChat = (designerId: string) => {
     if (!user) {
-      navigate('/login');
+      navigate('/auth');
       return;
     }
     

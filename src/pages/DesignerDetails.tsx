@@ -120,7 +120,7 @@ const DesignerDetails: React.FC = () => {
 
   const handleSendMessage = () => {
     if (!user) {
-      navigate('/login');
+      navigate('/auth');
       return;
     }
     

@@ -22,7 +22,7 @@ export const ProtectedRoute = ({ children, requireUserType }: ProtectedRouteProp
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/auth" replace />;
   }
 
   if (requireUserType) {

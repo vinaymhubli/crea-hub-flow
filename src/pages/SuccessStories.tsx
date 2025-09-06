@@ -211,7 +211,7 @@ const SuccessStories = () => {
               <Link to="/designers">Browse Designers</Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
-              <Link to="/signup">Get Started Free</Link>
+              <Link to="/auth">Get Started Free</Link>
             </Button>
           </div>
         </div>

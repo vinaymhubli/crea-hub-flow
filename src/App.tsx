@@ -92,8 +92,8 @@ function AppContent() {
           <Route path="/services" element={<Services />} />
           <Route path="/services/:id" element={<ServiceDetail />} />
           <Route path="/auth" element={<Auth />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
+          <Route path="/login" element={<Auth />} />
+          <Route path="/signup" element={<Auth />} />
           <Route path="/admin-login" element={<AdminLogin />} />
           <Route path="/ai-assistant" element={<AIAssistant />} />
           
