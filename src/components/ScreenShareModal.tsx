@@ -26,30 +26,44 @@ export function ScreenShareModal({
   const [isSharing, setIsSharing] = useState(false);
   const [connectionState, setConnectionState] = useState<string>('new');
   const [isConnected, setIsConnected] = useState(false);
+  const [showConnectionHint, setShowConnectionHint] = useState(false);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (isOpen) {
-      const manager = new ScreenShareManager(
-        roomId,
-        isHost,
-        (state) => {
-          console.log('Connection state changed:', state);
-          setConnectionState(state);
-          setIsConnected(state === 'connected');
-        }
-      );
+      const manager = new ScreenShareManager(roomId, isHost, (state) => {
+        setConnectionState(state);
+        setIsConnected(state === 'connected');
+      });
+
       setScreenShareManager(manager);
 
+      // Auto-join if not host
       if (!isHost && remoteVideoRef.current) {
         manager.joinScreenShare(remoteVideoRef.current);
       }
 
       return () => {
-        manager.stopScreenShare();
+        manager.cleanup();
+        setScreenShareManager(null);
+        setIsSharing(false);
+        setConnectionState('new');
+        setIsConnected(false);
+        setShowConnectionHint(false);
       };
     }
   }, [isOpen, roomId, isHost]);
+
+  // Show connection hint after 10 seconds if not connected
+  useEffect(() => {
+    if (!isHost && isOpen && !isConnected) {
+      const timer = setTimeout(() => {
+        setShowConnectionHint(true);
+      }, 10000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isHost, isOpen, isConnected]);
 
   const startScreenShare = async () => {
     if (!screenShareManager) return;
@@ -80,12 +94,22 @@ export function ScreenShareModal({
     }
   };
 
+  const retryConnection = async () => {
+    if (!isHost && screenShareManager && remoteVideoRef.current) {
+      console.log('🔄 Retrying connection...');
+      await screenShareManager.joinScreenShare(remoteVideoRef.current);
+      setShowConnectionHint(false);
+    }
+  };
+
   const handleClose = () => {
-    if (screenShareManager) {
-      screenShareManager.stopScreenShare();
+    if (isSharing) {
+      stopScreenShare();
     }
     setIsSharing(false);
+    setConnectionState('new');
     setIsConnected(false);
+    setShowConnectionHint(false);
     onClose();
   };
 
@@ -163,24 +187,41 @@ export function ScreenShareModal({
               )}
             </Card>
           ) : (
-            <Card className="h-full overflow-hidden bg-black">
-              <video
-                ref={remoteVideoRef}
-                autoPlay
-                playsInline
-                muted
-                className="w-full h-full object-contain"
-                style={{ background: '#000' }}
-              />
-              {!isConnected && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/80">
-                  <div className="text-center text-white">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
+            // Viewer content
+            <div className="space-y-6">
+              <div className="relative bg-gray-900 rounded-lg aspect-video min-h-[400px] flex items-center justify-center">
+                {!isConnected ? (
+                  <div className="text-center text-white/70">
+                    <div className="animate-spin w-8 h-8 border-2 border-white/20 border-t-white/70 rounded-full mx-auto mb-4"></div>
                     <p>Connecting to screen share...</p>
+                    {showConnectionHint && (
+                      <div className="mt-4 p-4 bg-orange-900/30 border border-orange-500/30 rounded-lg">
+                        <p className="text-sm text-orange-200 mb-3">
+                          Having trouble connecting? This might be due to network restrictions.
+                        </p>
+                        <Button
+                          onClick={retryConnection}
+                          variant="outline"
+                          size="sm"
+                          className="bg-orange-600 hover:bg-orange-700 border-orange-500 text-white"
+                        >
+                          Retry Connection
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                </div>
-              )}
-            </Card>
+                ) : null}
+                
+                <video
+                  ref={remoteVideoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full h-full object-contain"
+                  style={{ background: '#000' }}
+                />
+              </div>
+            </div>
           )}
         </div>
 

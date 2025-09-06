@@ -8,6 +8,9 @@ export class ScreenShareManager {
   private roomId: string;
   private isHost: boolean;
   private onConnectionStateChange?: (state: string) => void;
+  private pendingRemoteCandidates: RTCIceCandidateInit[] = [];
+  private isChannelReady = false;
+  private messageQueue: any[] = [];
 
   constructor(
     roomId: string,
@@ -21,31 +24,47 @@ export class ScreenShareManager {
   }
 
   private setupPeerConnection() {
-    this.peerConnection = new RTCPeerConnection({
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' }
-      ]
-    });
+    const iceServers: RTCIceServer[] = [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' }
+    ];
+
+    // Add TURN servers if configured
+    const turnUrl = process.env.VITE_TURN_URL;
+    const turnUsername = process.env.VITE_TURN_USERNAME;
+    const turnCredential = process.env.VITE_TURN_CREDENTIAL;
+    
+    if (turnUrl && turnUsername && turnCredential) {
+      iceServers.push({
+        urls: turnUrl,
+        username: turnUsername,
+        credential: turnCredential
+      });
+      console.log('TURN server configured');
+    }
+
+    const configuration: RTCConfiguration = { iceServers };
+    this.peerConnection = new RTCPeerConnection(configuration);
 
     this.peerConnection.onconnectionstatechange = () => {
       const state = this.peerConnection?.connectionState || 'disconnected';
-      console.log('WebRTC connection state:', state);
+      console.log('🔗 Connection state changed:', state);
       this.onConnectionStateChange?.(state);
     };
 
     this.peerConnection.ontrack = (event) => {
-      console.log('Received remote stream');
+      console.log('✅ Received remote stream with tracks:', event.streams[0]?.getTracks().length);
       if (this.remoteVideoElement && event.streams[0]) {
         this.remoteVideoElement.srcObject = event.streams[0];
         this.remoteVideoElement.play().catch(console.error);
+        console.log('📺 Video element updated with remote stream');
       }
     };
 
     this.peerConnection.onicecandidate = (event) => {
-      if (event.candidate && this.channel) {
-        console.log('Sending ICE candidate');
-        this.channel.send({
+      if (event.candidate) {
+        console.log('📡 Generated ICE candidate:', event.candidate.type);
+        this.sendSignalingMessage({
           type: 'broadcast',
           event: 'ice-candidate',
           payload: {
@@ -55,6 +74,13 @@ export class ScreenShareManager {
         });
       }
     };
+
+    // Add transceivers for better setup (if viewer)
+    if (!this.isHost) {
+      console.log('📺 Adding transceivers for receiving');
+      this.peerConnection.addTransceiver('video', { direction: 'recvonly' });
+      this.peerConnection.addTransceiver('audio', { direction: 'recvonly' });
+    }
   }
 
   async startScreenShare(): Promise<void> {
@@ -63,7 +89,7 @@ export class ScreenShareManager {
     }
 
     try {
-      console.log('Starting screen share...');
+      console.log('🎬 Starting screen share...');
       
       this.localStream = await navigator.mediaDevices.getDisplayMedia({
         video: {
@@ -74,10 +100,11 @@ export class ScreenShareManager {
         audio: true
       });
 
-      console.log('Got display media stream');
+      console.log('📹 Got display media with tracks:', this.localStream.getTracks().length);
 
       // Add stream to peer connection
       this.localStream.getTracks().forEach(track => {
+        console.log('➕ Adding track:', track.kind);
         if (this.peerConnection && this.localStream) {
           this.peerConnection.addTrack(track, this.localStream);
         }
@@ -90,10 +117,10 @@ export class ScreenShareManager {
       const offer = await this.peerConnection!.createOffer();
       await this.peerConnection!.setLocalDescription(offer);
 
-      console.log('Created offer, sending to room:', this.roomId);
+      console.log('📤 Created and set local description (offer)');
 
       // Send offer through Supabase realtime
-      this.channel.send({
+      this.sendSignalingMessage({
         type: 'broadcast',
         event: 'offer',
         payload: {
@@ -104,12 +131,12 @@ export class ScreenShareManager {
 
       // Handle stream end
       this.localStream.getVideoTracks()[0].onended = () => {
-        console.log('Screen share ended');
+        console.log('Screen share ended by user');
         this.stopScreenShare();
       };
 
     } catch (error) {
-      console.error('Error starting screen share:', error);
+      console.error('❌ Error starting screen share:', error);
       throw error;
     }
   }
@@ -119,10 +146,9 @@ export class ScreenShareManager {
       throw new Error('Host cannot join their own screen share');
     }
 
-    console.log('Joining screen share for room:', this.roomId);
+    console.log('👀 Joining screen share as viewer');
     this.remoteVideoElement = remoteVideoElement;
     this.setupRealtimeChannel();
-
   }
 
   private setupRealtimeChannel() {
@@ -131,41 +157,52 @@ export class ScreenShareManager {
     this.channel = supabase.channel(`screen-share-${this.roomId}`)
       .on('broadcast', { event: 'offer' }, async (payload) => {
         if (!this.isHost && payload.payload.roomId === this.roomId) {
-          console.log('Received offer');
+          console.log('📥 Received offer from host');
           await this.handleOffer(payload.payload.offer);
         }
       })
       .on('broadcast', { event: 'answer' }, async (payload) => {
         if (this.isHost && payload.payload.roomId === this.roomId) {
-          console.log('Received answer');
+          console.log('📥 Received answer from viewer');
           await this.handleAnswer(payload.payload.answer);
         }
       })
       .on('broadcast', { event: 'ice-candidate' }, async (payload) => {
         if (payload.payload.roomId === this.roomId) {
-          console.log('Received ICE candidate');
+          console.log('📥 Received ICE candidate:', payload.payload.candidate.type);
           await this.handleIceCandidate(payload.payload.candidate);
         }
       })
       .on('broadcast', { event: 'screen-share-ended' }, (payload) => {
         if (payload.payload.roomId === this.roomId) {
-          console.log('Screen share ended by host');
+          console.log('🔚 Remote screen share ended');
           this.handleRemoteScreenShareEnd();
         }
       })
       .on('broadcast', { event: 'request-offer' }, async (payload) => {
         if (this.isHost && payload.payload.roomId === this.roomId && this.localStream) {
-          console.log('Received request for offer, re-sending...');
+          console.log('📞 Received request for offer, re-sending...');
           await this.resendOffer();
         }
       })
       .subscribe(async (status) => {
-        console.log('Channel subscription status:', status);
+        console.log('📡 Channel subscription status:', status);
         
-        // If we're a viewer and channel is ready, request offer
-        if (!this.isHost && status === 'SUBSCRIBED') {
-          console.log('Channel subscribed, requesting offer from host...');
-          await this.requestOffer();
+        if (status === 'SUBSCRIBED') {
+          this.isChannelReady = true;
+          
+          // Send any queued messages
+          while (this.messageQueue.length > 0) {
+            const message = this.messageQueue.shift();
+            this.channel?.send(message);
+            console.log('📤 Sent queued message:', message.event);
+          }
+          
+          // If we're a viewer, request offer
+          if (!this.isHost) {
+            console.log('👀 Viewer requesting offer from host...');
+            await this.requestOffer();
+          }
         }
       });
   }
@@ -173,11 +210,17 @@ export class ScreenShareManager {
   private async handleOffer(offer: RTCSessionDescriptionInit) {
     try {
       await this.peerConnection!.setRemoteDescription(offer);
+      console.log('✅ Set remote description (offer)');
+      
+      // Process any buffered ICE candidates
+      await this.processPendingCandidates();
+      
       const answer = await this.peerConnection!.createAnswer();
       await this.peerConnection!.setLocalDescription(answer);
+      console.log('📤 Created and set local description (answer)');
 
-      console.log('Sending answer');
-      this.channel.send({
+      // Send answer back
+      this.sendSignalingMessage({
         type: 'broadcast',
         event: 'answer',
         payload: {
@@ -186,33 +229,66 @@ export class ScreenShareManager {
         }
       });
     } catch (error) {
-      console.error('Error handling offer:', error);
+      console.error('❌ Error handling offer:', error);
     }
   }
 
   private async handleAnswer(answer: RTCSessionDescriptionInit) {
     try {
       await this.peerConnection!.setRemoteDescription(answer);
-      console.log('Set remote description with answer');
+      console.log('✅ Set remote description (answer)');
+      
+      // Process any buffered ICE candidates
+      await this.processPendingCandidates();
     } catch (error) {
-      console.error('Error handling answer:', error);
+      console.error('❌ Error handling answer:', error);
     }
   }
 
   private async handleIceCandidate(candidate: RTCIceCandidateInit) {
+    // Buffer candidates if remote description is not set yet
+    if (!this.peerConnection?.remoteDescription) {
+      console.log('🔄 Buffering ICE candidate (no remote description yet)');
+      this.pendingRemoteCandidates.push(candidate);
+      return;
+    }
+    
     try {
       await this.peerConnection!.addIceCandidate(candidate);
-      console.log('Added ICE candidate');
+      console.log('✅ Added ICE candidate');
     } catch (error) {
-      console.error('Error adding ICE candidate:', error);
+      console.error('❌ Error adding ICE candidate:', error);
+    }
+  }
+
+  private async processPendingCandidates(): Promise<void> {
+    console.log(`🔄 Processing ${this.pendingRemoteCandidates.length} buffered ICE candidates`);
+    
+    for (const candidate of this.pendingRemoteCandidates) {
+      try {
+        await this.peerConnection?.addIceCandidate(candidate);
+        console.log('✅ Added buffered ICE candidate');
+      } catch (error) {
+        console.error('❌ Error adding buffered ICE candidate:', error);
+      }
+    }
+    
+    this.pendingRemoteCandidates = [];
+  }
+
+  private sendSignalingMessage(message: any): void {
+    if (this.isChannelReady && this.channel) {
+      this.channel.send(message);
+      console.log('📤 Sent message:', message.event);
+    } else {
+      console.log('🔄 Queuing message (channel not ready):', message.event);
+      this.messageQueue.push(message);
     }
   }
 
   private async requestOffer(): Promise<void> {
-    if (!this.channel) return;
-    
-    console.log('Requesting offer from host...');
-    this.channel.send({
+    console.log('📞 Requesting offer from host...');
+    this.sendSignalingMessage({
       type: 'broadcast',
       event: 'request-offer',
       payload: {
@@ -227,14 +303,14 @@ export class ScreenShareManager {
     }
 
     try {
-      console.log('Resending offer with ICE restart...');
+      console.log('🔄 Resending offer with ICE restart...');
       
       // Create new offer with ICE restart to reset connection
       const offer = await this.peerConnection.createOffer({ iceRestart: true });
       await this.peerConnection.setLocalDescription(offer);
 
       // Send the new offer
-      this.channel.send({
+      this.sendSignalingMessage({
         type: 'broadcast',
         event: 'offer',
         payload: {
@@ -243,23 +319,24 @@ export class ScreenShareManager {
         }
       });
     } catch (error) {
-      console.error('Error resending offer:', error);
+      console.error('❌ Error resending offer:', error);
     }
   }
 
   private handleRemoteScreenShareEnd() {
+    console.log('🔚 Remote screen share ended');
     if (this.remoteVideoElement) {
       this.remoteVideoElement.srcObject = null;
     }
-    this.cleanup();
+    this.onConnectionStateChange?.('disconnected');
   }
 
   stopScreenShare(): void {
-    console.log('Stopping screen share');
+    console.log('🛑 Stopping screen share');
     
     if (this.isHost && this.channel) {
       // Notify viewers that screen share has ended
-      this.channel.send({
+      this.sendSignalingMessage({
         type: 'broadcast',
         event: 'screen-share-ended',
         payload: {
@@ -271,7 +348,9 @@ export class ScreenShareManager {
     this.cleanup();
   }
 
-  private cleanup(): void {
+  cleanup(): void {
+    console.log('🧹 Cleaning up ScreenShareManager');
+    
     if (this.localStream) {
       this.localStream.getTracks().forEach(track => track.stop());
       this.localStream = null;
@@ -291,5 +370,10 @@ export class ScreenShareManager {
       this.remoteVideoElement.srcObject = null;
       this.remoteVideoElement = null;
     }
+
+    // Reset state
+    this.isChannelReady = false;
+    this.messageQueue = [];
+    this.pendingRemoteCandidates = [];
   }
 }
