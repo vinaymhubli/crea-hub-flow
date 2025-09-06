@@ -121,6 +121,20 @@ export class ScreenShareManager {
     console.log('Joining screen share for room:', this.roomId);
     this.remoteVideoElement = remoteVideoElement;
     this.setupRealtimeChannel();
+
+    // Request the host to send an offer (in case we joined late)
+    setTimeout(() => {
+      if (this.channel) {
+        console.log('Requesting offer from host...');
+        this.channel.send({
+          type: 'broadcast',
+          event: 'request-offer',
+          payload: {
+            roomId: this.roomId
+          }
+        });
+      }
+    }, 1000); // Small delay to ensure channel is subscribed
   }
 
   private setupRealtimeChannel() {
@@ -149,6 +163,12 @@ export class ScreenShareManager {
         if (payload.payload.roomId === this.roomId) {
           console.log('Screen share ended by host');
           this.handleRemoteScreenShareEnd();
+        }
+      })
+      .on('broadcast', { event: 'request-offer' }, async (payload) => {
+        if (this.isHost && payload.payload.roomId === this.roomId && this.localStream) {
+          console.log('Received request for offer, re-sending...');
+          await this.resendOffer();
         }
       })
       .subscribe();
@@ -189,6 +209,32 @@ export class ScreenShareManager {
       console.log('Added ICE candidate');
     } catch (error) {
       console.error('Error adding ICE candidate:', error);
+    }
+  }
+
+  private async resendOffer(): Promise<void> {
+    if (!this.isHost || !this.peerConnection || !this.localStream) {
+      return;
+    }
+
+    try {
+      console.log('Resending offer with ICE restart...');
+      
+      // Create new offer with ICE restart to reset connection
+      const offer = await this.peerConnection.createOffer({ iceRestart: true });
+      await this.peerConnection.setLocalDescription(offer);
+
+      // Send the new offer
+      this.channel.send({
+        type: 'broadcast',
+        event: 'offer',
+        payload: {
+          offer,
+          roomId: this.roomId
+        }
+      });
+    } catch (error) {
+      console.error('Error resending offer:', error);
     }
   }
 
