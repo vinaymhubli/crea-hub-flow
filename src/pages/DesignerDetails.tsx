@@ -9,6 +9,7 @@ import { Star, MapPin, Clock, MessageCircle, Calendar, ArrowLeft } from 'lucide-
 import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { usePortfolio } from '@/hooks/usePortfolio';
+import { useAuth } from '@/hooks/useAuth';
 
 interface DesignerProfile {
   id: string;
@@ -46,6 +47,7 @@ const DesignerDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, profile } = useAuth();
   const [designer, setDesigner] = useState<DesignerProfile | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [portfolioItems, setPortfolioItems] = useState<any[]>([]);
@@ -114,6 +116,20 @@ const DesignerDetails: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSendMessage = () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    
+    if (profile?.user_type !== 'client') {
+      toast.error('Only clients can chat with designers');
+      return;
+    }
+    
+    navigate(`/customer-dashboard/messages?designer_id=${id}`);
   };
 
   if (loading) {
@@ -266,7 +282,7 @@ const DesignerDetails: React.FC = () => {
                       </Button>
                     </BookingDialog>
                     
-                    <Button variant="outline" className="w-full">
+                    <Button variant="outline" className="w-full" onClick={handleSendMessage}>
                       <MessageCircle className="w-4 h-4 mr-2" />
                       Send Message
                     </Button>

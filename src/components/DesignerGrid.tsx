@@ -1,11 +1,12 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { BookingDialog } from './BookingDialog';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { FilterState } from '../pages/Designers';
+import { useAuth } from '@/hooks/useAuth';
 
 interface DesignerGridProps {
   filters: FilterState;
@@ -13,6 +14,8 @@ interface DesignerGridProps {
 
 const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, profile } = useAuth();
   const [sortBy, setSortBy] = useState('rating');
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [designers, setDesigners] = useState([]);
@@ -216,6 +219,20 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
     };
   }, [fetchDesigners]);
 
+  const handleChat = (designerId: string) => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    
+    if (profile?.user_type !== 'client') {
+      toast.error('Only clients can chat with designers');
+      return;
+    }
+    
+    navigate(`/customer-dashboard/messages?designer_id=${designerId}`);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -377,7 +394,10 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
                       >
                         View Profile
                       </Link>
-                      <button className="bg-background border border-green-600 text-green-600 py-2 px-4 rounded-xl text-sm font-medium hover:bg-green-50 transition-all duration-200">
+                      <button 
+                        onClick={() => handleChat(designer.id)}
+                        className="bg-background border border-green-600 text-green-600 py-2 px-4 rounded-xl text-sm font-medium hover:bg-green-50 transition-all duration-200"
+                      >
                         Chat
                       </button>
                       <BookingDialog designer={designer}>

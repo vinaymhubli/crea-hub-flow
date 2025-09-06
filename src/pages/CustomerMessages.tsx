@@ -182,14 +182,28 @@ export default function CustomerMessages() {
       const conversationsList = await Promise.all(conversationPromises);
       setConversations(conversationsList);
       
-      // Check for booking_id in URL params to auto-select conversation
+      // Check for booking_id or designer_id in URL params to auto-select conversation
       const urlParams = new URLSearchParams(window.location.search);
       const bookingId = urlParams.get('booking_id');
+      const designerId = urlParams.get('designer_id');
+      
       if (bookingId) {
         const conversation = conversationsList.find(c => c.booking_id === bookingId);
         if (conversation) {
           setSelectedConversation(conversation);
           return;
+        }
+      }
+      
+      if (designerId) {
+        // Find the most recent conversation with this designer
+        const designerConversations = conversationsList.filter(c => c.designer_id === designerId);
+        if (designerConversations.length > 0) {
+          setSelectedConversation(designerConversations[0]);
+          return;
+        } else {
+          // No conversation with this designer yet
+          toast.info("No conversation with this designer yet. Book a session to start chatting.");
         }
       }
       
