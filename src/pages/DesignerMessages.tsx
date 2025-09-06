@@ -145,14 +145,22 @@ export default function DesignerMessages() {
 
       // Get customer profiles for all unique customer IDs
       const customerIds = [...new Set(bookings.map(b => b.customer_id))];
-      const { data: customerProfiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('user_id, first_name, last_name')
-        .in('user_id', customerIds);
-
-      if (profilesError) {
-        console.error('Error fetching customer profiles:', profilesError);
+      
+      // Guard against empty array for .in() query
+      let customerProfiles: any[] = [];
+      if (customerIds.length > 0) {
+        const { data, error: profilesError } = await supabase
+          .from('profiles')
+          .select('user_id, first_name, last_name')
+          .in('user_id', customerIds);
+          
+        if (profilesError) {
+          console.error('Error fetching customer profiles:', profilesError);
+        } else {
+          customerProfiles = data || [];
+        }
       }
+
 
       // Build conversations with customer info and message data
       const conversationPromises = bookings.map(async (booking) => {
@@ -227,7 +235,7 @@ export default function DesignerMessages() {
 
   const setupRealtimeSubscription = (bookingId: string) => {
     const channel = supabase
-      .channel('messages')
+      .channel(`designer-messages-${bookingId}`)
       .on(
         'postgres_changes',
         {
@@ -249,10 +257,13 @@ export default function DesignerMessages() {
     };
   };
 
+  const [isSending, setIsSending] = useState(false);
+
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !selectedConversation) return;
+    if (!newMessage.trim() || !selectedConversation || isSending) return;
 
     try {
+      setIsSending(true);
       const { error } = await supabase
         .from('messages')
         .insert({
@@ -272,6 +283,8 @@ export default function DesignerMessages() {
     } catch (error) {
       console.error('Error:', error);
       toast.error('Failed to send message');
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -539,21 +552,23 @@ export default function DesignerMessages() {
                               placeholder="Type your message..."
                               value={newMessage}
                               onChange={(e) => setNewMessage(e.target.value)}
-                              onKeyPress={(e) => {
+                              onKeyDown={(e) => {
                                 if (e.key === 'Enter' && !e.shiftKey) {
                                   e.preventDefault();
                                   handleSendMessage();
                                 }
                               }}
                               className="min-h-[60px] resize-none border-gray-300 focus:border-green-500"
+                              disabled={isSending}
                             />
                           </div>
                           <Button
                             onClick={handleSendMessage}
-                            disabled={!newMessage.trim()}
+                            disabled={!newMessage.trim() || isSending}
                             className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white px-6"
                           >
                             <Send className="w-4 h-4" />
+                            {isSending && <span className="ml-2">Sending...</span>}
                           </Button>
                         </div>
                         <p className="text-xs text-gray-500 mt-2">Press Enter to send, Shift + Enter for new line</p>

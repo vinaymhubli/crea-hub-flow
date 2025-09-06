@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 interface Message {
   id: string;
@@ -99,6 +100,13 @@ export default function CustomerMessages() {
 
       // Get designer info for all unique designer IDs
       const designerIds = [...new Set(bookings.map(b => b.designer_id))];
+      
+      // Guard against empty array for .in() query
+      if (designerIds.length === 0) {
+        setConversations([]);
+        return;
+      }
+      
       const { data: designers, error: designersError } = await supabase
         .from('designers')
         .select('id, user_id, rating, is_online')
@@ -110,14 +118,22 @@ export default function CustomerMessages() {
 
       // Get designer profiles
       const designerUserIds = designers?.map(d => d.user_id) || [];
-      const { data: designerProfiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('user_id, first_name, last_name')
-        .in('user_id', designerUserIds);
-
-      if (profilesError) {
-        console.error('Error fetching designer profiles:', profilesError);
+      
+      // Guard against empty array for .in() query
+      let designerProfiles: any[] = [];
+      if (designerUserIds.length > 0) {
+        const { data, error: profilesError } = await supabase
+          .from('profiles')
+          .select('user_id, first_name, last_name')
+          .in('user_id', designerUserIds);
+          
+        if (profilesError) {
+          console.error('Error fetching designer profiles:', profilesError);
+        } else {
+          designerProfiles = data || [];
+        }
       }
+
 
       // Build conversations with designer info and message data
       const conversationPromises = bookings.map(async (booking) => {
@@ -206,10 +222,13 @@ export default function CustomerMessages() {
     }
   };
 
+  const [isSending, setIsSending] = useState(false);
+
   const handleSendMessage = async () => {
-    if (!messageInput.trim() || !selectedConversation) return;
+    if (!messageInput.trim() || !selectedConversation || isSending) return;
 
     try {
+      setIsSending(true);
       const { error } = await supabase
         .from('messages')
         .insert({
@@ -221,6 +240,7 @@ export default function CustomerMessages() {
 
       if (error) {
         console.error('Error sending message:', error);
+        toast.error('Failed to send message. Please try again.');
         return;
       }
 
@@ -231,12 +251,15 @@ export default function CustomerMessages() {
       fetchConversations();
     } catch (error) {
       console.error('Error:', error);
+      toast.error('Failed to send message. Please try again.');
+    } finally {
+      setIsSending(false);
     }
   };
 
   const setupRealtimeSubscription = (bookingId: string) => {
     const channel = supabase
-      .channel('customer-messages')
+      .channel(`customer-messages-${bookingId}`)
       .on(
         'postgres_changes',
         {
@@ -497,16 +520,18 @@ export default function CustomerMessages() {
                           placeholder="Type your message..."
                           value={messageInput}
                           onChange={(e) => setMessageInput(e.target.value)}
-                          onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                          onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
                           className="pr-24"
+                          disabled={isSending}
                         />
                       </div>
                       <Button 
                         onClick={handleSendMessage}
-                        disabled={!messageInput.trim()}
+                        disabled={!messageInput.trim() || isSending}
                         className="bg-gradient-to-r from-green-400 to-teal-500 hover:from-green-500 hover:to-teal-600"
                       >
                         <Send className="w-4 h-4" />
+                        {isSending && <span className="ml-2">Sending...</span>}
                       </Button>
                     </div>
                   </div>
