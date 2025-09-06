@@ -278,13 +278,13 @@ export default function DesignerMessages() {
       if (selectedConversation.type === 'direct' && selectedConversation.conversation_id) {
         ({ data, error } = await supabase
           .from('conversation_messages')
-          .select('*, booking_id')
+          .select('*')
           .eq('conversation_id', selectedConversation.conversation_id)
           .order('created_at', { ascending: true }));
       } else if (selectedConversation.booking_id) {
         ({ data, error } = await supabase
           .from('messages')
-          .select('*, conversation_id')
+          .select('*')
           .eq('booking_id', selectedConversation.booking_id)
           .order('created_at', { ascending: true }));
       }
@@ -337,6 +337,7 @@ export default function DesignerMessages() {
             filter: `booking_id=eq.${selectedConversation.booking_id}`
           },
           (payload) => {
+            console.log('New booking message received:', payload.new);
             setMessages(prev => [...prev, payload.new as Message]);
             fetchConversations();
           }
