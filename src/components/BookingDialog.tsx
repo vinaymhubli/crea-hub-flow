@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface BookingDialogProps {
   designer: any;
@@ -39,6 +40,7 @@ export function BookingDialog({ designer, children, service }: BookingDialogProp
   });
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const getCurrentPackage = () => {
     if (service?.packages && service.packages.length > 0) {
@@ -98,6 +100,7 @@ export function BookingDialog({ designer, children, service }: BookingDialogProp
         scheduled_date: ''
       });
       setOpen(false);
+      navigate('/customer-dashboard/bookings');
     } catch (error) {
       console.error('Error creating booking:', error);
       toast.error('Failed to create booking');
