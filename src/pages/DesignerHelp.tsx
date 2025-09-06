@@ -22,18 +22,28 @@ const DesignerHelp = () => {
         </div>
       </section>
 
-      <ComingSoonSection 
-        title="Designer Help Center Coming Soon"
-        description="We're creating a comprehensive help center tailored specifically for designers. Get ready for detailed guides, tutorials, and support resources."
-        features={[
-          "Getting started guides",
-          "Portfolio optimization tips",
-          "Client communication best practices",
-          "Pricing and proposals help",
-          "Technical troubleshooting",
-          "Success stories and case studies"
-        ]}
-      />
+      <section className="py-20">
+        <div className="max-w-7xl mx-auto px-6 text-center">
+          <h2 className="text-3xl font-bold mb-4">Designer Help Center Coming Soon</h2>
+          <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
+            We're creating a comprehensive help center tailored specifically for designers. Get ready for detailed guides, tutorials, and support resources.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto mb-8">
+            {[
+              "Getting started guides",
+              "Portfolio optimization tips",
+              "Client communication best practices",
+              "Pricing and proposals help",
+              "Technical troubleshooting",
+              "Success stories and case studies"
+            ].map((feature, index) => (
+              <div key={index} className="flex items-center justify-center p-4 bg-muted/50 rounded-lg">
+                <span className="text-sm">{feature}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
     </div>
   );
 };

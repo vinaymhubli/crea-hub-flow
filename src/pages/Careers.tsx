@@ -23,18 +23,28 @@ const Careers = () => {
         </div>
       </section>
 
-      <ComingSoonSection 
-        title="Career Opportunities Coming Soon"
-        description="We're growing fast and will be posting exciting opportunities soon. Join our team and help shape the future of design collaboration."
-        features={[
-          "Remote-first culture",
-          "Competitive compensation",
-          "Equity opportunities",
-          "Learning & development budget",
-          "Flexible working hours",
-          "Amazing team culture"
-        ]}
-      />
+      <section className="py-20">
+        <div className="max-w-7xl mx-auto px-6 text-center">
+          <h2 className="text-3xl font-bold mb-4">Career Opportunities Coming Soon</h2>
+          <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
+            We're growing fast and will be posting exciting opportunities soon. Join our team and help shape the future of design collaboration.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto mb-8">
+            {[
+              "Remote-first culture",
+              "Competitive compensation",
+              "Equity opportunities", 
+              "Learning & development budget",
+              "Flexible working hours",
+              "Amazing team culture"
+            ].map((feature, index) => (
+              <div key={index} className="flex items-center justify-center p-4 bg-muted/50 rounded-lg">
+                <span className="text-sm">{feature}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
     </div>
   );
 };

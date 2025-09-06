@@ -22,18 +22,28 @@ const Blog = () => {
         </div>
       </section>
 
-      <ComingSoonSection 
-        title="Design Blog Coming Soon"
-        description="We're preparing amazing content from industry experts and our community. Get ready for insights that will transform your design career."
-        features={[
-          "Weekly design trend reports",
-          "Designer success stories",
-          "Industry expert interviews",
-          "Tool reviews and tutorials",
-          "Business tips for freelancers",
-          "Client case studies"
-        ]}
-      />
+      <section className="py-20">
+        <div className="max-w-7xl mx-auto px-6 text-center">
+          <h2 className="text-3xl font-bold mb-4">Design Blog Coming Soon</h2>
+          <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
+            We're preparing amazing content from industry experts and our community. Get ready for insights that will transform your design career.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto mb-8">
+            {[
+              "Weekly design trend reports",
+              "Designer success stories", 
+              "Industry expert interviews",
+              "Tool reviews and tutorials",
+              "Business tips for freelancers",
+              "Client case studies"
+            ].map((feature, index) => (
+              <div key={index} className="flex items-center justify-center p-4 bg-muted/50 rounded-lg">
+                <span className="text-sm">{feature}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
     </div>
   );
 };
