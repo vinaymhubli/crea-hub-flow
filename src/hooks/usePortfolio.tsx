@@ -43,7 +43,7 @@ interface UpdatePortfolioData {
 
 export const usePortfolio = () => {
   const { user } = useAuth();
-  const { designerProfile } = useDesignerProfile();
+  const { designerProfile, ensureDesignerRow } = useDesignerProfile();
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -124,9 +124,16 @@ export const usePortfolio = () => {
   };
 
   const createPortfolioItem = async (itemData: CreatePortfolioData) => {
-    if (!designerProfile?.id || !user?.id) return false;
+    if (!user?.id) return false;
 
     try {
+      // Ensure designer row exists
+      let designerId = designerProfile?.id;
+      if (!designerId) {
+        designerId = await ensureDesignerRow();
+        if (!designerId) return false;
+      }
+
       // Upload image first
       const imageUrl = await uploadPortfolioImage(itemData.image);
       if (!imageUrl) return false;
@@ -134,7 +141,7 @@ export const usePortfolio = () => {
       const { error } = await supabase
         .from('portfolio_items')
         .insert({
-          designer_id: designerProfile.id,
+          designer_id: designerId,
           title: itemData.title,
           description: itemData.description,
           category: itemData.category,
@@ -257,8 +264,11 @@ export const usePortfolio = () => {
   useEffect(() => {
     if (designerProfile?.id) {
       fetchMyPortfolioItems();
+    } else if (designerProfile !== undefined) {
+      // Profile has loaded but no designer row exists - set loading to false
+      setLoading(false);
     }
-  }, [designerProfile?.id]);
+  }, [designerProfile]);
 
   return {
     portfolioItems,

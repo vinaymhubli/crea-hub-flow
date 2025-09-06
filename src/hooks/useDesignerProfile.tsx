@@ -60,6 +60,15 @@ export const useDesignerProfile = () => {
         return;
       }
 
+      if (!data && user?.id) {
+        // No designer profile found, create one automatically
+        const designerId = await ensureDesignerRow();
+        if (designerId) {
+          // Refetch after creating
+          return await fetchDesignerProfile();
+        }
+      }
+      
       setDesignerProfile(data);
     } catch (err) {
       console.error('Error:', err);

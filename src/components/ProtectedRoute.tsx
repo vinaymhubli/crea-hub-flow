@@ -25,12 +25,26 @@ export const ProtectedRoute = ({ children, requireUserType }: ProtectedRouteProp
     return <Navigate to="/login" replace />;
   }
 
-  if (requireUserType && profile?.user_type !== requireUserType) {
-    // Redirect to appropriate dashboard based on user type
-    const redirectPath = profile?.user_type === 'designer' 
-      ? '/designer-dashboard' 
-      : '/customer-dashboard';
-    return <Navigate to={redirectPath} replace />;
+  if (requireUserType) {
+    // Wait for profile to load before checking user type
+    if (!profile) {
+      return (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading profile...</p>
+          </div>
+        </div>
+      );
+    }
+    
+    if (profile.user_type !== requireUserType) {
+      // Redirect to appropriate dashboard based on user type
+      const redirectPath = profile.user_type === 'designer' 
+        ? '/designer-dashboard' 
+        : '/customer-dashboard';
+      return <Navigate to={redirectPath} replace />;
+    }
   }
 
   return <>{children}</>;
