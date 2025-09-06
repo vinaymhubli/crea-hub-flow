@@ -110,6 +110,79 @@ export type Database = {
           },
         ]
       }
+      conversation_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          file_url: string | null
+          id: string
+          message_type: string
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          file_url?: string | null
+          id?: string
+          message_type?: string
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          file_url?: string | null
+          id?: string
+          message_type?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          created_at: string
+          customer_id: string
+          designer_id: string
+          id: string
+          last_message_at: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          designer_id: string
+          id?: string
+          last_message_at?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          designer_id?: string
+          id?: string
+          last_message_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_designer_fk"
+            columns: ["designer_id"]
+            isOneToOne: false
+            referencedRelation: "designers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       designer_availability_settings: {
         Row: {
           auto_accept_bookings: boolean
@@ -281,6 +354,75 @@ export type Database = {
             foreignKeyName: "designers_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      live_session_requests: {
+        Row: {
+          accepted_at: string | null
+          actual_duration_minutes: number | null
+          cancellation_reason: string | null
+          channel_name: string
+          created_at: string | null
+          customer_id: string
+          designer_id: string
+          ended_at: string | null
+          estimated_duration_hours: number | null
+          expires_at: string | null
+          id: string
+          message: string | null
+          service_type: string
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          actual_duration_minutes?: number | null
+          cancellation_reason?: string | null
+          channel_name: string
+          created_at?: string | null
+          customer_id: string
+          designer_id: string
+          ended_at?: string | null
+          estimated_duration_hours?: number | null
+          expires_at?: string | null
+          id?: string
+          message?: string | null
+          service_type?: string
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          actual_duration_minutes?: number | null
+          cancellation_reason?: string | null
+          channel_name?: string
+          created_at?: string | null
+          customer_id?: string
+          designer_id?: string
+          ended_at?: string | null
+          estimated_duration_hours?: number | null
+          expires_at?: string | null
+          id?: string
+          message?: string | null
+          service_type?: string
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_session_requests_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "live_session_requests_designer_id_fkey"
+            columns: ["designer_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
@@ -799,6 +941,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      expire_old_live_session_requests: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      generate_live_session_channel: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_admin_stats: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -813,6 +963,10 @@ export type Database = {
       }
       is_admin: {
         Args: { user_uuid: string }
+        Returns: boolean
+      }
+      is_designer_available_for_live_session: {
+        Args: { designer_profile_id: string }
         Returns: boolean
       }
     }

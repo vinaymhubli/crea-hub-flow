@@ -33,7 +33,8 @@ import { Separator } from "@/components/ui/separator";
 interface Message {
   id: string;
   sender_id: string;
-  booking_id: string;
+  booking_id?: string;
+  conversation_id?: string;
   content: string;
   message_type: string;
   file_url: string | null;
@@ -41,15 +42,17 @@ interface Message {
 }
 
 interface Conversation {
-  booking_id: string;
+  conversation_id?: string;
+  booking_id?: string;
   customer_id: string;
   customer_name: string;
   customer_initials: string;
-  service: string;
-  status: string;
+  service?: string;
+  status?: string;
   last_message: string;
   last_message_time: string;
   unread_count: number;
+  type: 'booking' | 'direct';
 }
 
 export default function DesignerMessages() {
@@ -79,8 +82,8 @@ export default function DesignerMessages() {
     let cleanup: (() => void) | undefined;
     
     if (selectedConversation) {
-      fetchMessages(selectedConversation.booking_id);
-      cleanup = setupRealtimeSubscription(selectedConversation.booking_id);
+      fetchMessages(selectedConversation.conversation_id || selectedConversation.booking_id || '');
+      cleanup = setupRealtimeSubscription(selectedConversation.conversation_id || selectedConversation.booking_id || '');
     }
     
     return () => {
@@ -125,87 +128,14 @@ export default function DesignerMessages() {
     try {
       setLoading(true);
       
-      // First, get all bookings for this designer
-      const { data: bookings, error: bookingsError } = await supabase
-        .from('bookings')
-        .select('id, customer_id, service, status, updated_at')
-        .eq('designer_id', designerId)
-        .order('updated_at', { ascending: false });
+      // Get both booking-based and direct conversations
+      const [bookingConversations, directConversations] = await Promise.all([
+        fetchBookingConversations(),
+        fetchDirectConversations()
+      ]);
 
-      if (bookingsError) {
-        console.error('Error fetching bookings:', bookingsError);
-        toast.error('Failed to load conversations');
-        return;
-      }
-
-      if (!bookings || bookings.length === 0) {
-        setConversations([]);
-        return;
-      }
-
-      // Get customer profiles for all unique customer IDs
-      const customerIds = [...new Set(bookings.map(b => b.customer_id))];
-      
-      // Guard against empty array for .in() query
-      let customerProfiles: any[] = [];
-      if (customerIds.length > 0) {
-        const { data, error: profilesError } = await supabase
-          .from('profiles')
-          .select('user_id, first_name, last_name')
-          .in('user_id', customerIds);
-          
-        if (profilesError) {
-          console.error('Error fetching customer profiles:', profilesError);
-        } else {
-          customerProfiles = data || [];
-        }
-      }
-
-
-      // Build conversations with customer info and message data
-      const conversationPromises = bookings.map(async (booking) => {
-        // Find customer profile
-        const customerProfile = customerProfiles?.find(p => p.user_id === booking.customer_id);
-        const customerName = customerProfile 
-          ? `${customerProfile.first_name || ''} ${customerProfile.last_name || ''}`.trim() || 'Customer'
-          : 'Customer';
-        const customerInitials = customerProfile 
-          ? `${customerProfile.first_name?.[0] || ''}${customerProfile.last_name?.[0] || ''}` || 'C'
-          : 'C';
-
-        // Get latest message
-        const { data: latestMessage } = await supabase
-          .from('messages')
-          .select('content, created_at')
-          .eq('booking_id', booking.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        // Get unread count (messages from customer that I haven't seen)
-        const { count: unreadCount } = await supabase
-          .from('messages')
-          .select('*', { count: 'exact', head: true })
-          .eq('booking_id', booking.id)
-          .eq('sender_id', booking.customer_id);
-
-        return {
-          booking_id: booking.id,
-          customer_id: booking.customer_id,
-          customer_name: customerName,
-          customer_initials: customerInitials,
-          service: booking.service,
-          status: booking.status,
-          last_message: latestMessage?.content || 'No messages yet',
-          last_message_time: latestMessage?.created_at 
-            ? new Date(latestMessage.created_at).toLocaleDateString()
-            : '',
-          unread_count: Math.min(unreadCount || 0, 9)
-        };
-      });
-
-      const conversationsList = await Promise.all(conversationPromises);
-      setConversations(conversationsList);
+      const allConversations = [...directConversations, ...bookingConversations];
+      setConversations(allConversations);
     } catch (error) {
       console.error('Error:', error);
       toast.error('Failed to load conversations');
@@ -214,13 +144,150 @@ export default function DesignerMessages() {
     }
   };
 
-  const fetchMessages = async (bookingId: string) => {
-    try {
-      const { data, error } = await supabase
+  const fetchBookingConversations = async () => {
+    const { data: bookings, error: bookingsError } = await supabase
+      .from('bookings')
+      .select('id, customer_id, service, status, updated_at')
+      .eq('designer_id', designerId)
+      .order('updated_at', { ascending: false });
+
+    if (bookingsError || !bookings) return [];
+
+    const customerIds = [...new Set(bookings.map(b => b.customer_id))];
+    let customerProfiles: any[] = [];
+    if (customerIds.length > 0) {
+      const { data } = await supabase
+        .from('profiles')
+        .select('user_id, first_name, last_name')
+        .in('user_id', customerIds);
+      customerProfiles = data || [];
+    }
+
+    const conversationPromises = bookings.map(async (booking) => {
+      const customerProfile = customerProfiles?.find(p => p.user_id === booking.customer_id);
+      const customerName = customerProfile 
+        ? `${customerProfile.first_name || ''} ${customerProfile.last_name || ''}`.trim() || 'Customer'
+        : 'Customer';
+      const customerInitials = customerProfile 
+        ? `${customerProfile.first_name?.[0] || ''}${customerProfile.last_name?.[0] || ''}` || 'C'
+        : 'C';
+
+      const { data: latestMessage } = await supabase
         .from('messages')
-        .select('*')
-        .eq('booking_id', bookingId)
-        .order('created_at', { ascending: true });
+        .select('content, created_at')
+        .eq('booking_id', booking.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const { count: unreadCount } = await supabase
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('booking_id', booking.id)
+        .eq('sender_id', booking.customer_id);
+
+      return {
+        booking_id: booking.id,
+        customer_id: booking.customer_id,
+        customer_name: customerName,
+        customer_initials: customerInitials,
+        service: booking.service,
+        status: booking.status,
+        last_message: latestMessage?.content || 'No messages yet',
+        last_message_time: latestMessage?.created_at 
+          ? new Date(latestMessage.created_at).toLocaleDateString()
+          : '',
+        unread_count: Math.min(unreadCount || 0, 9),
+        type: 'booking' as const
+      };
+    });
+
+    return Promise.all(conversationPromises);
+  };
+
+  const fetchDirectConversations = async () => {
+    const { data: conversations, error } = await supabase
+      .from('conversations')
+      .select(`
+        id,
+        customer_id,
+        created_at,
+        last_message_at
+      `)
+      .eq('designer_id', designerId)
+      .order('last_message_at', { ascending: false });
+
+    if (error || !conversations) return [];
+
+    const customerIds = conversations.map(c => c.customer_id);
+    let customerProfiles: any[] = [];
+    if (customerIds.length > 0) {
+      const { data } = await supabase
+        .from('profiles')
+        .select('user_id, first_name, last_name')
+        .in('user_id', customerIds);
+      customerProfiles = data || [];
+    }
+
+    const conversationPromises = conversations.map(async (conversation) => {
+      const customerProfile = customerProfiles?.find(p => p.user_id === conversation.customer_id);
+      const customerName = customerProfile 
+        ? `${customerProfile.first_name || ''} ${customerProfile.last_name || ''}`.trim() || 'Customer'
+        : 'Customer';
+      const customerInitials = customerProfile 
+        ? `${customerProfile.first_name?.[0] || ''}${customerProfile.last_name?.[0] || ''}` || 'C'
+        : 'C';
+
+      const { data: latestMessage } = await supabase
+        .from('conversation_messages')
+        .select('content, created_at')
+        .eq('conversation_id', conversation.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const { count: unreadCount } = await supabase
+        .from('conversation_messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('conversation_id', conversation.id)
+        .eq('sender_id', conversation.customer_id);
+
+      return {
+        conversation_id: conversation.id,
+        customer_id: conversation.customer_id,
+        customer_name: customerName,
+        customer_initials: customerInitials,
+        last_message: latestMessage?.content || 'No messages yet',
+        last_message_time: latestMessage?.created_at 
+          ? new Date(latestMessage.created_at).toLocaleDateString()
+          : '',
+        unread_count: Math.min(unreadCount || 0, 9),
+        type: 'direct' as const
+      };
+    });
+
+    return Promise.all(conversationPromises);
+  };
+
+  const fetchMessages = async (conversationOrBookingId: string) => {
+    if (!selectedConversation) return;
+
+    try {
+      let data, error;
+      
+      if (selectedConversation.type === 'direct' && selectedConversation.conversation_id) {
+        ({ data, error } = await supabase
+          .from('conversation_messages')
+          .select('*, booking_id')
+          .eq('conversation_id', selectedConversation.conversation_id)
+          .order('created_at', { ascending: true }));
+      } else if (selectedConversation.booking_id) {
+        ({ data, error } = await supabase
+          .from('messages')
+          .select('*, conversation_id')
+          .eq('booking_id', selectedConversation.booking_id)
+          .order('created_at', { ascending: true }));
+      }
 
       if (error) {
         console.error('Error fetching messages:', error);
@@ -233,27 +300,53 @@ export default function DesignerMessages() {
     }
   };
 
-  const setupRealtimeSubscription = (bookingId: string) => {
-    const channel = supabase
-      .channel(`designer-messages-${bookingId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `booking_id=eq.${bookingId}`
-        },
-        (payload) => {
-          setMessages(prev => [...prev, payload.new as Message]);
-          // Update conversation list
-          fetchConversations();
-        }
-      )
-      .subscribe();
+  const setupRealtimeSubscription = (conversationOrBookingId: string) => {
+    if (!selectedConversation) return;
+
+    const channels: any[] = [];
+
+    if (selectedConversation.type === 'direct' && selectedConversation.conversation_id) {
+      const channel = supabase
+        .channel(`designer-conversation-${selectedConversation.conversation_id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'conversation_messages',
+            filter: `conversation_id=eq.${selectedConversation.conversation_id}`
+          },
+          (payload) => {
+            setMessages(prev => [...prev, payload.new as Message]);
+            fetchConversations();
+          }
+        )
+        .subscribe();
+      channels.push(channel);
+    }
+
+    if (selectedConversation.booking_id) {
+      const channel = supabase
+        .channel(`designer-messages-${selectedConversation.booking_id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages',
+            filter: `booking_id=eq.${selectedConversation.booking_id}`
+          },
+          (payload) => {
+            setMessages(prev => [...prev, payload.new as Message]);
+            fetchConversations();
+          }
+        )
+        .subscribe();
+      channels.push(channel);
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      channels.forEach(channel => supabase.removeChannel(channel));
     };
   };
 
@@ -264,14 +357,27 @@ export default function DesignerMessages() {
 
     try {
       setIsSending(true);
-      const { error } = await supabase
-        .from('messages')
-        .insert({
-          booking_id: selectedConversation.booking_id,
-          sender_id: user?.id,
-          content: newMessage.trim(),
-          message_type: 'text'
-        });
+      let error;
+
+      if (selectedConversation.type === 'direct' && selectedConversation.conversation_id) {
+        ({ error } = await supabase
+          .from('conversation_messages')
+          .insert({
+            conversation_id: selectedConversation.conversation_id,
+            sender_id: user?.id,
+            content: newMessage.trim(),
+            message_type: 'text'
+          }));
+      } else if (selectedConversation.booking_id) {
+        ({ error } = await supabase
+          .from('messages')
+          .insert({
+            booking_id: selectedConversation.booking_id,
+            sender_id: user?.id,
+            content: newMessage.trim(),
+            message_type: 'text'
+          }));
+      }
 
       if (error) {
         console.error('Error sending message:', error);
@@ -420,10 +526,12 @@ export default function DesignerMessages() {
                     ) : (
                       filteredConversations.map((conversation) => (
                         <div
-                          key={conversation.booking_id}
+                          key={conversation.conversation_id || conversation.booking_id}
                           onClick={() => setSelectedConversation(conversation)}
                           className={`p-4 border-b border-gray-100 cursor-pointer transition-colors hover:bg-gray-50 ${
-                            selectedConversation?.booking_id === conversation.booking_id ? 'bg-gradient-to-r from-green-50 to-blue-50 border-l-4 border-green-500' : ''
+                            selectedConversation?.conversation_id === conversation.conversation_id || 
+                            selectedConversation?.booking_id === conversation.booking_id 
+                              ? 'bg-gradient-to-r from-green-50 to-blue-50 border-l-4 border-green-500' : ''
                           }`}
                         >
                           <div className="flex items-start space-x-3">
@@ -448,7 +556,9 @@ export default function DesignerMessages() {
                                   </Badge>
                                 )}
                               </div>
-                              <p className="text-sm text-gray-500 truncate mt-1">{conversation.service}</p>
+                              {conversation.service && (
+                                <p className="text-sm text-gray-500 truncate mt-1">{conversation.service}</p>
+                              )}
                               <p className="text-sm text-gray-600 truncate mt-1">{conversation.last_message}</p>
                               <div className="flex items-center justify-between mt-2">
                                 <span className="text-xs text-gray-500 flex items-center">
