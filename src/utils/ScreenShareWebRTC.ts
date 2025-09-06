@@ -11,6 +11,9 @@ export class ScreenShareManager {
   private pendingRemoteCandidates: RTCIceCandidateInit[] = [];
   private isChannelReady = false;
   private messageQueue: any[] = [];
+  private senderId: string;
+  private offerRequestInterval: number | null = null;
+  private bufferedStream: MediaStream | null = null;
 
   constructor(
     roomId: string,
@@ -20,6 +23,8 @@ export class ScreenShareManager {
     this.roomId = roomId;
     this.isHost = isHost;
     this.onConnectionStateChange = onConnectionStateChange;
+    this.senderId = crypto.randomUUID();
+    console.log(`📱 ScreenShareManager created with ID: ${this.senderId}`);
     this.setupPeerConnection();
   }
 
@@ -30,9 +35,9 @@ export class ScreenShareManager {
     ];
 
     // Add TURN servers if configured
-    const turnUrl = process.env.VITE_TURN_URL;
-    const turnUsername = process.env.VITE_TURN_USERNAME;
-    const turnCredential = process.env.VITE_TURN_CREDENTIAL;
+    const turnUrl = import.meta.env.VITE_TURN_URL;
+    const turnUsername = import.meta.env.VITE_TURN_USERNAME;
+    const turnCredential = import.meta.env.VITE_TURN_CREDENTIAL;
     
     if (turnUrl && turnUsername && turnCredential) {
       iceServers.push({
@@ -50,14 +55,41 @@ export class ScreenShareManager {
       const state = this.peerConnection?.connectionState || 'disconnected';
       console.log('🔗 Connection state changed:', state);
       this.onConnectionStateChange?.(state);
+      
+      // Auto-recover on failure
+      if (state === 'failed' || state === 'disconnected') {
+        console.log('🔄 Connection failed/disconnected, attempting recovery...');
+        setTimeout(() => {
+          if (this.isHost && this.localStream) {
+            this.resendOffer();
+          } else if (!this.isHost) {
+            this.requestOffer();
+          }
+        }, 2000);
+      }
+    };
+
+    this.peerConnection.oniceconnectionstatechange = () => {
+      const iceState = this.peerConnection?.iceConnectionState || 'disconnected';
+      console.log('🧊 ICE connection state changed:', iceState);
+    };
+
+    this.peerConnection.onsignalingstatechange = () => {
+      const signalingState = this.peerConnection?.signalingState || 'closed';
+      console.log('📡 Signaling state changed:', signalingState);
     };
 
     this.peerConnection.ontrack = (event) => {
       console.log('✅ Received remote stream with tracks:', event.streams[0]?.getTracks().length);
-      if (this.remoteVideoElement && event.streams[0]) {
-        this.remoteVideoElement.srcObject = event.streams[0];
-        this.remoteVideoElement.play().catch(console.error);
-        console.log('📺 Video element updated with remote stream');
+      if (event.streams[0]) {
+        this.bufferedStream = event.streams[0];
+        if (this.remoteVideoElement) {
+          this.remoteVideoElement.srcObject = event.streams[0];
+          this.remoteVideoElement.play().catch(console.error);
+          console.log('📺 Video element updated with remote stream');
+        } else {
+          console.log('📺 Buffering stream (video element not ready)');
+        }
       }
     };
 
@@ -69,7 +101,8 @@ export class ScreenShareManager {
           event: 'ice-candidate',
           payload: {
             candidate: event.candidate,
-            roomId: this.roomId
+            roomId: this.roomId,
+            senderId: this.senderId
           }
         });
       }
@@ -97,7 +130,7 @@ export class ScreenShareManager {
           height: { ideal: 1080 },
           frameRate: { ideal: 30 }
         },
-        audio: true
+        audio: false // Simplified for better compatibility
       });
 
       console.log('📹 Got display media with tracks:', this.localStream.getTracks().length);
@@ -125,7 +158,8 @@ export class ScreenShareManager {
         event: 'offer',
         payload: {
           offer,
-          roomId: this.roomId
+          roomId: this.roomId,
+          senderId: this.senderId
         }
       });
 
@@ -148,39 +182,78 @@ export class ScreenShareManager {
 
     console.log('👀 Joining screen share as viewer');
     this.remoteVideoElement = remoteVideoElement;
+    
+    // Attach buffered stream if available
+    if (this.bufferedStream) {
+      this.remoteVideoElement.srcObject = this.bufferedStream;
+      this.remoteVideoElement.play().catch(console.error);
+      console.log('📺 Attached buffered stream to video element');
+    }
+    
     this.setupRealtimeChannel();
+  }
+
+  async resetAndReconnect(remoteVideoElement: HTMLVideoElement): Promise<void> {
+    console.log('🔄 Resetting and reconnecting...');
+    
+    // Clean up existing connection
+    if (this.peerConnection) {
+      this.peerConnection.close();
+    }
+    if (this.channel) {
+      supabase.removeChannel(this.channel);
+      this.channel = null;
+    }
+    if (this.offerRequestInterval) {
+      clearInterval(this.offerRequestInterval);
+      this.offerRequestInterval = null;
+    }
+    
+    // Reset state
+    this.isChannelReady = false;
+    this.messageQueue = [];
+    this.pendingRemoteCandidates = [];
+    
+    // Setup fresh connection
+    this.setupPeerConnection();
+    await this.joinScreenShare(remoteVideoElement);
   }
 
   private setupRealtimeChannel() {
     console.log('Setting up realtime channel for room:', this.roomId);
     
+    // Remove existing channel if any
+    if (this.channel) {
+      supabase.removeChannel(this.channel);
+    }
+    
     this.channel = supabase.channel(`screen-share-${this.roomId}`)
       .on('broadcast', { event: 'offer' }, async (payload) => {
-        if (!this.isHost && payload.payload.roomId === this.roomId) {
+        if (!this.isHost && payload.payload.roomId === this.roomId && payload.payload.senderId !== this.senderId) {
           console.log('📥 Received offer from host');
           await this.handleOffer(payload.payload.offer);
         }
       })
       .on('broadcast', { event: 'answer' }, async (payload) => {
-        if (this.isHost && payload.payload.roomId === this.roomId) {
+        if (this.isHost && payload.payload.roomId === this.roomId && payload.payload.senderId !== this.senderId) {
           console.log('📥 Received answer from viewer');
           await this.handleAnswer(payload.payload.answer);
         }
       })
       .on('broadcast', { event: 'ice-candidate' }, async (payload) => {
-        if (payload.payload.roomId === this.roomId) {
+        if (payload.payload.roomId === this.roomId && payload.payload.senderId !== this.senderId) {
           console.log('📥 Received ICE candidate:', payload.payload.candidate.type);
           await this.handleIceCandidate(payload.payload.candidate);
         }
       })
       .on('broadcast', { event: 'screen-share-ended' }, (payload) => {
-        if (payload.payload.roomId === this.roomId) {
+        if (payload.payload.roomId === this.roomId && payload.payload.senderId !== this.senderId) {
           console.log('🔚 Remote screen share ended');
           this.handleRemoteScreenShareEnd();
         }
       })
       .on('broadcast', { event: 'request-offer' }, async (payload) => {
-        if (this.isHost && payload.payload.roomId === this.roomId && this.localStream) {
+        if (this.isHost && payload.payload.roomId === this.roomId && payload.payload.senderId !== this.senderId && this.localStream) {
           console.log('📞 Received request for offer, re-sending...');
           await this.resendOffer();
         }
@@ -198,10 +271,11 @@ export class ScreenShareManager {
             console.log('📤 Sent queued message:', message.event);
           }
           
-          // If we're a viewer, request offer
+          // If we're a viewer, start requesting offers periodically
           if (!this.isHost) {
             console.log('👀 Viewer requesting offer from host...');
             await this.requestOffer();
+            this.startOfferRequestInterval();
           }
         }
       });
@@ -225,9 +299,17 @@ export class ScreenShareManager {
         event: 'answer',
         payload: {
           answer,
-          roomId: this.roomId
+          roomId: this.roomId,
+          senderId: this.senderId
         }
       });
+      
+      // Stop requesting offers once we have a connection
+      if (this.offerRequestInterval) {
+        clearInterval(this.offerRequestInterval);
+        this.offerRequestInterval = null;
+        console.log('✅ Stopped offer request interval (connected)');
+      }
     } catch (error) {
       console.error('❌ Error handling offer:', error);
     }
@@ -292,9 +374,32 @@ export class ScreenShareManager {
       type: 'broadcast',
       event: 'request-offer',
       payload: {
-        roomId: this.roomId
+        roomId: this.roomId,
+        senderId: this.senderId
       }
     });
+  }
+
+  private startOfferRequestInterval(): void {
+    // Clear existing interval if any
+    if (this.offerRequestInterval) {
+      clearInterval(this.offerRequestInterval);
+    }
+    
+    this.offerRequestInterval = window.setInterval(() => {
+      // Stop requesting if we have a remote description or are connected
+      if (this.peerConnection?.remoteDescription || this.peerConnection?.connectionState === 'connected') {
+        if (this.offerRequestInterval) {
+          clearInterval(this.offerRequestInterval);
+          this.offerRequestInterval = null;
+          console.log('✅ Stopped offer request interval (success)');
+        }
+        return;
+      }
+      
+      console.log('🔄 Requesting offer (interval)...');
+      this.requestOffer();
+    }, 2000);
   }
 
   private async resendOffer(): Promise<void> {
@@ -315,7 +420,8 @@ export class ScreenShareManager {
         event: 'offer',
         payload: {
           offer,
-          roomId: this.roomId
+          roomId: this.roomId,
+          senderId: this.senderId
         }
       });
     } catch (error) {
@@ -340,7 +446,8 @@ export class ScreenShareManager {
         type: 'broadcast',
         event: 'screen-share-ended',
         payload: {
-          roomId: this.roomId
+          roomId: this.roomId,
+          senderId: this.senderId
         }
       });
     }
@@ -371,9 +478,16 @@ export class ScreenShareManager {
       this.remoteVideoElement = null;
     }
 
+    // Clear intervals
+    if (this.offerRequestInterval) {
+      clearInterval(this.offerRequestInterval);
+      this.offerRequestInterval = null;
+    }
+
     // Reset state
     this.isChannelReady = false;
     this.messageQueue = [];
     this.pendingRemoteCandidates = [];
+    this.bufferedStream = null;
   }
 }

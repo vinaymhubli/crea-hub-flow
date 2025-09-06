@@ -27,6 +27,7 @@ export function ScreenShareModal({
   const [connectionState, setConnectionState] = useState<string>('new');
   const [isConnected, setIsConnected] = useState(false);
   const [showConnectionHint, setShowConnectionHint] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -95,10 +96,17 @@ export function ScreenShareModal({
   };
 
   const retryConnection = async () => {
-    if (!isHost && screenShareManager && remoteVideoRef.current) {
+    if (!isHost && screenShareManager && remoteVideoRef.current && !isRetrying) {
       console.log('🔄 Retrying connection...');
-      await screenShareManager.joinScreenShare(remoteVideoRef.current);
-      setShowConnectionHint(false);
+      setIsRetrying(true);
+      try {
+        await screenShareManager.resetAndReconnect(remoteVideoRef.current);
+        setShowConnectionHint(false);
+      } catch (error) {
+        console.error('Failed to retry connection:', error);
+      } finally {
+        setIsRetrying(false);
+      }
     }
   };
 
@@ -114,7 +122,7 @@ export function ScreenShareModal({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
       <DialogContent className="max-w-4xl w-full h-[80vh] max-h-[800px] p-0">
         <DialogHeader className="p-6 pb-0">
           <div className="flex items-center justify-between">
@@ -203,9 +211,10 @@ export function ScreenShareModal({
                           onClick={retryConnection}
                           variant="outline"
                           size="sm"
-                          className="bg-orange-600 hover:bg-orange-700 border-orange-500 text-white"
+                          disabled={isRetrying}
+                          className="bg-orange-600 hover:bg-orange-700 border-orange-500 text-white disabled:opacity-50"
                         >
-                          Retry Connection
+                          {isRetrying ? 'Retrying...' : 'Retry Connection'}
                         </Button>
                       </div>
                     )}
