@@ -642,7 +642,7 @@ export default function DesignerMessages() {
                             onClick={() => setShowScreenShare(true)}
                           >
                             <Monitor className="w-4 h-4" />
-                            Share Screen
+                            live design with client
                           </Button>
                           <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
                             <MoreVertical className="w-4 h-4" />
