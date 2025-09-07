@@ -10,7 +10,8 @@ import {
   Search,
   Users,
   Wallet,
-  ChevronRight
+  ChevronRight,
+  LogOut
 } from 'lucide-react';
 import {
   Sidebar,
@@ -20,7 +21,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
+import { toast } from "sonner";
 
 const sidebarItems = [
   { title: "Dashboard", url: "/customer-dashboard", icon: LayoutDashboard },
@@ -36,7 +39,7 @@ const sidebarItems = [
 
 export function CustomerSidebar() {
   const location = useLocation();
-  const { user, profile } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const currentPath = location.pathname;
 
   const isActive = (path: string) => currentPath === path;
@@ -73,6 +76,14 @@ export function CustomerSidebar() {
     if (profile?.first_name) return profile.first_name;
     if (user?.email) return user.email.split('@')[0];
     return 'User';
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      toast.error("Failed to sign out");
+    }
   };
 
   return (
@@ -119,6 +130,17 @@ export function CustomerSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      
+      <SidebarFooter className="bg-white border-r border-gray-200 border-t">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={handleSignOut} className="text-gray-700 hover:bg-gray-50">
+              <LogOut className="w-5 h-5" />
+              <span className="font-medium">Sign out</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   );
 }
