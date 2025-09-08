@@ -38,17 +38,28 @@ export class ScreenShareManager {
     rtcToken: string;
     rtmToken: string;
   }> {
-    const res = await fetch("/api/agora/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ uid, channel: this.agoraChannel, asSharer })
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || `Failed to fetch token: ${res.status}`);
+    try {
+      console.log("🎫 Requesting token for:", { uid, channel: this.agoraChannel, asSharer });
+
+      const res = await fetch("/api/agora/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uid, channel: this.agoraChannel, asSharer })
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        console.error("❌ Token fetch failed:", res.status, err);
+        throw new Error(err.error || `Failed to fetch token: ${res.status}`);
+      }
+
+      const data = await res.json();
+      console.log("✅ Token fetched successfully");
+      return { appId: data.appId, rtcToken: data.rtcToken, rtmToken: data.rtmToken };
+    } catch (error) {
+      console.error("❌ Token fetch error:", error);
+      throw new Error(`Token generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-    const data = await res.json();
-    return { appId: data.appId, rtcToken: data.rtcToken, rtmToken: data.rtmToken };
   }
 
   private setupRealtimeChannel() {
@@ -99,6 +110,11 @@ export class ScreenShareManager {
       });
 
       await this.client.join(appId, this.agoraChannel, rtcToken, uid);
+
+      // Check if we're in a secure context (HTTPS) for screen capture
+      if (!window.isSecureContext) {
+        throw new Error("Screen sharing requires a secure context (HTTPS)");
+      }
 
       const screenTrack = await AgoraRTC.createScreenVideoTrack({
         encoderConfig: {
