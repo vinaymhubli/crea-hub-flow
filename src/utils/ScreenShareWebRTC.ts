@@ -160,6 +160,70 @@ export class ScreenShareManager {
     }
   }
 
+  async startScreenShareWithStream(stream: MediaStream): Promise<void> {
+    if (!this.isHost) throw new Error("Only the host can start screen sharing");
+
+    this.setupRealtimeChannel();
+
+    try {
+      const uid = this.senderId;
+      const { appId, rtcToken } = await this.fetchToken(uid, true);
+
+      this.client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+
+      this.client.on("connection-state-change", (cur) => {
+        const map = {
+          CONNECTED: "connected",
+          CONNECTING: "connecting",
+          DISCONNECTED: "disconnected",
+          RECONNECTING: "connecting"
+        } as Record<string, string>;
+        this.onConnectionStateChange?.(map[cur] || "connecting");
+      });
+
+      await this.client.join(appId, this.agoraChannel, rtcToken, uid);
+
+      // Create video track from the provided stream
+      const videoTrack = stream.getVideoTracks()[0];
+      if (!videoTrack) {
+        throw new Error("No video track found in the provided stream");
+      }
+
+      // Create Agora video track from the MediaStreamTrack
+      this.screenTrack = await AgoraRTC.createCustomVideoTrack({
+        mediaStreamTrack: videoTrack,
+      });
+
+      await this.client.publish([this.screenTrack]);
+      this.onConnectionStateChange?.("connected");
+
+      // Fire existing notification for UI (re-using 'offer' event)
+      this.sendBroadcast({
+        type: "broadcast",
+        event: "offer",
+        payload: {
+          roomId: this.roomId,
+          senderId: this.senderId,
+          agoraChannel: this.agoraChannel
+        }
+      });
+
+      // Handle stream end
+      videoTrack.addEventListener('ended', () => {
+        console.log("🛑 Screen share ended by user");
+        this.stopScreenShare();
+      });
+
+      const mediaTrack = this.screenTrack as any;
+      if (mediaTrack?.on) {
+        mediaTrack.on("track-ended", () => this.stopScreenShare());
+      }
+    } catch (e) {
+      console.error("❌ Failed to start Agora screen share with stream:", e);
+      throw e;
+    }
+  }
+
   async joinScreenShare(remoteVideoElement: HTMLVideoElement): Promise<void> {
     if (this.isHost) throw new Error("Host cannot join their own screen share");
 

@@ -3,10 +3,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { BookingDialog } from './BookingDialog';
+import LiveSessionRequestDialog from './LiveSessionRequestDialog';
+import { ScreenShareModal } from './ScreenShareModal';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { FilterState } from '../pages/Designers';
 import { useAuth } from '@/hooks/useAuth';
+import { Video, MessageCircle, Calendar, Eye } from 'lucide-react';
 
 interface DesignerGridProps {
   filters: FilterState;
@@ -20,6 +23,10 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [designers, setDesigners] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedDesigner, setSelectedDesigner] = useState<any>(null);
+  const [showLiveSessionDialog, setShowLiveSessionDialog] = useState(false);
+  const [showScreenShare, setShowScreenShare] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
   const sortOptions = [
     { value: 'rating', label: 'Highest Rated' },
@@ -76,11 +83,6 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
       }
       query = query.gte('hourly_rate', filters.priceRange[0]);
 
-      // Apply online filter
-      if (filters.isOnlineOnly) {
-        query = query.eq('is_online', true);
-      }
-
       // Apply rating filter
       if (filters.selectedRating) {
         query = query.gte('rating', filters.selectedRating);
@@ -103,24 +105,39 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
       
       console.log('Fetched designers:', data?.length || 0);
       
-      // Fetch profiles for each designer
+      // Fetch profiles and activity status for each designer
       const designersWithProfiles = await Promise.all(
         (data || []).map(async (designer) => {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('first_name, last_name, avatar_url, email')
-            .eq('user_id', designer.user_id)
-            .single();
+          const [profileResult, activityResult] = await Promise.all([
+            supabase
+              .from('profiles')
+              .select('first_name, last_name, avatar_url, email')
+              .eq('user_id', designer.user_id)
+              .single(),
+            supabase
+              .from('designer_activity')
+              .select('is_online, activity_status, last_seen')
+              .eq('designer_id', designer.user_id)
+              .single()
+          ]);
           
           return {
             ...designer,
-            profiles: profile
+            profiles: profileResult.data,
+            activity: activityResult.data
           };
         })
       );
       
       // Apply client-side filters
       let filteredData = designersWithProfiles;
+      
+      // Apply online filter based on activity
+      if (filters.isOnlineOnly) {
+        filteredData = filteredData.filter(designer => 
+          designer.activity?.is_online || designer.is_online
+        );
+      }
       
       // Apply search filter client-side with improved matching
       if (filters.searchTerm) {
@@ -233,6 +250,76 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
     navigate(`/customer-dashboard/messages?designer_id=${designerId}`);
   };
 
+  const checkDesignerAvailability = async (designer: any) => {
+    try {
+      // Check if designer has any active sessions
+      const { data: activeSessions, error } = await supabase
+        .from('bookings')
+        .select('id, status, scheduled_date, duration_minutes')
+        .eq('designer_id', designer.id)
+        .in('status', ['in_progress', 'pending'])
+        .gte('scheduled_date', new Date().toISOString());
+
+      if (error) throw error;
+
+      // Check if designer is currently in a live session
+      const { data: liveSessions, error: liveError } = await supabase
+        .from('live_session_requests')
+        .select('id, status')
+        .eq('designer_id', designer.id)
+        .eq('status', 'accepted');
+
+      if (liveError) throw liveError;
+
+      // Designer is free if no active sessions and no live sessions
+      const hasActiveSessions = activeSessions && activeSessions.length > 0;
+      const hasLiveSessions = liveSessions && liveSessions.length > 0;
+      
+      return !hasActiveSessions && !hasLiveSessions;
+    } catch (error) {
+      console.error('Error checking designer availability:', error);
+      return false;
+    }
+  };
+
+  const handleLiveSessionRequest = async (designer: any) => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+    
+    if (profile?.user_type !== 'client') {
+      toast.error('Only clients can request live sessions');
+      return;
+    }
+
+    if (!designer.is_online) {
+      toast.error('Designer is currently offline');
+      return;
+    }
+
+    // Check if designer is free
+    const isAvailable = await checkDesignerAvailability(designer);
+    if (!isAvailable) {
+      toast.error('Designer is currently busy with another session');
+      return;
+    }
+
+    setSelectedDesigner(designer);
+    setShowLiveSessionDialog(true);
+  };
+
+  const handleSessionStart = (sessionId: string) => {
+    setCurrentSessionId(sessionId);
+    setShowScreenShare(true);
+    setShowLiveSessionDialog(false);
+  };
+
+  const handleCloseScreenShare = () => {
+    setShowScreenShare(false);
+    setCurrentSessionId(null);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -260,7 +347,7 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
           <div className="hidden sm:flex items-center space-x-2">
             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
             <span className="text-sm text-green-600 font-medium">
-              {designers.filter(d => d.is_online).length} online now
+              {designers.filter(d => d.activity?.is_online || d.is_online).length} online now
             </span>
           </div>
         </div>
@@ -324,8 +411,12 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
                       </span>
                     )}
                   </div>
-                  {designer.is_online && (
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-400 rounded-full border-2 border-white flex items-center justify-center">
+                  {(designer.activity?.is_online || designer.is_online) && (
+                    <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-white flex items-center justify-center ${
+                      designer.activity?.activity_status === 'active' 
+                        ? 'bg-green-400 animate-pulse' 
+                        : 'bg-yellow-400'
+                    }`}>
                       <span className="text-xs text-white font-bold">●</span>
                     </div>
                   )}
@@ -354,11 +445,16 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
                         <span className="text-sm text-muted-foreground ml-1">({designer.reviews_count || 0})</span>
                       </div>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        designer.is_online 
-                          ? 'bg-green-100 text-green-700' 
+                        (designer.activity?.is_online || designer.is_online)
+                          ? (designer.activity?.activity_status === 'active' 
+                              ? 'bg-green-100 text-green-700' 
+                              : 'bg-yellow-100 text-yellow-700')
                           : 'bg-muted text-muted-foreground'
                       }`}>
-                        {designer.is_online ? 'Online' : 'Offline'}
+                        {designer.activity?.is_online || designer.is_online
+                          ? (designer.activity?.activity_status === 'active' ? 'Active Now' : 'Available')
+                          : 'Offline'
+                        }
                       </span>
                     </div>
 
@@ -390,21 +486,36 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
                           hideGlobalChrome: location.pathname.includes('/customer-dashboard'),
                           fromPath: location.pathname 
                         }}
-                        className="bg-green-600 text-white py-2 px-4 rounded-xl text-sm font-medium hover:bg-green-700 transition-all duration-200 text-center"
+                        className="bg-green-600 text-white py-2 px-4 rounded-xl text-sm font-medium hover:bg-green-700 transition-all duration-200 text-center flex items-center justify-center space-x-2"
                       >
-                        View Profile
+                        <Eye className="w-4 h-4" />
+                        <span>View Profile</span>
                       </Link>
                       <button 
                         onClick={() => handleChat(designer.id)}
-                        className="bg-background border border-green-600 text-green-600 py-2 px-4 rounded-xl text-sm font-medium hover:bg-green-50 transition-all duration-200"
+                        className="bg-background border border-green-600 text-green-600 py-2 px-4 rounded-xl text-sm font-medium hover:bg-green-50 transition-all duration-200 flex items-center justify-center space-x-2"
                       >
-                        Chat
+                        <MessageCircle className="w-4 h-4" />
+                        <span>Chat</span>
                       </button>
                       <BookingDialog designer={designer}>
-                        <Button className="bg-background border border-blue-600 text-blue-600 py-2 px-4 rounded-xl text-sm font-medium hover:bg-blue-50 transition-all duration-200 w-full">
-                          Book Session
+                        <Button className="bg-background border border-blue-600 text-blue-600 py-2 px-4 rounded-xl text-sm font-medium hover:bg-blue-50 transition-all duration-200 w-full flex items-center justify-center space-x-2">
+                          <Calendar className="w-4 h-4" />
+                          <span>Book Session</span>
                         </Button>
                       </BookingDialog>
+                      <button 
+                        onClick={() => handleLiveSessionRequest(designer)}
+                        disabled={!(designer.activity?.is_online || designer.is_online)}
+                        className={`py-2 px-4 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center space-x-2 ${
+                          (designer.activity?.is_online || designer.is_online)
+                            ? 'bg-background border border-purple-600 text-purple-600 hover:bg-purple-50' 
+                            : 'bg-gray-100 border border-gray-300 text-gray-400 cursor-not-allowed'
+                        }`}
+                      >
+                        <Video className="w-4 h-4" />
+                        <span>Live Design Session</span>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -430,6 +541,32 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
           </button>
         </nav>
       </div>
+
+      {/* Live Session Request Dialog */}
+      {selectedDesigner && (
+        <LiveSessionRequestDialog
+          isOpen={showLiveSessionDialog}
+          onClose={() => {
+            setShowLiveSessionDialog(false);
+            setSelectedDesigner(null);
+          }}
+          designer={selectedDesigner}
+          onSessionStart={handleSessionStart}
+        />
+      )}
+
+      {/* Screen Share Modal */}
+      {currentSessionId && (
+        <ScreenShareModal
+          isOpen={showScreenShare}
+          onClose={handleCloseScreenShare}
+          roomId={currentSessionId}
+          isHost={profile?.user_type === 'designer'}
+          designerName={selectedDesigner?.profiles ? `${selectedDesigner.profiles.first_name} ${selectedDesigner.profiles.last_name}` : 'Designer'}
+          customerName={profile ? `${profile.first_name} ${profile.last_name}` : 'Customer'}
+          bookingId={undefined} // Live sessions don't have booking IDs
+        />
+      )}
     </div>
   );
 };

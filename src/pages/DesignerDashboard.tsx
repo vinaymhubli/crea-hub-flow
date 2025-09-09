@@ -21,6 +21,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRealtimeBookings } from '@/hooks/useRealtimeBookings';
 import { useDesignerProfile } from '@/hooks/useDesignerProfile';
 import { RealtimeSessionIndicator } from '@/components/RealtimeSessionIndicator';
+import LiveSessionNotification from '@/components/LiveSessionNotification';
+import { ScreenShareModal } from '@/components/ScreenShareModal';
+import { useDesignerActivity } from '@/hooks/useDesignerActivity';
 import { Link } from 'react-router-dom';
 import {
   SidebarProvider,
@@ -38,7 +41,10 @@ export default function DesignerDashboard() {
   const { signOut, user, profile } = useAuth();
   const { activeSession, getUpcomingBookings, getCompletedBookings, loading } = useRealtimeBookings();
   const { designerProfile, calculateTotalEarnings } = useDesignerProfile();
+  const { activity } = useDesignerActivity();
   const [totalEarnings, setTotalEarnings] = useState(0);
+  const [showScreenShare, setShowScreenShare] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   
   const upcomingBookings = getUpcomingBookings();
   const completedBookings = getCompletedBookings();
@@ -46,8 +52,29 @@ export default function DesignerDashboard() {
   useEffect(() => {
     if (designerProfile) {
       calculateTotalEarnings().then(setTotalEarnings);
+      // Automatically set designer online when they access dashboard
+      setDesignerOnline();
     }
   }, [designerProfile]);
+
+  const setDesignerOnline = async () => {
+    if (!designerProfile?.id) return;
+    
+    try {
+      const { error } = await supabase
+        .from('designers')
+        .update({ is_online: true })
+        .eq('id', designerProfile.id);
+
+      if (error) {
+        console.error('Error setting designer online:', error);
+      } else {
+        console.log('Designer set to online');
+      }
+    } catch (error) {
+      console.error('Error setting designer online:', error);
+    }
+  };
 
   const getInitials = (firstName?: string, lastName?: string) => {
     if (!firstName && !lastName) return 'D';
@@ -89,6 +116,65 @@ export default function DesignerDashboard() {
     }
   };
 
+  const handleSessionStart = (sessionId: string) => {
+    setCurrentSessionId(sessionId);
+    setShowScreenShare(true);
+  };
+
+  const handleCloseScreenShare = () => {
+    setShowScreenShare(false);
+    setCurrentSessionId(null);
+  };
+
+  // Set designer offline when component unmounts
+  useEffect(() => {
+    return () => {
+      if (designerProfile?.id) {
+        setDesignerOffline();
+      }
+    };
+  }, [designerProfile?.id]);
+
+  const setDesignerOffline = async () => {
+    if (!designerProfile?.id) return;
+    
+    try {
+      const { error } = await supabase
+        .from('designers')
+        .update({ is_online: false })
+        .eq('id', designerProfile.id);
+
+      if (error) {
+        console.error('Error setting designer offline:', error);
+      } else {
+        console.log('Designer set to offline');
+      }
+    } catch (error) {
+      console.error('Error setting designer offline:', error);
+    }
+  };
+
+  const toggleOnlineStatus = async () => {
+    if (!designerProfile?.id) return;
+    
+    try {
+      const { error } = await supabase
+        .from('designers')
+        .update({ is_online: !designerProfile.is_online })
+        .eq('id', designerProfile.id);
+
+      if (error) {
+        console.error('Error toggling online status:', error);
+      } else {
+        console.log(`Designer set to ${!designerProfile.is_online ? 'online' : 'offline'}`);
+        // Refresh the designer profile to get updated status
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error('Error toggling online status:', error);
+    }
+  };
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
@@ -107,10 +193,22 @@ export default function DesignerDashboard() {
               </div>
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
-                  <div className={`w-3 h-3 rounded-full ${designerProfile?.is_online ? 'bg-green-400 animate-pulse' : 'bg-gray-400'}`}></div>
-                  <span className="text-white/80 text-sm font-medium">
-                    {designerProfile?.is_online ? 'Online' : 'Offline'}
-                  </span>
+                  <div className="flex items-center space-x-2">
+                    <div className={`w-3 h-3 rounded-full ${
+                      activity?.is_online 
+                        ? (activity.activity_status === 'active' ? 'bg-green-400 animate-pulse' : 'bg-yellow-400')
+                        : 'bg-gray-400'
+                    }`}></div>
+                    <span className="text-white/80 text-sm font-medium">
+                      {activity?.is_online 
+                        ? (activity.activity_status === 'active' ? 'Active Now' : 'Available')
+                        : 'Offline'
+                      }
+                    </span>
+                    {activity?.is_in_schedule && (
+                      <span className="text-xs text-white/60">(Scheduled)</span>
+                    )}
+                  </div>
                 </div>
                 <Bell className="w-5 h-5 text-white/80" />
                 <Popover>
@@ -501,6 +599,27 @@ export default function DesignerDashboard() {
           </div>
         </main>
         <RealtimeSessionIndicator />
+        
+        {/* Live Session Notifications */}
+        {designerProfile?.id && (
+          <LiveSessionNotification
+            designerId={designerProfile.id}
+            onSessionStart={handleSessionStart}
+          />
+        )}
+
+        {/* Screen Share Modal */}
+        {currentSessionId && (
+          <ScreenShareModal
+            isOpen={showScreenShare}
+            onClose={handleCloseScreenShare}
+            roomId={currentSessionId}
+            isHost={true} // Designer is always the host in live sessions
+            designerName={profile ? `${profile.first_name} ${profile.last_name}` : 'Designer'}
+            customerName="Customer" // Will be updated when customer joins
+            bookingId={undefined} // Live sessions don't have booking IDs
+          />
+        )}
       </div>
     </SidebarProvider>
   );
