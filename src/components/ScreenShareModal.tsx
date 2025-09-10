@@ -160,20 +160,28 @@ export function ScreenShareModal({
                 setConnectionState(state);
                 setIsConnected(state === 'connected');
                 
-                // Request timer sync when customer connects (always, regardless of current state)
-                if (state === 'connected' && !isHost) {
-                    console.log('📡 Customer connected, requesting timer sync from designer');
-                    
-                    // Always request timer sync when customer connects
-                    // This ensures sync even if customer missed initial session_start broadcast
-                    setTimeout(() => {
-                        broadcastSessionEvent('timer_sync_request', { 
-                            customerJoined: true,
-                            timestamp: new Date().toISOString(),
-                            hasSessionStartTime: !!sessionStartTime
-                        });
-                    }, 1000); // Small delay to ensure channel is ready
-                }
+        // Customer connected - request current timer state from designer
+        if (state === 'connected' && !isHost) {
+            console.log('📡 Customer connected, requesting current timer state from designer');
+            
+            // First test if communication is working with a ping
+            setTimeout(() => {
+                console.log('📡 Customer sending ping to test communication');
+                broadcastSessionEvent('ping', { 
+                    from: 'customer',
+                    customerId: user?.id,
+                    timestamp: new Date().toISOString()
+                });
+            }, 500);
+            
+            // Request current timer state from designer
+            setTimeout(() => {
+                broadcastSessionEvent('request_timer_state', { 
+                    customerId: user?.id,
+                    timestamp: new Date().toISOString()
+                });
+            }, 1000); // Small delay to ensure channel is ready
+        }
             });
 
             setScreenShareManager(manager);
@@ -217,30 +225,25 @@ export function ScreenShareModal({
 
     const setupSessionControlChannel = () => {
         console.log('📡 Setting up session control channel for room:', roomId);
+        console.log('📡 User is host:', isHost);
+        console.log('📡 User ID:', user?.id);
+        
         const channel = supabase
             .channel(`session_control_${roomId}`)
             .on('broadcast', { event: 'session_start' }, (payload) => {
                 console.log('📡 Received session_start event:', payload.payload);
-                if (payload.payload.customerJoined || payload.payload.hostStartedSharing) {
-                    // Always sync the session start time, regardless of current state
-                    const receivedStartTime = new Date(payload.payload.startTime);
-                    setSessionStartTime(receivedStartTime);
-                    setIsSessionLive(payload.payload.isActive !== false); // Default to true if not specified
-                    setIsPaused(false);
-                    
-                    // If there's a currentDuration, use it; otherwise reset to 0
-                    if (payload.payload.currentDuration !== undefined) {
-                        setSessionDuration(payload.payload.currentDuration);
-                        console.log('⏰ Customer timer synced with current duration:', payload.payload.currentDuration, 'seconds, requestType:', payload.payload.requestType);
-                    } else {
-                        setSessionDuration(0);
-                        console.log('⏰ Customer timer synced -', payload.payload.customerJoined ? 'customer joined' : 'host started sharing', 'startTime:', receivedStartTime, 'requestType:', payload.payload.requestType);
-                    }
-                    
-                    console.log('⏰ Customer timer state after sync - isSessionLive:', payload.payload.isActive, 'sessionStartTime:', receivedStartTime, 'sessionDuration:', payload.payload.currentDuration || 0);
-                } else {
-                    console.log('📡 Session start event received but not for customer join or host sharing, ignoring');
-                }
+                const receivedStartTime = new Date(payload.payload.startTime);
+                setSessionStartTime(receivedStartTime);
+                setIsSessionLive(true);
+                setIsPaused(false);
+                setSessionDuration(0);
+                console.log('⏰ Timer started with startTime:', receivedStartTime);
+                console.log('⏰ Customer timer state after session_start:', {
+                    isSessionLive: true,
+                    sessionStartTime: receivedStartTime,
+                    sessionDuration: 0,
+                    isPaused: false
+                });
             })
             .on('broadcast', { event: 'session_pause' }, (payload) => {
                 console.log('📡 Received session_pause event:', payload.payload);
@@ -254,14 +257,12 @@ export function ScreenShareModal({
             })
             .on('broadcast', { event: 'session_end' }, (payload) => {
                 console.log('🛑 Received session_end event:', payload.payload);
-                console.log('🛑 Customer side - resetting session state');
                 setIsSessionLive(false);
                 setIsPaused(false);
                 setSessionDuration(0);
                 setSessionStartTime(null);
                 clearSessionState();
                 toast.success('Session ended by ' + payload.payload.endedBy);
-                console.log('🛑 Customer side - session state reset complete');
             })
             .on('broadcast', { event: 'pricing_change' }, (payload) => {
                 console.log('📡 Received pricing_change event:', payload.payload);
@@ -273,44 +274,77 @@ export function ScreenShareModal({
                 setFormatMultiplier(payload.payload.newMultiplier);
                 toast.success(`Format multiplier changed to ${payload.payload.newMultiplier}x by ${payload.payload.changedBy}`);
             })
-            .on('broadcast', { event: 'session_sync' }, (payload) => {
-                console.log('📡 Received session_sync event:', payload.payload);
-                // Sync the session duration from the sender
-                if (payload.payload.duration !== undefined && sessionStartTime) {
+            .on('broadcast', { event: 'timer_sync' }, (payload) => {
+                console.log('📡 Received timer_sync event:', payload.payload);
+                // If we're not the host and we receive a timer sync, adjust our start time for perfect sync
+                if (!isHost && payload.payload.duration !== undefined) {
                     const now = new Date();
                     const adjustedStartTime = new Date(now.getTime() - (payload.payload.duration * 1000));
                     setSessionStartTime(adjustedStartTime);
-                    setSessionDuration(payload.payload.duration);
-                    console.log('⏰ Session duration synced to:', payload.payload.duration, 'seconds');
+                    setSessionDuration(payload.payload.duration); // Set exact duration
+                    setIsSessionLive(true); // Ensure session is marked as live
+                    setIsPaused(false); // Ensure session is not paused
+                    console.log('⏰ Timer synced to exact duration:', payload.payload.duration, 'seconds');
+                    console.log('⏰ Customer timer state after timer_sync:', {
+                        isSessionLive: true,
+                        sessionStartTime: adjustedStartTime,
+                        sessionDuration: payload.payload.duration,
+                        isPaused: false
+                    });
                 }
             })
-            .on('broadcast', { event: 'timer_sync_request' }, (payload) => {
-                console.log('📡 Received timer_sync_request event:', payload.payload);
-                // Designer responds with current session state
+            .on('broadcast', { event: 'request_timer_state' }, (payload) => {
+                console.log('📡 Received request_timer_state event:', payload.payload);
+                // Designer responds with current timer state
                 if (isHost) {
                     const now = new Date();
                     let currentDuration = 0;
                     
                     if (isSessionLive && sessionStartTime) {
                         currentDuration = Math.floor((now.getTime() - sessionStartTime.getTime()) / 1000);
-                        console.log('📡 Designer responding to timer sync request with duration:', currentDuration, 'seconds');
+                        console.log('📡 Designer responding with current timer state - duration:', currentDuration, 'seconds');
                     } else {
-                        console.log('📡 Designer responding to timer sync request - no active session (isSessionLive:', isSessionLive, 'sessionStartTime:', sessionStartTime);
+                        console.log('📡 Designer responding - no active session');
                     }
                     
-                    // Always respond to sync requests, even if no active session
-                    const responsePayload = { 
+                    // Send current timer state to customer
+                    broadcastSessionEvent('timer_state_response', { 
                         startTime: sessionStartTime ? sessionStartTime.toISOString() : now.toISOString(),
-                        customerJoined: true,
                         currentDuration: currentDuration,
-                        isActive: isSessionLive,
-                        requestType: payload.payload.isFallback ? 'fallback' : payload.payload.isModalOpen ? 'modal_open' : payload.payload.isBackup ? 'backup' : 'connection'
-                    };
-                    
-                    console.log('📡 Designer sending session_start response:', responsePayload);
-                    broadcastSessionEvent('session_start', responsePayload);
+                        isSessionLive: isSessionLive,
+                        isPaused: isPaused,
+                        timestamp: now.toISOString()
+                    });
+                }
+            })
+            .on('broadcast', { event: 'timer_state_response' }, (payload) => {
+                console.log('📡 Received timer_state_response event:', payload.payload);
+                // Customer receives timer state from designer
+                if (!isHost) {
+                    const receivedStartTime = new Date(payload.payload.startTime);
+                    setSessionStartTime(receivedStartTime);
+                    setIsSessionLive(payload.payload.isSessionLive);
+                    setIsPaused(payload.payload.isPaused);
+                    setSessionDuration(payload.payload.currentDuration);
+                    console.log('⏰ Customer timer synced - startTime:', receivedStartTime, 'duration:', payload.payload.currentDuration, 'isLive:', payload.payload.isSessionLive);
+                    console.log('⏰ Customer timer state after timer_state_response:', {
+                        isSessionLive: payload.payload.isSessionLive,
+                        sessionStartTime: receivedStartTime,
+                        sessionDuration: payload.payload.currentDuration,
+                        isPaused: payload.payload.isPaused
+                    });
+                }
+            })
+            .on('broadcast', { event: 'ping' }, (payload) => {
+                console.log('📡 Received ping event:', payload.payload);
+                if (isHost) {
+                    console.log('📡 Designer responding to ping');
+                    broadcastSessionEvent('pong', { 
+                        from: 'designer',
+                        timestamp: new Date().toISOString()
+                    });
                 } else {
-                    console.log('📡 Timer sync request received but not host, ignoring');
+                    console.log('📡 Customer received pong from designer');
                 }
             })
             .subscribe();
@@ -322,12 +356,16 @@ export function ScreenShareModal({
     const broadcastSessionEvent = async (event: string, payload: Record<string, unknown>) => {
         if (sessionControlChannel) {
             console.log('📡 Broadcasting event:', event, 'with payload:', payload);
-            await sessionControlChannel.send({
-                type: 'broadcast',
-                event,
-                payload
-            });
-            console.log('📡 Event broadcasted successfully');
+            try {
+                await sessionControlChannel.send({
+                    type: 'broadcast',
+                    event,
+                    payload
+                });
+                console.log('📡 Event broadcasted successfully');
+            } catch (error) {
+                console.error('📡 Error broadcasting event:', error);
+            }
         } else {
             console.error('📡 No session control channel available for broadcasting');
         }
@@ -397,92 +435,101 @@ export function ScreenShareModal({
         }
     };
 
-    // Session duration timer - synchronized across both sides
+    // Simple session timer - both sides calculate from sessionStartTime
     useEffect(() => {
-        console.log('⏰ Timer useEffect triggered - isSessionLive:', isSessionLive, 'isPaused:', isPaused, 'isOpen:', isOpen, 'sessionStartTime:', sessionStartTime);
+        console.log('⏰ Timer useEffect - isSessionLive:', isSessionLive, 'isPaused:', isPaused, 'sessionStartTime:', sessionStartTime);
+        console.log('⏰ Timer useEffect - isHost:', isHost, 'user:', user?.id);
         
-        if (isSessionLive && !isPaused && isOpen && sessionStartTime) {
-            console.log('⏰ Starting timer for session');
+        if (isSessionLive && !isPaused && sessionStartTime) {
+            console.log('⏰ Starting timer for user:', user?.id, 'isHost:', isHost);
             const timer = setInterval(() => {
                 const now = new Date();
                 const elapsed = Math.floor((now.getTime() - sessionStartTime.getTime()) / 1000);
                 setSessionDuration(elapsed);
                 
-                // Broadcast session sync every 5 seconds to keep both sides in sync
+                // Log every 5 seconds to see if timer is running
+                if (elapsed % 5 === 0) {
+                    console.log('⏰ Timer running - elapsed:', elapsed, 'seconds, user:', user?.id, 'isHost:', isHost);
+                }
+                
+                // Broadcast current duration every 5 seconds for sync
                 if (elapsed % 5 === 0 && elapsed > 0) {
-                    broadcastSessionEvent('session_sync', { 
+                    broadcastSessionEvent('timer_sync', { 
                         duration: elapsed,
                         timestamp: now.toISOString()
                     });
                 }
-                
-                // Save session state every 10 seconds
-                if (elapsed % 10 === 0) {
-                    saveSessionState();
-                }
             }, 1000);
+            
             return () => {
-                console.log('⏰ Clearing timer');
+                console.log('⏰ Clearing timer for user:', user?.id);
                 clearInterval(timer);
             };
         } else {
-            console.log('⏰ Timer not started - conditions not met');
+            console.log('⏰ Timer not starting - isSessionLive:', isSessionLive, 'isPaused:', isPaused, 'sessionStartTime:', sessionStartTime);
         }
-    }, [isSessionLive, isPaused, isOpen, sessionStartTime]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [isSessionLive, isPaused, sessionStartTime]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // Fallback timer sync for customers - request sync every 10 seconds if timer is not running
+    // Request timer state when customer modal opens
     useEffect(() => {
-        if (!isHost && isConnected && isOpen && (!isSessionLive || !sessionStartTime)) {
-            console.log('⏰ Customer timer not running, setting up fallback sync requests');
+        if (!isHost && isOpen && sessionControlChannel && !isSessionLive) {
+            console.log('📡 Customer modal opened, requesting timer state from designer');
             
-            const fallbackTimer = setInterval(() => {
-                console.log('📡 Customer requesting timer sync (fallback)');
-                broadcastSessionEvent('timer_sync_request', { 
-                    customerJoined: true,
-                    timestamp: new Date().toISOString(),
-                    hasSessionStartTime: !!sessionStartTime,
-                    isFallback: true
-                });
-            }, 10000); // Request sync every 10 seconds
-            
-            return () => {
-                console.log('⏰ Clearing fallback timer sync');
-                clearInterval(fallbackTimer);
-            };
-        }
-    }, [isHost, isConnected, isOpen, isSessionLive, sessionStartTime]); // eslint-disable-line react-hooks/exhaustive-deps
-
-    // Additional timer sync request when modal opens for customers
-    useEffect(() => {
-        if (!isHost && isOpen && sessionControlChannel) {
-            console.log('📡 Customer modal opened, requesting immediate timer sync');
-            
-            // Request sync immediately when modal opens
+            // Request timer state when modal opens
             setTimeout(() => {
-                broadcastSessionEvent('timer_sync_request', { 
-                    customerJoined: true,
+                broadcastSessionEvent('request_timer_state', { 
+                    customerId: user?.id,
                     timestamp: new Date().toISOString(),
-                    hasSessionStartTime: !!sessionStartTime,
                     isModalOpen: true
                 });
             }, 2000); // 2 second delay to ensure channel is ready
+        }
+    }, [isHost, isOpen, sessionControlChannel, isSessionLive]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Continuous timer state request for customers until they get synced
+    useEffect(() => {
+        if (!isHost && isOpen && sessionControlChannel && !isSessionLive) {
+            console.log('📡 Customer setting up continuous timer state requests');
             
-            // Also request sync after 5 seconds as backup
-            const backupTimer = setTimeout(() => {
-                console.log('📡 Customer requesting backup timer sync');
-                broadcastSessionEvent('timer_sync_request', { 
-                    customerJoined: true,
+            const requestInterval = setInterval(() => {
+                console.log('📡 Customer requesting timer state (continuous)');
+                broadcastSessionEvent('request_timer_state', { 
+                    customerId: user?.id,
                     timestamp: new Date().toISOString(),
-                    hasSessionStartTime: !!sessionStartTime,
-                    isBackup: true
+                    isContinuous: true
                 });
-            }, 5000);
+            }, 3000); // Request every 3 seconds until synced
             
             return () => {
-                clearTimeout(backupTimer);
+                console.log('📡 Customer clearing continuous timer state requests');
+                clearInterval(requestInterval);
             };
         }
-    }, [isHost, isOpen, sessionControlChannel]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [isHost, isOpen, sessionControlChannel, isSessionLive]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Debug timer state changes
+    useEffect(() => {
+        console.log('🔍 Timer state changed:', {
+            isSessionLive,
+            sessionStartTime,
+            sessionDuration,
+            isPaused,
+            isOpen,
+            isHost,
+            user: user?.id
+        });
+        
+        // Additional debug for customer timer issues
+        if (!isHost && isOpen) {
+            console.log('🔍 Customer timer debug:', {
+                hasSessionStartTime: !!sessionStartTime,
+                isSessionLive,
+                isPaused,
+                sessionDuration,
+                shouldTimerRun: isSessionLive && !isPaused && sessionStartTime
+            });
+        }
+    }, [isSessionLive, sessionStartTime, sessionDuration, isPaused, isOpen, isHost, user?.id]);
 
     useEffect(() => {
         if (!isHost && screenShareManager && remoteVideoRef.current && isOpen) {
@@ -509,36 +556,32 @@ export function ScreenShareModal({
             console.log("🎬 Starting screen share...");
             setIsSharing(true);
             
-            // Start or resume session timer when host starts screen sharing
-            if (isHost) {
-                if (!sessionStartTime) {
-                    // First time starting - start the session
-                    const startTime = new Date();
-                    setSessionStartTime(startTime);
-                    setIsSessionLive(true);
-                    setIsPaused(false);
-                    setSessionDuration(0);
-                    
-                    console.log('🎬 Designer starting new session timer:', startTime);
-                    
-                    // Broadcast session start to sync timers (host started sharing)
-                    broadcastSessionEvent('session_start', { 
+            // Start session timer when host starts screen sharing
+            if (isHost && !isSessionLive) {
+                const startTime = new Date();
+                setSessionStartTime(startTime);
+                setIsSessionLive(true);
+                setIsPaused(false);
+                setSessionDuration(0);
+                
+                console.log('🎬 Designer starting session timer:', startTime);
+                
+                // Broadcast session start to customer
+                broadcastSessionEvent('session_start', { 
+                    startTime: startTime.toISOString()
+                });
+                
+                // Also send a direct timer state response to ensure customer gets it
+                setTimeout(() => {
+                    console.log('📡 Designer sending direct timer state to customer');
+                    broadcastSessionEvent('timer_state_response', { 
                         startTime: startTime.toISOString(),
-                        hostStartedSharing: true 
+                        currentDuration: 0,
+                        isSessionLive: true,
+                        isPaused: false,
+                        timestamp: new Date().toISOString()
                     });
-                } else if (isPaused) {
-                    // Resume existing session
-                    setIsPaused(false);
-                    console.log('🎬 Designer resuming session timer');
-                    broadcastSessionEvent('session_resume', { 
-                        resumedBy: designerName,
-                        reason: 'Screen sharing resumed'
-                    });
-                } else {
-                    // Session is already live, just ensure it's not paused
-                    setIsPaused(false);
-                    console.log('🎬 Designer continuing live session');
-                }
+                }, 500); // Small delay to ensure customer is ready
             }
             
             // Important: Call getDisplayMedia directly from the user gesture
@@ -852,6 +895,25 @@ export function ScreenShareModal({
                                                 <div className="text-center text-white/70 p-4">
                                                     <div className="animate-spin w-6 h-6 sm:w-8 sm:h-8 border-2 border-white/20 border-t-white/70 rounded-full mx-auto mb-3 sm:mb-4"></div>
                                                     <p className="text-sm sm:text-base">Connecting to screen share...</p>
+                                                    {!isHost && (
+                                                        <div className="mt-3 sm:mt-4">
+                                                            <Button
+                                                                onClick={() => {
+                                                                    console.log('🔧 Manual timer state request from customer');
+                                                                    broadcastSessionEvent('request_timer_state', { 
+                                                                        customerId: user?.id,
+                                                                        timestamp: new Date().toISOString(),
+                                                                        isManual: true
+                                                                    });
+                                                                }}
+                                                                variant="outline"
+                                                                size="sm"
+                                                                className="bg-blue-600 hover:bg-blue-700 border-blue-500 text-white text-xs sm:text-sm"
+                                                            >
+                                                                Request Timer State
+                                                            </Button>
+                                                        </div>
+                                                    )}
                                                     {showConnectionHint && (
                                                         <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-orange-900/30 border border-orange-500/30 rounded-lg">
                                                             <p className="text-xs sm:text-sm text-orange-200 mb-3">
