@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { 
   MessageCircle, 
@@ -63,6 +63,7 @@ export default function CustomerMessages() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
   const [showScreenShare, setShowScreenShare] = useState(false);
   const [screenShareNotification, setScreenShareNotification] = useState<{
@@ -76,33 +77,11 @@ export default function CustomerMessages() {
   const designerId = searchParams.get('designer_id');
   const bookingId = searchParams.get('booking_id');
 
-  useEffect(() => {
-    if (user) {
-      fetchConversations();
-    }
-  }, [user, designerId, bookingId]);
-
-  useEffect(() => {
-    let cleanup: (() => void) | undefined;
-    let screenShareCleanup: (() => void) | undefined;
-    
-    if (selectedConversation) {
-      fetchMessages(selectedConversation.conversation_id || selectedConversation.booking_id || '');
-      cleanup = setupRealtimeSubscription(selectedConversation.conversation_id || selectedConversation.booking_id || '');
-      screenShareCleanup = setupScreenShareNotification(selectedConversation.conversation_id || selectedConversation.booking_id || '');
-    }
-    
-    return () => {
-      if (cleanup) cleanup();
-      if (screenShareCleanup) screenShareCleanup();
-      setIsScreenShareActive(false);
-      setScreenShareNotification({ show: false, designerName: '', roomId: '' });
-    };
-  }, [selectedConversation]);
-
-  const fetchConversations = async () => {
+  const fetchConversations = useCallback(async (showLoading = false) => {
     try {
-      setLoading(true);
+      if (showLoading) {
+        setLoading(true);
+      }
       
       // Get both booking-based and direct conversations
       const [bookingConversations, directConversations] = await Promise.all([
@@ -150,11 +129,13 @@ export default function CustomerMessages() {
     } catch (error) {
       console.error('Error:', error);
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
-  };
+  }, [designerId, bookingId, selectedConversation, user?.id, setSearchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const fetchBookingConversations = async () => {
+  const fetchBookingConversations = useCallback(async () => {
     const { data: bookings, error: bookingsError } = await supabase
       .from('bookings')
       .select('id, designer_id')
@@ -221,9 +202,9 @@ export default function CustomerMessages() {
     });
 
     return Promise.all(conversationPromises);
-  };
+  }, [user?.id]);
 
-  const fetchDirectConversations = async () => {
+  const fetchDirectConversations = useCallback(async () => {
     const { data: conversations, error } = await supabase
       .from('conversations')
       .select(`
@@ -295,9 +276,9 @@ export default function CustomerMessages() {
     });
 
     return Promise.all(conversationPromises);
-  };
+  }, [user?.id]);
 
-  const createDirectConversation = async (designerId: string) => {
+  const createDirectConversation = useCallback(async (designerId: string) => {
     try {
       setIsCreatingConversation(true);
       console.log('Creating conversation with designer:', designerId);
@@ -372,9 +353,9 @@ export default function CustomerMessages() {
     } finally {
       setIsCreatingConversation(false);
     }
-  };
+  }, [user?.id, setSearchParams]);
 
-  const fetchMessages = async (conversationOrBookingId: string) => {
+  const fetchMessages = useCallback(async (conversationOrBookingId: string) => {
     if (!selectedConversation) return;
 
     try {
@@ -403,7 +384,7 @@ export default function CustomerMessages() {
     } catch (error) {
       console.error('Error:', error);
     }
-  };
+  }, [selectedConversation]);
 
   const [isSending, setIsSending] = useState(false);
 
@@ -474,10 +455,10 @@ export default function CustomerMessages() {
     }
   };
 
-  const setupRealtimeSubscription = (conversationOrBookingId: string) => {
+  const setupRealtimeSubscription = useCallback((conversationOrBookingId: string) => {
     if (!selectedConversation) return;
 
-    const channels: any[] = [];
+    const channels: ReturnType<typeof supabase.channel>[] = [];
 
     if (selectedConversation.type === 'direct' && selectedConversation.conversation_id) {
       const channel = supabase
@@ -525,9 +506,9 @@ export default function CustomerMessages() {
     return () => {
       channels.forEach(channel => supabase.removeChannel(channel));
     };
-  };
+  }, [selectedConversation]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const setupScreenShareNotification = (roomId: string) => {
+  const setupScreenShareNotification = useCallback((roomId: string) => {
     if (!selectedConversation) return;
 
     console.log('🎬 Setting up screen share notification for room:', roomId);
@@ -561,18 +542,52 @@ export default function CustomerMessages() {
       console.log('🧹 Cleaning up screen share notification channel');
       supabase.removeChannel(channel);
     };
-  };
+  }, [selectedConversation]);
 
   const joinScreenShare = () => {
     setShowScreenShare(true);
     setScreenShareNotification(prev => ({ ...prev, show: false }));
   };
 
+  // useEffect hooks
+  useEffect(() => {
+    if (user) {
+      // Only show loading on initial load or when URL params change
+      const shouldShowLoading = initialLoad || Boolean(designerId) || Boolean(bookingId);
+      fetchConversations(shouldShowLoading);
+    }
+  }, [user, designerId, bookingId, initialLoad, fetchConversations]);
+
+  // Separate effect to handle initial load state
+  useEffect(() => {
+    if (user && initialLoad) {
+      setInitialLoad(false);
+    }
+  }, [user, initialLoad]);
+
+  useEffect(() => {
+    let cleanup: (() => void) | undefined;
+    let screenShareCleanup: (() => void) | undefined;
+    
+    if (selectedConversation) {
+      fetchMessages(selectedConversation.conversation_id || selectedConversation.booking_id || '');
+      cleanup = setupRealtimeSubscription(selectedConversation.conversation_id || selectedConversation.booking_id || '');
+      screenShareCleanup = setupScreenShareNotification(selectedConversation.conversation_id || selectedConversation.booking_id || '');
+    }
+    
+    return () => {
+      if (cleanup) cleanup();
+      if (screenShareCleanup) screenShareCleanup();
+      setIsScreenShareActive(false);
+      setScreenShareNotification({ show: false, designerName: '', roomId: '' });
+    };
+  }, [selectedConversation, fetchMessages, setupRealtimeSubscription, setupScreenShareNotification]);
+
   const filteredConversations = conversations.filter(conv =>
     conv.designer_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (loading) {
+  if (loading && initialLoad) {
     return (
       <SidebarProvider>
         <div className="min-h-screen flex w-full bg-gradient-to-br from-background via-teal-50/30 to-blue-50/20">

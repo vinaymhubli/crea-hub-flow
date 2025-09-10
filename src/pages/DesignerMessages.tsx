@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   MessageSquare,
   Send, 
@@ -64,6 +64,7 @@ export default function DesignerMessages() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [designerId, setDesignerId] = useState<string | null>(null);
   const [showScreenShare, setShowScreenShare] = useState(false);
   const { user } = useAuth();
@@ -77,9 +78,17 @@ export default function DesignerMessages() {
 
   useEffect(() => {
     if (designerId) {
-      fetchConversations();
+      // Only show loading on initial load
+      fetchConversations(initialLoad);
     }
-  }, [designerId]);
+  }, [designerId, initialLoad]);
+
+  // Separate effect to handle initial load state
+  useEffect(() => {
+    if (designerId && initialLoad) {
+      setInitialLoad(false);
+    }
+  }, [designerId, initialLoad]);
 
   useEffect(() => {
     let cleanup: (() => void) | undefined;
@@ -127,9 +136,11 @@ export default function DesignerMessages() {
     }
   };
 
-  const fetchConversations = async () => {
+  const fetchConversations = useCallback(async (showLoading = false) => {
     try {
-      setLoading(true);
+      if (showLoading) {
+        setLoading(true);
+      }
       
       // Get both booking-based and direct conversations
       const [bookingConversations, directConversations] = await Promise.all([
@@ -143,9 +154,11 @@ export default function DesignerMessages() {
       console.error('Error:', error);
       toast.error('Failed to load conversations');
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
-  };
+  }, [designerId]);
 
   const fetchBookingConversations = async () => {
     const { data: bookings, error: bookingsError } = await supabase
@@ -272,7 +285,7 @@ export default function DesignerMessages() {
     return Promise.all(conversationPromises);
   };
 
-  const fetchMessages = async (conversationOrBookingId: string) => {
+  const fetchMessages = useCallback(async (conversationOrBookingId: string) => {
     if (!selectedConversation) return;
 
     try {
@@ -301,12 +314,12 @@ export default function DesignerMessages() {
     } catch (error) {
       console.error('Error:', error);
     }
-  };
+  }, [selectedConversation]);
 
-  const setupRealtimeSubscription = (conversationOrBookingId: string) => {
+  const setupRealtimeSubscription = useCallback((conversationOrBookingId: string) => {
     if (!selectedConversation) return;
 
-    const channels: any[] = [];
+    const channels: ReturnType<typeof supabase.channel>[] = [];
 
     if (selectedConversation.type === 'direct' && selectedConversation.conversation_id) {
       const channel = supabase
@@ -354,7 +367,7 @@ export default function DesignerMessages() {
     return () => {
       channels.forEach(channel => supabase.removeChannel(channel));
     };
-  };
+  }, [selectedConversation]);
 
   const [isSending, setIsSending] = useState(false);
 
@@ -429,7 +442,7 @@ export default function DesignerMessages() {
     conv.customer_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (loading) {
+  if (loading && initialLoad) {
     return (
       <SidebarProvider>
         <div className="min-h-screen flex w-full bg-background">
