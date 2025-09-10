@@ -48,6 +48,37 @@ interface FileItem {
   uploaded_by_id: string;
   created_at: string;
   session_id: string;
+  status?: 'pending' | 'approved' | 'rejected';
+  work_status?: 'pending' | 'in_review' | 'approved' | 'rejected';
+  work_type?: 'file' | 'work';
+  work_description?: string;
+  reviewed_by?: string;
+  reviewed_at?: string;
+  review_notes?: string;
+  rejection_reason?: string;
+  approved_by?: string;
+  approved_at?: string;
+}
+
+interface WorkReview {
+  id: string;
+  session_id: string;
+  work_file_id: string;
+  reviewer_id: string;
+  reviewer_type: 'designer' | 'customer';
+  review_status: 'pending' | 'approved' | 'rejected';
+  review_notes?: string;
+  rejection_reason?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface InvoiceMessage {
+  id: string;
+  session_id: string;
+  invoice_id: string;
+  message_id: string;
+  created_at: string;
 }
 
 export default function SessionSidePanel({
@@ -72,12 +103,18 @@ export default function SessionSidePanel({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [files, setFiles] = useState<FileItem[]>([]);
+  const [workReviews, setWorkReviews] = useState<WorkReview[]>([]);
+  const [invoices, setInvoices] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isEditingRate, setIsEditingRate] = useState(false);
   const [isEditingMultiplier, setIsEditingMultiplier] = useState(false);
   const [newRate, setNewRate] = useState(rate);
   const [newMultiplier, setNewMultiplier] = useState(formatMultiplier);
+  const [reviewingFile, setReviewingFile] = useState<FileItem | null>(null);
+  const [reviewNotes, setReviewNotes] = useState('');
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [workDescription, setWorkDescription] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -91,6 +128,8 @@ export default function SessionSidePanel({
     console.log('Customer name:', customerName);
     loadMessages();
     loadFiles();
+    loadWorkReviews();
+    loadInvoices();
 
     // Set up real-time subscriptions
     const messagesSubscription = supabase
@@ -100,8 +139,8 @@ export default function SessionSidePanel({
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'conversation_messages',
-          filter: `conversation_id=eq.${sessionId}`
+          table: 'session_messages',
+          filter: `session_id=eq.${sessionId}`
         },
         (payload) => {
           const newMessage = payload.new as {
@@ -171,10 +210,10 @@ export default function SessionSidePanel({
   const loadMessages = async () => {
     try {
       console.log('Loading messages for session:', sessionId);
-      const { data, error } = await supabase
-        .from('conversation_messages')
+      const { data, error } = await (supabase as any)
+        .from('session_messages')
         .select('*')
-        .eq('conversation_id', sessionId)
+        .eq('session_id', sessionId)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
@@ -207,19 +246,54 @@ export default function SessionSidePanel({
   const loadFiles = async () => {
     try {
       console.log('Loading files for session:', sessionId);
-      // TODO: Implement session files when database schema is ready
-      // const { data, error } = await supabase
-      //   .from('session_files')
-      //   .select('*')
-      //   .eq('session_id', sessionId)
-      //   .order('created_at', { ascending: false });
+      const { data, error } = await (supabase as any)
+        .from('session_files')
+        .select('*')
+        .eq('session_id', sessionId)
+        .order('created_at', { ascending: false });
 
-      // if (error) throw error;
-      // console.log('Loaded files:', data);
-      setFiles([]);
+      if (error) throw error;
+      console.log('Loaded files:', data);
+      setFiles(data || []);
     } catch (error) {
       console.error('Error loading files:', error);
       setFiles([]);
+    }
+  };
+
+  const loadWorkReviews = async () => {
+    try {
+      console.log('Loading work reviews for session:', sessionId);
+      const { data, error } = await supabase
+        .from('session_work_reviews')
+        .select('*')
+        .eq('session_id', sessionId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      console.log('Loaded work reviews:', data);
+      setWorkReviews(data || []);
+    } catch (error) {
+      console.error('Error loading work reviews:', error);
+      setWorkReviews([]);
+    }
+  };
+
+  const loadInvoices = async () => {
+    try {
+      console.log('Loading invoices for session:', sessionId);
+      const { data, error } = await supabase
+        .from('session_invoices')
+        .select('*')
+        .eq('session_id', sessionId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      console.log('Loaded invoices:', data);
+      setInvoices(data || []);
+    } catch (error) {
+      console.error('Error loading invoices:', error);
+      setInvoices([]);
     }
   };
 
@@ -227,17 +301,28 @@ export default function SessionSidePanel({
     if (!newMessage.trim() || !userId) return;
 
     try {
+      // Get current user profile for sender name
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('user_id', userId)
+        .single();
+
+      const senderName = profile ? `${profile.first_name} ${profile.last_name}`.trim() : 'User';
+
       const messageData = {
-        conversation_id: sessionId,
-        sender_id: userId,
+        session_id: sessionId,
+        booking_id: bookingId || null,
         content: newMessage.trim(),
-        message_type: 'text'
+        sender_type: isDesigner ? 'designer' : 'customer',
+        sender_name: senderName,
+        sender_id: userId
       };
 
-      console.log('Sending message:', messageData);
+      console.log('Sending session message:', messageData);
 
-      const { data, error } = await supabase
-        .from('conversation_messages')
+      const { data, error } = await (supabase as any)
+        .from('session_messages')
         .insert(messageData)
         .select()
         .single();
@@ -247,7 +332,6 @@ export default function SessionSidePanel({
       console.log('Message sent successfully:', data);
 
       // Don't add to local state here - let real-time subscription handle it
-      // This prevents duplicates and ensures consistency
       setNewMessage('');
       
       toast({
@@ -270,44 +354,51 @@ export default function SessionSidePanel({
 
     try {
       setIsUploading(true);
-      // TODO: Implement file upload when database schema is ready
-      // const fileExt = file.name.split('.').pop();
-      // const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
-      // const filePath = `session-files/${sessionId}/${fileName}`;
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+      const filePath = `session-files/${sessionId}/${fileName}`;
 
-      // const { error: uploadError } = await supabase.storage
-      //   .from('session-files')
-      //   .upload(filePath, file);
+      const { error: uploadError } = await supabase.storage
+        .from('session-files')
+        .upload(filePath, file);
 
-      // if (uploadError) throw uploadError;
+      if (uploadError) throw uploadError;
 
-      // const { data: { publicUrl } } = supabase.storage
-      //   .from('session-files')
-      //   .getPublicUrl(filePath);
+      const { data: { publicUrl } } = supabase.storage
+        .from('session-files')
+        .getPublicUrl(filePath);
 
-      // const { data: fileData, error: insertError } = await supabase
-      //   .from('session_files')
-      //   .insert({
-      //     session_id: sessionId,
-      //     name: file.name,
-      //     file_type: file.type || 'application/octet-stream',
-      //     file_size: file.size,
-      //     uploaded_by: isDesigner ? designerName : customerName,
-      //     uploaded_by_type: isDesigner ? 'designer' : 'customer',
-      //     uploaded_by_id: userId,
-      //     file_url: publicUrl
-      //   })
-      //   .select()
-      //   .single();
+      // Determine file status based on who uploads:
+      // - Customer files: approved (go directly to designer, no review needed)
+      // - Designer files: pending (need customer approval)
+      const fileStatus = isDesigner ? 'pending' : 'approved';
+      
+      const { data: fileData, error: insertError } = await (supabase as any)
+        .from('session_files')
+        .insert({
+          session_id: sessionId,
+          booking_id: bookingId,
+          name: file.name,
+          file_type: file.type || 'application/octet-stream',
+          file_size: file.size,
+          uploaded_by: isDesigner ? designerName : customerName,
+          uploaded_by_type: isDesigner ? 'designer' : 'customer',
+          uploaded_by_id: userId,
+          file_url: publicUrl,
+          status: fileStatus,
+          work_description: isDesigner ? 'Designer work for review' : 'Customer reference material'
+        })
+        .select()
+        .single();
 
-      // if (insertError) throw insertError;
+      if (insertError) throw insertError;
 
       // Don't add to local state here - let real-time subscription handle it
       // This prevents duplicates and ensures consistency
 
       toast({
-        title: "File upload",
-        description: "File upload feature coming soon",
+        title: "File uploaded",
+        description: `${file.name} has been uploaded`,
       });
     } catch (error) {
       console.error('Error uploading file:', error);
@@ -346,12 +437,322 @@ export default function SessionSidePanel({
     }
   };
 
+  const downloadInvoice = async (invoice: any) => {
+    try {
+      // Generate HTML invoice
+      const invoiceHTML = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Invoice #${invoice.id.slice(-8)}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 40px; }
+            .header { text-align: center; margin-bottom: 30px; }
+            .invoice-details { margin-bottom: 30px; }
+            .items-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+            .items-table th, .items-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            .items-table th { background-color: #f2f2f2; }
+            .total-section { text-align: right; margin-top: 20px; }
+            .total-line { margin: 5px 0; }
+            .grand-total { font-size: 18px; font-weight: bold; border-top: 2px solid #333; padding-top: 10px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>INVOICE</h1>
+            <p>Invoice #${invoice.id.slice(-8)}</p>
+            <p>Date: ${new Date(invoice.invoice_date).toLocaleDateString()}</p>
+          </div>
+          
+          <div class="invoice-details">
+            <p><strong>Designer:</strong> ${invoice.designer_name}</p>
+            <p><strong>Customer:</strong> ${invoice.customer_name}</p>
+          </div>
+          
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th>Duration</th>
+                <th>Rate</th>
+                <th>Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Design Session</td>
+                <td>${invoice.duration_minutes} minutes</td>
+                <td>$${invoice.rate_per_minute}/min</td>
+                <td>$${invoice.subtotal.toFixed(2)}</td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <div class="total-section">
+            <div class="total-line">Subtotal: $${invoice.subtotal.toFixed(2)}</div>
+            <div class="total-line">GST (18%): $${invoice.gst_amount.toFixed(2)}</div>
+            <div class="total-line grand-total">Total: $${invoice.total_amount.toFixed(2)}</div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      const blob = new Blob([invoiceHTML], { type: 'text/html' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `invoice-${invoice.id.slice(-8)}.html`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading invoice:', error);
+      toast({
+        title: "Error",
+        description: "Failed to download invoice",
+        variant: "destructive",
+      });
+    }
+  };
+
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const submitWorkForReview = async (file: FileItem) => {
+    if (!workDescription.trim()) {
+      toast({
+        title: "Work description required",
+        description: "Please provide a description of the work",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Update file as work submission
+      const { error: fileError } = await (supabase as any)
+        .from('session_files')
+        .update({
+          work_type: 'work',
+          work_description: workDescription,
+          work_status: 'in_review'
+        })
+        .eq('id', file.id);
+
+      if (fileError) throw fileError;
+
+      // Get the reviewer ID (the other party in the session)
+      let reviewerId = null;
+      if (bookingId) {
+        // For booking sessions, get the other user from booking
+        const { data: booking } = await supabase
+          .from('bookings')
+          .select('customer_id, designers(user_id)')
+          .eq('id', bookingId)
+          .single();
+        
+        if (booking) {
+          reviewerId = isDesigner ? booking.customer_id : booking.designers?.user_id;
+        }
+      } else {
+        // For live sessions, get the other user from active_sessions
+        const { data: session } = await (supabase as any)
+          .from('active_sessions')
+          .select('customer_id, designers(user_id)')
+          .eq('session_id', sessionId)
+          .single();
+        
+        if (session) {
+          reviewerId = isDesigner ? session.customer_id : session.designers?.user_id;
+        }
+      }
+
+      // Create work review (only if we have a valid reviewer ID)
+      if (reviewerId) {
+        const { error: reviewError } = await (supabase as any)
+          .from('session_work_reviews')
+          .insert({
+            session_id: sessionId,
+            work_file_id: file.id,
+            reviewer_id: reviewerId,
+            reviewer_type: isDesigner ? 'customer' : 'designer',
+            review_status: 'pending'
+          });
+
+        if (reviewError) throw reviewError;
+      }
+
+      // Update local state
+      setFiles(prev => prev.map(f => 
+        f.id === file.id 
+          ? { ...f, work_type: 'work', work_description: workDescription, work_status: 'in_review' }
+          : f
+      ));
+
+      setReviewingFile(null);
+      setWorkDescription('');
+      
+      toast({
+        title: "Work submitted for review",
+        description: "Your work has been submitted for review",
+      });
+    } catch (error) {
+      console.error('Error submitting work for review:', error);
+      toast({
+        title: "Error",
+        description: "Failed to submit work for review",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const approveWork = async (file: FileItem) => {
+    try {
+      // Create file review record
+      const { error: reviewError } = await (supabase as any)
+        .from('file_reviews')
+        .insert({
+          file_id: file.id,
+          reviewer_id: userId,
+          reviewer_type: isDesigner ? 'designer' : 'customer',
+          action: 'approve',
+          notes: reviewNotes.trim() || null
+        });
+
+      if (reviewError) throw reviewError;
+
+      // Update local state - set as approved and keep as regular file (not work under review)
+      setFiles(prev => prev.map(f => 
+        f.id === file.id 
+          ? { 
+              ...f, 
+              status: 'approved', 
+              work_status: 'approved',
+              work_type: 'file', // Keep as regular file, don't move to work review
+              reviewed_at: new Date().toISOString(), 
+              review_notes: reviewNotes 
+            }
+          : f
+      ));
+
+      setReviewingFile(null);
+      setReviewNotes('');
+      
+      toast({
+        title: "File approved",
+        description: "The file has been approved successfully",
+      });
+    } catch (error) {
+      console.error('Error approving file:', error);
+      toast({
+        title: "Error",
+        description: "Failed to approve file",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const rejectWork = async (file: FileItem) => {
+    if (!rejectionReason.trim()) {
+      toast({
+        title: "Rejection reason required",
+        description: "Please provide a reason for rejection",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Create file review record
+      const { error: reviewError } = await (supabase as any)
+        .from('file_reviews')
+        .insert({
+          file_id: file.id,
+          reviewer_id: userId,
+          reviewer_type: isDesigner ? 'designer' : 'customer',
+          action: 'reject',
+          notes: rejectionReason.trim()
+        });
+
+      if (reviewError) throw reviewError;
+
+      // Update local state - set as rejected and move to work under review
+      setFiles(prev => prev.map(f => 
+        f.id === file.id 
+          ? { 
+              ...f, 
+              status: 'rejected', 
+              work_status: 'rejected',
+              work_type: 'work',
+              reviewed_at: new Date().toISOString(), 
+              review_notes: rejectionReason 
+            }
+          : f
+      ));
+
+      setReviewingFile(null);
+      setRejectionReason('');
+      
+      toast({
+        title: "File rejected",
+        description: "The file has been rejected with feedback",
+      });
+    } catch (error) {
+      console.error('Error rejecting file:', error);
+      toast({
+        title: "Error",
+        description: "Failed to reject file",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'approved': return 'bg-green-100 text-green-800';
+      case 'rejected': return 'bg-red-100 text-red-800';
+      case 'revision_requested': return 'bg-orange-100 text-orange-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'approved': return 'Approved';
+      case 'rejected': return 'Rejected';
+      case 'in_review': return 'In Review';
+      case 'pending': return 'Pending';
+      default: return 'Unknown';
+    }
+  };
+
+  const getWorkStatusColor = (status: string) => {
+    switch (status) {
+      case 'approved': return 'bg-green-100 text-green-800';
+      case 'rejected': return 'bg-red-100 text-red-800';
+      case 'in_review': return 'bg-blue-100 text-blue-800';
+      case 'revision_requested': return 'bg-orange-100 text-orange-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getWorkStatusText = (status: string) => {
+    switch (status) {
+      case 'approved': return 'Approved';
+      case 'rejected': return 'Rejected';
+      case 'in_review': return 'In Review';
+      case 'revision_requested': return 'Revision Requested';
+      case 'pending': return 'Pending Review';
+      default: return 'Unknown';
+    }
   };
 
   const generateInvoice = async () => {
@@ -372,12 +773,41 @@ export default function SessionSidePanel({
         invoice_date: new Date().toISOString()
       };
 
-      // TODO: Implement session invoices when database schema is ready
-      // const { error } = await supabase
-      //   .from('session_invoices')
-      //   .insert(invoiceData);
+      // Save invoice to database
+      const { data: invoice, error } = await supabase
+        .from('session_invoices')
+        .insert(invoiceData)
+        .select()
+        .single();
 
-      // if (error) throw error;
+      if (error) throw error;
+
+      // Send invoice as a message in chat
+      const messageData = {
+        conversation_id: sessionId,
+        sender_id: userId,
+        content: `📄 Invoice generated for ${Math.ceil(duration / 60)} minutes of work. Total: $${total.toFixed(2)}`,
+        message_type: 'invoice'
+      };
+
+      const { data: message, error: messageError } = await supabase
+        .from('conversation_messages')
+        .insert(messageData)
+        .select()
+        .single();
+
+      if (messageError) throw messageError;
+
+      // Link invoice to message
+      const { error: linkError } = await supabase
+        .from('session_invoice_messages')
+        .insert({
+          session_id: sessionId,
+          invoice_id: invoice.id,
+          message_id: message.id
+        });
+
+      if (linkError) throw linkError;
 
       // Generate beautiful HTML invoice
       const invoiceHTML = `
@@ -544,10 +974,11 @@ export default function SessionSidePanel({
   return (
     <div className="w-full lg:w-80 xl:w-96 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col max-h-full overflow-auto md:overflow-hidden md:h-full h-[40vh]">
       <Tabs defaultValue="billing" className="flex-1 flex flex-col h-full min-h-0">
-        <TabsList className="grid w-full grid-cols-4 h-10 shrink-0">
+        <TabsList className="grid w-full grid-cols-5 h-10 shrink-0">
           <TabsTrigger value="billing" className="text-xs sm:text-sm px-1 sm:px-3">Billing</TabsTrigger>
           <TabsTrigger value="files" className="text-xs sm:text-sm px-1 sm:px-3">Files</TabsTrigger>
           <TabsTrigger value="chat" className="text-xs sm:text-sm px-1 sm:px-3">Chat</TabsTrigger>
+          <TabsTrigger value="review" className="text-xs sm:text-sm px-1 sm:px-3">Review</TabsTrigger>
           <TabsTrigger value="invoice" className="text-xs sm:text-sm px-1 sm:px-3">Invoice</TabsTrigger>
         </TabsList>
 
@@ -726,20 +1157,98 @@ export default function SessionSidePanel({
                   ) : (
                     <div className="space-y-2">
                       {files.map((file) => (
-                        <div key={file.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs sm:text-sm font-medium truncate">{file.name}</p>
-                            <p className="text-xs text-gray-500">{formatFileSize(file.file_size)}</p>
+                        <div key={file.id} className="p-3 bg-gray-50 rounded border">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs sm:text-sm font-medium truncate">{file.name}</p>
+                              <p className="text-xs text-gray-500">{formatFileSize(file.file_size)}</p>
+                              <p className="text-xs text-gray-400">Uploaded by: {file.uploaded_by}</p>
+                              {file.work_description && (
+                                <p className="text-xs text-blue-600 mt-1">
+                                  <strong>Work:</strong> {file.work_description}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(file.status || 'pending')}`}>
+                                {getStatusText(file.status || 'pending')}
+                              </span>
+                            </div>
                           </div>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => downloadFile(file)}
-                            className="ml-2 text-xs"
-                          >
-                            <span className="hidden sm:inline">Download</span>
-                            <span className="sm:hidden">↓</span>
-                          </Button>
+                          
+                          <div className="flex items-center justify-between">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => downloadFile(file)}
+                              className="text-xs"
+                            >
+                              <span className="hidden sm:inline">Download</span>
+                              <span className="sm:hidden">↓</span>
+                            </Button>
+                            
+                            {/* Designer can submit work for review */}
+                            {isDesigner && file.uploaded_by_type === 'designer' && file.work_type === 'file' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setReviewingFile(file)}
+                                className="text-blue-600 hover:text-blue-700 text-xs"
+                              >
+                                Submit for Review
+                              </Button>
+                            )}
+                            
+                            {/* Customer can review designer work */}
+                            {!isDesigner && file.uploaded_by_type === 'designer' && file.status === 'pending' && (
+                              <div className="flex space-x-1">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setReviewingFile(file)}
+                                  className="text-green-600 hover:text-green-700 text-xs"
+                                >
+                                  Approve
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setReviewingFile(file)}
+                                  className="text-red-600 hover:text-red-700 text-xs"
+                                >
+                                  Reject
+                                </Button>
+                              </div>
+                            )}
+                            
+                            {/* Designer can resubmit rejected work */}
+                            {isDesigner && file.uploaded_by_type === 'designer' && file.work_status === 'rejected' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setReviewingFile(file)}
+                                className="text-orange-600 hover:text-orange-700 text-xs"
+                              >
+                                Resubmit
+                              </Button>
+                            )}
+                          </div>
+                          
+                          {file.work_status === 'rejected' && file.rejection_reason && (
+                            <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
+                              <p className="text-xs text-red-600">
+                                <strong>Rejection reason:</strong> {file.rejection_reason}
+                              </p>
+                            </div>
+                          )}
+                          
+                          {file.work_status === 'approved' && file.review_notes && (
+                            <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded">
+                              <p className="text-xs text-green-600">
+                                <strong>Review notes:</strong> {file.review_notes}
+                              </p>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -811,20 +1320,308 @@ export default function SessionSidePanel({
           </Card>
         </TabsContent>
 
+        <TabsContent value="review" className="flex-1 p-2 sm:p-4 min-h-0">
+          <Card className="h-full flex flex-col min-h-0">
+            <CardHeader className="pb-2 sm:pb-3 shrink-0">
+              <CardTitle className="text-xs sm:text-sm font-medium">Work Review</CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1 flex flex-col min-h-0 overflow-hidden">
+              <ScrollArea className="flex-1 min-h-0">
+                {files.filter(file => file.work_type === 'work' && (file.work_status === 'in_review' || file.work_status === 'rejected')).length === 0 ? (
+                  <p className="text-xs sm:text-sm text-gray-500 text-center py-4">
+                    No work pending review
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {files
+                      .filter(file => file.work_type === 'work' && (file.work_status === 'in_review' || file.work_status === 'rejected'))
+                      .map((file) => (
+                        <div key={file.id} className="p-3 bg-gray-50 rounded border">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs sm:text-sm font-medium truncate">{file.name}</p>
+                              <p className="text-xs text-gray-500">{formatFileSize(file.file_size)}</p>
+                              <p className="text-xs text-gray-400">By: {file.uploaded_by}</p>
+                              {file.work_description && (
+                                <p className="text-xs text-blue-600 mt-1">
+                                  <strong>Description:</strong> {file.work_description}
+                                </p>
+                              )}
+                            </div>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getWorkStatusColor(file.work_status || 'pending')}`}>
+                              {getWorkStatusText(file.work_status || 'pending')}
+                            </span>
+                          </div>
+                          
+                          {file.work_status === 'rejected' && file.rejection_reason && (
+                            <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
+                              <p className="text-xs text-red-600">
+                                <strong>Rejection reason:</strong> {file.rejection_reason}
+                              </p>
+                            </div>
+                          )}
+                          
+                          <div className="mt-2 flex justify-between">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => downloadFile(file)}
+                              className="text-xs"
+                            >
+                              Download
+                            </Button>
+                            
+                            {!isDesigner && file.work_status === 'in_review' && (
+                              <div className="flex space-x-1">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setReviewingFile(file)}
+                                  className="text-green-600 hover:text-green-700 text-xs"
+                                >
+                                  Approve
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setReviewingFile(file)}
+                                  className="text-red-600 hover:text-red-700 text-xs"
+                                >
+                                  Reject
+                                </Button>
+                              </div>
+                            )}
+                            
+                            {isDesigner && file.work_status === 'rejected' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setReviewingFile(file)}
+                                className="text-orange-600 hover:text-orange-700 text-xs"
+                              >
+                                Resubmit
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="invoice" className="flex-1 p-2 sm:p-4 min-h-0">
           <Card className="h-full flex flex-col min-h-0">
             <CardHeader className="pb-2 sm:pb-3 shrink-0">
-              <CardTitle className="text-xs sm:text-sm font-medium">Generate Invoice</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium">Invoices</CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 flex flex-col justify-center min-h-0">
-              <Button onClick={generateInvoice} className="w-full text-xs sm:text-sm">
-                <span className="hidden sm:inline">Generate & Download Invoice</span>
-                <span className="sm:hidden">Generate Invoice</span>
-              </Button>
+            <CardContent className="flex-1 flex flex-col min-h-0 overflow-hidden">
+              <div className="space-y-3">
+                <Button onClick={generateInvoice} className="w-full text-xs sm:text-sm">
+                  <span className="hidden sm:inline">Generate New Invoice</span>
+                  <span className="sm:hidden">Generate Invoice</span>
+                </Button>
+                
+                <ScrollArea className="flex-1 min-h-0">
+                  {invoices.length === 0 ? (
+                    <p className="text-xs sm:text-sm text-gray-500 text-center py-4">
+                      No invoices generated yet
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {invoices.map((invoice) => (
+                        <div key={invoice.id} className="p-3 bg-gray-50 rounded border">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs sm:text-sm font-medium">Invoice #{invoice.id.slice(-8)}</p>
+                              <p className="text-xs text-gray-500">
+                                {Math.ceil(invoice.duration_minutes)} minutes @ ${invoice.rate_per_minute}/min
+                              </p>
+                              <p className="text-xs text-gray-400">
+                                {new Date(invoice.invoice_date).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <span className="text-xs sm:text-sm font-bold text-green-600">
+                              ${invoice.total_amount.toFixed(2)}
+                            </span>
+                          </div>
+                          
+                          <div className="flex justify-between">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => downloadInvoice(invoice)}
+                              className="text-xs"
+                            >
+                              Download
+                            </Button>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              invoice.status === 'paid' ? 'bg-green-100 text-green-800' :
+                              invoice.status === 'sent' ? 'bg-blue-100 text-blue-800' :
+                              'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </ScrollArea>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Work Review Dialog */}
+      {reviewingFile && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-h-96 overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-4">
+              {reviewingFile.work_type === 'work' ? 'Review Work' : 'Submit Work for Review'}
+            </h3>
+            
+            <div className="mb-4">
+              <p className="text-sm font-medium">{reviewingFile.name}</p>
+              <p className="text-xs text-gray-500">{formatFileSize(reviewingFile.file_size)}</p>
+              <p className="text-xs text-gray-400">By: {reviewingFile.uploaded_by}</p>
+            </div>
+
+            {reviewingFile.work_type === 'file' && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Work Description *</label>
+                  <textarea
+                    value={workDescription}
+                    onChange={(e) => setWorkDescription(e.target.value)}
+                    placeholder="Describe the work you've completed..."
+                    className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                    rows={3}
+                  />
+                </div>
+              </div>
+            )}
+
+            {reviewingFile.work_type === 'work' && reviewingFile.work_status === 'in_review' && (
+              <div className="space-y-4">
+                {reviewingFile.work_description && (
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded">
+                    <p className="text-sm text-blue-600">
+                      <strong>Work Description:</strong> {reviewingFile.work_description}
+                    </p>
+                  </div>
+                )}
+                
+                <div>
+                  <label className="block text-sm font-medium mb-2">Review Notes (Optional)</label>
+                  <textarea
+                    value={reviewNotes}
+                    onChange={(e) => setReviewNotes(e.target.value)}
+                    placeholder="Add review notes..."
+                    className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                    rows={3}
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-2">Rejection Reason (Required for rejection)</label>
+                  <textarea
+                    value={rejectionReason}
+                    onChange={(e) => setRejectionReason(e.target.value)}
+                    placeholder="Reason for rejection..."
+                    className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                    rows={3}
+                  />
+                </div>
+              </div>
+            )}
+
+            {reviewingFile.work_type === 'work' && reviewingFile.work_status === 'rejected' && (
+              <div className="space-y-4">
+                {reviewingFile.work_description && (
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded">
+                    <p className="text-sm text-blue-600">
+                      <strong>Work Description:</strong> {reviewingFile.work_description}
+                    </p>
+                  </div>
+                )}
+                
+                {reviewingFile.rejection_reason && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded">
+                    <p className="text-sm text-red-600">
+                      <strong>Rejection Reason:</strong> {reviewingFile.rejection_reason}
+                    </p>
+                  </div>
+                )}
+                
+                <div>
+                  <label className="block text-sm font-medium mb-2">Updated Work Description *</label>
+                  <textarea
+                    value={workDescription}
+                    onChange={(e) => setWorkDescription(e.target.value)}
+                    placeholder="Describe the updated work..."
+                    className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                    rows={3}
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end space-x-2 mt-6">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setReviewingFile(null);
+                  setReviewNotes('');
+                  setRejectionReason('');
+                  setWorkDescription('');
+                }}
+              >
+                Cancel
+              </Button>
+              
+              {reviewingFile.work_type === 'file' && (
+                <Button
+                  onClick={() => submitWorkForReview(reviewingFile)}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  Submit for Review
+                </Button>
+              )}
+              
+              {reviewingFile.work_type === 'work' && reviewingFile.work_status === 'in_review' && reviewingFile.status !== 'rejected' && (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={() => rejectWork(reviewingFile)}
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    Reject
+                  </Button>
+                  <Button
+                    onClick={() => approveWork(reviewingFile)}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    Approve
+                  </Button>
+                </>
+              )}
+              
+              {reviewingFile.work_type === 'work' && reviewingFile.work_status === 'rejected' && (
+                <Button
+                  onClick={() => submitWorkForReview(reviewingFile)}
+                  className="bg-orange-600 hover:bg-orange-700"
+                >
+                  Resubmit
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

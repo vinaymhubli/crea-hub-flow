@@ -7,6 +7,7 @@ import LiveSessionRequestDialog from './LiveSessionRequestDialog';
 import { ScreenShareModal } from './ScreenShareModal';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { cleanupStaleSessions } from '@/utils/sessionCleanup';
 import { FilterState } from '../pages/Designers';
 import { useAuth } from '@/hooks/useAuth';
 import { Video, MessageCircle, Calendar, Eye } from 'lucide-react';
@@ -108,24 +109,47 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
       // Fetch profiles and activity status for each designer
       const designersWithProfiles = await Promise.all(
         (data || []).map(async (designer) => {
-          const [profileResult, activityResult] = await Promise.all([
-            supabase
-              .from('profiles')
-              .select('first_name, last_name, avatar_url, email')
-              .eq('user_id', designer.user_id)
-              .single(),
-            supabase
-              .from('designer_activity')
-              .select('is_online, activity_status, last_seen')
-              .eq('designer_id', designer.user_id)
-              .single()
-          ]);
+          console.log('Processing designer:', designer.id, 'user_id:', designer.user_id);
           
-          return {
-            ...designer,
-            profiles: profileResult.data,
-            activity: activityResult.data
-          };
+          try {
+            const [profileResult, activityResult] = await Promise.all([
+              supabase
+                .from('profiles')
+                .select('first_name, last_name, avatar_url, email')
+                .eq('user_id', designer.user_id)
+                .single(),
+              supabase
+                .from('designer_activity')
+                .select('is_online, activity_status, last_seen')
+                .eq('designer_id', designer.user_id)
+                .maybeSingle() // Use maybeSingle to avoid errors if no record exists
+            ]);
+            
+            if (activityResult.error && activityResult.error.code !== 'PGRST116') {
+              console.warn('Activity query error for designer:', designer.user_id, activityResult.error);
+            }
+            
+            return {
+              ...designer,
+              profiles: profileResult.data,
+              activity: activityResult.data || {
+                is_online: designer.is_online || false,
+                activity_status: 'offline',
+                last_seen: new Date().toISOString()
+              }
+            };
+          } catch (error) {
+            console.error('Error fetching data for designer:', designer.user_id, error);
+            return {
+              ...designer,
+              profiles: null,
+              activity: {
+                is_online: designer.is_online || false,
+                activity_status: 'offline',
+                last_seen: new Date().toISOString()
+              }
+            };
+          }
         })
       );
       
@@ -252,33 +276,61 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
 
   const checkDesignerAvailability = async (designer: any) => {
     try {
-      // Check if designer has any active sessions
-      const { data: activeSessions, error } = await supabase
+      console.log('🔍 Checking availability for designer:', designer.id, designer.name || designer.profiles?.first_name);
+
+      // Check if designer has any active sessions in our new active_sessions table
+      const { data: activeSessions, error: activeError } = await supabase
+        .from('active_sessions')
+        .select('id, session_type, status, session_id, created_at')
+        .eq('designer_id', designer.id)
+        .eq('status', 'active');
+
+      if (activeError) {
+        console.warn('Error checking active sessions:', activeError);
+        // Don't block availability due to table errors - just continue
+      } else {
+        console.log('📋 Active sessions found:', activeSessions?.length || 0, activeSessions);
+      }
+
+      // Check if designer has any ongoing bookings
+      const { data: ongoingBookings, error: bookingError } = await supabase
         .from('bookings')
-        .select('id, status, scheduled_date, duration_minutes')
+        .select('id, status, scheduled_date, duration_hours')
         .eq('designer_id', designer.id)
-        .in('status', ['in_progress', 'pending'])
-        .gte('scheduled_date', new Date().toISOString());
+        .eq('status', 'in_progress');
 
-      if (error) throw error;
+      if (bookingError) {
+        console.warn('Error checking ongoing bookings:', bookingError);
+        // Don't block availability due to table errors - just continue
+      } else {
+        console.log('📅 Ongoing bookings found:', ongoingBookings?.length || 0, ongoingBookings);
+      }
 
-      // Check if designer is currently in a live session
-      const { data: liveSessions, error: liveError } = await supabase
-        .from('live_session_requests')
-        .select('id, status')
-        .eq('designer_id', designer.id)
-        .eq('status', 'accepted');
+      // Check ONLY active sessions - live_session_requests are just requests, not actual sessions
+      // The important thing is whether designer has an ACTIVE session, not pending/accepted requests
+      const hasActiveSessions = !activeError && activeSessions && activeSessions.length > 0;
+      const hasOngoingBookings = !bookingError && ongoingBookings && ongoingBookings.length > 0;
 
-      if (liveError) throw liveError;
-
-      // Designer is free if no active sessions and no live sessions
-      const hasActiveSessions = activeSessions && activeSessions.length > 0;
-      const hasLiveSessions = liveSessions && liveSessions.length > 0;
+      console.log('🎥 Checking ONLY active sessions and ongoing bookings for availability');
+      console.log('📋 Active sessions:', hasActiveSessions ? activeSessions : 'None');
+      console.log('📅 Ongoing bookings:', hasOngoingBookings ? ongoingBookings : 'None');
       
-      return !hasActiveSessions && !hasLiveSessions;
+      // Designer is available if they have NO active sessions and NO ongoing bookings
+      const isAvailable = !hasActiveSessions && !hasOngoingBookings;
+      
+      console.log('✅ Designer availability result:', {
+        isAvailable,
+        hasActiveSessions,
+        hasOngoingBookings,
+        designerId: designer.id
+      });
+      
+      return isAvailable;
     } catch (error) {
-      console.error('Error checking designer availability:', error);
-      return false;
+      console.error('❌ Error checking designer availability:', error);
+      // In case of errors, allow the session rather than blocking
+      console.log('⚠️ Allowing session due to availability check error');
+      return true;
     }
   };
 
@@ -293,16 +345,41 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
       return;
     }
 
-    if (!designer.is_online) {
-      toast.error('Designer is currently offline');
+    // Check if designer is online (both from designer table and activity table)
+    const isDesignerOnline = designer.is_online || designer.activity?.is_online;
+    
+    if (!isDesignerOnline) {
+      toast.error('Designer is currently offline and not available for live sessions');
       return;
     }
+
+    console.log('✅ Designer is online, checking availability...', {
+      designer_is_online: designer.is_online,
+      activity_is_online: designer.activity?.is_online,
+      activity_status: designer.activity?.activity_status
+    });
 
     // Check if designer is free
     const isAvailable = await checkDesignerAvailability(designer);
     if (!isAvailable) {
-      toast.error('Designer is currently busy with another session');
-      return;
+      // Try cleaning up stale sessions and check again
+      console.log('🧹 Designer appears busy, attempting to clean up stale sessions...');
+      const cleanupResult = await cleanupStaleSessions();
+      
+      if (cleanupResult.success && cleanupResult.cleaned.total > 0) {
+        console.log('🧹 Found and cleaned up stale sessions, retrying availability check...');
+        toast.success(`Cleaned up ${cleanupResult.cleaned.total} stale session(s). Retrying...`);
+        
+        // Check again after cleanup
+        const isAvailableAfterCleanup = await checkDesignerAvailability(designer);
+        if (!isAvailableAfterCleanup) {
+          toast.error('Designer is currently busy with another session');
+          return;
+        }
+      } else {
+        toast.error('Designer is currently busy with another session');
+        return;
+      }
     }
 
     setSelectedDesigner(designer);

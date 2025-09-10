@@ -15,7 +15,8 @@ import {
   CalendarClock,
   Bell,
   LogOut,
-  Package
+  Package,
+  Power
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRealtimeBookings } from '@/hooks/useRealtimeBookings';
@@ -34,7 +35,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { DesignerSidebar } from '@/components/DesignerSidebar';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 
 export default function DesignerDashboard() {
@@ -42,9 +46,11 @@ export default function DesignerDashboard() {
   const { activeSession, getUpcomingBookings, getCompletedBookings, loading } = useRealtimeBookings();
   const { designerProfile, calculateTotalEarnings } = useDesignerProfile();
   const { activity } = useDesignerActivity();
+  const { toast } = useToast();
   const [totalEarnings, setTotalEarnings] = useState(0);
   const [showScreenShare, setShowScreenShare] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [sessionCustomerName, setSessionCustomerName] = useState<string>('Customer');
   
   const upcomingBookings = getUpcomingBookings();
   const completedBookings = getCompletedBookings();
@@ -116,14 +122,32 @@ export default function DesignerDashboard() {
     }
   };
 
-  const handleSessionStart = (sessionId: string) => {
+  const handleSessionStart = async (sessionId: string) => {
     setCurrentSessionId(sessionId);
     setShowScreenShare(true);
+    
+    // Fetch customer name from active_sessions
+    try {
+      const { data: sessionData } = await supabase
+        .from('active_sessions')
+        .select('customer_id, profiles!active_sessions_customer_id_fkey(first_name, last_name)')
+        .eq('session_id', sessionId)
+        .single();
+      
+      if (sessionData?.profiles) {
+        const customerName = `${sessionData.profiles.first_name || ''} ${sessionData.profiles.last_name || ''}`.trim() || 'Customer';
+        setSessionCustomerName(customerName);
+      }
+    } catch (error) {
+      console.warn('Could not fetch customer name for session:', error);
+      setSessionCustomerName('Customer');
+    }
   };
 
   const handleCloseScreenShare = () => {
     setShowScreenShare(false);
     setCurrentSessionId(null);
+    setSessionCustomerName('Customer');
   };
 
   // Set designer offline when component unmounts
@@ -158,20 +182,106 @@ export default function DesignerDashboard() {
     if (!designerProfile?.id) return;
     
     try {
-      const { error } = await supabase
-        .from('designers')
-        .update({ is_online: !designerProfile.is_online })
-        .eq('id', designerProfile.id);
+      const newStatus = !designerProfile.is_online;
+      
+      console.log(`🔄 Toggling designer status to: ${newStatus ? 'ONLINE' : 'OFFLINE'}`);
+      
+      // Update both tables simultaneously
+      const [designerResult, activityResult] = await Promise.allSettled([
+        // Update designers table
+        supabase
+          .from('designers')
+          .update({ 
+            is_online: newStatus,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', designerProfile.id),
+        
+        // Update designer_activity table
+        supabase
+          .from('designer_activity')
+          .upsert({
+            designer_id: user?.id,
+            last_seen: new Date().toISOString(),
+            activity_status: newStatus ? 'active' : 'offline',
+            is_online: newStatus,
+            updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'designer_id'
+          })
+      ]);
 
-      if (error) {
-        console.error('Error toggling online status:', error);
-      } else {
-        console.log(`Designer set to ${!designerProfile.is_online ? 'online' : 'offline'}`);
-        // Refresh the designer profile to get updated status
-        window.location.reload();
+      // Check for errors
+      if (designerResult.status === 'rejected') {
+        console.error('Error updating designers table:', designerResult.reason);
+        throw new Error('Failed to update designer status');
       }
+      
+      if (activityResult.status === 'rejected') {
+        console.error('Error updating designer_activity table:', activityResult.reason);
+        // Don't throw here, activity table is secondary
+        console.warn('Activity table update failed, but continuing...');
+      }
+
+      // If going offline, end any active sessions immediately
+      if (!newStatus) {
+        console.log('🚫 Going offline, ending any active sessions...');
+        
+        const { error: endSessionsError } = await supabase
+          .from('active_sessions')
+          .update({
+            status: 'ended',
+            ended_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('designer_id', designerProfile.id)
+          .eq('status', 'active');
+
+        if (endSessionsError) {
+          console.warn('Error ending active sessions:', endSessionsError);
+        } else {
+          console.log('✅ Ended all active sessions for offline designer');
+        }
+
+        // Also reject any pending live session requests
+        const { error: rejectRequestsError } = await supabase
+          .from('live_session_requests')
+          .update({
+            status: 'rejected',
+            rejection_reason: 'Designer went offline',
+            updated_at: new Date().toISOString()
+          })
+          .eq('designer_id', designerProfile.id)
+          .eq('status', 'pending');
+
+        if (rejectRequestsError) {
+          console.warn('Error rejecting pending requests:', rejectRequestsError);
+        } else {
+          console.log('✅ Rejected all pending live session requests');
+        }
+      }
+        
+      console.log(`✅ Designer successfully set to ${newStatus ? 'ONLINE' : 'OFFLINE'}`);
+      
+      toast({
+        title: newStatus ? "Now Online" : "Now Offline",
+        description: newStatus 
+          ? "You are now available for live sessions" 
+          : "You are now offline. All active sessions and pending requests have been ended.",
+      });
+      
+      // Refresh the page to update all status indicators
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+      
     } catch (error) {
       console.error('Error toggling online status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update online status",
+        variant: "destructive",
+      });
     }
   };
 
@@ -192,7 +302,8 @@ export default function DesignerDashboard() {
                 </div>
               </div>
               <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-4">
+                  {/* Status Indicator */}
                   <div className="flex items-center space-x-2">
                     <div className={`w-3 h-3 rounded-full ${
                       activity?.is_online 
@@ -208,6 +319,19 @@ export default function DesignerDashboard() {
                     {activity?.is_in_schedule && (
                       <span className="text-xs text-white/60">(Scheduled)</span>
                     )}
+                  </div>
+                  
+                  {/* Online/Offline Toggle */}
+                  <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/20">
+                    <Power className="w-4 h-4 text-white/80" />
+                    <Switch
+                      checked={designerProfile?.is_online || false}
+                      onCheckedChange={toggleOnlineStatus}
+                      className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-500"
+                    />
+                    <span className="text-white/80 text-xs font-medium">
+                      {designerProfile?.is_online ? 'Online' : 'Offline'}
+                    </span>
                   </div>
                 </div>
                 <Bell className="w-5 h-5 text-white/80" />
@@ -616,7 +740,7 @@ export default function DesignerDashboard() {
             roomId={currentSessionId}
             isHost={true} // Designer is always the host in live sessions
             designerName={profile ? `${profile.first_name} ${profile.last_name}` : 'Designer'}
-            customerName="Customer" // Will be updated when customer joins
+            customerName={sessionCustomerName}
             bookingId={undefined} // Live sessions don't have booking IDs
           />
         )}

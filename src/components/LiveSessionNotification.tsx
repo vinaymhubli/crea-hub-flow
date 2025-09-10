@@ -31,6 +31,24 @@ export default function LiveSessionNotification({ designerId, onSessionStart }: 
   const [showNotification, setShowNotification] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
 
+  // Helper function to get designer name from profiles table
+  const getDesignerName = async (userId?: string) => {
+    if (!userId) return null;
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('user_id', userId)
+        .single();
+      
+      if (error || !data) return null;
+      return `${data.first_name || ''} ${data.last_name || ''}`.trim();
+    } catch (error) {
+      console.warn('Could not fetch designer name from profiles');
+      return null;
+    }
+  };
+
   useEffect(() => {
     if (!user || !designerId) return;
 
@@ -126,6 +144,16 @@ export default function LiveSessionNotification({ designerId, onSessionStart }: 
 
   const respondToRequest = async (requestId: string, status: 'accepted' | 'rejected') => {
     try {
+      // Require rejection reason
+      if (status === 'rejected' && !rejectionReason.trim()) {
+        toast({
+          title: "Rejection reason required",
+          description: "Please provide a reason for rejecting the session request",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const updateData: any = { status };
       
       if (status === 'rejected' && rejectionReason.trim()) {
@@ -143,9 +171,33 @@ export default function LiveSessionNotification({ designerId, onSessionStart }: 
         // Generate session ID and start screen sharing
         const sessionId = `live_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         
-        // Notify customer that session is starting
+        // Create active session record
         const request = pendingRequests.find(r => r.id === requestId);
         if (request) {
+          const { error: sessionError } = await supabase
+            .from('active_sessions')
+            .insert({
+              session_id: sessionId,
+              designer_id: designerId,
+              customer_id: request.customer_id,
+              session_type: 'live_session',
+              status: 'active'
+            });
+
+          if (sessionError) {
+            console.error('Error creating active session:', sessionError);
+            toast({
+              title: "Error",
+              description: "Failed to start session",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          // Get designer name from profiles table
+          const designerName = await getDesignerName(user?.id);
+          
+          // Notify customer that session is starting
           await supabase
             .channel(`customer_notifications_${request.customer_id}`)
             .send({
@@ -153,7 +205,7 @@ export default function LiveSessionNotification({ designerId, onSessionStart }: 
               event: 'live_session_accepted',
               payload: {
                 sessionId,
-                designerName: `${user?.user_metadata?.first_name || ''} ${user?.user_metadata?.last_name || ''}`
+                designerName: designerName || 'Designer'
               }
             });
         }
@@ -162,12 +214,51 @@ export default function LiveSessionNotification({ designerId, onSessionStart }: 
         setShowNotification(false);
       }
 
+      if (status === 'rejected') {
+        // When rejecting, immediately end any active sessions for this designer
+        console.log('🚫 Session rejected, ending any active sessions for designer:', designerId);
+        
+        const request = pendingRequests.find(r => r.id === requestId);
+        
+        // End any active sessions for this designer
+        const { error: endSessionError } = await supabase
+          .from('active_sessions')
+          .update({
+            status: 'ended',
+            ended_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('designer_id', designerId)
+          .eq('status', 'active');
+
+        if (endSessionError) {
+          console.warn('Error ending active sessions after rejection:', endSessionError);
+        }
+
+        // Notify customer about rejection with reason
+        if (request) {
+          await supabase
+            .channel(`customer_notifications_${request.customer_id}`)
+            .send({
+              type: 'broadcast',
+              event: 'live_session_rejected',
+              payload: {
+                designerName: `${user?.user_metadata?.first_name || ''} ${user?.user_metadata?.last_name || ''}`,
+                reason: rejectionReason.trim() || 'No reason provided'
+              }
+            });
+        }
+
+        console.log('✅ Session ended due to rejection');
+        setShowNotification(false);
+      }
+
       setRejectionReason('');
       toast({
         title: status === 'accepted' ? "Session accepted" : "Request rejected",
         description: status === 'accepted' 
           ? "Live session is starting..." 
-          : "Request has been rejected",
+          : `Request rejected. ${rejectionReason.trim() ? 'Reason: ' + rejectionReason.trim() : ''}`,
       });
 
     } catch (error) {
@@ -230,11 +321,12 @@ export default function LiveSessionNotification({ designerId, onSessionStart }: 
 
             <div className="space-y-2">
               <textarea
-                placeholder="Reason for rejection (optional)"
+                placeholder="Reason for rejection (required)"
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
-                className="w-full text-xs p-2 border border-gray-200 rounded-lg resize-none"
+                className="w-full text-xs p-2 border border-red-200 rounded-lg resize-none focus:border-red-400 focus:ring-1 focus:ring-red-400"
                 rows={2}
+                required
               />
               
               <div className="flex space-x-2">

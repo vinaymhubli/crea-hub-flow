@@ -68,6 +68,12 @@ export function BookingDialog({ designer, children, service }: BookingDialogProp
       return;
     }
 
+    // Check if designer is online
+    if (!designer.is_online) {
+      toast.error('This designer is currently offline. Please try again when they are online.');
+      return;
+    }
+
     try {
       setLoading(true);
       const scheduledDateTime = new Date(bookingData.scheduled_date).toISOString();
@@ -119,6 +125,17 @@ export function BookingDialog({ designer, children, service }: BookingDialogProp
           <DialogTitle>
             {service ? `Book "${service.title}"` : 'Book Design Session'}
           </DialogTitle>
+          <div className="flex items-center space-x-2 mt-2">
+            <div className={`w-3 h-3 rounded-full ${designer.is_online ? 'bg-green-400' : 'bg-gray-400'}`}></div>
+            <span className={`text-sm font-medium ${designer.is_online ? 'text-green-600' : 'text-gray-500'}`}>
+              {designer.is_online ? 'Designer is online' : 'Designer is offline'}
+            </span>
+          </div>
+          {!designer.is_online && (
+            <div className="text-xs text-orange-600 bg-orange-50 p-2 rounded-lg">
+              ⚠️ This designer is currently offline. You can still schedule a session for later, but they may not respond immediately.
+            </div>
+          )}
         </DialogHeader>
         <div className="space-y-4">
           {/* Package Selection for Services */}

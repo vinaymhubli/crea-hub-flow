@@ -174,6 +174,18 @@ export default function LiveSessionRequestDialog({
   const sendSessionRequest = async () => {
     if (!user || !requestMessage.trim()) return;
 
+    // Check if designer is online before sending request
+    const isDesignerOnline = designer.is_online || designer.activity?.is_online;
+    
+    if (!isDesignerOnline) {
+      toast({
+        title: "Designer Offline",
+        description: "This designer is currently offline and not available for live sessions",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setIsSubmitting(true);
 
@@ -196,7 +208,7 @@ export default function LiveSessionRequestDialog({
         description: "Your live session request has been sent to the designer",
       });
 
-      // Notify designer via real-time
+      // Notify designer via real-time broadcast (for immediate notifications)
       await supabase
         .channel(`designer_notifications_${designer.id}`)
         .send({
@@ -208,6 +220,9 @@ export default function LiveSessionRequestDialog({
             message: requestMessage.trim()
           }
         });
+
+      // The postgres_changes subscription in LiveSessionNotification will also trigger
+      // automatically when the INSERT happens, providing double coverage for notifications
 
     } catch (error) {
       console.error('Error sending session request:', error);
@@ -239,10 +254,32 @@ export default function LiveSessionRequestDialog({
       if (status === 'accepted') {
         // Generate session ID and start screen sharing
         const sessionId = `live_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const currentRequest = sessionRequests.find(r => r.id === requestId);
+        
+        // Create active session record
+        const { error: sessionError } = await supabase
+          .from('active_sessions')
+          .insert({
+            session_id: sessionId,
+            designer_id: designer.id,
+            customer_id: currentRequest?.customer_id,
+            session_type: 'live_session',
+            status: 'active'
+          });
+
+        if (sessionError) {
+          console.error('Error creating active session:', sessionError);
+          toast({
+            title: "Error",
+            description: "Failed to start session",
+            variant: "destructive",
+          });
+          return;
+        }
         
         // Notify customer that session is starting
         await supabase
-          .channel(`customer_notifications_${sessionRequests.find(r => r.id === requestId)?.customer_id}`)
+          .channel(`customer_notifications_${currentRequest?.customer_id}`)
           .send({
             type: 'broadcast',
             event: 'live_session_accepted',
@@ -256,12 +293,50 @@ export default function LiveSessionRequestDialog({
         onClose();
       }
 
+      if (status === 'rejected') {
+        // When rejecting, immediately end any active sessions for this designer
+        console.log('🚫 Session rejected, ending any active sessions for designer:', designer.id);
+        
+        const currentRequest = sessionRequests.find(r => r.id === requestId);
+        
+        // End any active sessions for this designer
+        const { error: endSessionError } = await supabase
+          .from('active_sessions')
+          .update({
+            status: 'ended',
+            ended_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('designer_id', designer.id)
+          .eq('status', 'active');
+
+        if (endSessionError) {
+          console.warn('Error ending active sessions after rejection:', endSessionError);
+        }
+
+        // Notify customer about rejection with reason
+        if (currentRequest) {
+          await supabase
+            .channel(`customer_notifications_${currentRequest.customer_id}`)
+            .send({
+              type: 'broadcast',
+              event: 'live_session_rejected',
+              payload: {
+                designerName: `${designer.profiles?.first_name} ${designer.profiles?.last_name}`,
+                reason: rejectionReason.trim() || 'No reason provided'
+              }
+            });
+        }
+
+        console.log('✅ Session ended due to rejection');
+      }
+
       setRejectionReason('');
       toast({
         title: status === 'accepted' ? "Session accepted" : "Request rejected",
         description: status === 'accepted' 
           ? "Live session is starting..." 
-          : "Request has been rejected",
+          : `Request rejected. ${rejectionReason.trim() ? 'Reason: ' + rejectionReason.trim() : ''}`,
       });
 
     } catch (error) {

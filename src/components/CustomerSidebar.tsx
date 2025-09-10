@@ -10,6 +10,7 @@ import {
   Search,
   Users,
   Wallet,
+  Receipt,
   ChevronRight,
   LogOut
 } from 'lucide-react';
@@ -32,6 +33,7 @@ const sidebarItems = [
   { title: "Messages", url: "/customer-dashboard/messages", icon: MessageCircle },
   { title: "Recent Designers", url: "/customer-dashboard/recent-designers", icon: Users },
   { title: "Wallet", url: "/customer-dashboard/wallet", icon: Wallet },
+  { title: "Invoices", url: "/customer-dashboard/invoices", icon: Receipt },
   { title: "Notifications", url: "/customer-dashboard/notifications", icon: Bell },
   { title: "Profile", url: "/customer-dashboard/profile", icon: User },
   { title: "Settings", url: "/customer-dashboard/settings", icon: Settings },

@@ -8,7 +8,8 @@ import {
   History, 
   Settings,
   MessageSquare,
-  Package
+  Package,
+  FileCheck
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useDesignerProfile } from '@/hooks/useDesignerProfile';
@@ -30,6 +31,7 @@ const sidebarItems = [
   { title: "Portfolio", url: "/designer-dashboard/portfolio", icon: FolderOpen },
   { title: "Bookings", url: "/designer-dashboard/bookings", icon: Calendar },
   { title: "Messages", url: "/designer-dashboard/messages", icon: MessageSquare },
+  // { title: "File Reviews", url: "/designer-dashboard/file-reviews", icon: FileCheck },
   { title: "Availability", url: "/designer-dashboard/availability", icon: Clock },
   { title: "Earnings", url: "/designer-dashboard/earnings", icon: DollarSign },
   { title: "Session History", url: "/designer-dashboard/history", icon: History },

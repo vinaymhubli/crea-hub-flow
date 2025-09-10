@@ -25,6 +25,7 @@ import CustomerDashboard from "./pages/CustomerDashboard"
 import CustomerProfile from "./pages/CustomerProfile"
 import CustomerBookings from "./pages/CustomerBookings"
 import CustomerWallet from "./pages/CustomerWallet"
+import CustomerInvoices from "./pages/CustomerInvoices"
 import CustomerMessages from "./pages/CustomerMessages"
 import CustomerNotifications from "./pages/CustomerNotifications"
 import CustomerSettings from "./pages/CustomerSettings"
@@ -40,11 +41,13 @@ import DesignerEarnings from "./pages/DesignerEarnings"
 import DesignerSessionHistory from "./pages/DesignerSessionHistory"
 import DesignerSettings from "./pages/DesignerSettings"
 import DesignerServices from "./pages/DesignerServices"
+import DesignerFileReviews from "./pages/DesignerFileReviews"
 import CallSession from "./pages/CallSession"
 import AIAssistant from "./pages/AIAssistant"
 import NotFound from "./pages/NotFound"
 import Pricing from "./pages/Pricing"
 import SuccessStories from "./pages/SuccessStories"
+import GlobalScreenShareNotification from "./components/GlobalScreenShareNotification"
 import Support from "./pages/Support"
 import ForDesigners from "./pages/ForDesigners"
 import DesignerResources from "./pages/DesignerResources"
@@ -197,6 +200,11 @@ function AppContent() {
               <CustomerWallet />
             </ProtectedRoute>
           } />
+          <Route path="/customer-dashboard/invoices" element={
+            <ProtectedRoute requireUserType="client">
+              <CustomerInvoices />
+            </ProtectedRoute>
+          } />
           <Route path="/customer-dashboard/messages" element={
             <ProtectedRoute requireUserType="client">
               <CustomerMessages />
@@ -254,6 +262,11 @@ function AppContent() {
               <DesignerMessages />
             </ProtectedRoute>
           } />
+          <Route path="/designer-dashboard/file-reviews" element={
+            <ProtectedRoute requireUserType="designer">
+              <DesignerFileReviews />
+            </ProtectedRoute>
+          } />
           <Route path="/designer-dashboard/availability" element={
             <ProtectedRoute requireUserType="designer">
               <DesignerAvailability />
@@ -286,6 +299,9 @@ function AppContent() {
         </Routes>
       </main>
       {!hideGlobalChrome && <Footer />}
+      
+      {/* Global Screen Share Notification Overlay */}
+      <GlobalScreenShareNotification />
     </div>
   );
 }

@@ -24,6 +24,10 @@ export const useDesignerActivity = () => {
   const updateActivity = async (status: 'active' | 'idle' | 'offline') => {
     if (!user?.id || profile?.user_type !== 'designer') return;
 
+    // TEMPORARILY DISABLED TO STOP DATABASE OVERLOAD
+    console.warn('⚠️ Activity updates temporarily disabled due to database issues');
+    return;
+
     try {
       const now = new Date();
       lastActivityRef.current = now;

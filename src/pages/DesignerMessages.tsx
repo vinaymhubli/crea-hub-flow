@@ -67,6 +67,7 @@ export default function DesignerMessages() {
   const [initialLoad, setInitialLoad] = useState(true);
   const [designerId, setDesignerId] = useState<string | null>(null);
   const [showScreenShare, setShowScreenShare] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
 
@@ -438,6 +439,87 @@ export default function DesignerMessages() {
     }
   };
 
+  // Helper function to get designer name from profiles table
+  const getDesignerName = async (userId?: string) => {
+    if (!userId) return null;
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('user_id', userId)
+        .single();
+      
+      if (error || !data) return null;
+      return `${data.first_name || ''} ${data.last_name || ''}`.trim();
+    } catch (error) {
+      console.warn('Could not fetch designer name from profiles');
+      return null;
+    }
+  };
+
+  const startLiveDesignSession = async () => {
+    if (!selectedConversation || !designerId) {
+      toast.error('Please select a conversation first');
+      return;
+    }
+
+    try {
+      // First, end any existing active sessions for this designer
+      await supabase
+        .from('active_sessions')
+        .update({
+          status: 'ended',
+          ended_at: new Date().toISOString()
+        })
+        .eq('designer_id', designerId)
+        .eq('status', 'active');
+
+      // Generate session ID
+      const sessionId = `live_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Create active session record
+      const { error: sessionError } = await supabase
+        .from('active_sessions')
+        .insert({
+          session_id: sessionId,
+          designer_id: designerId,
+          customer_id: selectedConversation.customer_id,
+          session_type: 'live_session',
+          status: 'active'
+        });
+
+      if (sessionError) {
+        console.error('Error creating active session:', sessionError);
+        toast.error(`Failed to start session: ${sessionError.message}`);
+        return;
+      }
+
+      // Get designer name from profiles table
+      const designerName = await getDesignerName(user?.id);
+      
+      // Notify customer that session is starting
+      await supabase
+        .channel(`customer_notifications_${selectedConversation.customer_id}`)
+        .send({
+          type: 'broadcast',
+          event: 'live_session_accepted',
+          payload: {
+            sessionId,
+            designerName: designerName || 'Designer'
+          }
+        });
+
+      // Start screen sharing
+      setCurrentSessionId(sessionId);
+      setShowScreenShare(true);
+      
+      toast.success('Live design session started!');
+    } catch (error) {
+      console.error('Error starting live design session:', error);
+      toast.error('Failed to start session');
+    }
+  };
+
   const filteredConversations = conversations.filter(conv =>
     conv.customer_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -652,7 +734,7 @@ export default function DesignerMessages() {
                             variant="ghost" 
                             size="sm" 
                             className="text-white hover:bg-white/20 gap-2"
-                            onClick={() => setShowScreenShare(true)}
+                            onClick={() => startLiveDesignSession()}
                           >
                             <Monitor className="w-4 h-4" />
                             live design with client
@@ -755,13 +837,18 @@ export default function DesignerMessages() {
         </main>
       </div>
       
-      {selectedConversation && (
+      {selectedConversation && currentSessionId && (
         <ScreenShareModal
           isOpen={showScreenShare}
-          onClose={() => setShowScreenShare(false)}
-          roomId={selectedConversation.conversation_id || selectedConversation.booking_id || ''}
+          onClose={() => {
+            setShowScreenShare(false);
+            setCurrentSessionId(null);
+          }}
+          roomId={currentSessionId}
           isHost={true}
-          participantName={selectedConversation.customer_name}
+          designerName={user?.user_metadata?.first_name ? `${user.user_metadata.first_name} ${user.user_metadata.last_name || ''}` : 'Designer'}
+          customerName={selectedConversation.customer_name}
+          bookingId={selectedConversation.booking_id}
         />
       )}
     </SidebarProvider>

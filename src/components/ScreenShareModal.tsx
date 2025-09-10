@@ -42,7 +42,8 @@ export function ScreenShareModal({
     const [isSessionLive, setIsSessionLive] = useState(false);
     const [bookingData, setBookingData] = useState<{
         id: string;
-        customer: { first_name: string; last_name: string };
+        customer_id: string;
+        customer: { first_name: string; last_name: string; id?: string; user_id?: string };
         designer: { hourly_rate: number; user: { first_name: string; last_name: string } };
     } | null>(null);
     const [designerRate, setDesignerRate] = useState(5.00);
@@ -53,6 +54,24 @@ export function ScreenShareModal({
     const remoteVideoRef = useRef<HTMLVideoElement>(null);
     const localVideoRef = useRef<HTMLVideoElement>(null);
     const { user, profile } = useAuth();
+
+    // Helper function to get designer name from profiles table
+    const getDesignerName = async (userId?: string) => {
+        if (!userId) return null;
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('first_name, last_name')
+                .eq('user_id', userId)
+                .single();
+            
+            if (error || !data) return null;
+            return `${data.first_name || ''} ${data.last_name || ''}`.trim();
+        } catch (error) {
+            console.warn('Could not fetch designer name from profiles');
+            return null;
+        }
+    };
 
     // Session persistence key
     const sessionKey = `session_${roomId}`;
@@ -550,6 +569,17 @@ export function ScreenShareModal({
         }
     }, [isHost, isOpen, isConnected]);
 
+    // Auto-start screen share for host when modal opens (for accepted live sessions)
+    useEffect(() => {
+        if (isHost && isOpen && isConnected && !isSharing) {
+            const autoStartTimer = setTimeout(() => {
+                console.log("🎬 Auto-starting screen share for accepted live session");
+                startScreenShare();
+            }, 2000); // Give 2 seconds for connection to stabilize
+            return () => clearTimeout(autoStartTimer);
+        }
+    }, [isHost, isOpen, isConnected, isSharing]);
+
     const startScreenShare = async () => {
         if (!screenShareManager) return;
         try {
@@ -602,6 +632,44 @@ export function ScreenShareModal({
             
             // Now pass the stream to the screen share manager
             await screenShareManager.startScreenShareWithStream(stream);
+            
+            // Broadcast global screen share notification to customer
+            if (isHost) {
+                let customerId = bookingData?.customer_id || bookingData?.customer?.id || bookingData?.customer?.user_id;
+                
+                // For live sessions without booking, try to extract customer ID from room ID
+                if (!customerId && roomId.startsWith('live_')) {
+                    // Try to find customer ID from active session
+                    try {
+                        const { data: activeSession } = await supabase
+                            .from('active_sessions')
+                            .select('customer_id')
+                            .eq('session_id', roomId)
+                            .single();
+                        customerId = activeSession?.customer_id;
+                    } catch (error) {
+                        console.log('Could not find customer ID from active session');
+                    }
+                }
+                
+                if (customerId) {
+                    console.log('📡 Broadcasting global screen share notification to customer:', customerId);
+                    await supabase
+                        .channel(`customer_notifications_${customerId}`)
+                        .send({
+                            type: 'broadcast',
+                            event: 'screen_share_started',
+                            payload: {
+                                sessionId: roomId,
+                                designerName: await getDesignerName(user?.id) || designerName || 'Designer',
+                                roomId: roomId
+                            }
+                        });
+                } else {
+                    console.log('⚠️ Could not find customer ID to send global notification');
+                }
+            }
+            
             toast.success('Screen sharing started');
         } catch (error: unknown) {
             console.error('Failed to start screen share:', error);
@@ -624,6 +692,24 @@ export function ScreenShareModal({
         if (screenShareManager) {
             console.log("🛑 Stopping screen share...");
             screenShareManager.stopScreenShare();
+            
+            // Broadcast screen share ended notification
+            if (isHost && shouldBroadcast) {
+                const customerId = bookingData?.customer_id || bookingData?.customer?.id || bookingData?.customer?.user_id;
+                if (customerId) {
+                    console.log('📡 Broadcasting screen share ended notification to customer:', customerId);
+                    supabase
+                        .channel(`customer_notifications_${customerId}`)
+                        .send({
+                            type: 'broadcast',
+                            event: 'screen_share_ended',
+                            payload: {
+                                sessionId: roomId,
+                                designerName: designerName || 'Designer'
+                            }
+                        });
+                }
+            }
             
             // Reset all screen sharing states
             setIsSharing(false);
@@ -719,25 +805,138 @@ export function ScreenShareModal({
         });
     };
 
-    const handleEndSession = () => {
-        console.log('🛑 Ending session...');
+    const handleEndSession = async () => {
+        console.log('🛑 Ending session immediately...');
         
-        // Stop screen sharing if active (without broadcasting, we'll do it ourselves)
+        // 1. IMMEDIATELY update database to end all related sessions
+        try {
+            console.log('🔄 Updating database - ending all sessions for this session...');
+            
+            // End active session in database
+            const { error: activeSessionError } = await supabase
+                .from('active_sessions')
+                .update({
+                    status: 'ended',
+                    ended_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                })
+                .eq('session_id', roomId);
+
+            if (activeSessionError) {
+                console.error('Error ending active session:', activeSessionError);
+            } else {
+                console.log('✅ Active session ended in database');
+            }
+
+            // End any related live session requests
+            if (bookingData?.designer_id) {
+                const { error: liveSessionError } = await supabase
+                    .from('live_session_requests')
+                    .update({
+                        status: 'rejected', // Using rejected as completed isn't allowed
+                        rejection_reason: `Session ended by ${isHost ? 'designer' : 'customer'}`,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('designer_id', bookingData.designer_id)
+                    .eq('status', 'accepted');
+
+                if (liveSessionError) {
+                    console.error('Error ending live session request:', liveSessionError);
+                } else {
+                    console.log('✅ Live session request ended in database');
+                }
+            }
+
+            // End any related bookings if this is a booking session
+            if (bookingId) {
+                const { error: bookingError } = await supabase
+                    .from('bookings')
+                    .update({
+                        status: 'completed',
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', bookingId);
+
+                if (bookingError) {
+                    console.error('Error ending booking:', bookingError);
+                } else {
+                    console.log('✅ Booking completed in database');
+                }
+            }
+
+        } catch (error) {
+            console.error('❌ Error updating database during session end:', error);
+            // Continue with local cleanup even if database update fails
+        }
+        
+        // 1.5. Auto-generate invoice if session has duration and no invoice exists
+        try {
+            if (sessionDuration > 0 && isHost) { // Only designer generates invoices
+                console.log('🧾 Checking if invoice exists for session...');
+                
+                // Check if invoice already exists
+                const { data: existingInvoices } = await supabase
+                    .from('session_invoices')
+                    .select('id')
+                    .eq('session_id', roomId);
+
+                if (!existingInvoices || existingInvoices.length === 0) {
+                    console.log('🧾 No invoice found, auto-generating invoice...');
+                    
+                    // Auto-generate invoice
+                    const durationMinutes = Math.ceil(sessionDuration / 60);
+                    const ratePerMinute = designerRate || 5.00;
+                    const subtotal = durationMinutes * ratePerMinute * formatMultiplier;
+                    const gstAmount = subtotal * 0.18;
+                    const total = subtotal + gstAmount;
+
+                    const { error: invoiceError } = await supabase
+                        .from('session_invoices')
+                        .insert({
+                            session_id: roomId,
+                            booking_id: bookingId || null,
+                            designer_name: designerName || 'Designer',
+                            customer_name: customerName || 'Customer',
+                            duration_minutes: durationMinutes,
+                            rate_per_minute: ratePerMinute,
+                            subtotal: subtotal,
+                            gst_amount: gstAmount,
+                            total_amount: total,
+                            invoice_date: new Date().toISOString(),
+                            status: 'generated'
+                        });
+
+                    if (invoiceError) {
+                        console.error('Error auto-generating invoice:', invoiceError);
+                    } else {
+                        console.log('✅ Auto-generated invoice for session');
+                        toast.success('Invoice automatically generated for session');
+                    }
+                } else {
+                    console.log('✅ Invoice already exists for this session');
+                }
+            }
+        } catch (error) {
+            console.error('❌ Error auto-generating invoice:', error);
+            // Don't block session ending if invoice generation fails
+        }
+        
+        // 2. Stop screen sharing if active (without broadcasting, we'll do it ourselves)
         if (isSharing) {
             stopScreenShare(false);
         }
         
-        // Reset all session states
+        // 3. Reset all session states
         setIsSessionLive(false);
         setIsPaused(false);
         setSessionDuration(0);
         setSessionStartTime(null);
         
-        // Save session state as ended before clearing
+        // 4. Save session state as ended before clearing
         saveSessionState(true);
         clearSessionState(); // Clear the persisted session state
         
-        // Broadcast session end to sync with other participants
+        // 5. Broadcast session end to sync with other participants
         console.log('🛑 Broadcasting session_end event from handleEndSession');
         broadcastSessionEvent('session_end', { 
             endedBy: isHost ? designerName : customerName,
