@@ -95,12 +95,12 @@ export default async function handler(
             throw new Error('Required Agora token builders not available');
         }
         
-        if (!RtcTokenBuilder.buildTokenWithAccount && !RtcTokenBuilder.buildTokenWithUid) {
+        if (!RtcTokenBuilder.buildTokenWithUserAccount && !RtcTokenBuilder.buildTokenWithUid) {
             throw new Error('No valid RTC token builder methods available');
         }
         
         console.log("🔍 Available RTC token methods:", {
-            buildTokenWithAccount: !!RtcTokenBuilder.buildTokenWithAccount,
+            buildTokenWithUserAccount: !!RtcTokenBuilder.buildTokenWithUserAccount,
             buildTokenWithUid: !!RtcTokenBuilder.buildTokenWithUid,
             RtcTokenBuilderKeys: Object.keys(RtcTokenBuilder)
         });
@@ -114,9 +114,9 @@ export default async function handler(
         let tokenMethod = 'unknown';
         
         try {
-            // Try buildTokenWithAccount first (preferred for string UIDs)
-            if (RtcTokenBuilder.buildTokenWithAccount) {
-                rtcToken = RtcTokenBuilder.buildTokenWithAccount(
+            // Try buildTokenWithUserAccount first (preferred for string UIDs)
+            if (RtcTokenBuilder.buildTokenWithUserAccount) {
+                rtcToken = RtcTokenBuilder.buildTokenWithUserAccount(
                     APP_ID,
                     APP_CERT,
                     channel,
@@ -124,13 +124,13 @@ export default async function handler(
                     rtcRole,
                     expireAt
                 );
-                tokenMethod = 'buildTokenWithAccount';
-                console.log("✅ Generated token using buildTokenWithAccount");
+                tokenMethod = 'buildTokenWithUserAccount';
+                console.log("✅ Generated token using buildTokenWithUserAccount");
             } else {
-                throw new Error('buildTokenWithAccount not available');
+                throw new Error('buildTokenWithUserAccount not available');
             }
         } catch (accountError) {
-            console.log("⚠️ buildTokenWithAccount failed, trying buildTokenWithUid:", accountError);
+            console.log("⚠️ buildTokenWithUserAccount failed, trying buildTokenWithUid:", accountError);
             
             // Fallback to buildTokenWithUid with numeric UID
             try {
