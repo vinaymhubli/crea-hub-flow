@@ -26,8 +26,8 @@ export default async function handler(
         }
 
         // Agora credentials - these should be moved to environment variables in production
-        const APP_ID = process.env.AGORA_APP_ID || "9f26de32fa2546839b41ffbf0ad0cfb9";
-        const APP_CERT = process.env.AGORA_APP_CERT || "bfe2d626b93d4665aa1756b7ab56780c";
+        const APP_ID = "cc907f53350b4b9e9ba84070daad8c52";
+        const APP_CERT = "808ccb94ef3247e7bbe032dc5491d34d";
         const ttl = 36000; // Token validity time in seconds
 
         console.log("🎫 Generating Agora token for:", {
