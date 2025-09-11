@@ -39,12 +39,12 @@ export default async function handler(
         const expireAt = now + ttl;
         const rtcRole = asSharer ? RtcRole.PUBLISHER : RtcRole.SUBSCRIBER;
 
-        // Generate RTC token for video/audio
-        const rtcToken = RtcTokenBuilder.buildTokenWithUid(
+        // Generate RTC token using Account to support string UIDs reliably
+        const rtcToken = RtcTokenBuilder.buildTokenWithAccount(
             APP_ID,
             APP_CERT,
             channel,
-            uid,
+            String(uid),
             rtcRole,
             expireAt
         );
@@ -53,16 +53,16 @@ export default async function handler(
         const rtmToken = RtmTokenBuilder.buildToken(
             APP_ID,
             APP_CERT,
-            uid,
+            String(uid),
             expireAt
         );
 
-        console.log("✅ Successfully generated Agora tokens");
+        console.log("✅ Successfully generated Agora tokens (account mode)");
 
         return res.status(200).json({
             appId: APP_ID,
             channel,
-            uid,
+            uid: String(uid),
             rtcToken,
             rtmToken,
             expireAt

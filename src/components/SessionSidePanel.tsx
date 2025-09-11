@@ -99,7 +99,7 @@ export default function SessionSidePanel({
   formatMultiplier = 1
 }: SessionSidePanelProps) {
   
-  console.log('SessionSidePanel props:', { isDesigner, rate, formatMultiplier });
+    // SessionSidePanel rendered
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [files, setFiles] = useState<FileItem[]>([]);
@@ -137,11 +137,6 @@ export default function SessionSidePanel({
 
   // Load initial data and set up real-time subscriptions
   useEffect(() => {
-    console.log('Setting up subscriptions for session:', sessionId);
-    console.log('User ID:', userId);
-    console.log('Is designer:', isDesigner);
-    console.log('Designer name:', designerName);
-    console.log('Customer name:', customerName);
     loadMessages();
     loadFiles();
     loadWorkReviews();

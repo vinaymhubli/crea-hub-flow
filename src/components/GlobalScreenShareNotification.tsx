@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Monitor, X, Video, User } from 'lucide-react';
 import { ScreenShareModal } from '@/components/ScreenShareModal';
+import { useNavigate } from 'react-router-dom';
 
 interface ScreenShareNotification {
   show: boolean;
@@ -16,6 +17,7 @@ interface ScreenShareNotification {
 export default function GlobalScreenShareNotification() {
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [notification, setNotification] = useState<ScreenShareNotification>({
     show: false,
     sessionId: '',
@@ -104,8 +106,13 @@ export default function GlobalScreenShareNotification() {
         (payload) => {
           const { sessionId } = payload.payload || {};
           if (sessionId) {
-            console.log('➡️ Navigating customer to session page:', sessionId);
-            window.location.assign(`/live-session/${sessionId}`);
+            console.log('➡️ Customer received navigate_to_session event for sessionId:', sessionId);
+            console.log('🚀 Current user:', user?.id, 'Profile type:', profile?.user_type);
+            // Use React Router navigation instead of window.location.assign to avoid full page reload
+            navigate(`/live-session/${sessionId}`, { replace: true });
+            console.log('✅ Navigation command executed for customer');
+          } else {
+            console.error('❌ No sessionId in navigate_to_session payload:', payload);
           }
         }
       )
