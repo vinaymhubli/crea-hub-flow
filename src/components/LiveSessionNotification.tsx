@@ -208,8 +208,18 @@ export default function LiveSessionNotification({ designerId, onSessionStart }: 
                 designerName: designerName || 'Designer'
               }
             });
+
+          // Ask customer app to navigate immediately to the full session page
+          await supabase
+            .channel(`customer_notifications_${request.customer_id}`)
+            .send({
+              type: 'broadcast',
+              event: 'navigate_to_session',
+              payload: { sessionId }
+            });
         }
 
+        // Navigate designer to the full session page route
         onSessionStart(sessionId);
         setShowNotification(false);
       }

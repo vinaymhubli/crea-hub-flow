@@ -25,7 +25,7 @@ import { RealtimeSessionIndicator } from '@/components/RealtimeSessionIndicator'
 import LiveSessionNotification from '@/components/LiveSessionNotification';
 import { ScreenShareModal } from '@/components/ScreenShareModal';
 import { useDesignerActivity } from '@/hooks/useDesignerActivity';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   SidebarProvider,
   SidebarTrigger,
@@ -43,6 +43,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function DesignerDashboard() {
   const { signOut, user, profile } = useAuth();
+  const navigate = useNavigate();
   const { activeSession, getUpcomingBookings, getCompletedBookings, loading } = useRealtimeBookings();
   const { designerProfile, calculateTotalEarnings } = useDesignerProfile();
   const { activity } = useDesignerActivity();
@@ -123,8 +124,8 @@ export default function DesignerDashboard() {
   };
 
   const handleSessionStart = async (sessionId: string) => {
-    setCurrentSessionId(sessionId);
-    setShowScreenShare(true);
+    // Redirect designer to full Meet-style session page
+    navigate(`/live-session/${sessionId}`, { state: { hideGlobalChrome: true } });
     
     // Fetch customer name from active_sessions
     try {

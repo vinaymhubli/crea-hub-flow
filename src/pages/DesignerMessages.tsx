@@ -509,9 +509,17 @@ export default function DesignerMessages() {
           }
         });
 
-      // Start screen sharing
-      setCurrentSessionId(sessionId);
-      setShowScreenShare(true);
+      // Immediately navigate customer's app to the live session page
+      await supabase
+        .channel(`customer_notifications_${selectedConversation.customer_id}`)
+        .send({
+          type: 'broadcast',
+          event: 'navigate_to_session',
+          payload: { sessionId }
+        });
+
+      // Redirect designer straight to live session page
+      navigate(`/live-session/${sessionId}`);
       
       toast.success('Live design session started!');
     } catch (error) {

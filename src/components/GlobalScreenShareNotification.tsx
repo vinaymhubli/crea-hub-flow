@@ -98,6 +98,17 @@ export default function GlobalScreenShareNotification() {
           });
         }
       )
+      .on(
+        'broadcast',
+        { event: 'navigate_to_session' },
+        (payload) => {
+          const { sessionId } = payload.payload || {};
+          if (sessionId) {
+            console.log('➡️ Navigating customer to session page:', sessionId);
+            window.location.assign(`/live-session/${sessionId}`);
+          }
+        }
+      )
       .subscribe();
 
     return () => {

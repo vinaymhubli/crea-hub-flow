@@ -93,7 +93,7 @@ export default function SessionSidePanel({
   onResumeSession,
   isPaused,
   bookingId,
-  userId,
+  userId = '',
   onRateChange,
   onMultiplierChange,
   formatMultiplier = 1
@@ -118,6 +118,22 @@ export default function SessionSidePanel({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  const pauseSession = async () => {
+    if (!isDesigner) return;
+    try {
+      await supabase.channel(`session_control_${sessionId}`).send({ type: 'broadcast', event: 'session_pause', payload: {} });
+      onPauseSession();
+    } catch {}
+  };
+
+  const resumeSession = async () => {
+    if (!isDesigner) return;
+    try {
+      await supabase.channel(`session_control_${sessionId}`).send({ type: 'broadcast', event: 'session_resume', payload: {} });
+      onResumeSession();
+    } catch {}
+  };
 
   // Load initial data and set up real-time subscriptions
   useEffect(() => {
@@ -205,7 +221,7 @@ export default function SessionSidePanel({
       messagesSubscription.unsubscribe();
       filesSubscription.unsubscribe();
     };
-  }, [sessionId, onPauseSession, onResumeSession, onMultiplierChange]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sessionId, onPauseSession, onResumeSession, onMultiplierChange, userId, isDesigner, designerName, customerName]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadMessages = async () => {
     try {

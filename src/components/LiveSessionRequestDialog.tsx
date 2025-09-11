@@ -289,6 +289,15 @@ export default function LiveSessionRequestDialog({
             }
           });
 
+        // Immediately navigate customer's app to the live session page
+        await supabase
+          .channel(`customer_notifications_${currentRequest?.customer_id}`)
+          .send({
+            type: 'broadcast',
+            event: 'navigate_to_session',
+            payload: { sessionId }
+          });
+
         onSessionStart(sessionId);
         onClose();
       }

@@ -43,6 +43,7 @@ import DesignerSettings from "./pages/DesignerSettings"
 import DesignerServices from "./pages/DesignerServices"
 import DesignerFileReviews from "./pages/DesignerFileReviews"
 import CallSession from "./pages/CallSession"
+import LiveCallSession from "./pages/LiveCallSession"
 import AIAssistant from "./pages/AIAssistant"
 import NotFound from "./pages/NotFound"
 import Pricing from "./pages/Pricing"
@@ -79,6 +80,7 @@ function AppContent() {
                           location.pathname.startsWith('/admin') ||
                           location.pathname === '/admin-dashboard' ||
                           location.pathname.startsWith('/session/') ||
+                          location.pathname.startsWith('/live-session/') ||
                           location.state?.hideGlobalChrome;
   
   return (
@@ -288,7 +290,19 @@ function AppContent() {
             </ProtectedRoute>
           } />
           
-          {/* Session Route */}
+          {/* New live session route with Agora A/V (unambiguous path) */}
+          <Route path="/live-session/:sessionId" element={
+            <ProtectedRoute>
+              <LiveCallSession />
+            </ProtectedRoute>
+          } />
+          {/* Back-compat live session route */}
+          <Route path="/session/live_:sessionId" element={
+            <ProtectedRoute>
+              <LiveCallSession />
+            </ProtectedRoute>
+          } />
+          {/* Legacy booking session route */}
           <Route path="/session/:id" element={
             <ProtectedRoute>
               <CallSession />
