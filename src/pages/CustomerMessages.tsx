@@ -19,6 +19,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { CustomerSidebar } from "@/components/CustomerSidebar";
+import { RingingBell } from "@/components/RingingBell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -72,10 +73,82 @@ export default function CustomerMessages() {
     roomId: string;
   }>({ show: false, designerName: '', roomId: '' });
   const [isScreenShareActive, setIsScreenShareActive] = useState(false);
-  const { user } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
+
+  // Debug: Show authentication state
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Not Authenticated</h1>
+          <p className="text-gray-600">Please log in to access messages.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (profile.user_type !== 'client') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
+          <p className="text-gray-600">This page is only for customers.</p>
+        </div>
+      </div>
+    );
+  }
+
 
   const designerId = searchParams.get('designer_id');
   const bookingId = searchParams.get('booking_id');
+
+  // Helper function to clear unread count for a conversation
+  const clearUnreadCount = useCallback(async (conversation: Conversation) => {
+    if (conversation.unread_count > 0) {
+      try {
+        // Update local state immediately for better UX
+        setConversations(prev => 
+          prev.map(c => 
+            c.conversation_id === conversation.conversation_id || 
+            c.booking_id === conversation.booking_id
+              ? { ...c, unread_count: 0 }
+              : c
+          )
+        );
+
+        // Store the last viewed timestamp in localStorage to track read status
+        const lastViewedKey = conversation.booking_id 
+          ? `last_viewed_booking_${conversation.booking_id}`
+          : `last_viewed_conversation_${conversation.conversation_id}`;
+        
+        localStorage.setItem(lastViewedKey, new Date().toISOString());
+      } catch (error) {
+        console.error('Error clearing unread count:', error);
+      }
+    }
+  }, []);
 
   const fetchConversations = useCallback(async (showLoading = false) => {
     try {
@@ -99,6 +172,7 @@ export default function CustomerMessages() {
         if (conversation) {
           console.log('Found existing booking conversation:', conversation);
           setSelectedConversation(conversation);
+          clearUnreadCount(conversation);
           return;
         }
       }
@@ -109,6 +183,7 @@ export default function CustomerMessages() {
         if (designerConversation) {
           console.log('Found existing direct conversation:', designerConversation);
           setSelectedConversation(designerConversation);
+          clearUnreadCount(designerConversation);
           // Remove designer_id from URL after successful selection
           setSearchParams(prev => {
             prev.delete('designer_id');
@@ -124,7 +199,9 @@ export default function CustomerMessages() {
       }
       
       if (allConversations.length > 0 && !selectedConversation) {
-        setSelectedConversation(allConversations[0]);
+        const firstConversation = allConversations[0];
+        setSelectedConversation(firstConversation);
+        clearUnreadCount(firstConversation);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -179,11 +256,29 @@ export default function CustomerMessages() {
         .limit(1)
         .maybeSingle();
 
-      const { count: unreadCount } = await supabase
-        .from('messages')
-        .select('*', { count: 'exact', head: true })
-        .eq('booking_id', booking.id)
-        .neq('sender_id', user?.id);
+      // Get the last viewed timestamp from localStorage
+      const lastViewedKey = `last_viewed_booking_${booking.id}`;
+      const lastViewed = localStorage.getItem(lastViewedKey);
+      
+      let unreadCount = 0;
+      if (lastViewed) {
+        // Count messages after the last viewed timestamp
+        const { count } = await supabase
+          .from('messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('booking_id', booking.id)
+          .neq('sender_id', user?.id)
+          .gt('created_at', lastViewed);
+        unreadCount = count || 0;
+      } else {
+        // If no last viewed timestamp, count all messages from others
+        const { count } = await supabase
+          .from('messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('booking_id', booking.id)
+          .neq('sender_id', user?.id);
+        unreadCount = count || 0;
+      }
 
       return {
         booking_id: booking.id,
@@ -253,11 +348,29 @@ export default function CustomerMessages() {
         .limit(1)
         .maybeSingle();
 
-      const { count: unreadCount } = await supabase
-        .from('conversation_messages')
-        .select('*', { count: 'exact', head: true })
-        .eq('conversation_id', conversation.id)
-        .neq('sender_id', user?.id);
+      // Get the last viewed timestamp from localStorage
+      const lastViewedKey = `last_viewed_conversation_${conversation.id}`;
+      const lastViewed = localStorage.getItem(lastViewedKey);
+      
+      let unreadCount = 0;
+      if (lastViewed) {
+        // Count messages after the last viewed timestamp
+        const { count } = await supabase
+          .from('conversation_messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('conversation_id', conversation.id)
+          .neq('sender_id', user?.id)
+          .gt('created_at', lastViewed);
+        unreadCount = count || 0;
+      } else {
+        // If no last viewed timestamp, count all messages from others
+        const { count } = await supabase
+          .from('conversation_messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('conversation_id', conversation.id)
+          .neq('sender_id', user?.id);
+        unreadCount = count || 0;
+      }
 
       return {
         conversation_id: conversation.id,
@@ -608,6 +721,7 @@ export default function CustomerMessages() {
     );
   }
 
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-background via-teal-50/30 to-blue-50/20">
@@ -626,7 +740,7 @@ export default function CustomerMessages() {
                 </div>
               </div>
               <div className="flex items-center space-x-3">
-                <Bell className="w-5 h-5 text-green-100" />
+                <RingingBell className="w-5 h-5 text-green-100" />
                 <Popover>
                   <PopoverTrigger asChild>
                     <button className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
@@ -695,7 +809,10 @@ export default function CustomerMessages() {
                   filteredConversations.map((conversation) => (
                     <div
                       key={conversation.conversation_id || conversation.booking_id}
-                      onClick={() => setSelectedConversation(conversation)}
+                      onClick={() => {
+                        setSelectedConversation(conversation);
+                        clearUnreadCount(conversation);
+                      }}
                       className={`p-4 border-b border-teal-200/20 cursor-pointer transition-all duration-300 hover:bg-gradient-to-r hover:from-teal-50 hover:to-blue-50 ${
                         selectedConversation?.conversation_id === conversation.conversation_id || 
                         selectedConversation?.booking_id === conversation.booking_id
@@ -709,7 +826,7 @@ export default function CustomerMessages() {
                             <span className="text-white font-semibold text-sm">{conversation.designer_initials}</span>
                           </div>
                           {conversation.designer_online && (
-                            <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-lg"></div>
+                            <div className="absolute -bottom-1 -right-1 w-4 h-4 sm:w-3 sm:h-3 bg-green-500 rounded-full border-2 border-white shadow-lg"></div>
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -750,7 +867,7 @@ export default function CustomerMessages() {
                             <span className="text-white font-semibold text-sm">{selectedConversation.designer_initials}</span>
                           </div>
                           {selectedConversation.designer_online && (
-                            <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-lg"></div>
+                            <div className="absolute -bottom-1 -right-1 w-4 h-4 sm:w-3 sm:h-3 bg-green-500 rounded-full border-2 border-white shadow-lg"></div>
                           )}
                         </div>
                         <div>

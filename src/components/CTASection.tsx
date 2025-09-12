@@ -46,7 +46,7 @@ export default function CTASection() {
               </div>
               <h3 className="text-2xl font-bold text-white mb-4">I'm a Designer</h3>
               <p className="text-white/80 mb-6">Showcase your skills, connect with clients, and build a thriving design business.</p>
-              <Link to="/designers" className="bg-white text-blue-600 px-8 py-4 rounded-full font-semibold hover:bg-gray-100 transition-colors cursor-pointer whitespace-nowrap inline-flex items-center">
+              <Link to="/signup?role=designer" className="bg-white text-blue-600 px-8 py-4 rounded-full font-semibold hover:bg-gray-100 transition-colors cursor-pointer whitespace-nowrap inline-flex items-center">
                 <i className="ri-user-add-line mr-2"></i>
                 Join as Designer
               </Link>

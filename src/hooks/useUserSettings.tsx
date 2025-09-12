@@ -16,7 +16,6 @@ interface UserSettings {
   booking_reminders: boolean;
   message_notifications: boolean;
   privacy_profile_visible: boolean;
-  privacy_contact_info_visible: boolean;
   privacy_activity_status: boolean;
   security_two_factor: boolean;
   security_login_alerts: boolean;
@@ -37,7 +36,6 @@ export const useUserSettings = () => {
     booking_reminders: true,
     message_notifications: true,
     privacy_profile_visible: true,
-    privacy_contact_info_visible: false,
     privacy_activity_status: true,
     security_two_factor: false,
     security_login_alerts: true
@@ -78,7 +76,6 @@ export const useUserSettings = () => {
           booking_reminders: data.booking_reminders,
           message_notifications: data.message_notifications,
           privacy_profile_visible: data.privacy_profile_visible,
-          privacy_contact_info_visible: data.privacy_contact_info_visible,
           privacy_activity_status: data.privacy_activity_status,
           security_two_factor: data.security_two_factor,
           security_login_alerts: data.security_login_alerts

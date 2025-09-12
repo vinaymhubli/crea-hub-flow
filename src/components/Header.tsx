@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, User, LogOut, Settings, LayoutDashboard, Wallet } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useWallet } from '@/hooks/useWallet';
 import { WalletBalanceIndicator } from './WalletBalanceIndicator';
 import {
   DropdownMenu,
@@ -17,6 +18,7 @@ import {
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const { user, profile, signOut } = useAuth();
+  const { balance, loading: walletLoading } = useWallet();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -57,9 +59,11 @@ export default function Header() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <span className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-              Meet My Designer
-            </span>
+            <img 
+              src="https://res.cloudinary.com/dknafpppp/image/upload/v1757697849/logo_final_2_x8c1wu.png" 
+              alt="Meet My Designer" 
+              className="h-10 w-auto"
+            />
           </Link>
 
           {/* Desktop Navigation */}
@@ -85,6 +89,28 @@ export default function Header() {
               <>
                 {/* Wallet Balance Indicator */}
                 <WalletBalanceIndicator className="hidden lg:block" />
+                
+                {/* Wallet Icon for Customers */}
+                {profile?.user_type === 'client' && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => navigate('/customer-dashboard/wallet')}
+                    className="flex items-center space-x-2 text-gray-700 hover:text-green-600 hover:bg-green-50"
+                  >
+                    <Wallet className="w-5 h-5" />
+                    <div className="flex flex-col items-start">
+                      <span className="hidden sm:inline text-sm font-medium">Wallet</span>
+                      {walletLoading ? (
+                        <span className="text-xs text-gray-500">Loading...</span>
+                      ) : (
+                        <span className="text-xs font-semibold text-green-600">
+                          ₹{balance.toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+                  </Button>
+                )}
                 
                 <DropdownMenu>
                 <DropdownMenuTrigger asChild>

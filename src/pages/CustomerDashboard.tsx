@@ -20,12 +20,13 @@ import {
   Bot,
   History,
   Download,
-  Info
+  Info,
+  Home
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRealtimeBookings } from '@/hooks/useRealtimeBookings';
 import { RealtimeSessionIndicator } from '@/components/RealtimeSessionIndicator';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   SidebarProvider,
   SidebarTrigger,
@@ -39,9 +40,11 @@ import { Separator } from "@/components/ui/separator";
 
 // Use the shared CustomerSidebar component
 import { CustomerSidebar } from '@/components/CustomerSidebar';
+import { RingingBell } from '@/components/RingingBell';
 
 export default function CustomerDashboard() {
   const { signOut, user, profile } = useAuth();
+  const navigate = useNavigate();
   const { activeSession, getUpcomingBookings, getCompletedBookings, loading } = useRealtimeBookings();
   const [walletBalance, setWalletBalance] = useState(0);
   const [recentDesigners, setRecentDesigners] = useState([]);
@@ -173,6 +176,15 @@ export default function CustomerDashboard() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <SidebarTrigger className="text-white hover:bg-white/20" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate('/')}
+                  className="text-white hover:bg-white/20 flex items-center space-x-2"
+                >
+                  <Home className="w-4 h-4" />
+                  <span>Back to Home</span>
+                </Button>
                 <div>
                   <h1 className="text-2xl font-bold text-white">Welcome back, {profile?.first_name || 'Customer'}!</h1>
                   <p className="text-white/80">Explore amazing designs and connect with talented designers</p>
@@ -183,7 +195,7 @@ export default function CustomerDashboard() {
                   <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
                   <span className="text-white/80 text-sm font-medium">Online</span>
                 </div>
-                <Bell className="w-5 h-5 text-white/80" />
+                <RingingBell className="w-5 h-5 text-white/80" />
                 <Popover>
                   <PopoverTrigger asChild>
                     <button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">

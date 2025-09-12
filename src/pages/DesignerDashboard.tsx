@@ -17,6 +17,7 @@ import {
   LogOut,
   Package,
   Power,
+  Home,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRealtimeBookings } from "@/hooks/useRealtimeBookings";
@@ -44,6 +45,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { DesignerSidebar } from "@/components/DesignerSidebar";
+import { RingingBell } from "@/components/RingingBell";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -324,6 +326,15 @@ export default function DesignerDashboard() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <SidebarTrigger className="text-white hover:bg-white/20" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate('/')}
+                  className="text-white hover:bg-white/20 flex items-center space-x-2"
+                >
+                  <Home className="w-4 h-4" />
+                  <span>Back to Home</span>
+                </Button>
                 <div>
                   <h1 className="text-2xl font-bold text-white">
                     Designer Dashboard
@@ -381,7 +392,7 @@ export default function DesignerDashboard() {
                     </span>
                   </div>
                 </div>
-                <Bell className="w-5 h-5 text-white/80" />
+                <RingingBell className="w-5 h-5 text-white/80" />
                 <Popover>
                   <PopoverTrigger asChild>
                     <button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">

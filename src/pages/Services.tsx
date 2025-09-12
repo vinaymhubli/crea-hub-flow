@@ -523,7 +523,7 @@ export default function Services() {
                 </Button>
                 <Button 
                   variant="outline"
-                  onClick={() => navigate('/auth')}
+                  onClick={() => navigate('/signup?role=designer')}
                 >
                   Join as Designer
                 </Button>

@@ -54,15 +54,15 @@ const HeroSection = () => {
                   <ArrowRight className="text-xl group-hover:translate-x-1 transition-transform" />
                 </span>
               </Link>
-              <a 
-                href="/for-designers" 
+              <Link 
+                to="/signup?role=designer" 
                 className="group bg-white/10 backdrop-blur-md text-white border-2 border-white/30 px-10 py-5 rounded-full text-xl font-semibold hover:bg-white/20 hover:border-white/50 transition-all duration-300 transform hover:scale-105 text-center whitespace-nowrap"
               >
                 <span className="flex items-center justify-center gap-3">
                   Join as Designer
                   <span className="text-xl group-hover:rotate-12 transition-transform">👨‍💻</span>
                 </span>
-              </a>
+              </Link>
             </div>
           </div>
         </div>

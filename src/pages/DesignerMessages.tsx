@@ -18,6 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { DesignerSidebar } from "@/components/DesignerSidebar";
+import { RingingBell } from "@/components/RingingBell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -620,7 +621,7 @@ export default function DesignerMessages() {
                     Online
                   </span>
                 </div>
-                <Bell className="w-5 h-5 text-white/80" />
+                <RingingBell className="w-5 h-5 text-white/80" />
                 <Popover>
                   <PopoverTrigger asChild>
                     <button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">

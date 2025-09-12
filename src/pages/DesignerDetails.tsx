@@ -199,8 +199,8 @@ const DesignerDetails: React.FC = () => {
                     </AvatarFallback>
                   </Avatar>
                   {designer.is_online && (
-                    <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-400 rounded-full border-4 border-white flex items-center justify-center">
-                      <span className="text-xs text-white font-bold">●</span>
+                    <div className="absolute -bottom-2 -right-2 w-8 h-8 sm:w-6 sm:h-6 bg-green-400 rounded-full border-4 sm:border-2 border-white flex items-center justify-center">
+                      <span className="text-xs sm:text-[10px] text-white font-bold">●</span>
                     </div>
                   )}
                 </div>
@@ -223,9 +223,6 @@ const DesignerDetails: React.FC = () => {
                     })()}
                   </h1>
                   <p className="text-green-600 font-semibold text-lg mb-1">{designer.specialty}</p>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    {designer.email || 'Email not available'}
-                  </p>
                   
                   <div className="flex flex-wrap items-center gap-4 mb-4">
                     <div className="flex items-center gap-1">

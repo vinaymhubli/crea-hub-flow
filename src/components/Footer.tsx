@@ -10,9 +10,11 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="lg:col-span-1">
             <Link to="/" className="flex items-center space-x-3 mb-6">
-              <span className="text-2xl font-bold bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent">
-                Meet My Designer
-              </span>
+              <img 
+                src="https://res.cloudinary.com/dknafpppp/image/upload/v1757697849/logo_final_2_x8c1wu.png" 
+                alt="Meet My Designer" 
+                className="h-10 w-auto"
+              />
             </Link>
             <p className="text-gray-400 leading-relaxed mb-6">
               Connect with top designers worldwide. Build amazing products with our trusted marketplace of creative professionals.

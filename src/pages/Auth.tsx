@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,10 @@ export default function Auth() {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  
+  // Get role from URL parameter
+  const roleFromUrl = searchParams.get('role') as 'designer' | 'client' | null;
 
   // Check if user is already logged in - but allow manual override
   useEffect(() => {
@@ -262,7 +266,7 @@ export default function Auth() {
                       <Users className="w-4 h-4" />
                       I am a...
                     </Label>
-                    <Select name="role" required>
+                    <Select name="role" required defaultValue={roleFromUrl || undefined}>
                       <SelectTrigger className="border-gray-200 focus:border-teal-400 focus:ring-teal-400/20">
                         <SelectValue placeholder="Select your role" />
                       </SelectTrigger>

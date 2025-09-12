@@ -473,7 +473,7 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
             <div className="flex flex-col lg:flex-row lg:items-start gap-6">
               {/* Left Side - Profile Image */}
               <div className="flex-shrink-0">
-                <div className="relative">
+                <div className="relative w-20 h-20">
                   <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-white font-semibold text-xl group-hover:scale-105 transition-transform duration-300 shadow-lg">
                     {designer.profiles?.avatar_url ? (
                       <img 
@@ -489,12 +489,16 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
                     )}
                   </div>
                   {(designer.activity?.is_online || designer.is_online) && (
-                    <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-white flex items-center justify-center ${
+                    <div className={`absolute -bottom-1 -right-1 w-6 h-6 sm:w-5 sm:h-5 rounded-full border-2 border-white flex items-center justify-center shadow-lg z-10 ${
                       designer.activity?.activity_status === 'active' 
                         ? 'bg-green-400 animate-pulse' 
-                        : 'bg-yellow-400'
+                        : designer.activity?.activity_status === 'idle'
+                        ? 'bg-yellow-400'
+                        : designer.is_online
+                        ? 'bg-yellow-400' // Fallback to yellow for online designers without specific activity status
+                        : 'bg-gray-400'
                     }`}>
-                      <span className="text-xs text-white font-bold">●</span>
+                      <span className="text-xs sm:text-[10px] text-white font-bold">●</span>
                     </div>
                   )}
                 </div>
@@ -510,9 +514,6 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
                         : designer.profiles?.email?.split('@')[0] || 'Designer'}
                     </h3>
                     <p className="text-green-600 font-medium text-sm mb-1">{designer.specialty}</p>
-                    <p className="text-xs text-muted-foreground mb-2">
-                      {designer.profiles?.email || 'Email not available'}
-                    </p>
                     
                     {/* Rating */}
                     <div className="flex items-center space-x-2 mb-3">

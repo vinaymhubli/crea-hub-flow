@@ -191,7 +191,7 @@ const MobileShowcase = () => {
                   </button>
                 </Link>
                 
-                <Link to="/designers">
+                <Link to="/signup?role=designer">
                   <button className="group relative px-8 py-4 bg-white border-2 border-blue-500 text-blue-600 font-semibold rounded-full overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-105 whitespace-nowrap">
                     <span className="absolute inset-0 bg-gradient-to-r from-blue-500 to-blue-600 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></span>
                     <span className="relative flex items-center justify-center group-hover:text-white transition-colors duration-300">

@@ -106,22 +106,22 @@ export default function CustomerSettings() {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
+      <div className="min-h-screen flex w-full bg-background overflow-x-hidden">
         <CustomerSidebar />
         
-        <main className="flex-1">
+        <main className="flex-1 min-w-0 overflow-x-hidden">
           {/* Header */}
-          <header className="bg-gradient-to-r from-green-400 to-blue-500 px-6 py-8">
+          <header className="bg-gradient-to-r from-green-400 to-blue-500 px-4 sm:px-6 py-6 sm:py-8">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 sm:space-x-4">
                 <SidebarTrigger className="text-white hover:bg-white/20" />
                 <div>
-                  <h1 className="text-2xl font-bold text-white">Settings</h1>
-                  <p className="text-white/80">Manage your account preferences</p>
+                  <h1 className="text-xl sm:text-2xl font-bold text-white">Settings</h1>
+                  <p className="text-white/80 text-sm sm:text-base">Manage your account preferences</p>
                 </div>
               </div>
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 sm:space-x-4">
+                <div className="hidden sm:flex items-center space-x-2">
                   <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
                   <span className="text-white/80 text-sm font-medium">Online</span>
                 </div>
@@ -184,7 +184,7 @@ export default function CustomerSettings() {
             </div>
           </header>
 
-          <div className="p-6 space-y-8">
+          <div className="p-4 sm:p-6 space-y-6 sm:space-y-8 overflow-x-hidden">
             {/* Settings Overview Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <Card className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in">
@@ -257,107 +257,115 @@ export default function CustomerSettings() {
             </div>
 
             {/* Settings Tabs */}
-            <Card className="overflow-hidden border-0 shadow-lg">
+            <Card className="overflow-hidden border-0 shadow-lg w-full">
               <CardHeader>
                 <CardTitle className="text-xl text-foreground">Account Settings</CardTitle>
                 <CardDescription>Customize your account preferences and privacy settings</CardDescription>
               </CardHeader>
-              <CardContent>
-                <Tabs defaultValue="notifications" className="space-y-6">
-                  <TabsList className="grid w-full grid-cols-5">
-                    <TabsTrigger value="notifications">Notifications</TabsTrigger>
-                    <TabsTrigger value="privacy">Privacy</TabsTrigger>
-                    <TabsTrigger value="security">Security</TabsTrigger>
-                    <TabsTrigger value="general">General</TabsTrigger>
-                    <TabsTrigger value="account">Account</TabsTrigger>
-                  </TabsList>
+              <CardContent className="overflow-x-hidden">
+                <Tabs defaultValue="notifications" className="space-y-6 w-full">
+                  <div className="overflow-x-auto -mx-4 sm:mx-0">
+                    <TabsList className="inline-flex w-max min-w-full sm:grid sm:grid-cols-5 sm:w-full">
+                      <TabsTrigger value="notifications" className="whitespace-nowrap px-3 sm:px-4">Notifications</TabsTrigger>
+                      <TabsTrigger value="privacy" className="whitespace-nowrap px-3 sm:px-4">Privacy</TabsTrigger>
+                      <TabsTrigger value="security" className="whitespace-nowrap px-3 sm:px-4">Security</TabsTrigger>
+                      <TabsTrigger value="general" className="whitespace-nowrap px-3 sm:px-4">General</TabsTrigger>
+                      <TabsTrigger value="account" className="whitespace-nowrap px-3 sm:px-4">Account</TabsTrigger>
+                    </TabsList>
+                  </div>
 
                   {/* Notifications Settings */}
                   <TabsContent value="notifications">
-                    <div className="space-y-6">
+                    <div className="space-y-4 sm:space-y-6">
                       <div>
                         <h3 className="text-lg font-medium mb-4">Notification Preferences</h3>
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                              <Mail className="w-4 h-4 text-gray-500" />
-                              <div>
-                                <p className="font-medium">Email Notifications</p>
-                                <p className="text-sm text-gray-500">Receive updates via email</p>
+                        <div className="space-y-3 sm:space-y-4">
+                          <div className="flex items-center justify-between py-2">
+                            <div className="flex items-center space-x-3 flex-1 min-w-0">
+                              <Mail className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                              <div className="min-w-0 flex-1">
+                                <p className="font-medium text-sm sm:text-base">Email Notifications</p>
+                                <p className="text-xs sm:text-sm text-gray-500">Receive updates via email</p>
                               </div>
                             </div>
                             <Switch 
                               checked={settings.notifications_email}
                               onCheckedChange={(checked) => updateSetting('notifications_email', checked)}
                               disabled={saving}
+                              className="flex-shrink-0 ml-2"
                             />
                           </div>
 
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                              <Smartphone className="w-4 h-4 text-gray-500" />
-                              <div>
-                                <p className="font-medium">Push Notifications</p>
-                                <p className="text-sm text-gray-500">Get notified on your device</p>
+                          <div className="flex items-center justify-between py-2">
+                            <div className="flex items-center space-x-3 flex-1 min-w-0">
+                              <Smartphone className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                              <div className="min-w-0 flex-1">
+                                <p className="font-medium text-sm sm:text-base">Push Notifications</p>
+                                <p className="text-xs sm:text-sm text-gray-500">Get notified on your device</p>
                               </div>
                             </div>
                             <Switch 
                               checked={settings.notifications_push}
                               onCheckedChange={(checked) => updateSetting('notifications_push', checked)}
                               disabled={saving}
+                              className="flex-shrink-0 ml-2"
                             />
                           </div>
 
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                              <MessageCircle className="w-4 h-4 text-gray-500" />
-                              <div>
-                                <p className="font-medium">SMS Notifications</p>
-                                <p className="text-sm text-gray-500">Receive important alerts via text</p>
+                          <div className="flex items-center justify-between py-2">
+                            <div className="flex items-center space-x-3 flex-1 min-w-0">
+                              <MessageCircle className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                              <div className="min-w-0 flex-1">
+                                <p className="font-medium text-sm sm:text-base">SMS Notifications</p>
+                                <p className="text-xs sm:text-sm text-gray-500">Receive important alerts via text</p>
                               </div>
                             </div>
                             <Switch 
                               checked={settings.notifications_sms}
                               onCheckedChange={(checked) => updateSetting('notifications_sms', checked)}
                               disabled={saving}
+                              className="flex-shrink-0 ml-2"
                             />
                           </div>
 
                           <Separator />
 
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="font-medium">Booking Reminders</p>
-                              <p className="text-sm text-gray-500">Reminders for upcoming sessions</p>
+                          <div className="flex items-center justify-between py-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm sm:text-base">Booking Reminders</p>
+                              <p className="text-xs sm:text-sm text-gray-500">Reminders for upcoming sessions</p>
                             </div>
                             <Switch 
                               checked={settings.booking_reminders}
                               onCheckedChange={(checked) => updateSetting('booking_reminders', checked)}
                               disabled={saving}
+                              className="flex-shrink-0 ml-2"
                             />
                           </div>
 
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="font-medium">Message Notifications</p>
-                              <p className="text-sm text-gray-500">New messages from designers</p>
+                          <div className="flex items-center justify-between py-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm sm:text-base">Message Notifications</p>
+                              <p className="text-xs sm:text-sm text-gray-500">New messages from designers</p>
                             </div>
                             <Switch 
                               checked={settings.message_notifications}
                               onCheckedChange={(checked) => updateSetting('message_notifications', checked)}
                               disabled={saving}
+                              className="flex-shrink-0 ml-2"
                             />
                           </div>
 
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="font-medium">Marketing Emails</p>
-                              <p className="text-sm text-gray-500">Promotional emails and updates</p>
+                          <div className="flex items-center justify-between py-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm sm:text-base">Marketing Emails</p>
+                              <p className="text-xs sm:text-sm text-gray-500">Promotional emails and updates</p>
                             </div>
                             <Switch 
                               checked={settings.notifications_marketing}
                               onCheckedChange={(checked) => updateSetting('notifications_marketing', checked)}
                               disabled={saving}
+                              className="flex-shrink-0 ml-2"
                             />
                           </div>
                         </div>
@@ -383,17 +391,6 @@ export default function CustomerSettings() {
                             />
                           </div>
 
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="font-medium">Show Contact Information</p>
-                              <p className="text-sm text-gray-500">Allow designers to see your contact details</p>
-                            </div>
-                            <Switch 
-                              checked={settings.privacy_contact_info_visible}
-                              onCheckedChange={(checked) => updateSetting('privacy_contact_info_visible', checked)}
-                              disabled={saving}
-                            />
-                          </div>
 
                           <div className="flex items-center justify-between">
                             <div>
@@ -488,20 +485,6 @@ export default function CustomerSettings() {
                             </Select>
                           </div>
 
-                          <div className="space-y-2">
-                            <Label>Currency</Label>
-                            <Select value={settings.currency} onValueChange={(value) => updateSetting('currency', value)}>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="USD">USD ($)</SelectItem>
-                                <SelectItem value="EUR">EUR (€)</SelectItem>
-                                <SelectItem value="GBP">GBP (£)</SelectItem>
-                                <SelectItem value="CAD">CAD (C$)</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
 
                           <div className="space-y-2">
                             <Label>Time Format</Label>
