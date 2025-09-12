@@ -66,7 +66,7 @@ export default function LiveSessionRequestDialog({
       if (isDesigner) {
         // Load requests for this designer
         const { data, error } = await supabase
-          .from('live_session_requests')
+          .from('live_session_requests' as any)
           .select('*')
           .eq('designer_id', designer.id)
           .order('created_at', { ascending: false });
@@ -104,7 +104,7 @@ export default function LiveSessionRequestDialog({
       } else {
         // Load requests from this customer to this designer
         const { data, error } = await supabase
-          .from('live_session_requests')
+          .from('live_session_requests' as any)
           .select('*')
           .eq('customer_id', user.id)
           .eq('designer_id', designer.id)
@@ -190,7 +190,7 @@ export default function LiveSessionRequestDialog({
       setIsSubmitting(true);
 
       const { data, error } = await supabase
-        .from('live_session_requests')
+        .from('live_session_requests' as any)
         .insert({
           customer_id: user.id,
           designer_id: designer.id,
@@ -208,18 +208,29 @@ export default function LiveSessionRequestDialog({
         description: "Your live session request has been sent to the designer",
       });
 
+      // Small delay to ensure database insert is complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       // Notify designer via real-time broadcast (for immediate notifications)
-      await supabase
-        .channel(`designer_notifications_${designer.id}`)
-        .send({
-          type: 'broadcast',
-          event: 'live_session_request',
-          payload: {
-            requestId: data.id,
-            customerName: `${profile?.first_name} ${profile?.last_name}`,
-            message: requestMessage.trim()
-          }
-        });
+      console.log('📡 Sending broadcast notification to designer:', designer.id);
+      try {
+        const broadcastResult = await supabase
+          .channel(`designer_notifications_${designer.id}`)
+          .send({
+            type: 'broadcast',
+            event: 'live_session_request',
+            payload: {
+              requestId: data.id,
+              customerName: `${profile?.first_name} ${profile?.last_name}`,
+              message: requestMessage.trim()
+            }
+          });
+        
+        console.log('📡 Broadcast result:', broadcastResult);
+      } catch (broadcastError) {
+        console.error('❌ Broadcast notification failed:', broadcastError);
+        // Don't fail the entire request if broadcast fails
+      }
 
       // The postgres_changes subscription in LiveSessionNotification will also trigger
       // automatically when the INSERT happens, providing double coverage for notifications
@@ -258,7 +269,7 @@ export default function LiveSessionRequestDialog({
         
         // Create active session record
         const { error: sessionError } = await supabase
-          .from('active_sessions')
+          .from('active_sessions' as any)
           .insert({
             session_id: sessionId,
             designer_id: designer.id,
@@ -310,7 +321,7 @@ export default function LiveSessionRequestDialog({
         
         // End any active sessions for this designer
         const { error: endSessionError } = await supabase
-          .from('active_sessions')
+          .from('active_sessions' as any)
           .update({
             status: 'ended',
             ended_at: new Date().toISOString(),

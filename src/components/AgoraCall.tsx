@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import AgoraRTC, { IAgoraRTCClient, ILocalAudioTrack, ILocalVideoTrack, IRemoteAudioTrack, IRemoteVideoTrack, ICameraVideoTrack, IMicrophoneAudioTrack } from 'agora-rtc-sdk-ng';
 import { Button } from '@/components/ui/button';
 import { Mic, MicOff, Video, VideoOff, ScreenShare, PhoneOff } from 'lucide-react';
@@ -22,11 +22,12 @@ interface AgoraCallProps {
   onOpenShare?: () => void;
   onScreenShareStarted?: () => void;
   onScreenShareStopped?: () => void;
+  onSessionEnd?: () => void;
 }
 
 // NOTE: We intentionally keep this component minimal and focused on A/V join/leave.
 // Screen-sharing continues to be handled by the existing ScreenShareModal to avoid regressions.
-export default function AgoraCall({ sessionId, userId, isDesigner, onEndByDesigner, onLocalJoined, onRemoteUserJoined, onRemoteUserLeft, onOpenShare, onScreenShareStarted, onScreenShareStopped }: AgoraCallProps) {
+const AgoraCall = forwardRef<any, AgoraCallProps>(({ sessionId, userId, isDesigner, onEndByDesigner, onLocalJoined, onRemoteUserJoined, onRemoteUserLeft, onOpenShare, onScreenShareStarted, onScreenShareStopped, onSessionEnd }, ref) => {
   const clientRef = useRef<IAgoraRTCClient | null>(null);
   const [joined, setJoined] = useState(false);
 
@@ -39,6 +40,36 @@ export default function AgoraCall({ sessionId, userId, isDesigner, onEndByDesign
       if (clientRef.current) {
         console.log('🧹 Cleaning up Agora client on unmount');
         try {
+          // Stop screen sharing if active
+          if (screenSharingRef.current && screenTrackRef.current) {
+            console.log('🛑 Stopping screen share on unmount');
+            try {
+              clientRef.current.unpublish(screenTrackRef.current);
+              screenTrackRef.current.close();
+              screenTrackRef.current = null;
+            } catch (screenError) {
+              console.warn('❌ Error stopping screen share on unmount:', screenError);
+            }
+          }
+          
+          // Force stop all media tracks
+          if (localAudioTrackRef.current) {
+            try {
+              localAudioTrackRef.current.stop();
+              localAudioTrackRef.current.close();
+            } catch (error) {
+              console.warn('❌ Error stopping audio on unmount:', error);
+            }
+          }
+          if (localVideoTrackRef.current) {
+            try {
+              localVideoTrackRef.current.stop();
+              localVideoTrackRef.current.close();
+            } catch (error) {
+              console.warn('❌ Error stopping video on unmount:', error);
+            }
+          }
+          
           clientRef.current.leave();
           clientRef.current = null;
         } catch (e) {
@@ -49,6 +80,8 @@ export default function AgoraCall({ sessionId, userId, isDesigner, onEndByDesign
   }, [sessionId, userId, isDesigner]);
   const [localAudioTrack, setLocalAudioTrack] = useState<IMicrophoneAudioTrack | null>(null);
   const [localVideoTrack, setLocalVideoTrack] = useState<ICameraVideoTrack | null>(null);
+  const localAudioTrackRef = useRef<IMicrophoneAudioTrack | null>(null);
+  const localVideoTrackRef = useRef<ICameraVideoTrack | null>(null);
   const [remoteUsers, setRemoteUsers] = useState<Record<string, RemoteUser>>({});
   const [muted, setMuted] = useState(false);
   const [cameraOff, setCameraOff] = useState(false);
@@ -229,6 +262,8 @@ export default function AgoraCall({ sessionId, userId, isDesigner, onEndByDesign
       
       setLocalAudioTrack(mic);
       setLocalVideoTrack(cam);
+      localAudioTrackRef.current = mic;
+      localVideoTrackRef.current = cam;
       
       // Only publish tracks that were successfully created
       const tracksToPublish = [];
@@ -293,17 +328,76 @@ export default function AgoraCall({ sessionId, userId, isDesigner, onEndByDesign
     const client = clientRef.current;
     if (!client) return;
     try {
-      if (localAudioTrack) localAudioTrack.close();
-      if (localVideoTrack) localVideoTrack.close();
+      console.log('🛑 AgoraCall: Starting media cleanup...');
+      
+      // Stop screen sharing first if active
+      if (screenSharingRef.current && screenTrackRef.current) {
+        console.log('🛑 Stopping screen share before leaving session');
+        try {
+          await client.unpublish(screenTrackRef.current);
+          screenTrackRef.current.close();
+          screenTrackRef.current = null;
+          setScreenSharing(false);
+          console.log('✅ Screen share stopped before leaving');
+        } catch (screenError) {
+          console.warn('❌ Error stopping screen share before leave:', screenError);
+        }
+      }
+      
+      // Stop all local media tracks
+      if (localAudioTrack) {
+        console.log('🛑 Stopping microphone track');
+        try {
+          localAudioTrack.stop();
+          localAudioTrack.close();
+        } catch (error) {
+          console.warn('❌ Error stopping microphone track:', error);
+        }
+      }
+      if (localVideoTrack) {
+        console.log('🛑 Stopping camera track');
+        try {
+          localVideoTrack.stop();
+          localVideoTrack.close();
+        } catch (error) {
+          console.warn('❌ Error stopping camera track:', error);
+        }
+      }
+      
+      // Unpublish all tracks and leave channel
       await client.unpublish();
       await client.leave();
+      
+      console.log('✅ All media tracks stopped and left channel');
     } finally {
       setLocalAudioTrack(null);
       setLocalVideoTrack(null);
+      localAudioTrackRef.current = null;
+      localVideoTrackRef.current = null;
       setRemoteUsers({});
       setJoined(false);
+      setScreenSharing(false);
+      setRemoteScreenSharing(false);
+      setMuted(false);
+      setCameraOff(false);
+      screenTrackRef.current = null;
     }
-  }, [localAudioTrack, localVideoTrack]);
+  }, [localAudioTrack, localVideoTrack, screenSharing]);
+
+  // Session end handler - called when session ends
+  const handleSessionEnd = useCallback(async () => {
+    console.log('🛑 AgoraCall: Session end triggered, stopping all media...');
+    await leave();
+    if (onSessionEnd) {
+      onSessionEnd();
+    }
+  }, [leave, onSessionEnd]);
+
+  // Expose functions via ref
+  useImperativeHandle(ref, () => ({
+    leave: handleSessionEnd,
+    stopAllMedia: handleSessionEnd
+  }), [handleSessionEnd]);
 
   const toggleMic = useCallback(async () => {
     if (!localAudioTrack) return;
@@ -467,7 +561,9 @@ export default function AgoraCall({ sessionId, userId, isDesigner, onEndByDesign
     }
     return () => {
       console.log('🚪 AgoraCall component unmounting, leaving channel');
-      leave();
+      leave().catch((error) => {
+        console.error('❌ Error during leave on unmount:', error);
+      });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, userId]);
@@ -720,6 +816,10 @@ export default function AgoraCall({ sessionId, userId, isDesigner, onEndByDesign
       </div>
     </div>
   );
-}
+});
+
+AgoraCall.displayName = 'AgoraCall';
+
+export default AgoraCall;
 
 
