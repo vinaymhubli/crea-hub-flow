@@ -65,7 +65,7 @@ export function BankAccountManager({ open, onOpenChange, onAccountAdded }: BankA
   const fetchBankAccounts = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('bank_accounts')
         .select('*')
         .eq('user_id', user?.id)
@@ -73,7 +73,7 @@ export function BankAccountManager({ open, onOpenChange, onAccountAdded }: BankA
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setAccounts(data || []);
+      setAccounts(data as BankAccount[] || []);
     } catch (error) {
       console.error('Error fetching bank accounts:', error);
       toast.error('Failed to fetch bank accounts');
@@ -103,7 +103,7 @@ export function BankAccountManager({ open, onOpenChange, onAccountAdded }: BankA
       let result;
       if (editingAccount) {
         // Update existing account
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
           .from('bank_accounts')
           .update(accountData)
           .eq('id', editingAccount.id)
@@ -115,7 +115,7 @@ export function BankAccountManager({ open, onOpenChange, onAccountAdded }: BankA
         toast.success('Bank account updated successfully');
       } else {
         // Add new account
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
           .from('bank_accounts')
           .insert(accountData)
           .select()
@@ -153,7 +153,7 @@ export function BankAccountManager({ open, onOpenChange, onAccountAdded }: BankA
 
     try {
       setLoading(true);
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('bank_accounts')
         .delete()
         .eq('id', accountId);
@@ -175,13 +175,13 @@ export function BankAccountManager({ open, onOpenChange, onAccountAdded }: BankA
       setLoading(true);
       
       // Remove primary from all accounts
-      await supabase
+      await (supabase as any)
         .from('bank_accounts')
         .update({ is_primary: false })
         .eq('user_id', user?.id);
 
       // Set selected account as primary
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('bank_accounts')
         .update({ is_primary: true })
         .eq('id', accountId);

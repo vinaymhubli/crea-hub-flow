@@ -14,6 +14,140 @@ export type Database = {
   }
   public: {
     Tables: {
+      about_page_content: {
+        Row: {
+          background_image_url: string | null
+          color_scheme: string | null
+          content: string | null
+          created_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          image_position: string | null
+          image_url: string | null
+          is_published: boolean | null
+          section_type: string
+          sort_order: number | null
+          stats: Json | null
+          subtitle: string | null
+          team_member: Json | null
+          title: string | null
+          updated_at: string | null
+          value_item: Json | null
+        }
+        Insert: {
+          background_image_url?: string | null
+          color_scheme?: string | null
+          content?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          image_position?: string | null
+          image_url?: string | null
+          is_published?: boolean | null
+          section_type: string
+          sort_order?: number | null
+          stats?: Json | null
+          subtitle?: string | null
+          team_member?: Json | null
+          title?: string | null
+          updated_at?: string | null
+          value_item?: Json | null
+        }
+        Update: {
+          background_image_url?: string | null
+          color_scheme?: string | null
+          content?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          image_position?: string | null
+          image_url?: string | null
+          is_published?: boolean | null
+          section_type?: string
+          sort_order?: number | null
+          stats?: Json | null
+          subtitle?: string | null
+          team_member?: Json | null
+          title?: string | null
+          updated_at?: string | null
+          value_item?: Json | null
+        }
+        Relationships: []
+      }
+      active_sessions: {
+        Row: {
+          booking_id: string | null
+          created_at: string | null
+          customer_id: string
+          designer_id: string
+          ended_at: string | null
+          id: string
+          session_id: string
+          session_type: string
+          started_at: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string | null
+          customer_id: string
+          designer_id: string
+          ended_at?: string | null
+          id?: string
+          session_id: string
+          session_type?: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string | null
+          customer_id?: string
+          designer_id?: string
+          ended_at?: string | null
+          id?: string
+          session_id?: string
+          session_type?: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "active_sessions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "active_sessions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "active_sessions_designer_id_fkey"
+            columns: ["designer_id"]
+            isOneToOne: false
+            referencedRelation: "designer_availability"
+            referencedColumns: ["designer_id"]
+          },
+          {
+            foreignKeyName: "active_sessions_designer_id_fkey"
+            columns: ["designer_id"]
+            isOneToOne: false
+            referencedRelation: "designers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       announcements: {
         Row: {
           created_at: string
@@ -47,6 +181,113 @@ export type Database = {
           title?: string
           type?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      bank_accounts: {
+        Row: {
+          account_holder_name: string
+          account_number: string
+          account_type: string | null
+          bank_name: string
+          created_at: string
+          id: string
+          ifsc_code: string
+          is_primary: boolean | null
+          is_verified: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_holder_name: string
+          account_number: string
+          account_type?: string | null
+          bank_name: string
+          created_at?: string
+          id?: string
+          ifsc_code: string
+          is_primary?: boolean | null
+          is_verified?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_holder_name?: string
+          account_number?: string
+          account_type?: string | null
+          bank_name?: string
+          created_at?: string
+          id?: string
+          ifsc_code?: string
+          is_primary?: boolean | null
+          is_verified?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_accounts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      blog_posts: {
+        Row: {
+          author_id: string | null
+          category: string | null
+          content: string
+          created_at: string
+          excerpt: string | null
+          featured_image_url: string | null
+          id: string
+          is_published: boolean | null
+          meta_description: string | null
+          meta_keywords: string[] | null
+          published_at: string | null
+          slug: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+          view_count: number | null
+        }
+        Insert: {
+          author_id?: string | null
+          category?: string | null
+          content: string
+          created_at?: string
+          excerpt?: string | null
+          featured_image_url?: string | null
+          id?: string
+          is_published?: boolean | null
+          meta_description?: string | null
+          meta_keywords?: string[] | null
+          published_at?: string | null
+          slug: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          view_count?: number | null
+        }
+        Update: {
+          author_id?: string | null
+          category?: string | null
+          content?: string
+          created_at?: string
+          excerpt?: string | null
+          featured_image_url?: string | null
+          id?: string
+          is_published?: boolean | null
+          meta_description?: string | null
+          meta_keywords?: string[] | null
+          published_at?: string | null
+          slug?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          view_count?: number | null
         }
         Relationships: []
       }
@@ -108,10 +349,110 @@ export type Database = {
             foreignKeyName: "bookings_designer_id_fkey"
             columns: ["designer_id"]
             isOneToOne: false
+            referencedRelation: "designer_availability"
+            referencedColumns: ["designer_id"]
+          },
+          {
+            foreignKeyName: "bookings_designer_id_fkey"
+            columns: ["designer_id"]
+            isOneToOne: false
             referencedRelation: "designers"
             referencedColumns: ["id"]
           },
         ]
+      }
+      contact_page_content: {
+        Row: {
+          action_text: string | null
+          color_scheme: string | null
+          contact_info: string | null
+          content: string | null
+          created_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          is_published: boolean | null
+          section_type: string
+          sort_order: number | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          action_text?: string | null
+          color_scheme?: string | null
+          contact_info?: string | null
+          content?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_published?: boolean | null
+          section_type: string
+          sort_order?: number | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          action_text?: string | null
+          color_scheme?: string | null
+          contact_info?: string | null
+          content?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_published?: boolean | null
+          section_type?: string
+          sort_order?: number | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      content_pages: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_published: boolean | null
+          meta_description: string | null
+          meta_keywords: string[] | null
+          page_type: string
+          sort_order: number | null
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_published?: boolean | null
+          meta_description?: string | null
+          meta_keywords?: string[] | null
+          page_type: string
+          sort_order?: number | null
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_published?: boolean | null
+          meta_description?: string | null
+          meta_keywords?: string[] | null
+          page_type?: string
+          sort_order?: number | null
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
       }
       conversation_messages: {
         Row: {
@@ -181,10 +522,47 @@ export type Database = {
             foreignKeyName: "conversations_designer_fk"
             columns: ["designer_id"]
             isOneToOne: false
+            referencedRelation: "designer_availability"
+            referencedColumns: ["designer_id"]
+          },
+          {
+            foreignKeyName: "conversations_designer_fk"
+            columns: ["designer_id"]
+            isOneToOne: false
             referencedRelation: "designers"
             referencedColumns: ["id"]
           },
         ]
+      }
+      designer_activity: {
+        Row: {
+          activity_status: string
+          created_at: string | null
+          designer_id: string
+          id: string
+          is_online: boolean | null
+          last_seen: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          activity_status?: string
+          created_at?: string | null
+          designer_id: string
+          id?: string
+          is_online?: boolean | null
+          last_seen?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          activity_status?: string
+          created_at?: string | null
+          designer_id?: string
+          id?: string
+          is_online?: boolean | null
+          last_seen?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       designer_availability_settings: {
         Row: {
@@ -362,86 +740,138 @@ export type Database = {
           },
         ]
       }
-      live_session_requests: {
+      faqs: {
         Row: {
-          accepted_at: string | null
-          actual_duration_minutes: number | null
-          cancellation_reason: string | null
-          channel_name: string
-          created_at: string | null
-          customer_id: string
-          designer_id: string
-          ended_at: string | null
-          estimated_duration_hours: number | null
-          expires_at: string | null
+          answer: string
+          category: string
+          created_at: string
+          created_by: string | null
           id: string
-          message: string | null
-          service_type: string
-          started_at: string | null
-          status: string
+          is_published: boolean | null
+          question: string
+          sort_order: number | null
+          updated_at: string
+          updated_by: string | null
         }
         Insert: {
-          accepted_at?: string | null
-          actual_duration_minutes?: number | null
-          cancellation_reason?: string | null
-          channel_name: string
-          created_at?: string | null
-          customer_id: string
-          designer_id: string
-          ended_at?: string | null
-          estimated_duration_hours?: number | null
-          expires_at?: string | null
+          answer: string
+          category?: string
+          created_at?: string
+          created_by?: string | null
           id?: string
-          message?: string | null
-          service_type?: string
-          started_at?: string | null
-          status?: string
+          is_published?: boolean | null
+          question: string
+          sort_order?: number | null
+          updated_at?: string
+          updated_by?: string | null
         }
         Update: {
-          accepted_at?: string | null
-          actual_duration_minutes?: number | null
-          cancellation_reason?: string | null
-          channel_name?: string
-          created_at?: string | null
-          customer_id?: string
-          designer_id?: string
-          ended_at?: string | null
-          estimated_duration_hours?: number | null
-          expires_at?: string | null
+          answer?: string
+          category?: string
+          created_at?: string
+          created_by?: string | null
           id?: string
-          message?: string | null
-          service_type?: string
-          started_at?: string | null
-          status?: string
+          is_published?: boolean | null
+          question?: string
+          sort_order?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      file_reviews: {
+        Row: {
+          action: string
+          created_at: string | null
+          file_id: string
+          id: string
+          notes: string | null
+          reviewer_id: string
+          reviewer_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          file_id: string
+          id?: string
+          notes?: string | null
+          reviewer_id: string
+          reviewer_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          file_id?: string
+          id?: string
+          notes?: string | null
+          reviewer_id?: string
+          reviewer_type?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "fk_live_session_requests_customer"
-            columns: ["customer_id"]
+            foreignKeyName: "file_reviews_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "session_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "file_reviews_reviewer_id_fkey"
+            columns: ["reviewer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
+        ]
+      }
+      live_session_requests: {
+        Row: {
+          created_at: string | null
+          customer_id: string
+          designer_id: string
+          id: string
+          message: string
+          rejection_reason: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id: string
+          designer_id: string
+          id?: string
+          message: string
+          rejection_reason?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string
+          designer_id?: string
+          id?: string
+          message?: string
+          rejection_reason?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
           {
-            foreignKeyName: "fk_live_session_requests_designer"
+            foreignKeyName: "live_session_requests_designer_id_fkey"
             columns: ["designer_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "live_session_requests_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
+            referencedRelation: "designer_availability"
+            referencedColumns: ["designer_id"]
           },
           {
             foreignKeyName: "live_session_requests_designer_id_fkey"
             columns: ["designer_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
+            referencedRelation: "designers"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -534,34 +964,88 @@ export type Database = {
       platform_settings: {
         Row: {
           commission_rate: number
+          contact_phone: string | null
           created_at: string
+          enable_analytics: boolean | null
+          enable_live_sessions: boolean | null
+          enable_notifications: boolean | null
+          enable_two_factor_auth: boolean | null
+          enable_wallet_system: boolean | null
           featured_designers_limit: number
           id: string
           maintenance_mode: boolean
+          max_concurrent_sessions: number | null
+          max_file_upload_size_mb: number | null
+          maximum_withdrawal_amount: number | null
+          minimum_withdrawal_amount: number | null
           new_registrations: boolean
+          password_min_length: number | null
+          platform_description: string | null
+          platform_name: string | null
+          require_email_verification: boolean | null
+          require_phone_verification: boolean | null
+          session_timeout_minutes: number | null
           singleton: boolean
+          support_email: string | null
+          tax_rate: number | null
           updated_at: string
           updated_by: string | null
         }
         Insert: {
           commission_rate?: number
+          contact_phone?: string | null
           created_at?: string
+          enable_analytics?: boolean | null
+          enable_live_sessions?: boolean | null
+          enable_notifications?: boolean | null
+          enable_two_factor_auth?: boolean | null
+          enable_wallet_system?: boolean | null
           featured_designers_limit?: number
           id?: string
           maintenance_mode?: boolean
+          max_concurrent_sessions?: number | null
+          max_file_upload_size_mb?: number | null
+          maximum_withdrawal_amount?: number | null
+          minimum_withdrawal_amount?: number | null
           new_registrations?: boolean
+          password_min_length?: number | null
+          platform_description?: string | null
+          platform_name?: string | null
+          require_email_verification?: boolean | null
+          require_phone_verification?: boolean | null
+          session_timeout_minutes?: number | null
           singleton?: boolean
+          support_email?: string | null
+          tax_rate?: number | null
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
           commission_rate?: number
+          contact_phone?: string | null
           created_at?: string
+          enable_analytics?: boolean | null
+          enable_live_sessions?: boolean | null
+          enable_notifications?: boolean | null
+          enable_two_factor_auth?: boolean | null
+          enable_wallet_system?: boolean | null
           featured_designers_limit?: number
           id?: string
           maintenance_mode?: boolean
+          max_concurrent_sessions?: number | null
+          max_file_upload_size_mb?: number | null
+          maximum_withdrawal_amount?: number | null
+          minimum_withdrawal_amount?: number | null
           new_registrations?: boolean
+          password_min_length?: number | null
+          platform_description?: string | null
+          platform_name?: string | null
+          require_email_verification?: boolean | null
+          require_phone_verification?: boolean | null
+          session_timeout_minutes?: number | null
           singleton?: boolean
+          support_email?: string | null
+          tax_rate?: number | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -615,10 +1099,62 @@ export type Database = {
             foreignKeyName: "portfolio_items_designer_id_fkey"
             columns: ["designer_id"]
             isOneToOne: false
+            referencedRelation: "designer_availability"
+            referencedColumns: ["designer_id"]
+          },
+          {
+            foreignKeyName: "portfolio_items_designer_id_fkey"
+            columns: ["designer_id"]
+            isOneToOne: false
             referencedRelation: "designers"
             referencedColumns: ["id"]
           },
         ]
+      }
+      privacy_policy_content: {
+        Row: {
+          card_items: Json | null
+          content: string | null
+          created_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          is_published: boolean | null
+          section_type: string
+          sort_order: number | null
+          subtitle: string | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          card_items?: Json | null
+          content?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_published?: boolean | null
+          section_type: string
+          sort_order?: number | null
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          card_items?: Json | null
+          content?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_published?: boolean | null
+          section_type?: string
+          sort_order?: number | null
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -831,10 +1367,450 @@ export type Database = {
             foreignKeyName: "services_designer_fk"
             columns: ["designer_id"]
             isOneToOne: false
+            referencedRelation: "designer_availability"
+            referencedColumns: ["designer_id"]
+          },
+          {
+            foreignKeyName: "services_designer_fk"
+            columns: ["designer_id"]
+            isOneToOne: false
             referencedRelation: "designers"
             referencedColumns: ["id"]
           },
         ]
+      }
+      session_files: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          booking_id: string | null
+          created_at: string | null
+          file_size: number
+          file_type: string
+          file_url: string
+          id: string
+          name: string
+          rejection_reason: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewed_by_id: string | null
+          session_id: string
+          status: string
+          updated_at: string | null
+          uploaded_by: string
+          uploaded_by_id: string | null
+          uploaded_by_type: string
+          work_description: string | null
+          work_status: string | null
+          work_type: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          booking_id?: string | null
+          created_at?: string | null
+          file_size: number
+          file_type: string
+          file_url: string
+          id?: string
+          name: string
+          rejection_reason?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewed_by_id?: string | null
+          session_id: string
+          status?: string
+          updated_at?: string | null
+          uploaded_by: string
+          uploaded_by_id?: string | null
+          uploaded_by_type: string
+          work_description?: string | null
+          work_status?: string | null
+          work_type?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          booking_id?: string | null
+          created_at?: string | null
+          file_size?: number
+          file_type?: string
+          file_url?: string
+          id?: string
+          name?: string
+          rejection_reason?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewed_by_id?: string | null
+          session_id?: string
+          status?: string
+          updated_at?: string | null
+          uploaded_by?: string
+          uploaded_by_id?: string | null
+          uploaded_by_type?: string
+          work_description?: string | null
+          work_status?: string | null
+          work_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_files_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_files_reviewed_by_id_fkey"
+            columns: ["reviewed_by_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "session_files_uploaded_by_id_fkey"
+            columns: ["uploaded_by_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      session_invoice_messages: {
+        Row: {
+          booking_id: string | null
+          created_at: string | null
+          id: string
+          invoice_id: string | null
+          message_id: string | null
+          session_id: string
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string | null
+          id?: string
+          invoice_id?: string | null
+          message_id?: string | null
+          session_id: string
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string | null
+          id?: string
+          invoice_id?: string | null
+          message_id?: string | null
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_invoice_messages_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_invoice_messages_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "session_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_invoice_messages_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_invoices: {
+        Row: {
+          booking_id: string | null
+          created_at: string | null
+          customer_name: string
+          designer_name: string
+          duration_minutes: number
+          gst_amount: number
+          id: string
+          invoice_date: string
+          rate_per_minute: number
+          session_id: string
+          status: string
+          subtotal: number
+          total_amount: number
+          updated_at: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string | null
+          customer_name: string
+          designer_name: string
+          duration_minutes: number
+          gst_amount: number
+          id?: string
+          invoice_date: string
+          rate_per_minute: number
+          session_id: string
+          status?: string
+          subtotal: number
+          total_amount: number
+          updated_at?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string | null
+          customer_name?: string
+          designer_name?: string
+          duration_minutes?: number
+          gst_amount?: number
+          id?: string
+          invoice_date?: string
+          rate_per_minute?: number
+          session_id?: string
+          status?: string
+          subtotal?: number
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_invoices_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_messages: {
+        Row: {
+          booking_id: string | null
+          content: string
+          created_at: string | null
+          id: string
+          sender_id: string | null
+          sender_name: string
+          sender_type: string
+          session_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          content: string
+          created_at?: string | null
+          id?: string
+          sender_id?: string | null
+          sender_name: string
+          sender_type: string
+          session_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          sender_id?: string | null
+          sender_name?: string
+          sender_type?: string
+          session_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_messages_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      session_work_reviews: {
+        Row: {
+          booking_id: string | null
+          created_at: string | null
+          id: string
+          rejection_reason: string | null
+          review_notes: string | null
+          review_status: string
+          reviewer_id: string
+          reviewer_type: string
+          session_id: string
+          updated_at: string | null
+          work_file_id: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string | null
+          id?: string
+          rejection_reason?: string | null
+          review_notes?: string | null
+          review_status: string
+          reviewer_id: string
+          reviewer_type: string
+          session_id: string
+          updated_at?: string | null
+          work_file_id?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string | null
+          id?: string
+          rejection_reason?: string | null
+          review_notes?: string | null
+          review_status?: string
+          reviewer_id?: string
+          reviewer_type?: string
+          session_id?: string
+          updated_at?: string | null
+          work_file_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_work_reviews_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_work_reviews_work_file_id_fkey"
+            columns: ["work_file_id"]
+            isOneToOne: false
+            referencedRelation: "session_files"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      success_stories_content: {
+        Row: {
+          achievements: Json | null
+          category: string | null
+          content: string | null
+          created_at: string | null
+          cta_data: Json | null
+          description: string | null
+          designer_data: Json | null
+          duration: string | null
+          id: string
+          image_url: string | null
+          is_published: boolean | null
+          metrics: Json | null
+          section_type: string
+          sort_order: number | null
+          stats_data: Json | null
+          subtitle: string | null
+          testimonial_data: Json | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          achievements?: Json | null
+          category?: string | null
+          content?: string | null
+          created_at?: string | null
+          cta_data?: Json | null
+          description?: string | null
+          designer_data?: Json | null
+          duration?: string | null
+          id?: string
+          image_url?: string | null
+          is_published?: boolean | null
+          metrics?: Json | null
+          section_type: string
+          sort_order?: number | null
+          stats_data?: Json | null
+          subtitle?: string | null
+          testimonial_data?: Json | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          achievements?: Json | null
+          category?: string | null
+          content?: string | null
+          created_at?: string | null
+          cta_data?: Json | null
+          description?: string | null
+          designer_data?: Json | null
+          duration?: string | null
+          id?: string
+          image_url?: string | null
+          is_published?: boolean | null
+          metrics?: Json | null
+          section_type?: string
+          sort_order?: number | null
+          stats_data?: Json | null
+          subtitle?: string | null
+          testimonial_data?: Json | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      support_page_content: {
+        Row: {
+          card_data: Json | null
+          content: string | null
+          created_at: string | null
+          description: string | null
+          form_fields: Json | null
+          id: string
+          is_published: boolean | null
+          section_type: string
+          sort_order: number | null
+          status_data: Json | null
+          subtitle: string | null
+          tab_name: string | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          card_data?: Json | null
+          content?: string | null
+          created_at?: string | null
+          description?: string | null
+          form_fields?: Json | null
+          id?: string
+          is_published?: boolean | null
+          section_type: string
+          sort_order?: number | null
+          status_data?: Json | null
+          subtitle?: string | null
+          tab_name?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          card_data?: Json | null
+          content?: string | null
+          created_at?: string | null
+          description?: string | null
+          form_fields?: Json | null
+          id?: string
+          is_published?: boolean | null
+          section_type?: string
+          sort_order?: number | null
+          status_data?: Json | null
+          subtitle?: string | null
+          tab_name?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       user_settings: {
         Row: {
@@ -912,6 +1888,7 @@ export type Database = {
           created_at: string
           description: string
           id: string
+          metadata: Json | null
           status: string
           transaction_type: string
           user_id: string
@@ -922,6 +1899,7 @@ export type Database = {
           created_at?: string
           description: string
           id?: string
+          metadata?: Json | null
           status?: string
           transaction_type: string
           user_id: string
@@ -932,6 +1910,7 @@ export type Database = {
           created_at?: string
           description?: string
           id?: string
+          metadata?: Json | null
           status?: string
           transaction_type?: string
           user_id?: string
@@ -953,11 +1932,97 @@ export type Database = {
           },
         ]
       }
+      website_sections: {
+        Row: {
+          background_color: string | null
+          content: string
+          created_at: string | null
+          icon: string | null
+          id: string
+          is_published: boolean | null
+          page: string
+          section_name: string
+          section_type: string
+          sort_order: number | null
+          subtitle: string | null
+          text_color: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          background_color?: string | null
+          content: string
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          is_published?: boolean | null
+          page: string
+          section_name: string
+          section_type: string
+          sort_order?: number | null
+          subtitle?: string | null
+          text_color?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          background_color?: string | null
+          content?: string
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          is_published?: boolean | null
+          page?: string
+          section_name?: string
+          section_type?: string
+          sort_order?: number | null
+          subtitle?: string | null
+          text_color?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      designer_availability: {
+        Row: {
+          activity_status: string | null
+          designer_id: string | null
+          is_available_for_live_session: boolean | null
+          is_online: boolean | null
+          last_seen: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "designers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
     }
     Functions: {
+      check_sufficient_balance: {
+        Args: { required_amount: number; user_uuid: string }
+        Returns: boolean
+      }
+      cleanup_stale_sessions: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      debug_designer_activity: {
+        Args: { user_uuid: string }
+        Returns: {
+          activity_record: Json
+          found_activity: boolean
+          is_designer: boolean
+          user_exists: boolean
+        }[]
+      }
       expire_old_live_session_requests: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -974,9 +2039,36 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_recent_transactions: {
+        Args: { limit_count?: number; user_uuid: string }
+        Returns: {
+          amount: number
+          created_at: string
+          description: string
+          id: string
+          metadata: Json
+          status: string
+          transaction_type: string
+        }[]
+      }
+      get_total_withdrawals: {
+        Args: { user_uuid: string }
+        Returns: number
+      }
       get_wallet_balance: {
         Args: { user_uuid: string }
         Returns: number
+      }
+      get_withdrawal_history: {
+        Args: { limit_count?: number; user_uuid: string }
+        Returns: {
+          amount: number
+          bank_details: Json
+          created_at: string
+          description: string
+          id: string
+          status: string
+        }[]
       }
       is_admin: {
         Args: { user_uuid: string }
@@ -984,6 +2076,10 @@ export type Database = {
       }
       is_designer_available_for_live_session: {
         Args: { designer_profile_id: string }
+        Returns: boolean
+      }
+      is_designer_in_live_session: {
+        Args: { designer_user_id: string }
         Returns: boolean
       }
     }
