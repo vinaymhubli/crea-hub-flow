@@ -53,7 +53,9 @@ export default function LiveSessionNotification({ designerId, onSessionStart }: 
     if (!user || !designerId) return;
 
     loadPendingRequests();
-    setupRealtimeSubscription();
+    const cleanup = setupRealtimeSubscription();
+    
+    return cleanup;
   }, [user, designerId]);
 
   const loadPendingRequests = async () => {
@@ -99,15 +101,29 @@ export default function LiveSessionNotification({ designerId, onSessionStart }: 
         }
       }));
 
+      console.log('📋 Loaded pending requests:', requestsWithProfiles.length);
       setPendingRequests(requestsWithProfiles);
       setShowNotification(requestsWithProfiles.length > 0);
+      
+      // Show toast notification for new requests
+      if (requestsWithProfiles.length > 0) {
+        const latestRequest = requestsWithProfiles[0];
+        toast({
+          title: "New Live Session Request",
+          description: `${latestRequest.customer.first_name} ${latestRequest.customer.last_name} wants to start a live session`,
+          duration: 5000,
+        });
+      }
     } catch (error) {
       console.error('Error loading pending requests:', error);
     }
   };
 
   const setupRealtimeSubscription = () => {
-    const channel = supabase
+    console.log('🔔 Setting up real-time subscription for designer:', designerId);
+    
+    // Channel for postgres changes (database triggers)
+    const postgresChannel = supabase
       .channel(`live_session_notifications_${designerId}`)
       .on(
         'postgres_changes',
@@ -118,7 +134,7 @@ export default function LiveSessionNotification({ designerId, onSessionStart }: 
           filter: `designer_id=eq.${designerId}`
         },
         (payload) => {
-          console.log('New session request:', payload);
+          console.log('📡 Postgres INSERT - New session request:', payload);
           loadPendingRequests();
         }
       )
@@ -131,14 +147,34 @@ export default function LiveSessionNotification({ designerId, onSessionStart }: 
           filter: `designer_id=eq.${designerId}`
         },
         (payload) => {
-          console.log('Session request updated:', payload);
+          console.log('📡 Postgres UPDATE - Session request updated:', payload);
           loadPendingRequests();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📡 Postgres channel subscription status:', status);
+      });
+
+    // Channel for broadcast notifications (immediate notifications)
+    const broadcastChannel = supabase
+      .channel(`designer_notifications_${designerId}`)
+      .on(
+        'broadcast',
+        { event: 'live_session_request' },
+        (payload) => {
+          console.log('📡 Broadcast - Live session request notification:', payload);
+          // Immediately reload requests to show the new one
+          loadPendingRequests();
+        }
+      )
+      .subscribe((status) => {
+        console.log('📡 Broadcast channel subscription status:', status);
+      });
 
     return () => {
-      supabase.removeChannel(channel);
+      console.log('🧹 Cleaning up real-time subscriptions');
+      supabase.removeChannel(postgresChannel);
+      supabase.removeChannel(broadcastChannel);
     };
   };
 

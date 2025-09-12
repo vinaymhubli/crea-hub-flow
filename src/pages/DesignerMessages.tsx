@@ -1,36 +1,36 @@
-import { useState, useEffect, useCallback } from 'react';
-import { 
+import { useState, useEffect, useCallback } from "react";
+import {
   MessageSquare,
-  Send, 
-  Search, 
-  MoreVertical, 
+  Send,
+  Search,
+  MoreVertical,
   Bell,
   LogOut,
   LayoutDashboard,
   User,
   DollarSign,
   Clock,
-  Monitor
-} from 'lucide-react';
-import { Link, useSearchParams } from 'react-router-dom';
+  Monitor,
+} from "lucide-react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import {
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
-import { DesignerSidebar } from '@/components/DesignerSidebar';
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { DesignerSidebar } from "@/components/DesignerSidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { ScreenShareModal } from "@/components/ScreenShareModal";
-
 
 interface Message {
   id: string;
@@ -54,13 +54,14 @@ interface Conversation {
   last_message: string;
   last_message_time: string;
   unread_count: number;
-  type: 'booking' | 'direct';
+  type: "booking" | "direct";
 }
 
 export default function DesignerMessages() {
-  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
-  const [newMessage, setNewMessage] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedConversation, setSelectedConversation] =
+    useState<Conversation | null>(null);
+  const [newMessage, setNewMessage] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,6 +71,7 @@ export default function DesignerMessages() {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (user) {
@@ -93,12 +95,20 @@ export default function DesignerMessages() {
 
   useEffect(() => {
     let cleanup: (() => void) | undefined;
-    
+
     if (selectedConversation) {
-      fetchMessages(selectedConversation.conversation_id || selectedConversation.booking_id || '');
-      cleanup = setupRealtimeSubscription(selectedConversation.conversation_id || selectedConversation.booking_id || '');
+      fetchMessages(
+        selectedConversation.conversation_id ||
+          selectedConversation.booking_id ||
+          ""
+      );
+      cleanup = setupRealtimeSubscription(
+        selectedConversation.conversation_id ||
+          selectedConversation.booking_id ||
+          ""
+      );
     }
-    
+
     return () => {
       if (cleanup) cleanup();
     };
@@ -106,9 +116,11 @@ export default function DesignerMessages() {
 
   useEffect(() => {
     // Check for booking_id in URL params to auto-select conversation
-    const bookingId = searchParams.get('booking_id');
+    const bookingId = searchParams.get("booking_id");
     if (bookingId && conversations.length > 0) {
-      const conversation = conversations.find(c => c.booking_id === bookingId);
+      const conversation = conversations.find(
+        (c) => c.booking_id === bookingId
+      );
       if (conversation) {
         setSelectedConversation(conversation);
       }
@@ -120,88 +132,100 @@ export default function DesignerMessages() {
   const fetchDesignerProfile = async () => {
     try {
       const { data, error } = await supabase
-        .from('designers')
-        .select('id')
-        .eq('user_id', user?.id)
+        .from("designers")
+        .select("id")
+        .eq("user_id", user?.id)
         .single();
 
       if (error) {
-        console.error('Error fetching designer profile:', error);
-        toast.error('Failed to load designer profile');
+        console.error("Error fetching designer profile:", error);
+        toast.error("Failed to load designer profile");
         return;
       }
 
       setDesignerId(data.id);
     } catch (error) {
-      console.error('Error:', error);
+      console.error("Error:", error);
     }
   };
 
-  const fetchConversations = useCallback(async (showLoading = false) => {
-    try {
-      if (showLoading) {
-        setLoading(true);
-      }
-      
-      // Get both booking-based and direct conversations
-      const [bookingConversations, directConversations] = await Promise.all([
-        fetchBookingConversations(),
-        fetchDirectConversations()
-      ]);
+  const fetchConversations = useCallback(
+    async (showLoading = false) => {
+      try {
+        if (showLoading) {
+          setLoading(true);
+        }
 
-      const allConversations = [...directConversations, ...bookingConversations];
-      setConversations(allConversations);
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Failed to load conversations');
-    } finally {
-      if (showLoading) {
-        setLoading(false);
+        // Get both booking-based and direct conversations
+        const [bookingConversations, directConversations] = await Promise.all([
+          fetchBookingConversations(),
+          fetchDirectConversations(),
+        ]);
+
+        const allConversations = [
+          ...directConversations,
+          ...bookingConversations,
+        ];
+        setConversations(allConversations);
+      } catch (error) {
+        console.error("Error:", error);
+        toast.error("Failed to load conversations");
+      } finally {
+        if (showLoading) {
+          setLoading(false);
+        }
       }
-    }
-  }, [designerId]);
+    },
+    [designerId]
+  );
 
   const fetchBookingConversations = async () => {
     const { data: bookings, error: bookingsError } = await supabase
-      .from('bookings')
-      .select('id, customer_id, service, status, updated_at')
-      .eq('designer_id', designerId)
-      .order('updated_at', { ascending: false });
+      .from("bookings")
+      .select("id, customer_id, service, status, updated_at")
+      .eq("designer_id", designerId)
+      .order("updated_at", { ascending: false });
 
     if (bookingsError || !bookings) return [];
 
-    const customerIds = [...new Set(bookings.map(b => b.customer_id))];
+    const customerIds = [...new Set(bookings.map((b) => b.customer_id))];
     let customerProfiles: any[] = [];
     if (customerIds.length > 0) {
       const { data } = await supabase
-        .from('profiles')
-        .select('user_id, first_name, last_name')
-        .in('user_id', customerIds);
+        .from("profiles")
+        .select("user_id, first_name, last_name")
+        .in("user_id", customerIds);
       customerProfiles = data || [];
     }
 
     const conversationPromises = bookings.map(async (booking) => {
-      const customerProfile = customerProfiles?.find(p => p.user_id === booking.customer_id);
-      const customerName = customerProfile 
-        ? `${customerProfile.first_name || ''} ${customerProfile.last_name || ''}`.trim() || 'Customer'
-        : 'Customer';
-      const customerInitials = customerProfile 
-        ? `${customerProfile.first_name?.[0] || ''}${customerProfile.last_name?.[0] || ''}` || 'C'
-        : 'C';
+      const customerProfile = customerProfiles?.find(
+        (p) => p.user_id === booking.customer_id
+      );
+      const customerName = customerProfile
+        ? `${customerProfile.first_name || ""} ${
+            customerProfile.last_name || ""
+          }`.trim() || "Customer"
+        : "Customer";
+      const customerInitials = customerProfile
+        ? `${customerProfile.first_name?.[0] || ""}${
+            customerProfile.last_name?.[0] || ""
+          }` || "C"
+        : "C";
 
       const { data: latestMessage } = await supabase
-        .from('messages')
-        .select('content, created_at')
-        .eq('booking_id', booking.id)
-        .order('created_at', { ascending: false })
+        .from("messages")
+        .select("content, created_at")
+        .eq("booking_id", booking.id)
+        .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
 
       const { count: unreadCount } = await supabase
-        .from('messages')
-        .select('*', { count: 'exact', head: true })
-        .eq('booking_id', booking.id)
-        .eq('sender_id', booking.customer_id);
+        .from("messages")
+        .select("*", { count: "exact", head: true })
+        .eq("booking_id", booking.id)
+        .eq("sender_id", booking.customer_id);
 
       return {
         booking_id: booking.id,
@@ -210,12 +234,12 @@ export default function DesignerMessages() {
         customer_initials: customerInitials,
         service: booking.service,
         status: booking.status,
-        last_message: latestMessage?.content || 'No messages yet',
-        last_message_time: latestMessage?.created_at 
+        last_message: latestMessage?.content || "No messages yet",
+        last_message_time: latestMessage?.created_at
           ? new Date(latestMessage.created_at).toLocaleDateString()
-          : '',
+          : "",
         unread_count: Math.min(unreadCount || 0, 9),
-        type: 'booking' as const
+        type: "booking" as const,
       };
     });
 
@@ -224,151 +248,173 @@ export default function DesignerMessages() {
 
   const fetchDirectConversations = async () => {
     const { data: conversations, error } = await supabase
-      .from('conversations')
-      .select(`
+      .from("conversations")
+      .select(
+        `
         id,
         customer_id,
         created_at,
         last_message_at
-      `)
-      .eq('designer_id', designerId)
-      .order('last_message_at', { ascending: false });
+      `
+      )
+      .eq("designer_id", designerId)
+      .order("last_message_at", { ascending: false });
 
     if (error || !conversations) return [];
 
-    const customerIds = conversations.map(c => c.customer_id);
+    const customerIds = conversations.map((c) => c.customer_id);
     let customerProfiles: any[] = [];
     if (customerIds.length > 0) {
       const { data } = await supabase
-        .from('profiles')
-        .select('user_id, first_name, last_name')
-        .in('user_id', customerIds);
+        .from("profiles")
+        .select("user_id, first_name, last_name")
+        .in("user_id", customerIds);
       customerProfiles = data || [];
     }
 
     const conversationPromises = conversations.map(async (conversation) => {
-      const customerProfile = customerProfiles?.find(p => p.user_id === conversation.customer_id);
-      const customerName = customerProfile 
-        ? `${customerProfile.first_name || ''} ${customerProfile.last_name || ''}`.trim() || 'Customer'
-        : 'Customer';
-      const customerInitials = customerProfile 
-        ? `${customerProfile.first_name?.[0] || ''}${customerProfile.last_name?.[0] || ''}` || 'C'
-        : 'C';
+      const customerProfile = customerProfiles?.find(
+        (p) => p.user_id === conversation.customer_id
+      );
+      const customerName = customerProfile
+        ? `${customerProfile.first_name || ""} ${
+            customerProfile.last_name || ""
+          }`.trim() || "Customer"
+        : "Customer";
+      const customerInitials = customerProfile
+        ? `${customerProfile.first_name?.[0] || ""}${
+            customerProfile.last_name?.[0] || ""
+          }` || "C"
+        : "C";
 
       const { data: latestMessage } = await supabase
-        .from('conversation_messages')
-        .select('content, created_at')
-        .eq('conversation_id', conversation.id)
-        .order('created_at', { ascending: false })
+        .from("conversation_messages")
+        .select("content, created_at")
+        .eq("conversation_id", conversation.id)
+        .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
 
       const { count: unreadCount } = await supabase
-        .from('conversation_messages')
-        .select('*', { count: 'exact', head: true })
-        .eq('conversation_id', conversation.id)
-        .eq('sender_id', conversation.customer_id);
+        .from("conversation_messages")
+        .select("*", { count: "exact", head: true })
+        .eq("conversation_id", conversation.id)
+        .eq("sender_id", conversation.customer_id);
 
       return {
         conversation_id: conversation.id,
         customer_id: conversation.customer_id,
         customer_name: customerName,
         customer_initials: customerInitials,
-        last_message: latestMessage?.content || 'No messages yet',
-        last_message_time: latestMessage?.created_at 
+        last_message: latestMessage?.content || "No messages yet",
+        last_message_time: latestMessage?.created_at
           ? new Date(latestMessage.created_at).toLocaleDateString()
-          : '',
+          : "",
         unread_count: Math.min(unreadCount || 0, 9),
-        type: 'direct' as const
+        type: "direct" as const,
       };
     });
 
     return Promise.all(conversationPromises);
   };
 
-  const fetchMessages = useCallback(async (conversationOrBookingId: string) => {
-    if (!selectedConversation) return;
+  const fetchMessages = useCallback(
+    async (conversationOrBookingId: string) => {
+      if (!selectedConversation) return;
 
-    try {
-      let data, error;
-      
-      if (selectedConversation.type === 'direct' && selectedConversation.conversation_id) {
-        ({ data, error } = await supabase
-          .from('conversation_messages')
-          .select('*')
-          .eq('conversation_id', selectedConversation.conversation_id)
-          .order('created_at', { ascending: true }));
-      } else if (selectedConversation.booking_id) {
-        ({ data, error } = await supabase
-          .from('messages')
-          .select('*')
-          .eq('booking_id', selectedConversation.booking_id)
-          .order('created_at', { ascending: true }));
+      try {
+        let data, error;
+
+        if (
+          selectedConversation.type === "direct" &&
+          selectedConversation.conversation_id
+        ) {
+          ({ data, error } = await supabase
+            .from("conversation_messages")
+            .select("*")
+            .eq("conversation_id", selectedConversation.conversation_id)
+            .order("created_at", { ascending: true }));
+        } else if (selectedConversation.booking_id) {
+          ({ data, error } = await supabase
+            .from("messages")
+            .select("*")
+            .eq("booking_id", selectedConversation.booking_id)
+            .order("created_at", { ascending: true }));
+        }
+
+        if (error) {
+          console.error("Error fetching messages:", error);
+          return;
+        }
+
+        setMessages(data || []);
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    },
+    [selectedConversation]
+  );
+
+  const setupRealtimeSubscription = useCallback(
+    (conversationOrBookingId: string) => {
+      if (!selectedConversation) return;
+
+      const channels: ReturnType<typeof supabase.channel>[] = [];
+
+      if (
+        selectedConversation.type === "direct" &&
+        selectedConversation.conversation_id
+      ) {
+        const channel = supabase
+          .channel(
+            `designer-conversation-${selectedConversation.conversation_id}`
+          )
+          .on(
+            "postgres_changes",
+            {
+              event: "INSERT",
+              schema: "public",
+              table: "conversation_messages",
+              filter: `conversation_id=eq.${selectedConversation.conversation_id}`,
+            },
+            (payload) => {
+              setMessages((prev) => [...prev, payload.new as Message]);
+              // Throttle conversation refresh
+              setTimeout(() => fetchConversations(), 1000);
+            }
+          )
+          .subscribe();
+        channels.push(channel);
       }
 
-      if (error) {
-        console.error('Error fetching messages:', error);
-        return;
+      if (selectedConversation.booking_id) {
+        const channel = supabase
+          .channel(`designer-messages-${selectedConversation.booking_id}`)
+          .on(
+            "postgres_changes",
+            {
+              event: "INSERT",
+              schema: "public",
+              table: "messages",
+              filter: `booking_id=eq.${selectedConversation.booking_id}`,
+            },
+            (payload) => {
+              console.log("New booking message received:", payload.new);
+              setMessages((prev) => [...prev, payload.new as Message]);
+              // Throttle conversation refresh
+              setTimeout(() => fetchConversations(), 1000);
+            }
+          )
+          .subscribe();
+        channels.push(channel);
       }
 
-      setMessages(data || []);
-    } catch (error) {
-      console.error('Error:', error);
-    }
-  }, [selectedConversation]);
-
-  const setupRealtimeSubscription = useCallback((conversationOrBookingId: string) => {
-    if (!selectedConversation) return;
-
-    const channels: ReturnType<typeof supabase.channel>[] = [];
-
-    if (selectedConversation.type === 'direct' && selectedConversation.conversation_id) {
-      const channel = supabase
-        .channel(`designer-conversation-${selectedConversation.conversation_id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'conversation_messages',
-            filter: `conversation_id=eq.${selectedConversation.conversation_id}`
-          },
-          (payload) => {
-            setMessages(prev => [...prev, payload.new as Message]);
-            // Throttle conversation refresh
-            setTimeout(() => fetchConversations(), 1000);
-          }
-        )
-        .subscribe();
-      channels.push(channel);
-    }
-
-    if (selectedConversation.booking_id) {
-      const channel = supabase
-        .channel(`designer-messages-${selectedConversation.booking_id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'messages',
-            filter: `booking_id=eq.${selectedConversation.booking_id}`
-          },
-          (payload) => {
-            console.log('New booking message received:', payload.new);
-            setMessages(prev => [...prev, payload.new as Message]);
-            // Throttle conversation refresh
-            setTimeout(() => fetchConversations(), 1000);
-          }
-        )
-        .subscribe();
-      channels.push(channel);
-    }
-
-    return () => {
-      channels.forEach(channel => supabase.removeChannel(channel));
-    };
-  }, [selectedConversation]);
+      return () => {
+        channels.forEach((channel) => supabase.removeChannel(channel));
+      };
+    },
+    [selectedConversation]
+  );
 
   const [isSending, setIsSending] = useState(false);
 
@@ -377,63 +423,62 @@ export default function DesignerMessages() {
 
     const messageContent = newMessage.trim();
     const tempId = `temp_${Date.now()}`;
-    
+
     // Optimistic UI update
     const optimisticMessage: Message = {
       id: tempId,
-      sender_id: user?.id || '',
+      sender_id: user?.id || "",
       booking_id: selectedConversation.booking_id,
       conversation_id: selectedConversation.conversation_id,
       content: messageContent,
-      message_type: 'text',
+      message_type: "text",
       file_url: null,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
     };
 
-    setMessages(prev => [...prev, optimisticMessage]);
-    setNewMessage('');
+    setMessages((prev) => [...prev, optimisticMessage]);
+    setNewMessage("");
 
     try {
       setIsSending(true);
       let error;
 
-      if (selectedConversation.type === 'direct' && selectedConversation.conversation_id) {
-        ({ error } = await supabase
-          .from('conversation_messages')
-          .insert({
-            conversation_id: selectedConversation.conversation_id,
-            sender_id: user?.id,
-            content: messageContent,
-            message_type: 'text'
-          }));
+      if (
+        selectedConversation.type === "direct" &&
+        selectedConversation.conversation_id
+      ) {
+        ({ error } = await supabase.from("conversation_messages").insert({
+          conversation_id: selectedConversation.conversation_id,
+          sender_id: user?.id,
+          content: messageContent,
+          message_type: "text",
+        }));
       } else if (selectedConversation.booking_id) {
-        ({ error } = await supabase
-          .from('messages')
-          .insert({
-            booking_id: selectedConversation.booking_id,
-            sender_id: user?.id,
-            content: messageContent,
-            message_type: 'text'
-          }));
+        ({ error } = await supabase.from("messages").insert({
+          booking_id: selectedConversation.booking_id,
+          sender_id: user?.id,
+          content: messageContent,
+          message_type: "text",
+        }));
       }
 
       if (error) {
-        console.error('Error sending message:', error);
+        console.error("Error sending message:", error);
         // Remove optimistic message on error
-        setMessages(prev => prev.filter(m => m.id !== tempId));
+        setMessages((prev) => prev.filter((m) => m.id !== tempId));
         setNewMessage(messageContent); // Restore message input
-        toast.error('Failed to send message');
+        toast.error("Failed to send message");
         return;
       }
 
       // Remove optimistic message - real message will come via realtime
-      setMessages(prev => prev.filter(m => m.id !== tempId));
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
     } catch (error) {
-      console.error('Error:', error);
+      console.error("Error:", error);
       // Remove optimistic message on error
-      setMessages(prev => prev.filter(m => m.id !== tempId));
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
       setNewMessage(messageContent); // Restore message input
-      toast.error('Failed to send message');
+      toast.error("Failed to send message");
     } finally {
       setIsSending(false);
     }
@@ -444,91 +489,93 @@ export default function DesignerMessages() {
     if (!userId) return null;
     try {
       const { data, error } = await supabase
-        .from('profiles')
-        .select('first_name, last_name')
-        .eq('user_id', userId)
+        .from("profiles")
+        .select("first_name, last_name")
+        .eq("user_id", userId)
         .single();
-      
+
       if (error || !data) return null;
-      return `${data.first_name || ''} ${data.last_name || ''}`.trim();
+      return `${data.first_name || ""} ${data.last_name || ""}`.trim();
     } catch (error) {
-      console.warn('Could not fetch designer name from profiles');
+      console.warn("Could not fetch designer name from profiles");
       return null;
     }
   };
 
   const startLiveDesignSession = async () => {
     if (!selectedConversation || !designerId) {
-      toast.error('Please select a conversation first');
+      toast.error("Please select a conversation first");
       return;
     }
 
     try {
       // First, end any existing active sessions for this designer
       await supabase
-        .from('active_sessions')
+        .from("active_sessions")
         .update({
-          status: 'ended',
-          ended_at: new Date().toISOString()
+          status: "ended",
+          ended_at: new Date().toISOString(),
         })
-        .eq('designer_id', designerId)
-        .eq('status', 'active');
+        .eq("designer_id", designerId)
+        .eq("status", "active");
 
       // Generate session ID
-      const sessionId = `live_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
+      const sessionId = `live_${Date.now()}_${Math.random()
+        .toString(36)
+        .substr(2, 9)}`;
+
       // Create active session record
       const { error: sessionError } = await supabase
-        .from('active_sessions')
+        .from("active_sessions")
         .insert({
           session_id: sessionId,
           designer_id: designerId,
           customer_id: selectedConversation.customer_id,
-          session_type: 'live_session',
-          status: 'active'
+          session_type: "live_session",
+          status: "active",
         });
 
       if (sessionError) {
-        console.error('Error creating active session:', sessionError);
+        console.error("Error creating active session:", sessionError);
         toast.error(`Failed to start session: ${sessionError.message}`);
         return;
       }
 
       // Get designer name from profiles table
       const designerName = await getDesignerName(user?.id);
-      
+
       // Notify customer that session is starting
       await supabase
         .channel(`customer_notifications_${selectedConversation.customer_id}`)
         .send({
-          type: 'broadcast',
-          event: 'live_session_accepted',
+          type: "broadcast",
+          event: "live_session_accepted",
           payload: {
             sessionId,
-            designerName: designerName || 'Designer'
-          }
+            designerName: designerName || "Designer",
+          },
         });
 
       // Immediately navigate customer's app to the live session page
       await supabase
         .channel(`customer_notifications_${selectedConversation.customer_id}`)
         .send({
-          type: 'broadcast',
-          event: 'navigate_to_session',
-          payload: { sessionId }
+          type: "broadcast",
+          event: "navigate_to_session",
+          payload: { sessionId },
         });
 
       // Redirect designer straight to live session page
       navigate(`/live-session/${sessionId}`);
-      
-      toast.success('Live design session started!');
+
+      toast.success("Live design session started!");
     } catch (error) {
-      console.error('Error starting live design session:', error);
-      toast.error('Failed to start session');
+      console.error("Error starting live design session:", error);
+      toast.error("Failed to start session");
     }
   };
 
-  const filteredConversations = conversations.filter(conv =>
+  const filteredConversations = conversations.filter((conv) =>
     conv.customer_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -552,7 +599,7 @@ export default function DesignerMessages() {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
         <DesignerSidebar />
-        
+
         <main className="flex-1">
           {/* Header */}
           <header className="bg-gradient-to-r from-green-400 to-blue-500 px-6 py-8">
@@ -561,50 +608,62 @@ export default function DesignerMessages() {
                 <SidebarTrigger className="text-white hover:bg-white/20" />
                 <div>
                   <h1 className="text-2xl font-bold text-white">Messages</h1>
-                  <p className="text-white/80">Communicate with your clients and manage project discussions</p>
+                  <p className="text-white/80">
+                    Communicate with your clients and manage project discussions
+                  </p>
                 </div>
               </div>
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
                   <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
-                  <span className="text-white/80 text-sm font-medium">Online</span>
+                  <span className="text-white/80 text-sm font-medium">
+                    Online
+                  </span>
                 </div>
                 <Bell className="w-5 h-5 text-white/80" />
                 <Popover>
                   <PopoverTrigger asChild>
                     <button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
-                      <span className="text-white font-semibold text-xs">MD</span>
+                      <span className="text-white font-semibold text-xs">
+                        MD
+                      </span>
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-64 p-0" align="end">
                     <div className="p-4">
                       <div className="flex items-center space-x-3 mb-3">
                         <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                          <span className="text-primary font-semibold text-xs">MD</span>
+                          <span className="text-primary font-semibold text-xs">
+                            MD
+                          </span>
                         </div>
                         <div>
-                          <p className="font-semibold text-foreground">Meet My Designer</p>
-                          <p className="text-sm text-muted-foreground">lvbn200@gmail.com</p>
+                          <p className="font-semibold text-foreground">
+                            Meet My Designer
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            lvbn200@gmail.com
+                          </p>
                         </div>
                       </div>
                       <Separator className="my-3" />
                       <div className="space-y-1">
-                        <Link 
-                          to="/designer-dashboard" 
+                        <Link
+                          to="/designer-dashboard"
                           className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
                         >
                           <LayoutDashboard className="w-4 h-4 mr-3" />
                           Dashboard
                         </Link>
-                        <Link 
-                          to="/designer-dashboard/earnings" 
+                        <Link
+                          to="/designer-dashboard/earnings"
                           className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
                         >
                           <DollarSign className="w-4 h-4 mr-3" />
                           Earnings
                         </Link>
-                        <Link 
-                          to="/designer-dashboard/profile" 
+                        <Link
+                          to="/designer-dashboard/profile"
                           className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
                         >
                           <User className="w-4 h-4 mr-3" />
@@ -630,7 +689,10 @@ export default function DesignerMessages() {
                 <CardHeader className="bg-gradient-to-r from-green-500 to-blue-500 text-white">
                   <CardTitle className="flex items-center justify-between">
                     <span>Conversations</span>
-                    <Badge variant="secondary" className="bg-white/20 text-white">
+                    <Badge
+                      variant="secondary"
+                      className="bg-white/20 text-white"
+                    >
                       {conversations.length}
                     </Badge>
                   </CardTitle>
@@ -654,18 +716,29 @@ export default function DesignerMessages() {
                     {filteredConversations.length === 0 ? (
                       <div className="p-8 text-center">
                         <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">No conversations</h3>
-                        <p className="text-gray-600">You'll see client conversations here once you have bookings</p>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                          No conversations
+                        </h3>
+                        <p className="text-gray-600">
+                          You'll see client conversations here once you have
+                          bookings
+                        </p>
                       </div>
                     ) : (
                       filteredConversations.map((conversation) => (
                         <div
-                          key={conversation.conversation_id || conversation.booking_id}
+                          key={
+                            conversation.conversation_id ||
+                            conversation.booking_id
+                          }
                           onClick={() => setSelectedConversation(conversation)}
                           className={`p-4 border-b border-gray-100 cursor-pointer transition-colors hover:bg-gray-50 ${
-                            selectedConversation?.conversation_id === conversation.conversation_id || 
-                            selectedConversation?.booking_id === conversation.booking_id 
-                              ? 'bg-gradient-to-r from-green-50 to-blue-50 border-l-4 border-green-500' : ''
+                            selectedConversation?.conversation_id ===
+                              conversation.conversation_id ||
+                            selectedConversation?.booking_id ===
+                              conversation.booking_id
+                              ? "bg-gradient-to-r from-green-50 to-blue-50 border-l-4 border-green-500"
+                              : ""
                           }`}
                         >
                           <div className="flex items-start space-x-3">
@@ -675,15 +748,22 @@ export default function DesignerMessages() {
                                   {conversation.customer_initials}
                                 </AvatarFallback>
                               </Avatar>
-                              <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${
-                                conversation.status === 'confirmed' || conversation.status === 'in_progress' ? 'bg-green-500' : 
-                                conversation.status === 'pending' ? 'bg-yellow-500' : 
-                                'bg-gray-400'
-                              }`}></div>
+                              <div
+                                className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${
+                                  conversation.status === "confirmed" ||
+                                  conversation.status === "in_progress"
+                                    ? "bg-green-500"
+                                    : conversation.status === "pending"
+                                    ? "bg-yellow-500"
+                                    : "bg-gray-400"
+                                }`}
+                              ></div>
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between">
-                                <h3 className="font-semibold text-gray-900 truncate">{conversation.customer_name}</h3>
+                                <h3 className="font-semibold text-gray-900 truncate">
+                                  {conversation.customer_name}
+                                </h3>
                                 {conversation.unread_count > 0 && (
                                   <Badge className="bg-gradient-to-r from-green-500 to-blue-500 text-white text-xs">
                                     {conversation.unread_count}
@@ -691,20 +771,27 @@ export default function DesignerMessages() {
                                 )}
                               </div>
                               {conversation.service && (
-                                <p className="text-sm text-gray-500 truncate mt-1">{conversation.service}</p>
+                                <p className="text-sm text-gray-500 truncate mt-1">
+                                  {conversation.service}
+                                </p>
                               )}
-                              <p className="text-sm text-gray-600 truncate mt-1">{conversation.last_message}</p>
+                              <p className="text-sm text-gray-600 truncate mt-1">
+                                {conversation.last_message}
+                              </p>
                               <div className="flex items-center justify-between mt-2">
                                 <span className="text-xs text-gray-500 flex items-center">
                                   <Clock className="w-3 h-3 mr-1" />
                                   {conversation.last_message_time}
                                 </span>
-                                <Badge 
-                                  variant="outline" 
+                                <Badge
+                                  variant="outline"
                                   className={`text-xs ${
-                                    conversation.status === 'confirmed' || conversation.status === 'in_progress' ? 'border-green-500 text-green-600' :
-                                    conversation.status === 'pending' ? 'border-yellow-500 text-yellow-600' :
-                                    'border-gray-400 text-gray-600'
+                                    conversation.status === "confirmed" ||
+                                    conversation.status === "in_progress"
+                                      ? "border-green-500 text-green-600"
+                                      : conversation.status === "pending"
+                                      ? "border-yellow-500 text-yellow-600"
+                                      : "border-gray-400 text-gray-600"
                                   }`}
                                 >
                                   {conversation.status}
@@ -733,21 +820,29 @@ export default function DesignerMessages() {
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <h3 className="font-semibold">{selectedConversation.customer_name}</h3>
-                            <p className="text-white/80 text-sm">Project: {selectedConversation.service}</p>
+                            <h3 className="font-semibold">
+                              {selectedConversation.customer_name}
+                            </h3>
+                            <p className="text-white/80 text-sm">
+                              Project: {selectedConversation.service}
+                            </p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             className="text-white hover:bg-white/20 gap-2"
                             onClick={() => startLiveDesignSession()}
                           >
                             <Monitor className="w-4 h-4" />
                             live design with client
                           </Button>
-                          <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-white hover:bg-white/20"
+                          >
                             <MoreVertical className="w-4 h-4" />
                           </Button>
                         </div>
@@ -760,17 +855,27 @@ export default function DesignerMessages() {
                         {messages.length === 0 ? (
                           <div className="text-center py-8">
                             <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                            <p className="text-gray-600">No messages yet. Start the conversation!</p>
+                            <p className="text-gray-600">
+                              No messages yet. Start the conversation!
+                            </p>
                           </div>
                         ) : (
                           messages.map((message) => (
                             <div
                               key={message.id}
-                              className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
+                              className={`flex ${
+                                message.sender_id === user?.id
+                                  ? "justify-end"
+                                  : "justify-start"
+                              }`}
                             >
-                              <div className={`flex items-start space-x-2 max-w-[70%] ${
-                                message.sender_id === user?.id ? 'flex-row-reverse space-x-reverse' : ''
-                              }`}>
+                              <div
+                                className={`flex items-start space-x-2 max-w-[70%] ${
+                                  message.sender_id === user?.id
+                                    ? "flex-row-reverse space-x-reverse"
+                                    : ""
+                                }`}
+                              >
                                 {message.sender_id !== user?.id && (
                                   <Avatar className="w-8 h-8">
                                     <AvatarFallback className="bg-gray-200 text-gray-600 text-xs">
@@ -778,18 +883,26 @@ export default function DesignerMessages() {
                                     </AvatarFallback>
                                   </Avatar>
                                 )}
-                                <div className={`rounded-2xl px-4 py-3 ${
-                                  message.sender_id === user?.id
-                                    ? 'bg-gradient-to-r from-green-500 to-blue-500 text-white'
-                                    : 'bg-gray-100 text-gray-900'
-                                }`}>
+                                <div
+                                  className={`rounded-2xl px-4 py-3 ${
+                                    message.sender_id === user?.id
+                                      ? "bg-gradient-to-r from-green-500 to-blue-500 text-white"
+                                      : "bg-gray-100 text-gray-900"
+                                  }`}
+                                >
                                   <p className="text-sm">{message.content}</p>
-                                  <p className={`text-xs mt-1 ${
-                                    message.sender_id === user?.id ? 'text-white/70' : 'text-gray-500'
-                                  }`}>
-                                    {new Date(message.created_at).toLocaleTimeString([], { 
-                                      hour: '2-digit', 
-                                      minute: '2-digit' 
+                                  <p
+                                    className={`text-xs mt-1 ${
+                                      message.sender_id === user?.id
+                                        ? "text-white/70"
+                                        : "text-gray-500"
+                                    }`}
+                                  >
+                                    {new Date(
+                                      message.created_at
+                                    ).toLocaleTimeString([], {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
                                     })}
                                   </p>
                                 </div>
@@ -808,7 +921,7 @@ export default function DesignerMessages() {
                               value={newMessage}
                               onChange={(e) => setNewMessage(e.target.value)}
                               onKeyDown={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
+                                if (e.key === "Enter" && !e.shiftKey) {
                                   e.preventDefault();
                                   handleSendMessage();
                                 }
@@ -823,10 +936,14 @@ export default function DesignerMessages() {
                             className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white px-6"
                           >
                             <Send className="w-4 h-4" />
-                            {isSending && <span className="ml-2">Sending...</span>}
+                            {isSending && (
+                              <span className="ml-2">Sending...</span>
+                            )}
                           </Button>
                         </div>
-                        <p className="text-xs text-gray-500 mt-2">Press Enter to send, Shift + Enter for new line</p>
+                        <p className="text-xs text-gray-500 mt-2">
+                          Press Enter to send, Shift + Enter for new line
+                        </p>
                       </div>
                     </CardContent>
                   </>
@@ -834,8 +951,12 @@ export default function DesignerMessages() {
                   <div className="flex-1 flex items-center justify-center">
                     <div className="text-center">
                       <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Select a conversation</h3>
-                      <p className="text-gray-600">Choose a conversation from the left to start messaging</p>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        Select a conversation
+                      </h3>
+                      <p className="text-gray-600">
+                        Choose a conversation from the left to start messaging
+                      </p>
                     </div>
                   </div>
                 )}
@@ -844,7 +965,7 @@ export default function DesignerMessages() {
           </div>
         </main>
       </div>
-      
+
       {selectedConversation && currentSessionId && (
         <ScreenShareModal
           isOpen={showScreenShare}
@@ -854,7 +975,13 @@ export default function DesignerMessages() {
           }}
           roomId={currentSessionId}
           isHost={true}
-          designerName={user?.user_metadata?.first_name ? `${user.user_metadata.first_name} ${user.user_metadata.last_name || ''}` : 'Designer'}
+          designerName={
+            user?.user_metadata?.first_name
+              ? `${user.user_metadata.first_name} ${
+                  user.user_metadata.last_name || ""
+                }`
+              : "Designer"
+          }
           customerName={selectedConversation.customer_name}
           bookingId={selectedConversation.booking_id}
         />
