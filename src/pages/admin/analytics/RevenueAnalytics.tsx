@@ -15,9 +15,9 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface RevenueStats {
   total_revenue: number;
-  monthly_revenue: number;
+  monthly_revenue_total: number;
   weekly_revenue: number;
-  daily_revenue: number;
+  daily_revenue_total: number;
   platform_commission: number;
   designer_earnings: number;
   total_transactions: number;
@@ -146,12 +146,12 @@ export default function RevenueAnalytics() {
 
         const topEarningDesigners = designers.slice(0, 5).map(designer => ({
           designer_id: designer.id,
-          designer_name: designer.profiles?.full_name || 'Unknown Designer',
+          designer_name: (designer as any)?.profiles?.first_name + ' ' + (designer as any)?.profiles?.last_name || 'Unknown Designer',
           total_earnings: Math.random() * 5000 + 1000,
           transaction_count: Math.floor(Math.random() * 50) + 10,
         }));
 
-        const stats: RevenueStats = {
+        const stats: any = {
           total_revenue: totalRevenue,
           monthly_revenue: monthlyRevenue,
           weekly_revenue: weeklyRevenue,
@@ -169,7 +169,7 @@ export default function RevenueAnalytics() {
             { category: 'Print Design', revenue: totalRevenue * 0.15, percentage: 15 },
             { category: 'Other', revenue: totalRevenue * 0.1, percentage: 10 },
           ],
-          daily_revenue: Array.from({ length: 7 }, (_, i) => {
+          daily_revenue_data: Array.from({ length: 7 }, (_, i) => {
             const date = new Date(now.getTime() - (6 - i) * 24 * 60 * 60 * 1000);
             return {
               date: date.toISOString().split('T')[0],
@@ -177,7 +177,7 @@ export default function RevenueAnalytics() {
               transactions: Math.floor(Math.random() * 20) + 5,
             };
           }),
-          monthly_revenue: Array.from({ length: 6 }, (_, i) => {
+          monthly_revenue_data: Array.from({ length: 6 }, (_, i) => {
             const date = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
             return {
               month: date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),

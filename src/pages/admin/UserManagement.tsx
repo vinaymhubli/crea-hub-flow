@@ -128,7 +128,7 @@ export default function UserManagement() {
         })
       );
 
-      setUsers(usersWithStats);
+      setUsers(usersWithStats as any);
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {

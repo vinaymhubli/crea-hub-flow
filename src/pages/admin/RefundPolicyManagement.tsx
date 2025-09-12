@@ -212,7 +212,7 @@ export default function RefundPolicyManagement() {
       }
 
       if (data && data.length > 0) {
-        setSections(data);
+        setSections(data as any);
       } else {
         // If no data exists, use the default sections
         setSections(REFUND_POLICY_SECTIONS);

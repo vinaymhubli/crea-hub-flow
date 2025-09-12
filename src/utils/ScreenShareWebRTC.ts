@@ -1,4 +1,4 @@
-import AgoraRTC, { IAgoraRTCClient, ILocalVideoTrack, IRemoteUser } from "agora-rtc-sdk-ng";
+import AgoraRTC, { IAgoraRTCClient, ILocalVideoTrack, IRemoteAudioTrack, IRemoteVideoTrack } from "agora-rtc-sdk-ng";
 import { supabase } from "@/integrations/supabase/client";
 
 export class ScreenShareManager {
@@ -125,7 +125,7 @@ export class ScreenShareManager {
           bitrateMax: 2000
         },
         optimizationMode: "detail"
-      }, false);
+      }, "disable");
 
       // Handle both single track and array of tracks
       if (Array.isArray(screenTrack)) {
@@ -252,7 +252,7 @@ export class ScreenShareManager {
         this.onConnectionStateChange?.(map[cur] || "connecting");
       });
 
-      this.client.on("user-published", async (user: IRemoteUser, mediaType) => {
+      this.client.on("user-published", async (user: any, mediaType) => {
         console.log("👤 Remote user published:", user.uid, "Media:", mediaType);
         await this.client!.subscribe(user, mediaType);
         if (mediaType === "video" && user.videoTrack && this.remoteVideoElement) {
@@ -273,7 +273,7 @@ export class ScreenShareManager {
         }
       });
 
-      this.client.on("user-unpublished", (user: IRemoteUser, mediaType) => {
+      this.client.on("user-unpublished", (user: any, mediaType) => {
         console.log("👤 Remote user unpublished:", user.uid, "Media:", mediaType);
       });
 

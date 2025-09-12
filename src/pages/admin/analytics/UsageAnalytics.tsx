@@ -94,7 +94,7 @@ export default function UsageAnalytics() {
           new_registrations_week: users.filter(u => new Date(u.created_at) >= weekAgo).length,
           new_registrations_month: users.filter(u => new Date(u.created_at) >= monthAgo).length,
           total_sessions: sessions.length,
-          average_session_duration: sessions.reduce((sum, s) => sum + (s.duration || 0), 0) / sessions.length || 0,
+          average_session_duration: sessions.reduce((sum, s) => sum + ((s as any)?.duration || 0), 0) / sessions.length || 0,
           page_views: Math.floor(Math.random() * 10000) + 5000, // Mock data
           unique_visitors: users.length,
           bounce_rate: Math.random() * 0.3 + 0.2, // Mock data
