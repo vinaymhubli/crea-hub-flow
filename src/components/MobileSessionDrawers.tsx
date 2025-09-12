@@ -66,8 +66,8 @@ export function MobileSessionDrawers(props: MobileSessionDrawersProps) {
 
   return (
     <>
-      {/* Floating Action Buttons - Mobile Only */}
-      <div className="lg:hidden fixed right-4 top-1/2 -translate-y-1/2 z-40 flex flex-col gap-3">
+      {/* Floating Action Buttons - Mobile/Tablet Only */}
+      <div className="xl:hidden fixed right-4 top-1/2 -translate-y-1/2 z-40 flex flex-col gap-3">
         {drawers.map((drawer) => (
           <Button
             key={drawer.id}

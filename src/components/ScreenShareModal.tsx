@@ -1159,7 +1159,7 @@ export function ScreenShareModal({
                         </div>
 
                         {/* Right Side - Session Panel - Desktop Only */}
-                        <div className="hidden lg:block w-80 xl:w-96 border-l border-gray-200 bg-white overflow-hidden">
+                        <div className="hidden xl:block w-80 xl:w-96 border-l border-gray-200 bg-white overflow-hidden">
                             <SessionSidePanel
                                 sessionId={roomId}
                                 designerName={

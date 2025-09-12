@@ -74,7 +74,7 @@ export default function LiveSessionRequestDialog({
         if (error) throw error;
 
         // Fetch customer profiles separately
-        const customerIds = (data || []).map(req => req.customer_id);
+        const customerIds = (data || []).map((req: any) => req.customer_id);
         let customerProfiles: any = {};
         
         if (customerIds.length > 0) {
@@ -92,7 +92,7 @@ export default function LiveSessionRequestDialog({
         }
 
         // Combine data with customer profiles
-        const requestsWithProfiles = (data || []).map(request => ({
+        const requestsWithProfiles = (data || []).map((request: any) => ({
           ...request,
           customer: customerProfiles[request.customer_id] || {
             first_name: 'Unknown',
@@ -113,27 +113,27 @@ export default function LiveSessionRequestDialog({
         if (error) throw error;
 
         // Fetch designer profiles separately
-        const designerIds = (data || []).map(req => req.designer_id);
-        let designerProfiles: any = {};
-        
-        if (designerIds.length > 0) {
-          const { data: profiles, error: profilesError } = await supabase
-            .from('profiles')
-            .select('user_id, first_name, last_name, avatar_url')
-            .in('user_id', designerIds);
+          const designerIds = (data || []).map((req: any) => req.designer_id);
+          let designerProfiles: any = {};
+          
+          if (designerIds.length > 0) {
+            const { data: profiles, error: profilesError } = await supabase
+              .from('profiles')
+              .select('user_id, first_name, last_name, avatar_url')
+              .in('user_id', designerIds);
 
-          if (!profilesError && profiles) {
-            designerProfiles = profiles.reduce((acc, profile) => {
-              acc[profile.user_id] = profile;
-              return acc;
-            }, {} as any);
+            if (!profilesError && profiles) {
+              designerProfiles = profiles.reduce((acc, profile) => {
+                acc[profile.user_id] = profile;
+                return acc;
+              }, {} as any);
+            }
           }
-        }
 
-        // Combine data with designer profiles
-        const requestsWithProfiles = (data || []).map(request => ({
-          ...request,
-          designer: designerProfiles[request.designer_id] || {
+          // Combine data with designer profiles
+          const requestsWithProfiles = (data || []).map((request: any) => ({
+            ...request,
+            designer: designerProfiles[request.designer_id] || {
             first_name: 'Unknown',
             last_name: 'Designer'
           }

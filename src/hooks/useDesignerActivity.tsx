@@ -174,7 +174,7 @@ export const useDesignerActivity = () => {
         is_online: isOnline,
         last_seen: activityData?.last_seen || new Date().toISOString(),
         is_in_schedule: isInSchedule,
-        activity_status: activityData?.activity_status || 'offline'
+        activity_status: (activityData?.activity_status as "active" | "offline" | "idle") || 'offline'
       });
 
       // Update designers table with combined status
