@@ -32,11 +32,14 @@ export default function Auth() {
         // Redirect based on user role
         const { data: profile } = await supabase
           .from('profiles')
-          .select('role, user_type')
+          .select('role, user_type, is_admin')
           .eq('user_id', session.user.id)
           .single();
         
-        if (profile?.role === 'designer' || profile?.user_type === 'designer') {
+        // Check if user is admin first
+        if (profile?.is_admin || profile?.user_type === 'admin') {
+          navigate('/admin-dashboard');
+        } else if (profile?.role === 'designer' || profile?.user_type === 'designer') {
           navigate('/designer-dashboard');
         } else {
           navigate('/customer-dashboard');
@@ -112,11 +115,14 @@ export default function Auth() {
         // Get user role and redirect accordingly
         const { data: profile } = await supabase
           .from('profiles')
-          .select('role, user_type')
+          .select('role, user_type, is_admin')
           .eq('user_id', data.user.id)
           .single();
         
-        if (profile?.role === 'designer' || profile?.user_type === 'designer') {
+        // Check if user is admin first
+        if (profile?.is_admin || profile?.user_type === 'admin') {
+          navigate('/admin-dashboard', { replace: true });
+        } else if (profile?.role === 'designer' || profile?.user_type === 'designer') {
           navigate('/designer-dashboard', { replace: true });
         } else {
           navigate('/customer-dashboard', { replace: true });

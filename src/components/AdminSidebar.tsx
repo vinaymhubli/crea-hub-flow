@@ -27,6 +27,18 @@ import {
   MessageSquare,
   Bell,
   ChevronRight,
+  Users,
+  Receipt,
+  HelpCircle,
+  FileText as FileTextIcon,
+  Globe,
+  DollarSign,
+  TrendingUp,
+  Activity,
+  Edit,
+  Database,
+  Shield,
+  Trophy,
 } from "lucide-react";
 
 const mainSections = [
@@ -34,6 +46,16 @@ const mainSections = [
     title: "Dashboard",
     url: "/admin-dashboard",
     icon: LayoutDashboard,
+  },
+  {
+    title: "User Management",
+    url: "/admin/users",
+    icon: Users,
+  },
+  {
+    title: "Transactions",
+    url: "/admin/transactions",
+    icon: Receipt,
   },
   {
     title: "Designer Verification",
@@ -52,30 +74,110 @@ const mainSections = [
   },
 ];
 
-// General section items
-const generalSections = [
+// Content Management section items
+const contentSections = [
+  // {
+  //   title: "CMS Dashboard",
+  //   url: "/admin/cms",
+  //   icon: FileTextIcon,
+  // },
+  // {
+  //   title: "Website Sections",
+  //   url: "/admin/cms/sections",
+  //   icon: LayoutDashboard,
+  // },
+  // {
+  //   title: "FAQs",
+  //   url: "/admin/cms/faqs",
+  //   icon: HelpCircle,
+  // },
   {
-    title: "General Settings",
-    url: "/admin/general-settings",
-    icon: Settings,
+    title: "Terms & Conditions",
+    url: "/admin/cms/terms",
+    icon: FileText,
   },
-];
-
-// Invoicing section items
-const invoicingSections = [
   {
-    title: "Invoicing",
-    url: "/admin/invoicing",
-    icon: CreditCard,
+    title: "Support Content",
+    url: "/admin/cms/support",
+    icon: MessageSquare,
   },
+  {
+    title: "Privacy Policy",
+    url: "/admin/cms/privacy-policy",
+    icon: Shield,
+  },
+  {
+    title: "Success Stories",
+    url: "/admin/cms/success-stories",
+    icon: Trophy,
+  },
+  // {
+  //   title: "For Designers",
+  //   url: "/admin/cms/for-designers",
+  //   icon: Users,
+  // },
+  {
+    title: "About Us",
+    url: "/admin/cms/about",
+    icon: Globe,
+  },
+  {
+    title: "Contact Info",
+    url: "/admin/cms/contact",
+    icon: Bell,
+  },
+  {
+    title: "Refund Policy",
+    url: "/admin/cms/refund-policy",
+    icon: DollarSign,
+  },
+  // {
+  //   title: "Help Center",
+  //   url: "/admin/cms/help-center",
+  //   icon: HelpCircle,
+  // },
+  // {
+  //   title: "Blog",
+  //   url: "/admin/cms/blog",
+  //   icon: Edit,
+  // },
 ];
 
 // Analytics section items
 const analyticsSections = [
   {
-    title: "Analytics",
-    url: "/admin/analytics",
+    title: "Usage Analytics",
+    url: "/admin/analytics/usage",
+    icon: Activity,
+  },
+  {
+    title: "Revenue Analytics",
+    url: "/admin/analytics/revenue",
+    icon: TrendingUp,
+  },
+  {
+    title: "Engagement Analytics",
+    url: "/admin/analytics/engagement",
     icon: BarChart3,
+  },
+];
+
+// Platform Configuration section items
+const platformSections = [
+  {
+    title: "Commissions",
+    url: "/admin/platform/commissions",
+    icon: DollarSign,
+  },
+  {
+    title: "Taxes",
+    url: "/admin/platform/taxes",
+    icon: Receipt,
+  },
+  {
+    title: "General Settings",
+    url: "/admin/platform/settings",
+    icon: Settings,
   },
 ];
 
@@ -142,12 +244,12 @@ export function AdminSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* General Section */}
+        {/* Content Management Section */}
         <SidebarGroup>
-          {!collapsed && <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">General</SidebarGroupLabel>}
+          {!collapsed && <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Content Management</SidebarGroupLabel>}
           <SidebarGroupContent>
             <SidebarMenu>
-              {generalSections.map((item) => (
+              {contentSections.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink to={item.url} className={getNavCls}>
@@ -164,12 +266,12 @@ export function AdminSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Invoicing Section */}
+        {/* Platform Configuration Section */}
         <SidebarGroup>
-          {!collapsed && <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Invoicing</SidebarGroupLabel>}
+          {!collapsed && <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Platform Config</SidebarGroupLabel>}
           <SidebarGroupContent>
             <SidebarMenu>
-              {invoicingSections.map((item) => (
+              {platformSections.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink to={item.url} className={getNavCls}>
