@@ -1018,7 +1018,7 @@ export default function SessionSidePanel({
                     <div className="flex items-center space-x-1">
                       <Input
                         type="number"
-                        step="0.01"
+                        step=".1"
                         min="0"
                         value={newRate}
                         onChange={(e) => setNewRate(parseFloat(e.target.value) || 0)}
@@ -1072,8 +1072,8 @@ export default function SessionSidePanel({
                     <div className="flex items-center space-x-1">
                       <Input
                         type="number"
-                        step="0.1"
-                        min="0.1"
+                        step=".1"
+                        min="0"
                         value={newMultiplier}
                         onChange={(e) => setNewMultiplier(parseFloat(e.target.value) || 1)}
                         className="w-16 h-6 text-xs"

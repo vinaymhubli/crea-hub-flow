@@ -22,7 +22,7 @@ export default function LiveCallSession() {
   const [bothJoined, setBothJoined] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [duration, setDuration] = useState(0);
-  const [rate, setRate] = useState(5.0); // Default rate like ScreenShare
+  const [rate, setRate] = useState(0); // Start with 0, will be loaded from database
   const [formatMultiplier, setFormatMultiplier] = useState(1);
   const [screenShareNotification, setScreenShareNotification] = useState<
     string | null
@@ -85,24 +85,55 @@ export default function LiveCallSession() {
         );
         setTimeout(() => setScreenShareNotification(null), 3000);
       })
-      .on("broadcast", { event: "session_end" }, async (p) => {
-        console.log("📡 Customer received session_end event:", p.payload);
-        // Customer should stop media and redirect when designer ends session
-        if (!isDesigner) {
-          console.log("🛑 Customer stopping media due to session end by designer");
-          // Stop all media first
-          if (agoraCallRef.current) {
-            try {
-              await agoraCallRef.current.leave();
-              console.log("✅ Customer media tracks stopped");
-            } catch (error) {
-              console.error("❌ Error stopping customer media tracks:", error);
-            }
-          }
-          console.log("🔄 Customer redirecting due to session end by designer");
-          navigate("/customer-dashboard");
-        }
-      })
+       .on("broadcast", { event: "session_end" }, async (p) => {
+         console.log("📡 Customer received session_end event:", p.payload);
+         // Customer should stop media and redirect when designer ends session
+         if (!isDesigner) {
+           console.log("🛑 Customer stopping media due to session end by designer");
+           // Stop all media first
+           if (agoraCallRef.current) {
+             try {
+               await agoraCallRef.current.leave();
+               console.log("✅ Customer media tracks stopped");
+             } catch (error) {
+               console.error("❌ Error stopping customer media tracks:", error);
+             }
+           }
+           console.log("🔄 Customer redirecting due to session end by designer");
+           navigate("/customer-dashboard");
+         }
+       })
+       .on("broadcast", { event: "request_current_values" }, (p) => {
+         console.log("📡 Designer received request for current values:", p.payload);
+         // Designer should respond with current rate and multiplier
+         if (isDesigner) {
+           // Send current rate
+           if (rate > 0) {
+             channel.send({
+               type: "broadcast",
+               event: "pricing_change",
+               payload: {
+                 newRate: rate,
+                 changedBy: designerName,
+               },
+             });
+             console.log("💰 Designer responding with current rate:", rate);
+           }
+           
+           // Send current format multiplier
+           if (formatMultiplier > 0) {
+             channel.send({
+               type: "broadcast",
+               event: "multiplier_change",
+               payload: {
+                 newMultiplier: formatMultiplier,
+                 changedBy: designerName,
+               },
+             });
+             console.log("📊 Designer responding with current format multiplier:", formatMultiplier);
+           }
+         }
+       })
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
@@ -201,6 +232,10 @@ export default function LiveCallSession() {
           data.designer.hourly_rate / 60,
           "per minute"
         );
+      } else {
+        // Set default rate if no rate found in booking
+        setRate(5.0);
+        console.log("💰 Using default rate from booking: 5.0 per minute");
       }
       setCustomerBalance(0);
     } catch (error) {
@@ -225,11 +260,21 @@ export default function LiveCallSession() {
             designerData.hourly_rate / 60,
             "per minute"
           );
+        } else {
+          // Set default rate for designer if no rate found
+          setRate(5.0);
+          console.log("💰 Using default rate for designer: 5.0 per minute");
         }
+      } else if (!isDesigner) {
+        // Customer should wait for rate from designer, but set a default
+        setRate(5.0);
+        console.log("💰 Customer using default rate: 5.0 per minute");
       }
       setCustomerBalance(0);
     } catch (error) {
       console.error("Error loading current user data:", error);
+      // Set default rate on error
+      setRate(5.0);
     }
   };
 
@@ -239,6 +284,41 @@ export default function LiveCallSession() {
       loadBookingData();
     }
   }, [sessionId, isDesigner, user?.id]);
+
+  // Broadcast initial values when rate is loaded and both users are joined
+  useEffect(() => {
+    if (bothJoined && isDesigner && rate > 0) {
+      console.log("💰 Rate loaded, broadcasting initial values:", rate);
+      
+      // Add a small delay to ensure the rate is fully set
+      const timeoutId = setTimeout(() => {
+        // Broadcast current rate
+        channel.send({
+          type: "broadcast",
+          event: "pricing_change",
+          payload: {
+            newRate: rate,
+            changedBy: designerName,
+          },
+        });
+        
+        // Broadcast current format multiplier
+        if (formatMultiplier > 0) {
+          channel.send({
+            type: "broadcast",
+            event: "multiplier_change",
+            payload: {
+              newMultiplier: formatMultiplier,
+              changedBy: designerName,
+            },
+          });
+          console.log("📊 Broadcasting initial format multiplier:", formatMultiplier);
+        }
+      }, 500); // 500ms delay to ensure rate is loaded
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [bothJoined, isDesigner, rate, formatMultiplier, channel, designerName]);
 
   const handleEndByDesigner = async () => {
     console.log("🛑 Ending session immediately...");
@@ -391,6 +471,18 @@ export default function LiveCallSession() {
   const handleLocalJoined = () => {
     console.log("🎯 Local user joined, setting bothJoined to true");
     setBothJoined(true);
+    
+    // If customer joins, request current values from designer
+    if (!isDesigner) {
+      channel.send({
+        type: "broadcast",
+        event: "request_current_values",
+        payload: {
+          requestedBy: customerName,
+        },
+      });
+      console.log("📡 Customer requesting current rate and multiplier values");
+    }
   };
   const handleRemoteJoined = () => {
     setBothJoined(true);
@@ -401,18 +493,6 @@ export default function LiveCallSession() {
         event: "session_start",
         payload: { started_at: new Date().toISOString() },
       });
-      // Also broadcast current rate to customer
-      if (rate > 0) {
-        channel.send({
-          type: "broadcast",
-          event: "pricing_change",
-          payload: {
-            newRate: rate,
-            changedBy: designerName,
-          },
-        });
-        console.log("💰 Broadcasting initial rate to customer:", rate);
-      }
     }
   };
   const handleRemoteLeft = () => {

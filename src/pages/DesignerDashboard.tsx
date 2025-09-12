@@ -373,7 +373,11 @@ export default function DesignerDashboard() {
                       className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-500"
                     />
                     <span className="text-white/80 text-xs font-medium">
-                      {designerProfile?.is_online ? "Online" : "Offline"}
+                      {activity?.is_online
+                        ? activity.activity_status
+                          ? "Online"
+                          : "Offline"
+                        : "Offline"}
                     </span>
                   </div>
                 </div>
