@@ -969,6 +969,7 @@ export default function DesignerMessages() {
 
       {selectedConversation && currentSessionId && (
         <ScreenShareModal
+          participantName="Designer"
           isOpen={showScreenShare}
           onClose={() => {
             setShowScreenShare(false);

@@ -29,7 +29,7 @@ export default function FooterCTA() {
   const fetchContent = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('for_designers_content')
         .select('*')
         .eq('section_type', 'footer_cta')
@@ -39,7 +39,7 @@ export default function FooterCTA() {
         .single();
 
       if (error && error.code !== 'PGRST116') throw error;
-      setContent(data);
+      setContent(data as ForDesignersContent);
     } catch (error) {
       console.error('Error fetching footer CTA content:', error);
     } finally {

@@ -830,7 +830,7 @@ export function ScreenShareModal({
             }
 
             // End any related live session requests
-            if (bookingData?.designer_id) {
+            if (bookingData?.designer) {
                 const { error: liveSessionError } = await supabase
                     .from('live_session_requests')
                     .update({
@@ -838,7 +838,7 @@ export function ScreenShareModal({
                         rejection_reason: `Session ended by ${isHost ? 'designer' : 'customer'}`,
                         updated_at: new Date().toISOString()
                     })
-                    .eq('designer_id', bookingData.designer_id)
+                    .eq('designer_id', (bookingData as any).designer_id || (bookingData as any).designer?.id)
                     .eq('status', 'accepted');
 
                 if (liveSessionError) {

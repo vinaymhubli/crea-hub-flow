@@ -287,7 +287,7 @@ export default function SessionSidePanel({
 
       if (error) throw error;
       console.log('Loaded work reviews:', data);
-      setWorkReviews(data || []);
+      setWorkReviews((data as any) || []);
     } catch (error) {
       console.error('Error loading work reviews:', error);
       setWorkReviews([]);

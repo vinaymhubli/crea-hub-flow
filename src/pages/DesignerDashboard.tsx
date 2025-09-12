@@ -923,6 +923,7 @@ export default function DesignerDashboard() {
             onClose={handleCloseScreenShare}
             roomId={currentSessionId}
             isHost={true} // Designer is always the host in live sessions
+            participantName="Designer"
             designerName={
               profile
                 ? `${profile.first_name} ${profile.last_name}`

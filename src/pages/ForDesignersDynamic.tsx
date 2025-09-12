@@ -29,14 +29,14 @@ export default function ForDesignersDynamic() {
   const fetchContent = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('for_designers_content')
         .select('*')
         .eq('is_published', true)
         .order('sort_order', { ascending: true });
 
       if (error) throw error;
-      setContent(data || []);
+      setContent((data as any) || []);
     } catch (error) {
       console.error('Error fetching for designers content:', error);
     } finally {

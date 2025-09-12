@@ -80,9 +80,9 @@ export function WithdrawalModal({ open, onOpenChange, onSuccess, userType = 'cus
   const fetchWalletBalance = async () => {
     try {
       if (userType === 'designer') {
-        const { data, error } = await supabase.rpc('get_available_earnings', { user_uuid: user?.id });
+        const { data, error } = await (supabase as any).rpc('get_available_earnings', { user_uuid: user?.id });
         if (error) throw error;
-        setWalletBalance(data || 0);
+        setWalletBalance(Number(data) || 0);
       } else {
         const { data, error } = await supabase.rpc('get_wallet_balance', { user_uuid: user?.id });
         if (error) throw error;

@@ -60,7 +60,7 @@ export function useWallet() {
         .limit(limit);
 
       if (error) throw error;
-      setTransactions(data || []);
+      setTransactions((data as any) || []);
     } catch (err) {
       console.error('Error fetching transactions:', err);
       setError('Failed to fetch transactions');

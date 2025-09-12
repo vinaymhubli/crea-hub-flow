@@ -640,6 +640,7 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
           onClose={handleCloseScreenShare}
           roomId={currentSessionId}
           isHost={profile?.user_type === 'designer'}
+          participantName={profile?.user_type === 'designer' ? 'Designer' : 'Customer'}
           designerName={selectedDesigner?.profiles ? `${selectedDesigner.profiles.first_name} ${selectedDesigner.profiles.last_name}` : 'Designer'}
           customerName={profile ? `${profile.first_name} ${profile.last_name}` : 'Customer'}
           bookingId={undefined} // Live sessions don't have booking IDs

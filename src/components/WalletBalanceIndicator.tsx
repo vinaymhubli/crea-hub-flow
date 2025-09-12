@@ -46,9 +46,9 @@ export function WalletBalanceIndicator({ className = '', showActions = true }: W
   const fetchDesignerEarnings = async () => {
     try {
       setEarningsLoading(true);
-      const { data, error } = await supabase.rpc('get_total_earnings', { user_uuid: user?.id });
+      const { data, error } = await (supabase as any).rpc('get_total_earnings', { user_uuid: user?.id });
       if (error) throw error;
-      setEarnings(data || 0);
+      setEarnings(Number(data) || 0);
     } catch (error) {
       console.error('Error fetching earnings:', error);
     } finally {

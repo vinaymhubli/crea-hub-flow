@@ -26,6 +26,7 @@ interface EarningsTransaction {
   description: string;
   status: string;
   created_at: string;
+  transaction_type: string;
   metadata?: any;
 }
 
@@ -60,9 +61,9 @@ export function DesignerEarningsDashboard() {
       setLoading(true);
       
       // Get total earnings
-      const { data: earningsData, error: earningsError } = await supabase.rpc('get_total_earnings', { user_uuid: user?.id });
+      const { data: earningsData, error: earningsError } = await (supabase as any).rpc('get_total_earnings', { user_uuid: user?.id });
       if (earningsError) throw earningsError;
-      setEarnings(earningsData || 0);
+      setEarnings(Number(earningsData) || 0);
 
       // Get earnings transactions
       const { data: transactionsData, error: transactionsError } = await supabase
