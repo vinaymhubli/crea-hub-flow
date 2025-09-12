@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ScreenShareManager } from '@/utils/ScreenShareWebRTC';
 import { toast } from "sonner";
 import SessionSidePanel from './SessionSidePanel';
+import { MobileSessionDrawers } from './MobileSessionDrawers';
 import SessionControls from './SessionControls';
 import LiveSessionTicker from './LiveSessionTicker';
 import { supabase } from '@/integrations/supabase/client';
@@ -1157,8 +1158,8 @@ export function ScreenShareModal({
                             </div>
                         </div>
 
-                        {/* Right Side - Session Panel */}
-                        <div className="w-full lg:w-80 xl:w-96 border-t lg:border-t-0 lg:border-l border-gray-200 bg-white overflow-hidden">
+                        {/* Right Side - Session Panel - Desktop Only */}
+                        <div className="hidden lg:block w-80 xl:w-96 border-l border-gray-200 bg-white overflow-hidden">
                             <SessionSidePanel
                                 sessionId={roomId}
                                 designerName={
@@ -1191,6 +1192,39 @@ export function ScreenShareModal({
                                 formatMultiplier={formatMultiplier}
                             />
                         </div>
+
+                        {/* Mobile Floating Action Buttons & Drawers */}
+                        <MobileSessionDrawers
+                            sessionId={roomId}
+                            designerName={
+                                designerName || 
+                                (bookingData?.designer?.user?.first_name && bookingData?.designer?.user?.last_name 
+                                    ? `${bookingData.designer.user.first_name} ${bookingData.designer.user.last_name}`
+                                    : profile?.user_type === 'designer' 
+                                        ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Designer'
+                                        : 'Designer')
+                            }
+                            customerName={
+                                customerName || 
+                                (bookingData?.customer?.first_name && bookingData?.customer?.last_name 
+                                    ? `${bookingData.customer.first_name} ${bookingData.customer.last_name}`
+                                    : profile?.user_type === 'customer' 
+                                        ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Customer'
+                                        : 'Customer')
+                            }
+                            isDesigner={isHost}
+                            duration={sessionDuration}
+                            rate={designerRate}
+                            balance={customerBalance}
+                            onPauseSession={handlePauseSession}
+                            onResumeSession={handleResumeSession}
+                            isPaused={isPaused}
+                            bookingId={bookingId}
+                            userId={user?.id}
+                            onRateChange={handleRateChange}
+                            onMultiplierChange={handleMultiplierChange}
+                            formatMultiplier={formatMultiplier}
+                        />
                     </div>
                 </DialogContent>
             </Dialog>

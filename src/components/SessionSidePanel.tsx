@@ -26,6 +26,8 @@ interface SessionSidePanelProps {
   onRateChange?: (newRate: number) => void;
   onMultiplierChange?: (newMultiplier: number) => void;
   formatMultiplier?: number;
+  defaultTab?: string;
+  mobileMode?: boolean;
 }
 
 interface ChatMessage {
@@ -96,7 +98,9 @@ export default function SessionSidePanel({
   userId = '',
   onRateChange,
   onMultiplierChange,
-  formatMultiplier = 1
+  formatMultiplier = 1,
+  defaultTab = 'billing',
+  mobileMode = false
 }: SessionSidePanelProps) {
   
     // SessionSidePanel rendered
@@ -983,15 +987,17 @@ export default function SessionSidePanel({
   }, [formatMultiplier]);
 
   return (
-    <div className="w-full lg:w-80 xl:w-96 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col max-h-full overflow-auto md:overflow-hidden md:h-full h-[40vh]">
-      <Tabs defaultValue="billing" className="flex-1 flex flex-col h-full min-h-0">
-        <TabsList className="grid w-full grid-cols-5 h-10 shrink-0">
-          <TabsTrigger value="billing" className="text-xs sm:text-sm px-1 sm:px-3">Billing</TabsTrigger>
-          <TabsTrigger value="files" className="text-xs sm:text-sm px-1 sm:px-3">Files</TabsTrigger>
-          <TabsTrigger value="chat" className="text-xs sm:text-sm px-1 sm:px-3">Chat</TabsTrigger>
-          <TabsTrigger value="review" className="text-xs sm:text-sm px-1 sm:px-3">Review</TabsTrigger>
-          <TabsTrigger value="invoice" className="text-xs sm:text-sm px-1 sm:px-3">Invoice</TabsTrigger>
-        </TabsList>
+    <div className={mobileMode ? "w-full bg-white flex flex-col h-full" : "w-full lg:w-80 xl:w-96 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col max-h-full overflow-auto md:overflow-hidden md:h-full h-[40vh]"}>
+      <Tabs defaultValue={defaultTab} className="flex-1 flex flex-col h-full min-h-0">
+        {!mobileMode && (
+          <TabsList className="grid w-full grid-cols-5 h-10 shrink-0">
+            <TabsTrigger value="billing" className="text-xs sm:text-sm px-1 sm:px-3">Billing</TabsTrigger>
+            <TabsTrigger value="files" className="text-xs sm:text-sm px-1 sm:px-3">Files</TabsTrigger>
+            <TabsTrigger value="chat" className="text-xs sm:text-sm px-1 sm:px-3">Chat</TabsTrigger>
+            <TabsTrigger value="review" className="text-xs sm:text-sm px-1 sm:px-3">Review</TabsTrigger>
+            <TabsTrigger value="invoice" className="text-xs sm:text-sm px-1 sm:px-3">Invoice</TabsTrigger>
+          </TabsList>
+        )}
 
         <TabsContent value="billing" className="flex-1 p-2 sm:p-4 space-y-3 sm:space-y-4 min-h-0">
           <Card className="h-full min-h-[20rem] flex flex-col min-h-">
