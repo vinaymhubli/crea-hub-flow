@@ -45,7 +45,7 @@ export default function PrivacyPolicyManagement() {
         .order('sort_order', { ascending: true });
 
       if (error) throw error;
-      setContent(data || []);
+      setContent(data as any || []);
     } catch (error) {
       console.error('Error fetching privacy policy content:', error);
       toast({

@@ -43,12 +43,12 @@ export default function ForDesignersManagement() {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('for_designers_content')
+        .from('website_sections' as any)
         .select('*')
         .order('sort_order', { ascending: true });
 
       if (error) throw error;
-      setContent(data || []);
+      setContent(data as any || []);
     } catch (error) {
       console.error('Error fetching for designers content:', error);
       toast({
@@ -82,14 +82,14 @@ export default function ForDesignersManagement() {
 
       if (item.id) {
         const { error } = await supabase
-          .from('for_designers_content')
+          .from('website_sections' as any)
           .update(itemData)
           .eq('id', item.id);
 
         if (error) throw error;
       } else {
         const { error } = await supabase
-          .from('for_designers_content')
+          .from('website_sections' as any)
           .insert(itemData);
 
         if (error) throw error;
@@ -116,7 +116,7 @@ export default function ForDesignersManagement() {
   const deleteItem = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('for_designers_content')
+        .from('website_sections' as any)
         .delete()
         .eq('id', id);
 

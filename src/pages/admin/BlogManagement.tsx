@@ -94,6 +94,7 @@ export default function BlogManagement() {
       
       const postData = {
         title: formData.title,
+        slug: formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
         content: formData.content,
         excerpt: formData.excerpt,
         is_published: formData.is_published,

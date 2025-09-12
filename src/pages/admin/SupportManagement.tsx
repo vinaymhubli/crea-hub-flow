@@ -48,7 +48,7 @@ export default function SupportManagement() {
         .order('sort_order', { ascending: true });
 
       if (error) throw error;
-      setContent(data || []);
+      setContent(data as any || []);
     } catch (error) {
       console.error('Error fetching support content:', error);
       toast({

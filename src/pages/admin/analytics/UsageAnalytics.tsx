@@ -76,7 +76,7 @@ export default function UsageAnalytics() {
       // Fetch user data
       const { data: users } = await supabase.from('profiles').select('*');
       const { data: bookings } = await supabase.from('bookings').select('*');
-      const { data: sessions } = await supabase.from('live_sessions').select('*');
+      const { data: sessions } = await supabase.from('active_sessions' as any).select('*');
 
       if (users && bookings && sessions) {
         const now = new Date();

@@ -68,7 +68,7 @@ export default function AboutManagement() {
         .order('sort_order', { ascending: true });
 
       if (error) throw error;
-      setContent(data || []);
+      setContent(data as any || []);
     } catch (error) {
       console.error('Error fetching about content:', error);
       toast({
