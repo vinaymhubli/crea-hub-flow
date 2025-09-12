@@ -58,6 +58,7 @@ import Blog from "./pages/Blog"
 import Careers from "./pages/Careers"
 import Privacy from "./pages/Privacy"
 import Terms from "./pages/Terms"
+import RefundPolicy from "./pages/RefundPolicy"
 import { ProtectedRoute } from "./components/ProtectedRoute"
 import { ProtectedAdminRoute } from "./components/ProtectedAdminRoute"
 import { AdminLayout } from "./components/AdminLayout"
@@ -114,6 +115,7 @@ function AppContent() {
           <Route path="/careers" element={<Careers />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
+          <Route path="/refund-policy" element={<RefundPolicy />} />
           
           {/* Protected Admin Routes */}
           <Route path="/admin-dashboard" element={

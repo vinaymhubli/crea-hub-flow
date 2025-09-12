@@ -60,16 +60,17 @@ const Footer = () => {
             <ul className="space-y-4">
               <li><Link to="/about" className="text-gray-400 hover:text-green-400 transition-colors">About Us</Link></li>
               <li><Link to="/careers" className="text-gray-400 hover:text-green-400 transition-colors">Careers</Link></li>
-              <li><Link to="/contact" className="text-gray-400 hover:text-green-400 transition-colors">Contact</Link></li>
+              <li><Link to="/contact" className="text-gray-400 hover:text-green-400 transition-colors">Contact Us</Link></li>
               <li><Link to="/privacy" className="text-gray-400 hover:text-green-400 transition-colors">Privacy Policy</Link></li>
-              <li><Link to="/terms" className="text-gray-400 hover:text-green-400 transition-colors">Terms of Service</Link></li>
+              <li><Link to="/terms" className="text-gray-400 hover:text-green-400 transition-colors">Terms and Conditions</Link></li>
+              <li><Link to="/refund-policy" className="text-gray-400 hover:text-green-400 transition-colors">Refund Policy</Link></li>
             </ul>
           </div>
         </div>
 
         <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-400 text-sm">
-            © 2024 Meet My Designers. All rights reserved.
+            © 2024 Meet My Designers Pvt Ltd. All rights reserved.
           </p>
           <div className="flex items-center space-x-6 mt-4 md:mt-0">
             <span className="text-gray-400 text-sm">Made with</span>

@@ -29,7 +29,7 @@ export default function Header() {
     { name: 'Designers', href: getDesignersLink() },
     { name: 'Services', href: '/services' },
     { name: 'How It Works', href: '/how-to-use' },
-    { name: 'Contact', href: '/contact' },
+    { name: 'Contact Us', href: '/contact' },
   ];
 
   const handleSignOut = async () => {

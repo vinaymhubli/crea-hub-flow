@@ -11,10 +11,10 @@ const Terms = () => {
         <div className="max-w-4xl mx-auto px-6 text-center">
           <Badge className="mb-4" variant="secondary">
             <Scale className="w-4 h-4 mr-2" />
-            Terms of Service
+            Terms and Conditions
           </Badge>
           <h1 className="text-4xl md:text-5xl font-bold mb-6">
-            Terms of Service
+            Terms and Conditions
           </h1>
           <p className="text-xl text-muted-foreground mb-8">
             Last updated: January 1, 2024
@@ -28,7 +28,8 @@ const Terms = () => {
           <div className="prose prose-lg max-w-none">
             <h2>Acceptance of Terms</h2>
             <p>
-              By accessing and using Meet My Designer, you accept and agree to be bound by the terms and provision of this agreement.
+              By accessing and using Meet My Designer, you accept and agree to be bound by the terms and conditions of this agreement. 
+              If you do not agree to these terms, please do not use our services.
             </p>
 
             <Card className="my-8">
@@ -55,10 +56,11 @@ const Terms = () => {
               and professional standards.
             </p>
 
-            <h2>Payment Terms</h2>
+            <h2>Payment Terms and Conditions</h2>
             <p>
-              All payments are processed securely through our payment providers. Fees are clearly disclosed before 
-              any transaction is completed.
+              All payments are processed securely through our trusted payment providers. Fees and charges are clearly 
+              disclosed before any transaction is completed. By making a payment, you agree to our payment terms and 
+              acknowledge that all transactions are final unless otherwise specified in our refund policy.
             </p>
 
             <Card className="my-8">
@@ -120,17 +122,37 @@ const Terms = () => {
               including intellectual property rights and dispute resolution clauses.
             </p>
 
-            <h2>Changes to Terms</h2>
+            <h2>Changes to Terms and Conditions</h2>
             <p>
-              We reserve the right to modify these terms at any time. Users will be notified of significant changes 
-              and continued use constitutes acceptance of the modified terms.
+              We reserve the right to modify these terms and conditions at any time. Users will be notified of significant changes 
+              via email or through our platform. Continued use of our services after changes are posted constitutes acceptance 
+              of the modified terms. We encourage you to review these terms periodically.
+            </p>
+
+            <h2>Governing Law and Jurisdiction</h2>
+            <p>
+              These terms and conditions are governed by and construed in accordance with the laws of the jurisdiction 
+              where our company is incorporated. Any disputes arising from these terms will be subject to the exclusive 
+              jurisdiction of the courts in that jurisdiction.
+            </p>
+
+            <h2>Severability</h2>
+            <p>
+              If any provision of these terms and conditions is found to be unenforceable or invalid, that provision 
+              will be limited or eliminated to the minimum extent necessary so that the remaining terms will remain 
+              in full force and effect.
             </p>
 
             <h2>Contact Information</h2>
             <p>
-              For questions about these Terms of Service, please contact us at legal@meetmydesigner.com or through 
-              our support channels.
+              For questions about these Terms and Conditions, please contact us at:
             </p>
+            <ul>
+              <li>Email: legal@meetmydesigner.com</li>
+              <li>Support: support@meetmydesigner.com</li>
+              <li>Phone: +1 (555) 123-4567</li>
+              <li>Address: Meet My Designers Pvt Ltd, Plot No. C-54, G Block, Bandra Kurla Complex, Mumbai, Maharashtra 400051</li>
+            </ul>
           </div>
         </div>
       </section>
