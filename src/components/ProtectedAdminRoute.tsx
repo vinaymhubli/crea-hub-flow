@@ -1,7 +1,7 @@
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 interface ProtectedAdminRouteProps {
   children: ReactNode;
@@ -9,42 +9,14 @@ interface ProtectedAdminRouteProps {
 
 export const ProtectedAdminRoute = ({ children }: ProtectedAdminRouteProps) => {
   const { user, loading } = useAuth();
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
-  const [checkingAdmin, setCheckingAdmin] = useState(true);
+  const { isAdmin, loading: adminLoading } = useAdminAuth();
 
-  useEffect(() => {
-    const checkAdminStatus = async () => {
-      if (!user) {
-        setIsAdmin(false);
-        setCheckingAdmin(false);
-        return;
-      }
-
-      try {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('is_admin')
-          .eq('user_id', user.id)
-          .single();
-        
-        setIsAdmin(profile?.is_admin || false);
-      } catch (error) {
-        console.error('Error checking admin status:', error);
-        setIsAdmin(false);
-      } finally {
-        setCheckingAdmin(false);
-      }
-    };
-
-    checkAdminStatus();
-  }, [user]);
-
-  if (loading || checkingAdmin) {
+  if (loading || adminLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Verifying access...</p>
+          <p className="mt-4 text-muted-foreground">Verifying admin access...</p>
         </div>
       </div>
     );
@@ -55,7 +27,17 @@ export const ProtectedAdminRoute = ({ children }: ProtectedAdminRouteProps) => {
   }
 
   if (!isAdmin) {
-    return <Navigate to="/admin-login" replace />;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
+          <p className="text-muted-foreground mb-4">
+            You don't have admin privileges. Only the designated admin can access this area.
+          </p>
+          <Navigate to="/admin-login" replace />
+        </div>
+      </div>
+    );
   }
 
   return <>{children}</>;

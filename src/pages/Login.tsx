@@ -16,10 +16,14 @@ export default function Login() {
   // Redirect if already logged in
   useEffect(() => {
     if (!loading && user && profile) {
-      const redirectPath = profile.user_type === 'designer' 
-        ? '/designer-dashboard' 
-        : '/customer-dashboard';
-      navigate(redirectPath, { replace: true });
+      // Check if user is admin first
+      if (profile.is_admin || profile.user_type === 'admin') {
+        navigate('/admin-dashboard', { replace: true });
+      } else if (profile.user_type === 'designer') {
+        navigate('/designer-dashboard', { replace: true });
+      } else {
+        navigate('/customer-dashboard', { replace: true });
+      }
     }
   }, [user, profile, loading, navigate]);
 

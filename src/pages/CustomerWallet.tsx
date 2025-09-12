@@ -19,7 +19,8 @@ import {
   RefreshCw,
   X,
   Copy,
-  CheckCircle
+  CheckCircle,
+  ArrowUpFromLine
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -46,78 +47,35 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { UniversalPaymentModal } from '@/components/UniversalPaymentModal';
+import { WithdrawalModal } from '@/components/WithdrawalModal';
+import { BankAccountManager } from '@/components/BankAccountManager';
 
 // Real data will be fetched from database
 
 // CustomerSidebar is now imported from shared component
 
-function AddFundsModal() {
-  const [amount, setAmount] = useState('');
-  const [open, setOpen] = useState(false);
+function AddFundsButton() {
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 text-white hover:shadow-lg transition-all duration-300">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Funds
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-xl text-foreground">Add funds to your wallet</DialogTitle>
-          <DialogDescription>
-            Enter the amount you would like to add to your wallet.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="amount">Amount</Label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
-              <Input
-                id="amount"
-                placeholder="0.00"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="pl-8 border-teal-200/50 focus:border-teal-400 focus:ring-teal-400/20"
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="payment-method">Payment Method</Label>
-            <Select>
-              <SelectTrigger className="border-teal-200/50 focus:border-teal-400 focus:ring-teal-400/20">
-                <SelectValue placeholder="Select a payment method" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="card-5678">•••• 5678</SelectItem>
-                <SelectItem value="new">Add new payment method</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <div className="flex justify-end space-x-3 mt-6">
-          <Button variant="outline" onClick={() => setOpen(false)}>
-            Cancel
-          </Button>
-          <Button 
-            className="bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 text-white hover:shadow-lg transition-all duration-300" 
-            onClick={() => {
-              if (amount && parseFloat(amount) > 0) {
-                console.log('Adding funds:', amount);
-                // In a real app, this would process the payment
-                alert(`Successfully added $${amount} to your wallet!`);
-                setAmount('');
-                setOpen(false);
-              }
-            }}
-          >
-            Add Funds
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+    <>
+      <Button 
+        className="bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 text-white hover:shadow-lg transition-all duration-300"
+        onClick={() => setShowPaymentModal(true)}
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Add Credits
+      </Button>
+      <UniversalPaymentModal 
+        open={showPaymentModal}
+        onOpenChange={setShowPaymentModal}
+        onSuccess={() => {
+          // Refresh wallet data after successful payment
+          window.location.reload();
+        }}
+      />
+    </>
   );
 }
 
@@ -127,12 +85,28 @@ export default function CustomerWallet() {
   const [walletBalance, setWalletBalance] = useState(0);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
+  const [showBankManager, setShowBankManager] = useState(false);
 
   useEffect(() => {
     if (user) {
       fetchWalletData();
     }
   }, [user]);
+
+  // Handle payment success callback
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('payment_success') === 'true' || urlParams.get('mock_payment_success') === 'true') {
+      // Refresh wallet data after successful payment
+      fetchWalletData();
+      // Show success message
+      const amount = urlParams.get('amount') || '';
+      alert(`Payment successful! ₹${amount} has been added to your wallet.`);
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   const fetchWalletData = async () => {
     try {
@@ -158,8 +132,8 @@ export default function CustomerWallet() {
         title: transaction.description,
         date: new Date(transaction.created_at).toLocaleDateString(),
         amount: transaction.transaction_type === 'deposit' || transaction.transaction_type === 'refund' 
-          ? `+$${transaction.amount}` 
-          : `-$${transaction.amount}`,
+          ? `+₹${transaction.amount}` 
+          : `-₹${transaction.amount}`,
         status: transaction.status,
         icon: transaction.transaction_type === 'deposit' ? ArrowDownLeft : 
               transaction.transaction_type === 'refund' ? RefreshCw : ArrowUpRight,
@@ -287,12 +261,17 @@ export default function CustomerWallet() {
                 <CardContent>
                   <div className="space-y-4">
                     <div>
-                      <p className="text-4xl font-bold text-foreground mb-2">${walletBalance.toFixed(2)}</p>
+                      <p className="text-4xl font-bold text-foreground mb-2">₹{walletBalance.toFixed(2)}</p>
                       <p className="text-muted-foreground">Available for design sessions</p>
                     </div>
                     <div className="flex space-x-3">
-                      <AddFundsModal />
-                      <Button variant="outline" className="hover:bg-gradient-to-r hover:from-teal-50 hover:to-blue-100 border-teal-300/50">
+                      <AddFundsButton />
+                      <Button 
+                        variant="outline" 
+                        className="hover:bg-gradient-to-r hover:from-teal-50 hover:to-blue-100 border-teal-300/50"
+                        onClick={() => setShowWithdrawalModal(true)}
+                      >
+                        <ArrowUpFromLine className="w-4 h-4 mr-2" />
                         Withdraw
                       </Button>
                     </div>
@@ -324,9 +303,13 @@ export default function CustomerWallet() {
                         Default
                       </Badge>
                     </div>
-                    <Button variant="outline" className="w-full hover:bg-gradient-to-r hover:from-teal-50 hover:to-blue-100 border-teal-300/50">
+                    <Button 
+                      variant="outline" 
+                      className="w-full hover:bg-gradient-to-r hover:from-teal-50 hover:to-blue-100 border-teal-300/50"
+                      onClick={() => setShowBankManager(true)}
+                    >
                       <Plus className="w-4 h-4 mr-2" />
-                      Add Payment Method
+                      Manage Bank Accounts
                     </Button>
                   </div>
                 </CardContent>
@@ -413,6 +396,26 @@ export default function CustomerWallet() {
           </div>
         </main>
       </div>
+      
+      {/* Withdrawal Modal */}
+      <WithdrawalModal 
+        open={showWithdrawalModal}
+        onOpenChange={setShowWithdrawalModal}
+        onSuccess={() => {
+          // Refresh wallet data after successful withdrawal
+          fetchWalletData();
+        }}
+      />
+      
+      {/* Bank Account Manager Modal */}
+      <BankAccountManager 
+        open={showBankManager}
+        onOpenChange={setShowBankManager}
+        onAccountAdded={() => {
+          // Refresh data after account added
+          fetchWalletData();
+        }}
+      />
     </SidebarProvider>
   );
 }

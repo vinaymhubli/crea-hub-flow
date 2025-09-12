@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, User, LogOut, Settings, LayoutDashboard, Wallet } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { WalletBalanceIndicator } from './WalletBalanceIndicator';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -81,7 +82,11 @@ export default function Header() {
           {/* Auth Section */}
           <div className="flex items-center space-x-4">
             {user ? (
-              <DropdownMenu>
+              <>
+                {/* Wallet Balance Indicator */}
+                <WalletBalanceIndicator className="hidden lg:block" />
+                
+                <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                     <div className="w-8 h-8 bg-gradient-to-r from-green-600 to-blue-600 rounded-full flex items-center justify-center">
@@ -122,6 +127,7 @@ export default function Header() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              </>
             ) : (
               <div className="flex items-center space-x-4">
                 <Link to="/auth">

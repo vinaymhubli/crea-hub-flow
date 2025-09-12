@@ -18,9 +18,33 @@ import Login from "./pages/Login"
 import Signup from "./pages/Signup"
 import AdminLogin from "./pages/AdminLogin"
 import AdminDashboard from "./pages/AdminDashboard"
+import UserManagement from "./pages/admin/UserManagement"
+import TransactionManagement from "./pages/admin/TransactionManagement"
 import DesignerVerification from "./pages/admin/DesignerVerification"
 import SessionControl from "./pages/admin/SessionControl"
 import AdminDesignerAvailability from "./pages/admin/DesignerAvailability"
+// import CMSDashboard from "./pages/admin/CMSDashboard"
+// import FAQManagement from "./pages/admin/FAQManagement"
+import TermsManagement from "./pages/admin/TermsManagement"
+import SupportManagement from "./pages/admin/SupportManagement"
+import SupportDynamic from "./pages/SupportDynamic"
+import PrivacyPolicyManagement from "./pages/admin/PrivacyPolicyManagement"
+import PrivacyPolicyDynamic from "./pages/PrivacyPolicyDynamic"
+import SuccessStoriesManagement from "./pages/admin/SuccessStoriesManagement"
+import SuccessStoriesDynamic from "./pages/SuccessStoriesDynamic"
+// import ForDesignersManagement from "./pages/admin/ForDesignersManagement"
+// import ForDesignersDynamic from "./pages/ForDesignersDynamic"
+import AboutManagement from "./pages/admin/AboutManagement"
+import AboutDynamic from "./pages/AboutDynamic"
+import ContactManagement from "./pages/admin/ContactManagement"
+import ContactDynamic from "./pages/ContactDynamic"
+import RefundPolicyManagement from "./pages/admin/RefundPolicyManagement"
+// import HelpCenterManagement from "./pages/admin/HelpCenterManagement"
+// import BlogManagement from "./pages/admin/BlogManagement"
+// import WebsiteSectionManager from "./pages/admin/WebsiteSectionManager"
+import UsageAnalytics from "./pages/admin/analytics/UsageAnalytics"
+import RevenueAnalytics from "./pages/admin/analytics/RevenueAnalytics"
+import PlatformSettings from "./pages/admin/platform/PlatformSettings"
 import CustomerDashboard from "./pages/CustomerDashboard"
 import CustomerProfile from "./pages/CustomerProfile"
 import CustomerBookings from "./pages/CustomerBookings"
@@ -58,7 +82,8 @@ import Blog from "./pages/Blog"
 import Careers from "./pages/Careers"
 import Privacy from "./pages/Privacy"
 import Terms from "./pages/Terms"
-import RefundPolicy from "./pages/RefundPolicy"
+import RefundPolicyDynamic from "./pages/RefundPolicyDynamic"
+import TermsDynamic from "./pages/TermsDynamic"
 import { ProtectedRoute } from "./components/ProtectedRoute"
 import { ProtectedAdminRoute } from "./components/ProtectedAdminRoute"
 import { AdminLayout } from "./components/AdminLayout"
@@ -90,9 +115,9 @@ function AppContent() {
       <main className="flex-1">
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/about" element={<About />} />
+          <Route path="/about" element={<AboutDynamic />} />
           <Route path="/how-to-use" element={<HowToUse />} />
-          <Route path="/contact" element={<Contact />} />
+          <Route path="/contact" element={<ContactDynamic />} />
           <Route path="/designers" element={<Designers />} />
           <Route path="/designer/:id" element={<DesignerDetails />} />
           <Route path="/services" element={<Services />} />
@@ -105,17 +130,17 @@ function AppContent() {
           
           {/* New Footer Pages */}
           <Route path="/pricing" element={<Pricing />} />
-          <Route path="/success-stories" element={<SuccessStories />} />
-          <Route path="/support" element={<Support />} />
+          <Route path="/success-stories" element={<SuccessStoriesDynamic />} />
+          <Route path="/support" element={<SupportDynamic />} />
           <Route path="/for-designers" element={<ForDesigners />} />
           <Route path="/designer-resources" element={<DesignerResources />} />
           <Route path="/designer-community" element={<DesignerCommunity />} />
           <Route path="/designer-help" element={<DesignerHelp />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/careers" element={<Careers />} />
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="/terms" element={<Terms />} />
-          <Route path="/refund-policy" element={<RefundPolicy />} />
+          <Route path="/privacy" element={<PrivacyPolicyDynamic />} />
+          <Route path="/terms" element={<TermsDynamic />} />
+          <Route path="/refund-policy" element={<RefundPolicyDynamic />} />
           
           {/* Protected Admin Routes */}
           <Route path="/admin-dashboard" element={
@@ -125,6 +150,26 @@ function AppContent() {
               </AdminLayout>
             </ProtectedAdminRoute>
           } />
+          
+          {/* User Management */}
+          <Route path="/admin/users" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <UserManagement />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          
+          {/* Transaction Management */}
+          <Route path="/admin/transactions" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <TransactionManagement />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          
+          {/* Designer Management */}
           <Route path="/admin/designer-verification" element={
             <ProtectedAdminRoute>
               <AdminLayout>
@@ -147,29 +192,127 @@ function AppContent() {
             </ProtectedAdminRoute>
           } />
           
-          {/* General Settings */}
-          <Route path="/admin/general-settings" element={
+          {/* Content Management System */}
+          {/* <Route path="/admin/cms" element={
             <ProtectedAdminRoute>
               <AdminLayout>
-                <GeneralSettings />
+                <CMSDashboard />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } /> */}
+          {/* <Route path="/admin/cms/faqs" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <FAQManagement />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } /> */}
+          <Route path="/admin/cms/terms" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <TermsManagement />
               </AdminLayout>
             </ProtectedAdminRoute>
           } />
-          
-          {/* Invoicing */}
-          <Route path="/admin/invoicing" element={
+          <Route path="/admin/cms/support" element={
             <ProtectedAdminRoute>
               <AdminLayout>
-                <Invoicing />
+                <SupportManagement />
               </AdminLayout>
             </ProtectedAdminRoute>
           } />
+          <Route path="/admin/cms/privacy-policy" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <PrivacyPolicyManagement />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/admin/cms/success-stories" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <SuccessStoriesManagement />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          {/* <Route path="/admin/cms/for-designers" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <ForDesignersManagement />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } /> */}
+          <Route path="/admin/cms/about" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <AboutManagement />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/admin/cms/contact" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <ContactManagement />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/admin/cms/refund-policy" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <RefundPolicyManagement />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          {/* <Route path="/admin/cms/help-center" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <HelpCenterManagement />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/admin/cms/blog" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <BlogManagement />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } /> */}
+          {/* <Route path="/admin/cms/sections" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <WebsiteSectionManager />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } /> */}
           
           {/* Analytics */}
+          <Route path="/admin/analytics/usage" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <UsageAnalytics />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/admin/analytics/revenue" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <RevenueAnalytics />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } />
           <Route path="/admin/analytics" element={
             <ProtectedAdminRoute>
               <AdminLayout>
                 <Analytics />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          
+          {/* Platform Configuration */}
+          <Route path="/admin/platform/settings" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <PlatformSettings />
               </AdminLayout>
             </ProtectedAdminRoute>
           } />
