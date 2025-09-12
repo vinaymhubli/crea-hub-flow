@@ -113,7 +113,7 @@ export const useDesignerActivity = () => {
         .from('designer_weekly_schedule')
         .select('start_time, end_time')
         .eq('designer_id', designerId)
-        .eq('day_of_week', currentDay)
+        .eq('day_of_week', parseInt(currentDay.toString()))
         .single();
 
       if (!weeklyError && weeklySchedule) {

@@ -60,7 +60,7 @@ export default function CustomerInvoices() {
 
       if (error) throw error;
 
-      setInvoices(data || []);
+      setInvoices(data as any || []);
     } catch (error) {
       console.error('Error loading invoices:', error);
       toast({

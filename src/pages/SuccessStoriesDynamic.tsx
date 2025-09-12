@@ -41,7 +41,7 @@ export default function SuccessStoriesDynamic() {
         .order('sort_order', { ascending: true });
 
       if (error) throw error;
-      setContent(data || []);
+      setContent(data as any || []);
     } catch (error) {
       console.error('Error fetching success stories content:', error);
     } finally {

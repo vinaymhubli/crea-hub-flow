@@ -38,7 +38,7 @@ const RefundPolicyDynamic = () => {
 
       if (error) throw error;
 
-      setSections(data || []);
+      setSections(data as any || []);
     } catch (error) {
       console.error('Error fetching refund policy sections:', error);
     } finally {

@@ -220,7 +220,7 @@ export default function LiveSessionRequestDialog({
             type: 'broadcast',
             event: 'live_session_request',
             payload: {
-              requestId: data.id,
+              requestId: (data as any)?.id,
               customerName: `${profile?.first_name} ${profile?.last_name}`,
               message: requestMessage.trim()
             }

@@ -135,7 +135,7 @@ export default function DesignerFileReviews() {
         new Map(allFiles.map(file => [file.id, file])).values()
       ).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-      setFiles(uniqueFiles);
+      setFiles(uniqueFiles as any);
     } catch (error) {
       console.error('Error loading files:', error);
       toast({
