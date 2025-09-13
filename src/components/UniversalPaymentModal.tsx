@@ -98,7 +98,7 @@ export function UniversalPaymentModal({ open, onOpenChange, onSuccess }: Univers
       const result = await response.json();
 
       if (result.success) {
-        toast.success(`Payment of ₹${amount} processed successfully!`);
+        toast.success(`Payment of $${amount} processed successfully!`);
         onSuccess?.(parseFloat(amount), selectedMethod);
         onOpenChange(false);
         setAmount('');
@@ -133,9 +133,9 @@ export function UniversalPaymentModal({ open, onOpenChange, onSuccess }: Univers
         <div className="space-y-6">
           {/* Amount Selection */}
           <div className="space-y-4">
-            <Label htmlFor="amount" className="text-lg font-semibold">Amount (₹)</Label>
+            <Label htmlFor="amount" className="text-lg font-semibold">Amount ($)</Label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-lg">₹</span>
+              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-lg">$</span>
               <Input
                 id="amount"
                 placeholder="0.00"
@@ -148,7 +148,7 @@ export function UniversalPaymentModal({ open, onOpenChange, onSuccess }: Univers
               />
             </div>
             <p className="text-sm text-muted-foreground">
-              You will receive ₹{amount || '0'} as wallet credits
+              You will receive ${amount || '0'} as wallet credits
             </p>
 
             {/* Quick Amount Buttons */}
@@ -163,7 +163,7 @@ export function UniversalPaymentModal({ open, onOpenChange, onSuccess }: Univers
                     onClick={() => setAmount(quickAmount.toString())}
                     className="hover:bg-green-50 border-green-200 hover:border-green-300"
                   >
-                    ₹{quickAmount}
+                    ${quickAmount}
                   </Button>
                 ))}
               </div>
@@ -340,7 +340,7 @@ export function UniversalPaymentModal({ open, onOpenChange, onSuccess }: Univers
             ) : (
               <>
                 <Wallet className="w-4 h-4 mr-2" />
-                Add ₹{amount || '0'} Credits
+                Add ${amount || '0'} Credits
                 <ArrowRight className="w-4 h-4 ml-2" />
               </>
             )}

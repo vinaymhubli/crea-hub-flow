@@ -60,7 +60,7 @@ export function SessionPaymentExample({
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Price:</span>
-            <span className="font-bold text-lg">₹{price}</span>
+            <span className="font-bold text-lg">${price}</span>
           </div>
         </div>
 
@@ -69,7 +69,7 @@ export function SessionPaymentExample({
           <div className="space-y-3">
             <div className="flex items-center justify-between text-sm">
               <span>Your Wallet Balance:</span>
-              <span className="font-semibold">₹{balance.toFixed(2)}</span>
+              <span className="font-semibold">${balance.toFixed(2)}</span>
             </div>
             
             {hasSufficientBalance(price) ? (
@@ -81,7 +81,7 @@ export function SessionPaymentExample({
             ) : (
               <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
                 <p className="text-sm text-orange-800">
-                  ⚠️ You need ₹{(price - balance).toFixed(2)} more to book this session
+                  ⚠️ You need ${(price - balance).toFixed(2)} more to book this session
                 </p>
               </div>
             )}

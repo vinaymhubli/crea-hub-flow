@@ -411,6 +411,19 @@ export default function SessionSidePanel({
       // Don't add to local state here - let real-time subscription handle it
       // This prevents duplicates and ensures consistency
 
+      // If this is a designer uploading a final file, broadcast to customer
+      if (isDesigner && fileStatus === 'pending') {
+        const channel = supabase.channel(`file_upload_${sessionId}`);
+        channel.send({
+          type: 'broadcast',
+          event: 'file_uploaded',
+          payload: {
+            fileName: file.name,
+            fileUrl: publicUrl
+          }
+        });
+      }
+
       toast({
         title: "File uploaded",
         description: `${file.name} has been uploaded`,

@@ -31,7 +31,7 @@ export function QuickRecharge({
   // Set default amount to cover shortfall with some buffer
   React.useEffect(() => {
     if (shortfall > 0) {
-      setAmount((shortfall + 10).toString()); // Add ₹10 buffer
+      setAmount((shortfall + 10).toString()); // Add $10 buffer
     }
   }, [shortfall]);
 
@@ -101,12 +101,12 @@ export function QuickRecharge({
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Required Amount:</span>
-                    <span className="font-semibold">₹{requiredAmount.toFixed(2)}</span>
+                    <span className="font-semibold">${requiredAmount.toFixed(2)}</span>
                   </div>
                   {shortfall > 0 && (
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Shortfall:</span>
-                      <span className="font-semibold text-orange-600">₹{shortfall.toFixed(2)}</span>
+                      <span className="font-semibold text-orange-600">${shortfall.toFixed(2)}</span>
                     </div>
                   )}
                 </div>
@@ -115,9 +115,9 @@ export function QuickRecharge({
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="amount">Amount (₹)</Label>
+            <Label htmlFor="amount">Amount ($)</Label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">₹</span>
+              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
               <Input
                 id="amount"
                 placeholder="0.00"
@@ -130,7 +130,7 @@ export function QuickRecharge({
               />
             </div>
             <p className="text-sm text-muted-foreground">
-              You will receive ₹{amount || '0'} as wallet credits
+              You will receive ${amount || '0'} as wallet credits
             </p>
           </div>
 
@@ -145,7 +145,7 @@ export function QuickRecharge({
                   onClick={() => setAmount(quickAmount.toString())}
                   className="hover:bg-teal-50 border-teal-200"
                 >
-                  ₹{quickAmount}
+                  ${quickAmount}
                 </Button>
               ))}
             </div>
@@ -185,7 +185,7 @@ export function QuickRecharge({
             ) : (
               <>
                 <Wallet className="w-4 h-4 mr-2" />
-                Recharge ₹{amount || '0'}
+                Recharge ${amount || '0'}
                 <ArrowRight className="w-4 h-4 ml-2" />
               </>
             )}

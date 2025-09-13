@@ -5,6 +5,13 @@ import { supabase } from "@/integrations/supabase/client";
 import AgoraCall from "@/components/AgoraCall";
 import { ScreenShareModal } from "@/components/ScreenShareModal";
 import SessionSidePanel from "@/components/SessionSidePanel";
+import SessionApprovalDialog from "@/components/SessionApprovalDialog";
+import SessionPaymentDialog from "@/components/SessionPaymentDialog";
+import PaymentCompletionNotification from "@/components/PaymentCompletionNotification";
+import FileUploadWaitingDialog from "@/components/FileUploadWaitingDialog";
+import FileDownloadNotification from "@/components/FileDownloadNotification";
+import SessionRatingDialog from "@/components/SessionRatingDialog";
+import DesignerFileUploadDialog from "@/components/DesignerFileUploadDialog";
 import { toast } from "sonner";
 
 export default function LiveCallSession() {
@@ -44,11 +51,50 @@ export default function LiveCallSession() {
     };
   } | null>(null);
 
+  // Enhanced session flow state
+  const [showApprovalDialog, setShowApprovalDialog] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [showPaymentCompletionNotification, setShowPaymentCompletionNotification] = useState(false);
+  const [showFileUploadWaiting, setShowFileUploadWaiting] = useState(false);
+  const [showFileDownloadNotification, setShowFileDownloadNotification] = useState(false);
+  const [showRatingDialog, setShowRatingDialog] = useState(false);
+  const [showDesignerFileUpload, setShowDesignerFileUpload] = useState(false);
+  const [sessionApprovalRequest, setSessionApprovalRequest] = useState<any>(null);
+  const [uploadedFile, setUploadedFile] = useState<{url: string, name: string} | null>(null);
+  const [sessionData, setSessionData] = useState<any>(null);
+
   // Broadcast helper
   const channel = useMemo(
     () => supabase.channel(`session_control_${sessionId}`),
     [sessionId]
   );
+
+  // Load session data on component mount
+  useEffect(() => {
+    const loadSessionData = async () => {
+      try {
+        const sessionIdWithPrefix = sessionId.includes("live_") ? sessionId : `live_${sessionId}`;
+        const { data: activeSessionData, error: sessionError } = await supabase
+          .from('active_sessions')
+          .select('*')
+          .eq('session_id', sessionIdWithPrefix)
+          .single();
+
+        if (sessionError) {
+          console.error('Error loading session data:', sessionError);
+        } else {
+          console.log('📊 Loaded session data:', activeSessionData);
+          setSessionData(activeSessionData);
+        }
+      } catch (error) {
+        console.error('Error in loadSessionData:', error);
+      }
+    };
+
+    if (sessionId) {
+      loadSessionData();
+    }
+  }, [sessionId]);
 
   useEffect(() => {
     const sub = channel
@@ -132,6 +178,67 @@ export default function LiveCallSession() {
              });
              console.log("📊 Designer responding with current format multiplier:", formatMultiplier);
            }
+         }
+       })
+       .on("broadcast", { event: "session_approval_request" }, (p) => {
+         console.log("📡 Customer received session approval request:", p.payload);
+         if (!isDesigner) {
+           setShowApprovalDialog(true);
+         }
+       })
+       .on("broadcast", { event: "payment_completed" }, (p) => {
+         console.log("📡 Designer received payment completion notification:", p.payload);
+         console.log("📡 Is designer:", isDesigner);
+         if (isDesigner) {
+           console.log("📡 Setting showPaymentCompletionNotification to true");
+           setShowPaymentCompletionNotification(true);
+         }
+       })
+       .on("broadcast", { event: "file_uploaded" }, (p) => {
+         console.log("📡 Customer received file upload notification:", p.payload);
+         if (!isDesigner) {
+           setUploadedFile({ url: p.payload.fileUrl, name: p.payload.fileName });
+         }
+       })
+       .on("broadcast", { event: "file_downloaded" }, (p) => {
+         console.log("📡 Designer received file download notification:", p.payload);
+         if (isDesigner) {
+           setShowFileDownloadNotification(true);
+         }
+       })
+       .on("broadcast", { event: "rating_completed" }, (p) => {
+         console.log("📡 Designer received rating completion notification:", p.payload);
+         if (isDesigner) {
+           // Session is now fully complete
+           toast.success("Session completed successfully!");
+           setTimeout(() => {
+             navigate("/designer-dashboard");
+           }, 2000);
+         }
+       })
+       .on("broadcast", { event: "session_complete_show_review" }, (p) => {
+         console.log("📡 Customer received session complete notification:", p.payload);
+         if (!isDesigner) {
+           // Store review data in localStorage to show on dashboard redirect
+           localStorage.setItem('pendingReview', JSON.stringify({
+             designerName: p.payload.designerName,
+             designerId: p.payload.designerId,
+             sessionId: p.payload.sessionId,
+             timestamp: new Date().toISOString()
+           }));
+           
+           // Redirect customer to dashboard immediately
+           console.log("📡 Redirecting customer to dashboard with review data");
+           setTimeout(() => {
+             navigate("/customer-dashboard");
+           }, 1000);
+         }
+       })
+       .on("broadcast", { event: "session_ended" }, (p) => {
+         console.log("📡 Session ended notification received:", p.payload);
+         if (!isDesigner) {
+           // Don't show rating dialog here anymore - will show on dashboard
+           console.log("📡 Session ended, customer will see review on dashboard");
          }
        })
       .subscribe();
@@ -321,151 +428,88 @@ export default function LiveCallSession() {
   }, [bothJoined, isDesigner, rate, formatMultiplier, channel, designerName]);
 
   const handleEndByDesigner = async () => {
-    console.log("🛑 Ending session immediately...");
+    console.log("🛑 STOP & SEND REQUEST APPROVAL - Starting enhanced session flow...");
 
-    // 0. Stop all media first (mic, camera, screen sharing)
-    if (agoraCallRef.current) {
-      console.log("🛑 Stopping all media tracks...");
-      try {
-        await agoraCallRef.current.leave();
-        console.log("✅ All media tracks stopped");
-      } catch (error) {
-        console.error("❌ Error stopping media tracks:", error);
-      }
-    }
+    // Calculate total amount
+    const durationMinutes = Math.ceil(duration / 60);
+    const ratePerMinute = rate || 5.0;
+    const subtotal = durationMinutes * ratePerMinute * formatMultiplier;
+    const gstAmount = subtotal * 0.18;
+    const totalAmount = subtotal + gstAmount;
 
-    // 1. IMMEDIATELY update database to end all related sessions - EXACT copy from ScreenShare
     try {
-      console.log(
-        "🔄 Updating database - ending all sessions for this session...",
-        { sessionId }
-      );
+      // Get customer_id from active_sessions table
+      const sessionIdWithPrefix = sessionId.includes("live_") ? sessionId : `live_${sessionId}`;
+      const { data: sessionData, error: sessionError } = await supabase
+        .from('active_sessions')
+        .select('customer_id')
+        .eq('session_id', sessionIdWithPrefix)
+        .single();
 
-      const sessionIdWithPrefix = sessionId.includes("live_")
-        ? sessionId
-        : `live_${sessionId}`;
-      // End active session in database
-      const { error: activeSessionError } = await supabase
-        .from("active_sessions" as any)
-        .update({
-          status: "ended",
-          ended_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+      if (sessionError || !sessionData?.customer_id) {
+        console.error('Error getting customer_id from active_sessions:', sessionError);
+        console.error('SessionId used:', sessionIdWithPrefix);
+        console.error('SessionData:', sessionData);
+        toast.error('Failed to get session data');
+        return;
+      }
+
+      console.log('Found customer_id:', sessionData.customer_id);
+
+      // Create session approval request
+      const { data: approvalRequest, error: approvalError } = await (supabase as any)
+        .from('session_approval_requests')
+        .insert({
+          session_id: sessionIdWithPrefix,
+          designer_id: user?.id,
+          customer_id: sessionData.customer_id,
+          status: 'pending',
+          total_amount: totalAmount
         })
-        .eq("session_id", sessionIdWithPrefix);
+        .select()
+        .single();
 
-      if (activeSessionError) {
-        console.error("Error ending active session:", activeSessionError);
-      } else {
-        console.log("✅ Active session ended in database");
+      if (approvalError) {
+        console.error('Error creating approval request:', approvalError);
+        console.error('Approval request data:', {
+          session_id: sessionIdWithPrefix,
+          designer_id: user?.id,
+          customer_id: sessionData.customer_id,
+          status: 'pending',
+          total_amount: totalAmount
+        });
+        toast.error('Failed to create approval request');
+        return;
       }
 
-      // End any related live session requests
-      if (bookingData?.designer) {
-        const { error: liveSessionError } = await supabase
-          .from("live_session_requests" as any)
-          .update({
-            status: "rejected", // Using rejected as completed isn't allowed
-            updated_at: new Date().toISOString(),
-          })
-          .eq("designer_id", (bookingData.designer as any).user_id)
-          .eq("status", "accepted");
+      setSessionApprovalRequest(approvalRequest);
 
-        if (liveSessionError) {
-          console.error("Error ending live session request:", liveSessionError);
-        } else {
-          console.log("✅ Live session request ended in database");
-        }
-      }
+      // Pause the session
+      setIsPaused(true);
+      channel.send({
+        type: "broadcast",
+        event: "session_pause",
+        payload: {},
+      });
 
-      // End any related bookings if this is a booking session
-      if (bookingData?.id) {
-        const { error: bookingError } = await supabase
-          .from("bookings")
-          .update({
-            status: "completed",
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", bookingData.id);
+      // Send approval request to customer
+      channel.send({
+        type: "broadcast",
+        event: "session_approval_request",
+        payload: {
+          sessionId,
+          designerName,
+          totalAmount,
+          duration: `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}`,
+          approvalRequestId: approvalRequest.id
+        },
+      });
 
-        if (bookingError) {
-          console.error("Error ending booking:", bookingError);
-        } else {
-          console.log("✅ Booking ended in database");
-        }
-      }
+      toast.success("Approval request sent to customer");
     } catch (error) {
-      console.error("Error in database cleanup:", error);
-      // Continue with local cleanup even if database update fails
+      console.error('Error in approval request:', error);
+      toast.error('Failed to send approval request');
     }
-
-    // 2. Auto-generate invoice if session has duration and no invoice exists
-    if (duration > 0 && isDesigner) {
-      console.log("🧾 Checking if invoice exists for session...");
-
-      try {
-        // Check if invoice already exists
-        const { data: existingInvoices, error: invoiceCheckError } =
-          await supabase
-            .from("invoices" as any)
-            .select("id")
-            .eq("session_id", sessionId);
-
-        if (invoiceCheckError) {
-          console.error("Error checking existing invoices:", invoiceCheckError);
-        } else if (!existingInvoices || existingInvoices.length === 0) {
-          console.log("🧾 No invoice found, auto-generating invoice...");
-
-          // Auto-generate invoice
-          const durationMinutes = Math.ceil(duration / 60);
-          const ratePerMinute = rate || 5.0;
-          const subtotal = durationMinutes * ratePerMinute * formatMultiplier;
-          const gstAmount = subtotal * 0.18;
-          const total = subtotal + gstAmount;
-
-          const { error: invoiceError } = await supabase
-            .from("invoices" as any)
-            .insert({
-              session_id: sessionId,
-              designer_name: designerName,
-              customer_name: customerName,
-              duration_minutes: durationMinutes,
-              rate_per_minute: ratePerMinute,
-              subtotal: subtotal,
-              gst_amount: gstAmount,
-              total_amount: total,
-              invoice_date: new Date().toISOString(),
-              status: "generated",
-            });
-
-          if (invoiceError) {
-            console.error("Error auto-generating invoice:", invoiceError);
-          } else {
-            console.log("✅ Auto-generated invoice for session");
-          }
-        } else {
-          console.log("✅ Invoice already exists for this session");
-        }
-      } catch (invoiceError) {
-        console.error("Error in invoice generation:", invoiceError);
-      }
-    }
-
-    // 3. Broadcast session end to sync with other participants - EXACT copy from ScreenShare
-    console.log("🛑 Broadcasting session_end event from handleEndByDesigner");
-    channel.send({
-      type: "broadcast",
-      event: "session_end",
-      payload: {
-        endedBy: isDesigner ? designerName : customerName,
-        reason: "Session ended by user",
-      },
-    });
-
-    // 4. Show success message and redirect both users
-    toast.success("Session ended");
-    console.log("🔄 Redirecting users...");
-    navigate(isDesigner ? "/designer-dashboard" : "/customer-dashboard");
   };
 
   const handleLocalJoined = () => {
@@ -567,6 +611,240 @@ export default function LiveCallSession() {
     },
     [channel, isDesigner, designerName, customerName]
   );
+
+  // Enhanced session flow handlers
+  const handleApprovalAccept = () => {
+    setShowApprovalDialog(false);
+    setShowPaymentDialog(true);
+  };
+
+  const handleApprovalContinue = () => {
+    setShowApprovalDialog(false);
+    setIsPaused(false);
+    channel.send({
+      type: "broadcast",
+      event: "session_resume",
+      payload: {},
+    });
+    toast.success("Session resumed");
+  };
+
+  const handlePaymentSuccess = () => {
+    console.log('🎉 Payment success handler called');
+    setShowPaymentDialog(false);
+    
+    // Update approval request status
+    if (sessionApprovalRequest) {
+      console.log('📝 Updating approval request status to payment_completed');
+      (supabase as any)
+        .from('session_approval_requests')
+        .update({ 
+          status: 'payment_completed',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', sessionApprovalRequest.id);
+    }
+
+    // Notify designer
+    console.log('📡 Sending payment_completed broadcast to designer');
+    channel.send({
+      type: "broadcast",
+      event: "payment_completed",
+      payload: {
+        customerName,
+        amount: sessionApprovalRequest?.total_amount || 0
+      },
+    });
+
+    // Show waiting dialog for customer
+    console.log('⏳ Setting showFileUploadWaiting to true for customer');
+    console.log('⏳ Current showFileUploadWaiting state:', showFileUploadWaiting);
+    setShowFileUploadWaiting(true);
+    console.log('⏳ showFileUploadWaiting should now be true');
+  };
+
+  const handlePaymentCompletionOk = () => {
+    console.log('🎯 Designer clicked OK to upload file');
+    setShowPaymentCompletionNotification(false);
+    // Show the file upload dialog for designer
+    setShowDesignerFileUpload(true);
+  };
+
+  const handleFileReady = (fileUrl: string, fileName: string) => {
+    setShowFileUploadWaiting(false);
+    setUploadedFile({ url: fileUrl, name: fileName });
+    
+    // Update approval request status
+    if (sessionApprovalRequest) {
+      (supabase as any)
+        .from('session_approval_requests')
+        .update({ 
+          status: 'file_uploaded',
+          file_uploaded_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', sessionApprovalRequest.id);
+    }
+  };
+
+  const handleDesignerFileUploaded = (fileUrl: string, fileName: string) => {
+    console.log('🎨 Designer uploaded file:', fileName);
+    setShowDesignerFileUpload(false);
+    // The file upload dialog will handle broadcasting to customer
+  };
+
+  const handleEndSession = async () => {
+    console.log('🛑 Ending session after file upload');
+    
+    try {
+      // Update session status to ended
+      const sessionIdWithPrefix = sessionId.includes("live_") ? sessionId : `live_${sessionId}`;
+      
+      // Update active_sessions table
+      const { error: sessionError } = await supabase
+        .from('active_sessions')
+        .update({ 
+          status: 'ended',
+          ended_at: new Date().toISOString()
+        })
+        .eq('session_id', sessionIdWithPrefix);
+
+      if (sessionError) {
+        console.error('Error updating session status:', sessionError);
+      }
+
+      // Update session approval request status
+      if (sessionApprovalRequest) {
+        const { error: approvalError } = await (supabase as any)
+          .from('session_approval_requests')
+          .update({ 
+            status: 'completed',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', sessionApprovalRequest.id);
+
+        if (approvalError) {
+          console.error('Error updating approval request:', approvalError);
+        }
+      }
+
+      // Broadcast session ended to both users
+      channel.send({
+        type: "broadcast",
+        event: "session_ended",
+        payload: {
+          message: "Session has been completed successfully"
+        }
+      });
+
+      toast.success("Session ended successfully!");
+      
+      // Navigate to dashboard after a short delay
+      setTimeout(() => {
+        if (isDesigner) {
+          navigate("/designer-dashboard");
+        } else {
+          navigate("/customer-dashboard");
+        }
+      }, 2000);
+
+    } catch (error) {
+      console.error('Error ending session:', error);
+      toast.error("Failed to end session properly");
+    }
+  };
+
+  const handleFileDownload = () => {
+    if (uploadedFile) {
+      // Create download link for background download
+      const link = document.createElement('a');
+      link.href = uploadedFile.url;
+      link.download = uploadedFile.name;
+      link.target = '_blank'; // Ensure download happens in background
+      link.style.display = 'none'; // Hide the link element
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Notify designer
+      channel.send({
+        type: "broadcast",
+        event: "file_downloaded",
+        payload: {
+          customerName,
+          fileName: uploadedFile.name,
+          downloadTime: new Date().toLocaleString()
+        },
+      });
+
+      // Update approval request status
+      if (sessionApprovalRequest) {
+        (supabase as any)
+          .from('session_approval_requests')
+          .update({ 
+            status: 'file_downloaded',
+            file_downloaded_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', sessionApprovalRequest.id);
+      }
+
+      // Don't show rating dialog here anymore - will show after designer ends session
+    }
+  };
+
+  const handleFileDownloadNotificationClose = () => {
+    setShowFileDownloadNotification(false);
+  };
+
+  const handleSessionComplete = async () => {
+    console.log('🎉 Designer clicked "Great! Session Complete"');
+    setShowFileDownloadNotification(false);
+    
+    // Broadcast to customer to show review dialog on their redirect
+    channel.send({
+      type: "broadcast",
+      event: "session_complete_show_review",
+      payload: {
+        designerName,
+        designerId: sessionApprovalRequest?.designer_id,
+        sessionId: sessionId
+      }
+    });
+    
+    // Update session status to ended
+    await handleEndSession();
+  };
+
+  const handleRatingComplete = () => {
+    setShowRatingDialog(false);
+    
+    // Update approval request status
+    if (sessionApprovalRequest) {
+      (supabase as any)
+        .from('session_approval_requests')
+        .update({ 
+          status: 'completed',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', sessionApprovalRequest.id);
+    }
+
+    // Notify designer
+    channel.send({
+      type: "broadcast",
+      event: "rating_completed",
+      payload: {
+        customerName
+      },
+    });
+
+    // End session for customer
+    toast.success("Thank you for your feedback! Session completed.");
+    setTimeout(() => {
+      navigate("/customer-dashboard");
+    }, 2000);
+  };
 
   // Critical debugging: Track component lifecycle and auth state
   const userId = user?.id;
@@ -688,6 +966,86 @@ export default function LiveCallSession() {
           formatMultiplier={formatMultiplier}
         />
       </div>
+
+      {/* Enhanced Session Flow Dialogs */}
+      <SessionApprovalDialog
+        isOpen={showApprovalDialog}
+        onAccept={handleApprovalAccept}
+        onContinue={handleApprovalContinue}
+        designerName={designerName}
+        sessionDuration={`${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}`}
+        totalAmount={sessionApprovalRequest?.total_amount || (Math.ceil(duration / 60) * rate * formatMultiplier * 1.18)}
+      />
+
+      <SessionPaymentDialog
+        isOpen={showPaymentDialog}
+        onClose={() => setShowPaymentDialog(false)}
+        onPaymentSuccess={handlePaymentSuccess}
+        totalAmount={sessionApprovalRequest?.total_amount || (Math.ceil(duration / 60) * rate * formatMultiplier * 1.18)}
+        sessionId={sessionId}
+        designerName={designerName}
+        designerId={sessionApprovalRequest?.designer_id}
+      />
+      {console.log('🔍 LiveCallSession - Passing designerId to SessionPaymentDialog:', sessionApprovalRequest?.designer_id)}
+
+      <PaymentCompletionNotification
+        isOpen={showPaymentCompletionNotification}
+        onOk={handlePaymentCompletionOk}
+        customerName={customerName}
+        amount={sessionApprovalRequest?.total_amount || (Math.ceil(duration / 60) * rate * formatMultiplier * 1.18)}
+      />
+
+      <FileUploadWaitingDialog
+        isOpen={showFileUploadWaiting}
+        designerName={designerName}
+        onFileReady={handleFileReady}
+        sessionId={sessionId}
+      />
+
+      <FileDownloadNotification
+        isOpen={showFileDownloadNotification}
+        onClose={handleFileDownloadNotificationClose}
+        onSessionComplete={handleSessionComplete}
+        customerName={customerName}
+        fileName={uploadedFile?.name || ''}
+        downloadTime={new Date().toLocaleString()}
+      />
+
+      <SessionRatingDialog
+        isOpen={showRatingDialog}
+        onClose={() => setShowRatingDialog(false)}
+        onRatingComplete={handleRatingComplete}
+        designerName={designerName}
+        sessionId={sessionId}
+        customerId={user?.id || ''}
+      />
+
+      <DesignerFileUploadDialog
+        isOpen={showDesignerFileUpload}
+        onClose={() => setShowDesignerFileUpload(false)}
+        onFileUploaded={handleDesignerFileUploaded}
+        onEndSession={handleEndSession}
+        sessionId={sessionId}
+        designerName={designerName}
+        customerName={customerName}
+        designerId={sessionApprovalRequest?.designer_id}
+        bookingId={sessionData?.booking_id}
+      />
+
+      {/* File Download Button for Customer */}
+      {!isDesigner && uploadedFile && (
+        <div className="fixed bottom-4 right-4 z-40">
+          <button
+            onClick={handleFileDownload}
+            className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2 font-medium"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span>Download Final File</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }

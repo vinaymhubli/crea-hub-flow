@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS public.about_page_content (
   icon TEXT,
   color_scheme TEXT, -- 'green', 'blue', 'purple', 'red', 'orange', 'yellow'
   image_position TEXT DEFAULT 'center', -- 'left', 'right', 'center', 'background'
-  stats JSONB, -- For statistics like "50K+", "₹50Cr+", "15+"
+  stats JSONB, -- For statistics like "50K+", "$50Cr+", "15+"
   team_member JSONB, -- For team member data
   value_item JSONB, -- For core values data
   sort_order INTEGER DEFAULT 0,
@@ -80,7 +80,7 @@ INSERT INTO public.about_page_content (section_type, title, subtitle, descriptio
 -- Insert statistics
 INSERT INTO public.about_page_content (section_type, title, image_position, stats, sort_order, is_published) VALUES
 ('stats', 'Projects Completed', 'center', '{"value": "50K+", "color": "green"}', 20, true),
-('stats', 'Designer Earnings', 'center', '{"value": "₹50Cr+", "color": "blue"}', 21, true),
+('stats', 'Designer Earnings', 'center', '{"value": "$50Cr+", "color": "blue"}', 21, true),
 ('stats', 'Countries', 'center', '{"value": "15+", "color": "purple"}', 22, true);
 
 -- RLS policies

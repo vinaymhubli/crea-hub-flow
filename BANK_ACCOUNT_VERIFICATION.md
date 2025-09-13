@@ -23,7 +23,7 @@ A comprehensive bank account verification system that supports multiple verifica
 - **Integration**: Razorpay, PayU, Direct bank APIs
 
 ### 4. **Micro Deposit Verification**
-- **How it works**: Deposits small amount (₹1-5) to user's account
+- **How it works**: Deposits small amount ($1-5) to user's account
 - **Timeline**: 1-2 business days
 - **Security**: User confirms exact amount received
 - **Integration**: Banking APIs, Payment gateways

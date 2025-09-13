@@ -11,7 +11,7 @@ A comprehensive wallet and payment system that supports multiple payment methods
 - **Digital Wallets** - Paytm, PhonePe, etc.
 
 ### 💰 Wallet System
-- **Credit-based wallet** - 1:1 credit system (₹100 payment = ₹100 credits)
+- **Credit-based wallet** - 1:1 credit system ($100 payment = $100 credits)
 - **Real-time balance** - Instant balance updates
 - **Transaction history** - Complete payment and withdrawal history
 - **Multiple payment methods** - Choose your preferred payment option
@@ -26,7 +26,7 @@ A comprehensive wallet and payment system that supports multiple payment methods
 - **Bank transfers** - Direct transfers to bank accounts
 - **Processing time** - 2-4 business days
 - **Transaction tracking** - Real-time withdrawal status
-- **Minimum withdrawal** - ₹100 minimum amount
+- **Minimum withdrawal** - $100 minimum amount
 
 ## 📁 File Structure
 
@@ -89,7 +89,7 @@ import { UniversalPaymentButton } from '@/components/UniversalPaymentButton';
   sessionId="session_456"
   description="Design session payment"
   onSuccess={(amount, method) => {
-    console.log(`Payment of ₹${amount} successful via ${method}`);
+    console.log(`Payment of $${amount} successful via ${method}`);
   }}
   onError={(error) => {
     console.error('Payment failed:', error);
@@ -139,8 +139,8 @@ function MyComponent() {
 
   return (
     <div>
-      <p>Balance: ₹{balance.toFixed(2)}</p>
-      <button onClick={handlePayment}>Add ₹1000 Credits</button>
+      <p>Balance: ${balance.toFixed(2)}</p>
+      <button onClick={handlePayment}>Add $1000 Credits</button>
     </div>
   );
 }

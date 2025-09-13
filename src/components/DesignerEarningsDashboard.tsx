@@ -61,7 +61,9 @@ export function DesignerEarningsDashboard() {
       setLoading(true);
       
       // Get total earnings
-      const { data: earningsData, error: earningsError } = await (supabase as any).rpc('get_total_earnings', { user_uuid: user?.id });
+      console.log('🎯 Designer earnings - User ID:', user?.id);
+      const { data: earningsData, error: earningsError } = await (supabase as any).rpc('get_total_earnings', { designer_user_id: user?.id });
+      console.log('🎯 Designer earnings - Function result:', earningsData, 'Error:', earningsError);
       if (earningsError) throw earningsError;
       setEarnings(Number(earningsData) || 0);
 
@@ -75,6 +77,7 @@ export function DesignerEarningsDashboard() {
         .limit(50);
 
       if (transactionsError) throw transactionsError;
+      console.log('🎯 Designer wallet transactions:', transactionsData);
       setTransactions(transactionsData || []);
     } catch (error) {
       console.error('Error fetching earnings data:', error);
@@ -142,7 +145,7 @@ export function DesignerEarningsDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <p className="text-3xl font-bold text-green-800">₹{earnings.toFixed(2)}</p>
+              <p className="text-3xl font-bold text-green-800">${earnings.toFixed(2)}</p>
               <p className="text-sm text-green-700">Available for withdrawal</p>
               <Button 
                 size="sm" 
@@ -212,14 +215,20 @@ export function DesignerEarningsDashboard() {
               <div className="flex justify-between">
                 <span className="text-sm text-purple-700">Sessions:</span>
                 <span className="font-semibold text-purple-800">
-                  {transactions.filter(t => t.metadata?.earnings_type === 'session_completion').length}
+                  {transactions.filter(t => 
+                    t.transaction_type === 'deposit' && 
+                    t.description.includes('Payment received for session')
+                  ).length}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-purple-700">Earnings:</span>
                 <span className="font-semibold text-purple-800">
-                  ₹{transactions
-                    .filter(t => t.metadata?.earnings_type === 'session_completion')
+                  ${transactions
+                    .filter(t => 
+                      t.transaction_type === 'deposit' && 
+                      t.description.includes('Payment received for session')
+                    )
                     .reduce((sum, t) => sum + t.amount, 0)
                     .toFixed(2)}
                 </span>
@@ -227,7 +236,7 @@ export function DesignerEarningsDashboard() {
               <div className="flex justify-between">
                 <span className="text-sm text-purple-700">Withdrawals:</span>
                 <span className="font-semibold text-purple-800">
-                  ₹{transactions
+                  ${transactions
                     .filter(t => t.transaction_type === 'withdrawal')
                     .reduce((sum, t) => sum + t.amount, 0)
                     .toFixed(2)}
@@ -290,7 +299,7 @@ export function DesignerEarningsDashboard() {
                     </div>
                     <div className="flex items-center space-x-3">
                       <span className="font-semibold">
-                        {transaction.transaction_type === 'withdrawal' ? '-' : '+'}₹{transaction.amount.toFixed(2)}
+                        {transaction.transaction_type === 'withdrawal' ? '-' : '+'}${transaction.amount.toFixed(2)}
                       </span>
                       {getStatusIcon(transaction.status)}
                     </div>
@@ -322,7 +331,7 @@ export function DesignerEarningsDashboard() {
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
-                        <span className="font-semibold">+₹{transaction.amount.toFixed(2)}</span>
+                        <span className="font-semibold">+${transaction.amount.toFixed(2)}</span>
                         {getStatusIcon(transaction.status)}
                       </div>
                     </div>
@@ -353,7 +362,7 @@ export function DesignerEarningsDashboard() {
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
-                        <span className="font-semibold">-₹{transaction.amount.toFixed(2)}</span>
+                        <span className="font-semibold">-${transaction.amount.toFixed(2)}</span>
                         {getStatusIcon(transaction.status)}
                       </div>
                     </div>

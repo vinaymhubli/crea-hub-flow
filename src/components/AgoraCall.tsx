@@ -967,13 +967,14 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({ sessionId, userId, isDesign
             </Button>
           )}
           
-          {/* End call button - only for designer */}
+          {/* Stop & Send Request Approval button - only for designer */}
           {isDesigner && (
             <Button 
               variant="destructive" 
               size="lg"
               className="rounded-full w-12 h-12 p-0 bg-red-600 hover:bg-red-700 ml-2"
               onClick={() => onEndByDesigner()}
+              title="STOP & SEND REQUEST APPROVAL"
             >
               <PhoneOff className="w-5 h-5" />
             </Button>

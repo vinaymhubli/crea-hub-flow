@@ -179,7 +179,7 @@ serve(async (req) => {
           user_id: customerId,
           type: 'session_payment',
           title: 'Session Payment Processed',
-          message: `₹${amount} has been deducted from your wallet for the completed session.`,
+          message: `$${amount} has been deducted from your wallet for the completed session.`,
           data: {
             amount: amount,
             session_id: sessionId,
@@ -194,7 +194,7 @@ serve(async (req) => {
           user_id: designerId,
           type: 'session_earnings',
           title: 'Session Earnings Added',
-          message: `₹${amount} has been added to your wallet for the completed session.`,
+          message: `$${amount} has been added to your wallet for the completed session.`,
           data: {
             amount: amount,
             session_id: sessionId,

@@ -100,15 +100,15 @@ export function BalanceGuard({
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Current Balance:</span>
-                    <span className="font-semibold">₹{currentBalance.toFixed(2)}</span>
+                    <span className="font-semibold">${currentBalance.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Required Amount:</span>
-                    <span className="font-semibold">₹{requiredAmount.toFixed(2)}</span>
+                    <span className="font-semibold">${requiredAmount.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between border-t pt-2">
                     <span className="text-sm text-muted-foreground">Shortfall:</span>
-                    <span className="font-semibold text-orange-600">₹{(requiredAmount - currentBalance).toFixed(2)}</span>
+                    <span className="font-semibold text-orange-600">${(requiredAmount - currentBalance).toFixed(2)}</span>
                   </div>
                 </div>
               </CardContent>

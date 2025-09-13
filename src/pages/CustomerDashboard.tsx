@@ -41,6 +41,7 @@ import { Separator } from "@/components/ui/separator";
 // Use the shared CustomerSidebar component
 import { CustomerSidebar } from '@/components/CustomerSidebar';
 import { RingingBell } from '@/components/RingingBell';
+import SessionRatingDialog from '@/components/SessionRatingDialog';
 
 export default function CustomerDashboard() {
   const { signOut, user, profile } = useAuth();
@@ -48,6 +49,8 @@ export default function CustomerDashboard() {
   const { activeSession, getUpcomingBookings, getCompletedBookings, loading } = useRealtimeBookings();
   const [walletBalance, setWalletBalance] = useState(0);
   const [recentDesigners, setRecentDesigners] = useState([]);
+  const [showReviewDialog, setShowReviewDialog] = useState(false);
+  const [pendingReviewData, setPendingReviewData] = useState(null);
   const [recentProjects, setRecentProjects] = useState([]);
   
   const upcomingBookings = getUpcomingBookings();
@@ -57,6 +60,7 @@ export default function CustomerDashboard() {
     if (user) {
       fetchWalletBalance();
       fetchRecentDesigners();
+      checkForPendingReview();
       fetchRecentProjects();
     }
   }, [user]);
@@ -68,6 +72,29 @@ export default function CustomerDashboard() {
       setWalletBalance(data || 0);
     } catch (error) {
       console.error('Error fetching wallet balance:', error);
+    }
+  };
+
+  const checkForPendingReview = () => {
+    const pendingReview = localStorage.getItem('pendingReview');
+    if (pendingReview) {
+      try {
+        const reviewData = JSON.parse(pendingReview);
+        console.log('📝 Found pending review data:', reviewData);
+        // Show review dialog after a short delay to ensure UI is ready
+        setTimeout(() => {
+          setPendingReviewData(reviewData);
+          setShowReviewDialog(true);
+          // Clear the pending review from localStorage
+          localStorage.removeItem('pendingReview');
+          console.log('📝 Showing review dialog for designer:', reviewData.designerName);
+        }, 1500);
+      } catch (error) {
+        console.error('Error parsing pending review data:', error);
+        localStorage.removeItem('pendingReview');
+      }
+    } else {
+      console.log('📝 No pending review data found');
     }
   };
 
@@ -511,6 +538,19 @@ export default function CustomerDashboard() {
         </main>
         <RealtimeSessionIndicator />
       </div>
+      
+      {/* Review Dialog */}
+      <SessionRatingDialog
+        isOpen={showReviewDialog}
+        onClose={() => setShowReviewDialog(false)}
+        onRatingComplete={() => {
+          setShowReviewDialog(false);
+          setPendingReviewData(null);
+        }}
+        designerName={pendingReviewData?.designerName || 'Designer'}
+        sessionId={pendingReviewData?.sessionId}
+        customerId={user?.id || ''}
+      />
     </SidebarProvider>
   );
 }

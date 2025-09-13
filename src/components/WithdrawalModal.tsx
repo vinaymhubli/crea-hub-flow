@@ -137,7 +137,7 @@ export function WithdrawalModal({ open, onOpenChange, onSuccess, userType = 'cus
       const result = await response.json();
 
       if (result.success) {
-        toast.success(`Withdrawal of ₹${amount} initiated successfully!`);
+        toast.success(`Withdrawal of $${amount} initiated successfully!`);
         onSuccess?.(parseFloat(amount));
         onOpenChange(false);
         setAmount('');
@@ -182,7 +182,7 @@ export function WithdrawalModal({ open, onOpenChange, onSuccess, userType = 'cus
                     <p className="text-sm text-green-700">
                       {userType === 'designer' ? 'Available Earnings' : 'Available Balance'}
                     </p>
-                    <p className="text-2xl font-bold text-green-800">₹{walletBalance.toFixed(2)}</p>
+                    <p className="text-2xl font-bold text-green-800">${walletBalance.toFixed(2)}</p>
                   </div>
                   <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                     <CheckCircle className="w-6 h-6 text-green-600" />
@@ -194,10 +194,10 @@ export function WithdrawalModal({ open, onOpenChange, onSuccess, userType = 'cus
             {/* Amount Selection */}
             <div className="space-y-4">
               <Label htmlFor="amount" className="text-lg font-semibold">
-                {userType === 'designer' ? 'Earnings Withdrawal Amount (₹)' : 'Withdrawal Amount (₹)'}
+                {userType === 'designer' ? 'Earnings Withdrawal Amount ($)' : 'Withdrawal Amount ($)'}
               </Label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-lg">₹</span>
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-lg">$</span>
                 <Input
                   id="amount"
                   placeholder="0.00"
@@ -211,7 +211,7 @@ export function WithdrawalModal({ open, onOpenChange, onSuccess, userType = 'cus
                 />
               </div>
               <p className="text-sm text-muted-foreground">
-                Maximum {userType === 'designer' ? 'earnings withdrawal' : 'withdrawal'}: ₹{walletBalance.toFixed(2)}
+                Maximum {userType === 'designer' ? 'earnings withdrawal' : 'withdrawal'}: ${walletBalance.toFixed(2)}
               </p>
 
               {/* Quick Amount Buttons */}
@@ -227,7 +227,7 @@ export function WithdrawalModal({ open, onOpenChange, onSuccess, userType = 'cus
                       disabled={quickAmount > walletBalance}
                       className="hover:bg-green-50 border-green-200 hover:border-green-300"
                     >
-                      ₹{quickAmount}
+                      ${quickAmount}
                     </Button>
                   ))}
                 </div>
@@ -332,7 +332,7 @@ export function WithdrawalModal({ open, onOpenChange, onSuccess, userType = 'cus
                       <li>• {userType === 'designer' ? 'Earnings withdrawals typically take 1-2 business days' : 'Withdrawals typically take 2-4 business days'}</li>
                       <li>• Processing time may vary by bank</li>
                       <li>• You'll receive a notification when completed</li>
-                      <li>• Minimum withdrawal amount: ₹100</li>
+                      <li>• Minimum withdrawal amount: $100</li>
                       {userType === 'designer' && <li>• Only verified bank accounts can be used</li>}
                     </ul>
                   </div>
@@ -362,7 +362,7 @@ export function WithdrawalModal({ open, onOpenChange, onSuccess, userType = 'cus
               ) : (
                 <>
                   <ArrowUpRight className="w-4 h-4 mr-2" />
-                  {userType === 'designer' ? 'Withdraw Earnings' : 'Withdraw'} ₹{amount || '0'}
+                  {userType === 'designer' ? 'Withdraw Earnings' : 'Withdraw'} ${amount || '0'}
                 </>
               )}
             </Button>

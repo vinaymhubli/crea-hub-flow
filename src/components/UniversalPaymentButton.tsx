@@ -55,7 +55,7 @@ export function UniversalPaymentButton({
         const result = await payDesigner(designerId, paymentAmount, sessionId);
         
         if (result.success) {
-          toast.success(`Payment of ₹${paymentAmount} processed successfully!`);
+          toast.success(`Payment of $${paymentAmount} processed successfully!`);
           onSuccess?.(paymentAmount, paymentMethod);
         } else {
           toast.error(result.error || 'Payment failed');
@@ -63,7 +63,7 @@ export function UniversalPaymentButton({
         }
       } else {
         // Just add credits to wallet
-        toast.success(`₹${paymentAmount} added to your wallet!`);
+        toast.success(`$${paymentAmount} added to your wallet!`);
         onSuccess?.(paymentAmount, paymentMethod);
       }
     } catch (error) {
@@ -93,12 +93,12 @@ export function UniversalPaymentButton({
     
     if (designerId) {
       if (hasSufficientBalance(amount)) {
-        return `Pay ₹${amount} from Wallet`;
+        return `Pay $${amount} from Wallet`;
       } else {
-        return `Add Credits & Pay ₹${amount}`;
+        return `Add Credits & Pay $${amount}`;
       }
     } else {
-      return `Add ₹${amount} Credits`;
+      return `Add $${amount} Credits`;
     }
   };
 
@@ -136,7 +136,7 @@ export function UniversalPaymentButton({
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Wallet Balance:</span>
             <div className="flex items-center space-x-2">
-              <span className="font-semibold">₹{balance.toFixed(2)}</span>
+              <span className="font-semibold">${balance.toFixed(2)}</span>
               {designerId && (
                 <Badge 
                   variant={hasSufficientBalance(amount) ? "default" : "destructive"}
@@ -173,7 +173,7 @@ export function UniversalPaymentButton({
         
         {designerId && !hasSufficientBalance(amount) && (
           <p className="text-xs text-orange-600">
-            You need ₹{(amount - balance).toFixed(2)} more. Click to add credits first.
+            You need ${(amount - balance).toFixed(2)} more. Click to add credits first.
           </p>
         )}
       </div>
