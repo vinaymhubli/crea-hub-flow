@@ -10,7 +10,8 @@ import {
   Eye,
   Clock,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  MessageSquare
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,6 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import CustomerComplaintDialog from '@/components/CustomerComplaintDialog';
 
 interface SessionFile {
   id: string;
@@ -39,8 +41,10 @@ interface SessionFile {
   uploaded_by_id: string;
   status: 'pending' | 'approved' | 'rejected';
   created_at: string;
+  booking_id?: string;
   designer_name?: string;
   designer_rating?: number;
+  designer_id?: string;
   session_date?: string;
   total_amount?: number;
 }
@@ -52,6 +56,8 @@ export default function CustomerFiles() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('newest');
+  const [showComplaintDialog, setShowComplaintDialog] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<SessionFile | null>(null);
 
   useEffect(() => {
     if (user?.id) {
@@ -192,12 +198,18 @@ export default function CustomerFiles() {
               console.error('🔍 Error fetching designer profile:', error);
             }
 
-            // Get designer rating
-            const { data: designerData } = await (supabase as any)
-              .from('designers')
-              .select('average_rating')
-              .eq('user_id', customerSession.designer_id)
-              .single();
+            // Get designer rating (skip if designers table doesn't exist)
+            let designerData = null;
+            try {
+              const { data } = await (supabase as any)
+                .from('designers')
+                .select('average_rating')
+                .eq('user_id', customerSession.designer_id)
+                .single();
+              designerData = data;
+            } catch (error) {
+              console.log('Designers table not available, skipping rating fetch');
+            }
             
             console.log('🔍 NEW CODE - Final designer name:', designerName);
             
@@ -205,6 +217,7 @@ export default function CustomerFiles() {
               ...file,
               designer_name: designerName,
               designer_rating: designerData?.average_rating || 0,
+              designer_id: customerSession.designer_id,
               session_date: file.created_at,
               total_amount: 0 // We'll get this from approval requests if needed
             };
@@ -215,6 +228,7 @@ export default function CustomerFiles() {
               ...file,
               designer_name: 'Unknown Designer',
               designer_rating: 0,
+              designer_id: customerSession?.designer_id || '',
               session_date: file.created_at,
               total_amount: 0
             };
@@ -251,6 +265,16 @@ export default function CustomerFiles() {
       console.error('Download error:', error);
       toast.error('Failed to download file');
     }
+  };
+
+  const handleComplaint = (file: SessionFile) => {
+    setSelectedFile(file);
+    setShowComplaintDialog(true);
+  };
+
+  const handleComplaintClose = () => {
+    setShowComplaintDialog(false);
+    setSelectedFile(null);
   };
 
   const formatFileSize = (bytes: number) => {
@@ -484,6 +508,14 @@ export default function CustomerFiles() {
                             >
                               <Eye className="w-4 h-4" />
                             </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleComplaint(file)}
+                              className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                            >
+                              <MessageSquare className="w-4 h-4" />
+                            </Button>
                           </div>
                         </div>
                       </CardContent>
@@ -496,6 +528,20 @@ export default function CustomerFiles() {
         </div>
         
       </div>
+
+      {/* Complaint Dialog */}
+      {selectedFile && (
+        <CustomerComplaintDialog
+          isOpen={showComplaintDialog}
+          onClose={handleComplaintClose}
+          fileId={selectedFile.id}
+          sessionId={selectedFile.session_id}
+          bookingId={selectedFile.booking_id || undefined}
+          designerId={selectedFile.designer_id || selectedFile.uploaded_by_id || ''}
+          designerName={selectedFile.designer_name || 'Unknown Designer'}
+          fileName={selectedFile.name}
+        />
+      )}
     </SidebarProvider>
   );
 }

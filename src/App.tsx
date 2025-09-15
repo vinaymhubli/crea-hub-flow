@@ -20,6 +20,9 @@ import AdminLogin from "./pages/AdminLogin"
 import AdminDashboard from "./pages/AdminDashboard"
 import UserManagement from "./pages/admin/UserManagement"
 import TransactionManagement from "./pages/admin/TransactionManagement"
+import AdminFinalFiles from "./pages/admin/AdminFinalFiles"
+import AdminComplaints from "./pages/admin/AdminComplaints"
+import AdminRefunds from "./pages/admin/AdminRefunds"
 import DesignerVerification from "./pages/admin/DesignerVerification"
 import SessionControl from "./pages/admin/SessionControl"
 import AdminDesignerAvailability from "./pages/admin/DesignerAvailability"
@@ -44,7 +47,7 @@ import RefundPolicyManagement from "./pages/admin/RefundPolicyManagement"
 // import WebsiteSectionManager from "./pages/admin/WebsiteSectionManager"
 import UsageAnalytics from "./pages/admin/analytics/UsageAnalytics"
 import RevenueAnalytics from "./pages/admin/analytics/RevenueAnalytics"
-import PlatformSettings from "./pages/admin/platform/PlatformSettings"
+import AdminPlatformSettings from "./pages/admin/AdminPlatformSettings"
 import CustomerDashboard from "./pages/CustomerDashboard"
 import CustomerProfile from "./pages/CustomerProfile"
 import CustomerBookings from "./pages/CustomerBookings"
@@ -63,6 +66,7 @@ import DesignerBookings from "./pages/DesignerBookings"
 import DesignerMessages from "./pages/DesignerMessages"
 import DesignerAvailability from "./pages/DesignerAvailability"
 import DesignerEarnings from "./pages/DesignerEarnings"
+import DesignerComplaints from "./pages/DesignerComplaints"
 import DesignerSessionHistory from "./pages/DesignerSessionHistory"
 import DesignerSettings from "./pages/DesignerSettings"
 import DesignerServices from "./pages/DesignerServices"
@@ -166,6 +170,33 @@ function AppContent() {
             <ProtectedAdminRoute>
               <AdminLayout>
                 <TransactionManagement />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          
+          {/* Final Files Management */}
+          <Route path="/admin/final-files" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <AdminFinalFiles />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          
+          {/* Complaints Management */}
+          <Route path="/admin/complaints" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <AdminComplaints />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          
+          {/* Refunds Management */}
+          <Route path="/admin/refunds" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <AdminRefunds />
               </AdminLayout>
             </ProtectedAdminRoute>
           } />
@@ -313,7 +344,7 @@ function AppContent() {
           <Route path="/admin/platform/settings" element={
             <ProtectedAdminRoute>
               <AdminLayout>
-                <PlatformSettings />
+                <AdminPlatformSettings />
               </AdminLayout>
             </ProtectedAdminRoute>
           } />
@@ -428,6 +459,11 @@ function AppContent() {
           <Route path="/designer-dashboard/earnings" element={
             <ProtectedRoute requireUserType="designer">
               <DesignerEarnings />
+            </ProtectedRoute>
+          } />
+          <Route path="/designer/complaints" element={
+            <ProtectedRoute requireUserType="designer">
+              <DesignerComplaints />
             </ProtectedRoute>
           } />
           <Route path="/designer-dashboard/history" element={

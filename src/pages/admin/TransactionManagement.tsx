@@ -88,6 +88,8 @@ export default function TransactionManagement() {
         .select(`
           *,
           profiles!wallet_transactions_user_id_fkey (
+            first_name,
+            last_name,
             full_name,
             email,
             role

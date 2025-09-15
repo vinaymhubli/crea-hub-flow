@@ -58,6 +58,21 @@ const mainSections = [
     icon: Receipt,
   },
   {
+    title: "Final Files",
+    url: "/admin/final-files",
+    icon: FileText,
+  },
+  {
+    title: "Complaints",
+    url: "/admin/complaints",
+    icon: MessageSquare,
+  },
+  {
+    title: "Refunds",
+    url: "/admin/refunds",
+    icon: DollarSign,
+  },
+  {
     title: "Designer Verification",
     url: "/admin/designer-verification",
     icon: UserCheck,
@@ -165,6 +180,11 @@ const analyticsSections = [
 // Platform Configuration section items
 const platformSections = [
   {
+    title: "Platform Settings",
+    url: "/admin/platform/settings",
+    icon: Settings,
+  },
+  {
     title: "Commissions",
     url: "/admin/platform/commissions",
     icon: DollarSign,
@@ -173,11 +193,6 @@ const platformSections = [
     title: "Taxes",
     url: "/admin/platform/taxes",
     icon: Receipt,
-  },
-  {
-    title: "General Settings",
-    url: "/admin/platform/settings",
-    icon: Settings,
   },
 ];
 
