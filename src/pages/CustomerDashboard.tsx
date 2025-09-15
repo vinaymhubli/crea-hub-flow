@@ -383,7 +383,7 @@ export default function CustomerDashboard() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-600 mb-1 font-medium">Wallet Balance</p>
-                      <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">${walletBalance.toFixed(2)}</p>
+                      <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">₹{walletBalance.toFixed(2)}</p>
                       <Link to="/customer-dashboard/wallet" className="text-sm text-green-600 hover:text-green-700 flex items-center mt-3 font-medium group">
                         Manage wallet
                         <TrendingUp className="w-3 h-3 ml-1 transition-transform group-hover:translate-x-1" />
@@ -434,7 +434,7 @@ export default function CustomerDashboard() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-600 mb-1 font-medium">Total Spent</p>
-                      <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">$450</p>
+                      <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">₹450</p>
                       <p className="text-sm text-purple-600 mt-3 font-medium">On design services</p>
                     </div>
                     <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
@@ -517,7 +517,7 @@ export default function CustomerDashboard() {
                       <div className="w-2 h-2 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full mt-2"></div>
                       <div className="flex-1">
                         <p className="text-sm font-medium text-gray-800">Payment processed</p>
-                        <p className="text-xs text-gray-500">$80.00 - Yesterday</p>
+                        <p className="text-xs text-gray-500">₹80.00 - Yesterday</p>
                       </div>
                       <Badge variant="outline" className="text-blue-600 border-blue-200">Payment</Badge>
                     </div>

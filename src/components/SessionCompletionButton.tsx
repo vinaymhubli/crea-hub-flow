@@ -99,7 +99,7 @@ export function SessionCompletionButton({
           </div>
           <div className="flex justify-between">
             <span className="text-sm text-muted-foreground">Amount:</span>
-            <span className="font-bold text-lg">${amount}</span>
+            <span className="font-bold text-lg">₹{amount}</span>
           </div>
         </div>
 

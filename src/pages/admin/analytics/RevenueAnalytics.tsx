@@ -266,7 +266,7 @@ export default function RevenueAnalytics() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats.total_revenue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">₹{stats.total_revenue.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground flex items-center">
               {stats.revenue_growth_rate > 0 ? (
                 <TrendingUp className="h-3 w-3 mr-1 text-green-600" />
@@ -284,7 +284,7 @@ export default function RevenueAnalytics() {
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats.platform_commission.toLocaleString()}</div>
+            <div className="text-2xl font-bold">₹{stats.platform_commission.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
               {((stats.platform_commission / stats.total_revenue) * 100).toFixed(1)}% of total revenue
             </p>
@@ -297,7 +297,7 @@ export default function RevenueAnalytics() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats.designer_earnings.toLocaleString()}</div>
+            <div className="text-2xl font-bold">₹{stats.designer_earnings.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
               {((stats.designer_earnings / stats.total_revenue) * 100).toFixed(1)}% of total revenue
             </p>
@@ -310,7 +310,7 @@ export default function RevenueAnalytics() {
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats.average_transaction_value.toFixed(2)}</div>
+            <div className="text-2xl font-bold">₹{stats.average_transaction_value.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
               {stats.total_transactions} total transactions
             </p>
@@ -325,7 +325,7 @@ export default function RevenueAnalytics() {
             <CardTitle className="text-sm font-medium">Daily Revenue</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats.daily_revenue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">₹{stats.daily_revenue.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">Today</p>
           </CardContent>
         </Card>
@@ -334,7 +334,7 @@ export default function RevenueAnalytics() {
             <CardTitle className="text-sm font-medium">Weekly Revenue</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats.weekly_revenue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">₹{stats.weekly_revenue.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">Last 7 days</p>
           </CardContent>
         </Card>
@@ -343,7 +343,7 @@ export default function RevenueAnalytics() {
             <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats.monthly_revenue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">₹{stats.monthly_revenue.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">Last 30 days</p>
           </CardContent>
         </Card>
@@ -439,7 +439,7 @@ export default function RevenueAnalytics() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-bold">${designer.total_earnings.toLocaleString()}</div>
+                      <div className="font-bold">₹{designer.total_earnings.toLocaleString()}</div>
                       <div className="text-sm text-muted-foreground">
                         {((designer.total_earnings / stats.designer_earnings) * 100).toFixed(1)}% of total
                       </div>
@@ -528,7 +528,7 @@ export default function RevenueAnalytics() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Average Refund</span>
-                    <span className="font-medium">${stats.refund_stats.average_refund_amount.toFixed(2)}</span>
+                    <span className="font-medium">₹{stats.refund_stats.average_refund_amount.toFixed(2)}</span>
                   </div>
                 </div>
               </CardContent>

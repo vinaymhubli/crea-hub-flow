@@ -151,7 +151,7 @@ export function BookingDialog({ designer, children, service }: BookingDialogProp
                     <SelectItem key={pkg.tier} value={pkg.tier}>
                       <div className="flex flex-col">
                         <span className="font-medium capitalize">{pkg.title}</span>
-                        <span className="text-xs text-gray-500">${pkg.price} - {pkg.delivery_time_days} days</span>
+                        <span className="text-xs text-gray-500">₹{pkg.price} - {pkg.delivery_time_days} days</span>
                       </div>
                     </SelectItem>
                   ))}
@@ -258,14 +258,14 @@ export function BookingDialog({ designer, children, service }: BookingDialogProp
                 </div>
                 <div className="flex justify-between items-center pt-2 border-t">
                   <span className="text-sm font-medium">Total:</span>
-                  <span className="text-lg font-bold text-green-600">${getCurrentPrice().toFixed(2)}</span>
+                  <span className="text-lg font-bold text-green-600">₹{getCurrentPrice().toFixed(2)}</span>
                 </div>
               </>
             ) : (
               <>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm text-gray-600">Rate:</span>
-                  <span className="font-medium">${designer.hourly_rate}/hour</span>
+                  <span className="font-medium">₹{designer.hourly_rate}/hour</span>
                 </div>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm text-gray-600">Duration:</span>
@@ -273,7 +273,7 @@ export function BookingDialog({ designer, children, service }: BookingDialogProp
                 </div>
                 <div className="flex justify-between items-center pt-2 border-t">
                   <span className="text-sm font-medium">Total:</span>
-                  <span className="text-lg font-bold text-green-600">${getCurrentPrice().toFixed(2)}</span>
+                  <span className="text-lg font-bold text-green-600">₹{getCurrentPrice().toFixed(2)}</span>
                 </div>
               </>
             )}

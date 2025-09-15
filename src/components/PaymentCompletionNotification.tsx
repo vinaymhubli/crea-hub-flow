@@ -41,7 +41,7 @@ export default function PaymentCompletionNotification({
                 <DollarSign className="w-4 h-4 text-green-600" />
                 <span className="text-sm text-gray-600">Amount Received:</span>
               </div>
-              <span className="font-bold text-lg text-green-600">${amount.toFixed(2)}</span>
+              <span className="font-bold text-lg text-green-600">₹{amount.toFixed(2)}</span>
             </div>
             
             <div className="flex items-center space-x-2">

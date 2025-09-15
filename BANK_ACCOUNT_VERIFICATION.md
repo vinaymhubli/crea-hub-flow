@@ -184,7 +184,7 @@ async function sendEmail(email: string, otp: string): Promise<boolean> {
       subject: 'Bank Account Verification',
       html: `
         <h2>Verify Your Bank Account</h2>
-        <p>Your verification code is: <strong>${otp}</strong></p>
+        <p>Your verification code is: <strong>₹{otp}</strong></p>
         <p>This code is valid for 10 minutes.</p>
       `
     });

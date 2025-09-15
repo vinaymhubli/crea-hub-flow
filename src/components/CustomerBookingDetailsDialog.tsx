@@ -233,7 +233,7 @@ export function CustomerBookingDetailsDialog({
               <DollarSign className="w-6 h-6 text-primary" />
               <div>
                 <p className="text-sm text-muted-foreground">Amount</p>
-                <p className="font-medium text-green-600">${booking.total_amount}</p>
+                <p className="font-medium text-green-600">₹{booking.total_amount}</p>
               </div>
             </div>
           </div>

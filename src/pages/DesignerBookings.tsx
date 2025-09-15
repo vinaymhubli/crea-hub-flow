@@ -348,7 +348,7 @@ export default function DesignerBookings() {
             </div>
             <div className="flex items-center space-x-2">
               <DollarSign className="w-4 h-4 text-gray-400" />
-              <span className="text-sm font-semibold text-green-600">${booking.total_amount}</span>
+              <span className="text-sm font-semibold text-green-600">₹{booking.total_amount}</span>
             </div>
           </div>
 

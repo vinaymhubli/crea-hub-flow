@@ -441,7 +441,7 @@ export default function Analytics() {
             <DollarSign className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${analytics.totalRevenue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">₹{analytics.totalRevenue.toLocaleString()}</div>
             <div className="flex items-center text-xs text-muted-foreground">
               {getGrowthIcon(analytics.revenueGrowth)}
               <span className={`ml-1 ${getGrowthColor(analytics.revenueGrowth)}`}>
@@ -514,7 +514,7 @@ export default function Analytics() {
             <DollarSign className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${analytics.averageBookingValue.toFixed(0)}</div>
+            <div className="text-2xl font-bold">₹{analytics.averageBookingValue.toFixed(0)}</div>
             <p className="text-xs text-muted-foreground">Per booking average</p>
           </CardContent>
         </Card>
@@ -645,7 +645,7 @@ export default function Analytics() {
                     </div>
                     <span className="text-sm">{designer.name}</span>
                   </div>
-                  <span className="font-medium">${designer.revenue.toFixed(0)}</span>
+                  <span className="font-medium">₹{designer.revenue.toFixed(0)}</span>
                 </div>
               ))}
               {analytics.topDesigners.length === 0 && (

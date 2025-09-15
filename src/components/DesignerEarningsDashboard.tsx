@@ -145,7 +145,7 @@ export function DesignerEarningsDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <p className="text-3xl font-bold text-green-800">${earnings.toFixed(2)}</p>
+              <p className="text-3xl font-bold text-green-800">₹{earnings.toFixed(2)}</p>
               <p className="text-sm text-green-700">Available for withdrawal</p>
               <Button 
                 size="sm" 
@@ -224,7 +224,7 @@ export function DesignerEarningsDashboard() {
               <div className="flex justify-between">
                 <span className="text-sm text-purple-700">Earnings:</span>
                 <span className="font-semibold text-purple-800">
-                  ${transactions
+                ₹{transactions
                     .filter(t => 
                       t.transaction_type === 'deposit' && 
                       t.description.includes('Payment received for session')
@@ -236,7 +236,7 @@ export function DesignerEarningsDashboard() {
               <div className="flex justify-between">
                 <span className="text-sm text-purple-700">Withdrawals:</span>
                 <span className="font-semibold text-purple-800">
-                  ${transactions
+                ₹{transactions
                     .filter(t => t.transaction_type === 'withdrawal')
                     .reduce((sum, t) => sum + t.amount, 0)
                     .toFixed(2)}
@@ -299,7 +299,7 @@ export function DesignerEarningsDashboard() {
                     </div>
                     <div className="flex items-center space-x-3">
                       <span className="font-semibold">
-                        {transaction.transaction_type === 'withdrawal' ? '-' : '+'}${transaction.amount.toFixed(2)}
+                        {transaction.transaction_type === 'withdrawal' ? '-' : '+'} ₹{transaction.amount.toFixed(2)}
                       </span>
                       {getStatusIcon(transaction.status)}
                     </div>
@@ -331,7 +331,7 @@ export function DesignerEarningsDashboard() {
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
-                        <span className="font-semibold">+${transaction.amount.toFixed(2)}</span>
+                        <span className="font-semibold">+₹{transaction.amount.toFixed(2)}</span>
                         {getStatusIcon(transaction.status)}
                       </div>
                     </div>
@@ -362,7 +362,7 @@ export function DesignerEarningsDashboard() {
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
-                        <span className="font-semibold">-${transaction.amount.toFixed(2)}</span>
+                        <span className="font-semibold">-₹{transaction.amount.toFixed(2)}</span>
                         {getStatusIcon(transaction.status)}
                       </div>
                     </div>

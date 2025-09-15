@@ -552,7 +552,7 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
                   {/* Right Side - Price and Actions */}
                   <div className="flex-shrink-0 lg:text-right">
                     <div className="text-2xl font-bold text-foreground mb-1">
-                      ${designer.hourly_rate}<span className="text-base font-normal text-muted-foreground">/hr</span>
+                    ₹{designer.hourly_rate}<span className="text-base font-normal text-muted-foreground">/hr</span>
                     </div>
                     <p className="text-sm text-muted-foreground mb-4">Usually responds in {designer.response_time || '1 hour'}</p>
 

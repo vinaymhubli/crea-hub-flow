@@ -53,7 +53,7 @@ export default function SessionApprovalDialog({
                 <DollarSign className="w-4 h-4 text-gray-500" />
                 <span className="text-sm text-gray-600">Total Amount:</span>
               </div>
-              <span className="font-bold text-lg text-green-600">${totalAmount.toFixed(2)}</span>
+              <span className="font-bold text-lg text-green-600">₹{totalAmount.toFixed(2)}</span>
             </div>
           </div>
 

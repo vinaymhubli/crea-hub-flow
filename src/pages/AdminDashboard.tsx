@@ -155,7 +155,7 @@ export default function AdminDashboard() {
             <DollarSign className="h-5 w-5 text-purple-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">${stats?.total_revenue || 0}</div>
+            <div className="text-3xl font-bold">₹{stats?.total_revenue || 0}</div>
             <p className="text-xs text-muted-foreground">
               {stats?.completed_bookings || 0} completed sessions
             </p>
@@ -381,7 +381,7 @@ export default function AdminDashboard() {
                           {booking.status}
                         </Badge>
                       </TableCell>
-                      <TableCell>${booking.total_amount}</TableCell>
+                      <TableCell>₹{booking.total_amount}</TableCell>
                       <TableCell>
                         {new Date(booking.scheduled_date).toLocaleDateString()}
                       </TableCell>

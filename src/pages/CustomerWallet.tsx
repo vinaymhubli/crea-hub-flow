@@ -102,7 +102,7 @@ export default function CustomerWallet() {
       fetchWalletData();
       // Show success message
       const amount = urlParams.get('amount') || '';
-      alert(`Payment successful! $${amount} has been added to your wallet.`);
+      alert(`Payment successful! ₹${amount} has been added to your wallet.`);
       // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }
@@ -132,8 +132,8 @@ export default function CustomerWallet() {
         title: transaction.description,
         date: new Date(transaction.created_at).toLocaleDateString(),
         amount: transaction.transaction_type === 'deposit' || transaction.transaction_type === 'refund' 
-          ? `+$${transaction.amount}` 
-          : `-$${transaction.amount}`,
+          ? `+₹${transaction.amount}` 
+          : `-₹${transaction.amount}`,
         status: transaction.status,
         icon: transaction.transaction_type === 'deposit' ? ArrowDownLeft : 
               transaction.transaction_type === 'refund' ? RefreshCw : ArrowUpRight,
@@ -261,7 +261,7 @@ export default function CustomerWallet() {
                 <CardContent>
                   <div className="space-y-4">
                     <div>
-                      <p className="text-4xl font-bold text-foreground mb-2">${walletBalance.toFixed(2)}</p>
+                      <p className="text-4xl font-bold text-foreground mb-2">₹{walletBalance.toFixed(2)}</p>
                       <p className="text-muted-foreground">Available for design sessions</p>
                     </div>
                     <div className="flex space-x-3">

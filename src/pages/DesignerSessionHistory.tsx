@@ -149,7 +149,7 @@ export default function DesignerSessionHistory() {
           </div>
           <div className="flex items-center space-x-2">
             <DollarSign className="w-4 h-4 text-gray-400" />
-            <span className="text-sm font-semibold text-green-600">${session.earnings}</span>
+            <span className="text-sm font-semibold text-green-600">₹{session.earnings}</span>
           </div>
         </div>
 
@@ -279,7 +279,7 @@ export default function DesignerSessionHistory() {
                   <div className="w-12 h-12 bg-gradient-to-r from-green-400 to-blue-500 rounded-xl flex items-center justify-center mx-auto mb-3">
                     <DollarSign className="w-6 h-6 text-white" />
                   </div>
-                  <p className="text-2xl font-bold text-gray-900">${stats.totalEarnings}</p>
+                  <p className="text-2xl font-bold text-gray-900">₹{stats.totalEarnings}</p>
                   <p className="text-sm text-gray-600">Total Earned</p>
                 </CardContent>
               </Card>

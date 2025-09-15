@@ -101,12 +101,12 @@ export function QuickRecharge({
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Required Amount:</span>
-                    <span className="font-semibold">${requiredAmount.toFixed(2)}</span>
+                    <span className="font-semibold">₹{requiredAmount.toFixed(2)}</span>
                   </div>
                   {shortfall > 0 && (
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Shortfall:</span>
-                      <span className="font-semibold text-orange-600">${shortfall.toFixed(2)}</span>
+                      <span className="font-semibold text-orange-600">₹{shortfall.toFixed(2)}</span>
                     </div>
                   )}
                 </div>

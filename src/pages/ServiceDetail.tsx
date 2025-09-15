@@ -361,7 +361,7 @@ export default function ServiceDetail() {
                             <p className="text-gray-600">{pkg.description}</p>
                           </div>
                           <div className="text-right">
-                            <div className="text-2xl font-bold">${pkg.price}</div>
+                            <div className="text-2xl font-bold">₹{pkg.price}</div>
                           </div>
                         </div>
                         <div className="flex items-center space-x-4 text-sm text-gray-600 mb-4">
@@ -480,7 +480,7 @@ export default function ServiceDetail() {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span>Starting at</span>
-                    <span className="font-semibold">${service.price}</span>
+                    <span className="font-semibold">₹{service.price}</span>
                   </div>
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Delivery time</span>

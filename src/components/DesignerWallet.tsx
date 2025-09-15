@@ -135,7 +135,7 @@ export function DesignerWallet() {
           <CardContent>
             <div className="space-y-4">
               <div>
-                <p className="text-4xl font-bold text-foreground mb-2">${walletBalance.toFixed(2)}</p>
+                <p className="text-4xl font-bold text-foreground mb-2">₹{walletBalance.toFixed(2)}</p>
                 <p className="text-muted-foreground">Ready for withdrawal</p>
               </div>
               <Button variant="outline" className="hover:bg-gradient-to-r hover:from-green-50 hover:to-teal-100 border-green-300/50">
@@ -157,7 +157,7 @@ export function DesignerWallet() {
           <CardContent>
             <div className="space-y-4">
               <div>
-                <p className="text-4xl font-bold text-foreground mb-2">${totalEarnings.toFixed(2)}</p>
+                <p className="text-4xl font-bold text-foreground mb-2">₹{totalEarnings.toFixed(2)}</p>
                 <p className="text-muted-foreground">All-time earnings</p>
               </div>
               <Badge className="bg-gradient-to-r from-green-100 to-teal-100 text-teal-700 border-teal-200">

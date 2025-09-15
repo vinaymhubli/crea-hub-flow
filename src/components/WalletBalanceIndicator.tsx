@@ -99,7 +99,7 @@ export function WalletBalanceIndicator({ className = '', showActions = true }: W
                   ) : (
                     <>
                       <p className="text-lg font-bold text-green-900">
-                        {showBalance ? `$${(isDesigner ? earnings : balance).toFixed(2)}` : '••••••'}
+                        {showBalance ? `₹${(isDesigner ? earnings : balance).toFixed(2)}` : '••••••'}
                       </p>
                       {isDesigner && (
                         <Badge className="bg-green-100 text-green-800 text-xs">

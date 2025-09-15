@@ -118,7 +118,7 @@ export function WalletDashboard() {
           <CardContent>
             <div className="space-y-3">
               <p className="text-3xl font-bold text-green-800">
-                {showBalance ? `$${balance.toFixed(2)}` : '••••••'}
+                {showBalance ? `₹${balance.toFixed(2)}` : '••••••'}
               </p>
               <p className="text-sm text-green-700">Available for design sessions</p>
               <div className="flex space-x-2">

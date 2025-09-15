@@ -145,7 +145,7 @@ serve(async (req) => {
           user_id: user.id,
           type: 'withdrawal_completed',
           title: 'Withdrawal Completed',
-          message: `$${amount} has been transferred to your ${bankAccount.bank_name} account ending in ${bankAccount.account_number.slice(-4)}`,
+          message: `₹${amount} has been transferred to your ${bankAccount.bank_name} account ending in ${bankAccount.account_number.slice(-4)}`,
           data: {
             amount: amount,
             bank_name: bankAccount.bank_name,

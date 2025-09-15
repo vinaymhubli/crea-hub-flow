@@ -117,7 +117,7 @@ function BookingCard({ booking, onClick }: { booking: any; onClick: () => void }
                 <span>Video Call</span>
               </div>
             </div>
-            <span className="font-semibold text-foreground">${booking.total_amount}</span>
+            <span className="font-semibold text-foreground">₹{booking.total_amount}</span>
           </div>
 
           <div className="flex justify-center pt-3 border-t">
@@ -353,12 +353,12 @@ export default function CustomerBookings() {
                     <div>
                       <p className="text-sm text-gray-600 mb-1 font-medium">Total Spent</p>
                       <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 via-violet-600 to-pink-600 bg-clip-text text-transparent">
-                        ${stats.totalSpent}
+                      ₹{stats.totalSpent}
                       </p>
                       <p className="text-sm text-purple-600 mt-3 font-medium">This year</p>
                     </div>
                     <div className="w-16 h-16 bg-gradient-to-br from-purple-500 via-violet-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
-                      <span className="text-white font-bold text-lg">$</span>
+                      <span className="text-white font-bold text-lg">₹</span>
                     </div>
                   </div>
                 </CardContent>

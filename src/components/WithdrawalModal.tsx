@@ -182,7 +182,7 @@ export function WithdrawalModal({ open, onOpenChange, onSuccess, userType = 'cus
                     <p className="text-sm text-green-700">
                       {userType === 'designer' ? 'Available Earnings' : 'Available Balance'}
                     </p>
-                    <p className="text-2xl font-bold text-green-800">${walletBalance.toFixed(2)}</p>
+                    <p className="text-2xl font-bold text-green-800">₹{walletBalance.toFixed(2)}</p>
                   </div>
                   <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                     <CheckCircle className="w-6 h-6 text-green-600" />
@@ -332,7 +332,7 @@ export function WithdrawalModal({ open, onOpenChange, onSuccess, userType = 'cus
                       <li>• {userType === 'designer' ? 'Earnings withdrawals typically take 1-2 business days' : 'Withdrawals typically take 2-4 business days'}</li>
                       <li>• Processing time may vary by bank</li>
                       <li>• You'll receive a notification when completed</li>
-                      <li>• Minimum withdrawal amount: $100</li>
+                      <li>• Minimum withdrawal amount: ₹100</li>
                       {userType === 'designer' && <li>• Only verified bank accounts can be used</li>}
                     </ul>
                   </div>

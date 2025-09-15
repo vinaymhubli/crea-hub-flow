@@ -62,9 +62,9 @@ export default function SessionPaymentDialog({
       console.log('Current wallet balance:', balance);
       setWalletBalance(balance);
 
-      // If balance is 0, create a deposit transaction to give user $100
+      // If balance is 0, create a deposit transaction to give user ₹100
       if (balance === 0) {
-        console.log('Balance is 0, creating $100 deposit transaction');
+        console.log('Balance is 0, creating ₹100 deposit transaction');
         const { error: depositError } = await (supabase as any)
           .from('wallet_transactions')
           .insert({
@@ -259,7 +259,7 @@ export default function SessionPaymentDialog({
 
         toast({
           title: "Payment Successful",
-          description: `$${totalAmount.toFixed(2)} has been transferred to the designer's wallet.`,
+          description: `₹${totalAmount.toFixed(2)} has been transferred to the designer's wallet.`,
         });
       } else {
         // For other payment methods, simulate processing
@@ -326,7 +326,7 @@ export default function SessionPaymentDialog({
 
         toast({
           title: "Payment Successful",
-          description: `$${totalAmount.toFixed(2)} has been transferred to the designer's wallet.`,
+          description: `₹${totalAmount.toFixed(2)} has been transferred to the designer's wallet.`,
         });
       }
 
@@ -365,7 +365,7 @@ export default function SessionPaymentDialog({
           {/* Payment Amount */}
           <div className="bg-gray-50 rounded-lg p-4 text-center">
             <p className="text-sm text-gray-600 mb-1">Total Amount</p>
-            <p className="text-3xl font-bold text-green-600">${totalAmount.toFixed(2)}</p>
+            <p className="text-3xl font-bold text-green-600">₹{totalAmount.toFixed(2)}</p>
           </div>
 
           {/* Payment Methods */}
@@ -379,7 +379,7 @@ export default function SessionPaymentDialog({
                   <Wallet className="w-5 h-5 text-blue-600" />
                   <div className="flex-1">
                     <p className="font-medium">Wallet Balance</p>
-                    <p className="text-sm text-gray-500">${walletBalance.toFixed(2)} available</p>
+                    <p className="text-sm text-gray-500">₹{walletBalance.toFixed(2)} available</p>
                   </div>
                 </Label>
               </div>

@@ -461,8 +461,8 @@ export default function UserManagement() {
                     </TableCell>
                     <TableCell>
                       <div className="text-sm space-y-1">
-                        <div>Spent: ${user.total_spent?.toFixed(2) || '0.00'}</div>
-                        <div>Earned: ${user.total_earned?.toFixed(2) || '0.00'}</div>
+                        <div>Spent: ₹{user.total_spent?.toFixed(2) || '0.00'}</div>
+                        <div>Earned: ₹{user.total_earned?.toFixed(2) || '0.00'}</div>
                       </div>
                     </TableCell>
                     <TableCell>

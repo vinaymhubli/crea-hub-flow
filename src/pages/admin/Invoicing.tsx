@@ -339,7 +339,7 @@ export default function Invoicing() {
             <DollarSign className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats.totalRevenue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">₹{stats.totalRevenue.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
               {stats.totalInvoices} invoice{stats.totalInvoices !== 1 ? 's' : ''} total
             </p>
@@ -352,7 +352,7 @@ export default function Invoicing() {
             <TrendingUp className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats.totalCommission.toLocaleString()}</div>
+            <div className="text-2xl font-bold">₹{stats.totalCommission.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
               {((stats.totalCommission / stats.totalRevenue) * 100).toFixed(1)}% of total revenue
             </p>
@@ -365,7 +365,7 @@ export default function Invoicing() {
             <Clock className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats.pendingAmount.toLocaleString()}</div>
+            <div className="text-2xl font-bold">₹{stats.pendingAmount.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
               {stats.totalInvoices - stats.paidInvoices} invoice{stats.totalInvoices - stats.paidInvoices !== 1 ? 's' : ''} pending
             </p>
@@ -499,8 +499,8 @@ export default function Invoicing() {
                     <TableCell className="font-medium">{invoice.invoice_number}</TableCell>
                     <TableCell>{invoice.customer_name}</TableCell>
                     <TableCell>{invoice.designer_name}</TableCell>
-                    <TableCell>${invoice.amount.toFixed(2)}</TableCell>
-                    <TableCell>${invoice.commission_amount.toFixed(2)}</TableCell>
+                    <TableCell>₹{invoice.amount.toFixed(2)}</TableCell>
+                    <TableCell>₹{invoice.commission_amount.toFixed(2)}</TableCell>
                     <TableCell>{getStatusBadge(invoice.status)}</TableCell>
                     <TableCell>{new Date(invoice.due_date).toLocaleDateString()}</TableCell>
                     <TableCell>
@@ -555,7 +555,7 @@ export default function Invoicing() {
                       <CreditCard className="w-4 h-4" />
                     </div>
                     <h3 className="font-semibold">{method.method}</h3>
-                    <p className="text-2xl font-bold text-blue-600">${method.total_amount.toLocaleString()}</p>
+                    <p className="text-2xl font-bold text-blue-600">₹{method.total_amount.toLocaleString()}</p>
                     <p className="text-sm text-muted-foreground">
                       {method.count} payment{method.count !== 1 ? 's' : ''} ({method.percentage.toFixed(1)}%)
                     </p>

@@ -509,7 +509,7 @@ export default function SessionSidePanel({
             <tbody>
               <tr>
                 <td>Design Session</td>
-                <td>${invoice.duration_minutes} minutes</td>
+                <td>₹{invoice.duration_minutes} minutes</td>
                 <td>$${invoice.rate_per_minute}/min</td>
                 <td>$${invoice.subtotal.toFixed(2)}</td>
               </tr>
@@ -883,15 +883,15 @@ export default function SessionSidePanel({
                   <h3>Designer Details</h3>
                   <div class="detail-row">
                     <span class="detail-label">Name:</span>
-                    <span class="detail-value">${designerName}</span>
+                    <span class="detail-value">₹{designerName}</span>
                   </div>
                   <div class="detail-row">
                     <span class="detail-label">Session ID:</span>
-                    <span class="detail-value">${sessionId}</span>
+                    <span class="detail-value">₹{sessionId}</span>
                   </div>
                   <div class="detail-row">
                     <span class="detail-label">Date:</span>
-                    <span class="detail-value">${new Date().toLocaleDateString()}</span>
+                    <span class="detail-value">₹{new Date().toLocaleDateString()}</span>
                   </div>
                 </div>
                 
@@ -899,11 +899,11 @@ export default function SessionSidePanel({
                   <h3>Customer Details</h3>
                   <div class="detail-row">
                     <span class="detail-label">Name:</span>
-                    <span class="detail-value">${customerName}</span>
+                    <span class="detail-value">₹{customerName}</span>
                   </div>
                   <div class="detail-row">
                     <span class="detail-label">Duration:</span>
-                    <span class="detail-value">${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}</span>
+                    <span class="detail-value">₹{Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}</span>
                   </div>
                   <div class="detail-row">
                     <span class="detail-label">Rate:</span>
@@ -1068,7 +1068,7 @@ export default function SessionSidePanel({
                     </div>
                   ) : (
                     <div className="flex items-center space-x-1">
-                      <span>${rate.toFixed(2)}</span>
+                      <span>₹{rate.toFixed(2)}</span>
                       {isDesigner && (
                         <Button
                           size="sm"
@@ -1142,15 +1142,15 @@ export default function SessionSidePanel({
                 <Separator />
                 <div className="flex justify-between font-medium text-xs sm:text-sm">
                   <span>Subtotal:</span>
-                  <span>${(Math.ceil(duration / 60) * rate * formatMultiplier).toFixed(2)}</span>
+                  <span>₹{(Math.ceil(duration / 60) * rate * formatMultiplier).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-xs sm:text-sm">
                   <span>GST (18%):</span>
-                  <span>${(Math.ceil(duration / 60) * rate * formatMultiplier * 0.18).toFixed(2)}</span>
+                  <span>₹{(Math.ceil(duration / 60) * rate * formatMultiplier * 0.18).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-sm sm:text-lg">
                   <span>Total:</span>
-                  <span>${(Math.ceil(duration / 60) * rate * formatMultiplier * 1.18).toFixed(2)}</span>
+                  <span>₹{(Math.ceil(duration / 60) * rate * formatMultiplier * 1.18).toFixed(2)}</span>
                 </div>
               </div>
             </CardContent>

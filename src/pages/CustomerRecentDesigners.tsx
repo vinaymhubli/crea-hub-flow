@@ -97,7 +97,7 @@ function DesignerCard({ designer, favorites, onToggleFavorite, onMessage, onBook
             </div>
           </div>
           <div className="text-right">
-            <p className="font-semibold text-gray-900 bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">${designer.hourly_rate}/hour</p>
+            <p className="font-semibold text-gray-900 bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">₹{designer.hourly_rate}/hour</p>
             {designer.location && (
               <div className="flex items-center space-x-1 mt-1">
                 <MapPin className="w-3 h-3 text-gray-400" />
@@ -149,7 +149,7 @@ function DesignerCard({ designer, favorites, onToggleFavorite, onMessage, onBook
             </div>
             <div>
               <p className="text-gray-500">Total spent</p>
-              <p className="font-medium text-gray-900">${designer.totalSpent || 0}</p>
+              <p className="font-medium text-gray-900">₹{designer.totalSpent || 0}</p>
             </div>
             <div>
               <p className="text-gray-500">Response time</p>

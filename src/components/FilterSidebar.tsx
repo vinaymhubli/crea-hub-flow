@@ -99,10 +99,10 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFiltersChange,
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="bg-muted px-3 py-2 rounded-lg">
-                  <span className="text-sm font-medium text-foreground">${filters.priceRange[0]}</span>
+                  <span className="text-sm font-medium text-foreground">₹{filters.priceRange[0]}</span>
                 </div>
                 <div className="bg-muted px-3 py-2 rounded-lg">
-                  <span className="text-sm font-medium text-foreground">${filters.priceRange[1]}+</span>
+                  <span className="text-sm font-medium text-foreground">₹{filters.priceRange[1]}+</span>
                 </div>
               </div>
               <div className="relative">

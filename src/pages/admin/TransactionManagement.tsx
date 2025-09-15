@@ -1,30 +1,64 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { Navigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Receipt, Search, Filter, Download, Eye, DollarSign, 
-  TrendingUp, TrendingDown, Clock, CheckCircle, XCircle,
-  AlertTriangle, CreditCard, Wallet, Users, Calendar,
-  ArrowUpRight, ArrowDownLeft, RefreshCw, FileText
-} from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { Navigate } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Receipt,
+  Search,
+  Filter,
+  Download,
+  Eye,
+  DollarSign,
+  TrendingUp,
+  TrendingDown,
+  Clock,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  CreditCard,
+  Wallet,
+  Users,
+  Calendar,
+  ArrowUpRight,
+  ArrowDownLeft,
+  RefreshCw,
+  FileText,
+} from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Transaction {
   id: string;
   user_id: string;
-  transaction_type: 'deposit' | 'payment' | 'refund' | 'withdrawal';
+  transaction_type: "deposit" | "payment" | "refund" | "withdrawal";
   amount: number;
   description: string;
-  status: 'pending' | 'completed' | 'failed';
+  status: "pending" | "completed" | "failed";
   booking_id?: string;
   created_at: string;
   user?: {
@@ -57,14 +91,17 @@ interface TransactionStats {
 export default function TransactionManagement() {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
+  const [filteredTransactions, setFilteredTransactions] = useState<
+    Transaction[]
+  >([]);
   const [stats, setStats] = useState<TransactionStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [dateFilter, setDateFilter] = useState('all');
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<Transaction | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
 
   if (!user) {
@@ -84,8 +121,9 @@ export default function TransactionManagement() {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('wallet_transactions')
-        .select(`
+        .from("wallet_transactions")
+        .select(
+          `
           *,
           profiles!wallet_transactions_user_id_fkey (
             first_name,
@@ -99,14 +137,15 @@ export default function TransactionManagement() {
             designer_id,
             customer_id
           )
-        `)
-        .order('created_at', { ascending: false });
+        `
+        )
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
 
-      setTransactions(data as any || []);
+      setTransactions((data as any) || []);
     } catch (error) {
-      console.error('Error fetching transactions:', error);
+      console.error("Error fetching transactions:", error);
     } finally {
       setLoading(false);
     }
@@ -115,40 +154,57 @@ export default function TransactionManagement() {
   const fetchStats = async () => {
     try {
       const { data: transactions } = await supabase
-        .from('wallet_transactions')
-        .select('*');
+        .from("wallet_transactions")
+        .select("*");
 
       if (transactions) {
         const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const today = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate()
+        );
         const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
         const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
 
         const stats: TransactionStats = {
           total_transactions: transactions.length,
-          total_volume: transactions.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0),
-          pending_transactions: transactions.filter(t => t.status === 'pending').length,
-          completed_transactions: transactions.filter(t => t.status === 'completed').length,
-          failed_transactions: transactions.filter(t => t.status === 'failed').length,
-          deposits: transactions.filter(t => t.transaction_type === 'deposit').length,
-          payments: transactions.filter(t => t.transaction_type === 'payment').length,
-          refunds: transactions.filter(t => t.transaction_type === 'refund').length,
-          withdrawals: transactions.filter(t => t.transaction_type === 'withdrawal').length,
+          total_volume: transactions.reduce(
+            (sum, t) => sum + parseFloat(t.amount.toString()),
+            0
+          ),
+          pending_transactions: transactions.filter(
+            (t) => t.status === "pending"
+          ).length,
+          completed_transactions: transactions.filter(
+            (t) => t.status === "completed"
+          ).length,
+          failed_transactions: transactions.filter((t) => t.status === "failed")
+            .length,
+          deposits: transactions.filter((t) => t.transaction_type === "deposit")
+            .length,
+          payments: transactions.filter((t) => t.transaction_type === "payment")
+            .length,
+          refunds: transactions.filter((t) => t.transaction_type === "refund")
+            .length,
+          withdrawals: transactions.filter(
+            (t) => t.transaction_type === "withdrawal"
+          ).length,
           today_volume: transactions
-            .filter(t => new Date(t.created_at) >= today)
+            .filter((t) => new Date(t.created_at) >= today)
             .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0),
           this_week_volume: transactions
-            .filter(t => new Date(t.created_at) >= weekAgo)
+            .filter((t) => new Date(t.created_at) >= weekAgo)
             .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0),
           this_month_volume: transactions
-            .filter(t => new Date(t.created_at) >= monthAgo)
+            .filter((t) => new Date(t.created_at) >= monthAgo)
             .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0),
         };
 
         setStats(stats);
       }
     } catch (error) {
-      console.error('Error fetching stats:', error);
+      console.error("Error fetching stats:", error);
     }
   };
 
@@ -156,41 +212,56 @@ export default function TransactionManagement() {
     let filtered = transactions;
 
     if (searchTerm) {
-      filtered = filtered.filter(transaction =>
-        transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        transaction.user?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        transaction.user?.email.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (transaction) =>
+          transaction.description
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          transaction.user?.full_name
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          transaction.user?.email
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())
       );
     }
 
-    if (typeFilter !== 'all') {
-      filtered = filtered.filter(transaction => transaction.transaction_type === typeFilter);
+    if (typeFilter !== "all") {
+      filtered = filtered.filter(
+        (transaction) => transaction.transaction_type === typeFilter
+      );
     }
 
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(transaction => transaction.status === statusFilter);
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(
+        (transaction) => transaction.status === statusFilter
+      );
     }
 
-    if (dateFilter !== 'all') {
+    if (dateFilter !== "all") {
       const now = new Date();
       let filterDate: Date;
 
       switch (dateFilter) {
-        case 'today':
-          filterDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        case "today":
+          filterDate = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate()
+          );
           break;
-        case 'week':
+        case "week":
           filterDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
           break;
-        case 'month':
+        case "month":
           filterDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
           break;
         default:
           filterDate = new Date(0);
       }
 
-      filtered = filtered.filter(transaction => 
-        new Date(transaction.created_at) >= filterDate
+      filtered = filtered.filter(
+        (transaction) => new Date(transaction.created_at) >= filterDate
       );
     }
 
@@ -202,58 +273,63 @@ export default function TransactionManagement() {
     setIsDetailDialogOpen(true);
   };
 
-  const handleUpdateTransactionStatus = async (transactionId: string, newStatus: 'pending' | 'completed' | 'failed') => {
+  const handleUpdateTransactionStatus = async (
+    transactionId: string,
+    newStatus: "pending" | "completed" | "failed"
+  ) => {
     try {
       const { error } = await supabase
-        .from('wallet_transactions')
+        .from("wallet_transactions")
         .update({ status: newStatus })
-        .eq('id', transactionId);
+        .eq("id", transactionId);
 
       if (error) throw error;
 
       // Update local state
-      setTransactions(transactions.map(t => 
-        t.id === transactionId 
-          ? { ...t, status: newStatus }
-          : t
-      ));
+      setTransactions(
+        transactions.map((t) =>
+          t.id === transactionId ? { ...t, status: newStatus } : t
+        )
+      );
     } catch (error) {
-      console.error('Error updating transaction status:', error);
+      console.error("Error updating transaction status:", error);
     }
   };
 
   const exportTransactions = () => {
     const csvContent = [
-      ['ID', 'User', 'Type', 'Amount', 'Status', 'Description', 'Date'],
-      ...filteredTransactions.map(transaction => [
+      ["ID", "User", "Type", "Amount", "Status", "Description", "Date"],
+      ...filteredTransactions.map((transaction) => [
         transaction.id,
-        transaction.user?.full_name || transaction.user?.email || 'Unknown',
+        transaction.user?.full_name || transaction.user?.email || "Unknown",
         transaction.transaction_type,
         transaction.amount.toString(),
         transaction.status,
         transaction.description,
         new Date(transaction.created_at).toLocaleString(),
-      ])
-    ].map(row => row.join(',')).join('\n');
+      ]),
+    ]
+      .map((row) => row.join(","))
+      .join("\n");
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const blob = new Blob([csvContent], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = 'transactions.csv';
+    a.download = "transactions.csv";
     a.click();
     window.URL.revokeObjectURL(url);
   };
 
   const getTransactionIcon = (type: string) => {
     switch (type) {
-      case 'deposit':
+      case "deposit":
         return <ArrowDownLeft className="h-4 w-4 text-green-600" />;
-      case 'payment':
+      case "payment":
         return <ArrowUpRight className="h-4 w-4 text-blue-600" />;
-      case 'refund':
+      case "refund":
         return <RefreshCw className="h-4 w-4 text-orange-600" />;
-      case 'withdrawal':
+      case "withdrawal":
         return <ArrowUpRight className="h-4 w-4 text-red-600" />;
       default:
         return <DollarSign className="h-4 w-4" />;
@@ -262,11 +338,11 @@ export default function TransactionManagement() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'completed':
+      case "completed":
         return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case 'pending':
+      case "pending":
         return <Clock className="h-4 w-4 text-yellow-600" />;
-      case 'failed':
+      case "failed":
         return <XCircle className="h-4 w-4 text-red-600" />;
       default:
         return <AlertTriangle className="h-4 w-4" />;
@@ -283,6 +359,7 @@ export default function TransactionManagement() {
       </div>
     );
   }
+  console.log({ filteredTransactions });
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -290,7 +367,9 @@ export default function TransactionManagement() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Transaction Management</h1>
-          <p className="text-muted-foreground">View and manage all platform transactions</p>
+          <p className="text-muted-foreground">
+            View and manage all platform transactions
+          </p>
         </div>
         <div className="flex gap-2">
           <Button onClick={fetchTransactions} variant="outline">
@@ -309,11 +388,15 @@ export default function TransactionManagement() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Volume</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Total Volume
+              </CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${stats.total_volume.toFixed(2)}</div>
+              <div className="text-2xl font-bold">
+              ₹{stats.total_volume.toFixed(2)}
+              </div>
               <p className="text-xs text-muted-foreground">
                 {stats.total_transactions} transactions
               </p>
@@ -326,9 +409,15 @@ export default function TransactionManagement() {
               <CheckCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.completed_transactions}</div>
+              <div className="text-2xl font-bold">
+                {stats.completed_transactions}
+              </div>
               <p className="text-xs text-muted-foreground">
-                {((stats.completed_transactions / stats.total_transactions) * 100).toFixed(1)}% success rate
+                {(
+                  (stats.completed_transactions / stats.total_transactions) *
+                  100
+                ).toFixed(1)}
+                % success rate
               </p>
             </CardContent>
           </Card>
@@ -339,7 +428,9 @@ export default function TransactionManagement() {
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.pending_transactions}</div>
+              <div className="text-2xl font-bold">
+                {stats.pending_transactions}
+              </div>
               <p className="text-xs text-muted-foreground">
                 Awaiting processing
               </p>
@@ -352,10 +443,10 @@ export default function TransactionManagement() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${stats.this_month_volume.toFixed(2)}</div>
-              <p className="text-xs text-muted-foreground">
-                Monthly volume
-              </p>
+              <div className="text-2xl font-bold">
+              ₹{stats.this_month_volume.toFixed(2)}
+              </div>
+              <p className="text-xs text-muted-foreground">Monthly volume</p>
             </CardContent>
           </Card>
         </div>
@@ -369,7 +460,9 @@ export default function TransactionManagement() {
               <CardTitle className="text-sm font-medium">Deposits</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{stats.deposits}</div>
+              <div className="text-2xl font-bold text-green-600">
+                {stats.deposits}
+              </div>
             </CardContent>
           </Card>
           <Card>
@@ -377,7 +470,9 @@ export default function TransactionManagement() {
               <CardTitle className="text-sm font-medium">Payments</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{stats.payments}</div>
+              <div className="text-2xl font-bold text-blue-600">
+                {stats.payments}
+              </div>
             </CardContent>
           </Card>
           <Card>
@@ -385,7 +480,9 @@ export default function TransactionManagement() {
               <CardTitle className="text-sm font-medium">Refunds</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-orange-600">{stats.refunds}</div>
+              <div className="text-2xl font-bold text-orange-600">
+                {stats.refunds}
+              </div>
             </CardContent>
           </Card>
           <Card>
@@ -393,7 +490,9 @@ export default function TransactionManagement() {
               <CardTitle className="text-sm font-medium">Withdrawals</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">{stats.withdrawals}</div>
+              <div className="text-2xl font-bold text-red-600">
+                {stats.withdrawals}
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -504,22 +603,26 @@ export default function TransactionManagement() {
                     <TableCell>
                       <div>
                         <div className="font-medium text-sm">
-                          {transaction.user?.full_name || 'Unknown User'}
+                          {transaction.profiles?.full_name || "Unknown User"}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {transaction.user?.email}
+                          {transaction.profiles?.email}
                         </div>
                         <Badge variant="outline" className="text-xs">
-                          {transaction.user?.role}
+                          {transaction.profiles?.role}
                         </Badge>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge 
+                      <Badge
                         variant={
-                          transaction.transaction_type === 'deposit' ? 'default' :
-                          transaction.transaction_type === 'payment' ? 'secondary' :
-                          transaction.transaction_type === 'refund' ? 'outline' : 'destructive'
+                          transaction.transaction_type === "deposit"
+                            ? "default"
+                            : transaction.transaction_type === "payment"
+                            ? "secondary"
+                            : transaction.transaction_type === "refund"
+                            ? "outline"
+                            : "destructive"
                         }
                       >
                         {transaction.transaction_type}
@@ -527,7 +630,7 @@ export default function TransactionManagement() {
                     </TableCell>
                     <TableCell>
                       <div className="font-medium">
-                        ${parseFloat(transaction.amount.toString()).toFixed(2)}
+                        ₹{parseFloat(transaction.amount.toString()).toFixed(2)}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -553,18 +656,25 @@ export default function TransactionManagement() {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        {transaction.status === 'pending' && (
+                        {transaction.status === "pending" && (
                           <Select
                             value={transaction.status}
-                            onValueChange={(value: 'pending' | 'completed' | 'failed') => 
-                              handleUpdateTransactionStatus(transaction.id, value)
+                            onValueChange={(
+                              value: "pending" | "completed" | "failed"
+                            ) =>
+                              handleUpdateTransactionStatus(
+                                transaction.id,
+                                value
+                              )
                             }
                           >
                             <SelectTrigger className="w-24">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="completed">Complete</SelectItem>
+                              <SelectItem value="completed">
+                                Complete
+                              </SelectItem>
                               <SelectItem value="failed">Fail</SelectItem>
                             </SelectContent>
                           </Select>
@@ -590,39 +700,48 @@ export default function TransactionManagement() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Transaction ID</Label>
-                  <div className="text-sm font-mono">{selectedTransaction.id}</div>
+                  <div className="text-sm font-mono">
+                    {selectedTransaction.id}
+                  </div>
                 </div>
                 <div>
                   <Label>Type</Label>
                   <div className="flex items-center space-x-2">
                     {getTransactionIcon(selectedTransaction.transaction_type)}
-                    <span className="capitalize">{selectedTransaction.transaction_type}</span>
+                    <span className="capitalize">
+                      {selectedTransaction.transaction_type}
+                    </span>
                   </div>
                 </div>
                 <div>
                   <Label>Amount</Label>
                   <div className="text-lg font-bold">
-                    ${parseFloat(selectedTransaction.amount.toString()).toFixed(2)}
+                    ₹
+                    {parseFloat(selectedTransaction.amount.toString()).toFixed(
+                      2
+                    )}
                   </div>
                 </div>
                 <div>
                   <Label>Status</Label>
                   <div className="flex items-center space-x-2">
                     {getStatusIcon(selectedTransaction.status)}
-                    <span className="capitalize">{selectedTransaction.status}</span>
+                    <span className="capitalize">
+                      {selectedTransaction.status}
+                    </span>
                   </div>
                 </div>
                 <div>
                   <Label>User</Label>
                   <div>
                     <div className="font-medium">
-                      {selectedTransaction.user?.full_name || 'Unknown User'}
+                      {selectedTransaction.profiles?.full_name || "Unknown User"}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      {selectedTransaction.user?.email}
+                      {selectedTransaction.profiles?.email}
                     </div>
                     <Badge variant="outline" className="text-xs">
-                      {selectedTransaction.user?.role}
+                      {selectedTransaction.profiles?.role}
                     </Badge>
                   </div>
                 </div>
@@ -640,7 +759,9 @@ export default function TransactionManagement() {
               {selectedTransaction.booking_id && (
                 <div>
                   <Label>Related Booking</Label>
-                  <div className="text-sm font-mono">{selectedTransaction.booking_id}</div>
+                  <div className="text-sm font-mono">
+                    {selectedTransaction.booking_id}
+                  </div>
                 </div>
               )}
             </div>

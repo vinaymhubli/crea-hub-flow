@@ -63,7 +63,7 @@ export function UniversalPaymentButton({
         }
       } else {
         // Just add credits to wallet
-        toast.success(`$${paymentAmount} added to your wallet!`);
+        toast.success(`₹${paymentAmount} added to your wallet!`);
         onSuccess?.(paymentAmount, paymentMethod);
       }
     } catch (error) {
@@ -136,7 +136,7 @@ export function UniversalPaymentButton({
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Wallet Balance:</span>
             <div className="flex items-center space-x-2">
-              <span className="font-semibold">${balance.toFixed(2)}</span>
+              <span className="font-semibold">₹{balance.toFixed(2)}</span>
               {designerId && (
                 <Badge 
                   variant={hasSufficientBalance(amount) ? "default" : "destructive"}

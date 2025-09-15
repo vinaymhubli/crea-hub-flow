@@ -365,7 +365,7 @@ const DesignerDetails: React.FC = () => {
                       {service.description}
                     </p>
                     <div className="flex items-center justify-between">
-                      <div className="text-lg font-bold">${service.price}</div>
+                      <div className="text-lg font-bold">₹{service.price}</div>
                       <div className="flex items-center gap-1 text-sm">
                         <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                         <span>{service.rating}</span>

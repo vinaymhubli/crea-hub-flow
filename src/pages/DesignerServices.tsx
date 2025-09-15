@@ -1098,7 +1098,7 @@ export default function DesignerServices() {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-1">
                     <DollarSign className="w-4 h-4 text-green-600" />
-                    <span className="font-semibold text-green-600">${service.price}</span>
+                    <span className="font-semibold text-green-600">₹{service.price}</span>
                   </div>
                   <div className="flex items-center space-x-1 text-sm text-gray-600">
                     <Clock className="w-4 h-4" />

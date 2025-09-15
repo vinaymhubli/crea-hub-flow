@@ -302,7 +302,7 @@ export default function SessionControl() {
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
                           <span className="text-muted-foreground">Amount:</span>
-                          <span className="font-medium ml-2">${session.total_amount}</span>
+                          <span className="font-medium ml-2">₹{session.total_amount}</span>
                         </div>
                         <div>
                           <span className="text-muted-foreground">Duration:</span>
