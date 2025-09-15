@@ -13,7 +13,8 @@ import {
   Receipt,
   ChevronRight,
   LogOut,
-  FileText
+  FileText,
+  AlertTriangle
 } from 'lucide-react';
 import {
   Sidebar,
@@ -34,6 +35,7 @@ const sidebarItems = [
   { title: "Messages", url: "/customer-dashboard/messages", icon: MessageCircle },
   { title: "Recent Designers", url: "/customer-dashboard/recent-designers", icon: Users },
   { title: "Files", url: "/customer-dashboard/files", icon: FileText },
+  { title: "Complaints", url: "/customer/complaints", icon: AlertTriangle },
   { title: "Wallet", url: "/customer-dashboard/wallet", icon: Wallet },
   { title: "Invoices", url: "/customer-dashboard/invoices", icon: Receipt },
   { title: "Notifications", url: "/customer-dashboard/notifications", icon: Bell },

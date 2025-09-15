@@ -59,6 +59,7 @@ import CustomerSettings from "./pages/CustomerSettings"
 import CustomerRecentDesigners from "./pages/CustomerRecentDesigners"
 import CustomerDesigners from "./pages/CustomerDesigners"
 import CustomerFiles from "./pages/CustomerFiles"
+import CustomerComplaints from "./pages/CustomerComplaints"
 import DesignerDashboard from "./pages/DesignerDashboard"
 import DesignerProfile from "./pages/DesignerProfile"
 import DesignerPortfolio from "./pages/DesignerPortfolio"
@@ -402,6 +403,11 @@ function AppContent() {
           <Route path="/customer-dashboard/files" element={
             <ProtectedRoute requireUserType="client">
               <CustomerFiles />
+            </ProtectedRoute>
+          } />
+          <Route path="/customer/complaints" element={
+            <ProtectedRoute requireUserType="client">
+              <CustomerComplaints />
             </ProtectedRoute>
           } />
           <Route path="/customer-dashboard/recent-designers" element={

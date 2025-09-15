@@ -59,23 +59,59 @@ export default function DesignerComplaints() {
   const fetchComplaints = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+
+      // 1) Fetch complaints for this designer (no joins to avoid FK dependency)
+      const { data: rawComplaints, error: complaintsError } = await supabase
         .from('customer_complaints')
-        .select(`
-          *,
-          customer:profiles!customer_complaints_customer_id_fkey(first_name, last_name),
-          file:session_files(name)
-        `)
+        .select('*')
         .eq('designer_id', user?.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (complaintsError) throw complaintsError;
 
-      const formattedComplaints = data?.map(complaint => ({
-        ...complaint,
-        customer_name: `${complaint.customer?.first_name || ''} ${complaint.customer?.last_name || ''}`.trim(),
-        file_name: complaint.file?.name || 'Unknown File'
-      })) || [];
+      const complaintsList = rawComplaints || [];
+      if (complaintsList.length === 0) {
+        setComplaints([]);
+        return;
+      }
+
+      // 2) Batch fetch customer profiles
+      const customerIds = Array.from(new Set(complaintsList.map(c => c.customer_id).filter(Boolean)));
+      let customerMap: Record<string, { first_name?: string; last_name?: string; full_name?: string }> = {};
+      if (customerIds.length > 0) {
+        const { data: customerProfiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('user_id, first_name, last_name, full_name')
+          .in('user_id', customerIds);
+        if (!profilesError && customerProfiles) {
+          customerProfiles.forEach(p => { customerMap[p.user_id] = p; });
+        }
+      }
+
+      // 3) Batch fetch file names
+      const fileIds = Array.from(new Set(complaintsList.map(c => c.file_id).filter(Boolean)));
+      let fileMap: Record<string, { name?: string }> = {};
+      if (fileIds.length > 0) {
+        const { data: files, error: filesError } = await supabase
+          .from('session_files')
+          .select('id, name')
+          .in('id', fileIds);
+        if (!filesError && files) {
+          files.forEach(f => { fileMap[f.id] = { name: f.name }; });
+        }
+      }
+
+      // 4) Format
+      const formattedComplaints: Complaint[] = complaintsList.map((c: any) => {
+        const prof = customerMap[c.customer_id] || {} as any;
+        const fullName = prof.full_name || `${prof.first_name || ''} ${prof.last_name || ''}`.trim();
+        const fileName = (fileMap[c.file_id]?.name) || 'Unknown File';
+        return {
+          ...c,
+          customer_name: fullName || 'Unknown Customer',
+          file_name: fileName,
+        } as Complaint;
+      });
 
       setComplaints(formattedComplaints);
     } catch (error) {
