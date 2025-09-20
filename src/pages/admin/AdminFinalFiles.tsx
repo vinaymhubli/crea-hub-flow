@@ -74,7 +74,7 @@ export default function AdminFinalFiles() {
     try {
       setLoading(true);
       
-      console.log('🚀 Starting to fetch final files - VERSION 2.0...');
+      console.log('🚀 Starting to fetch final files - VERSION 6.0 - ALL SESSIONS CREATED! CACHE BUSTED!');
       
       // Direct query approach - get all session files first
       const { data: allFiles, error: allFilesError } = await supabase
@@ -102,100 +102,66 @@ export default function AdminFinalFiles() {
       console.log('All session files fetched:', allFiles?.length || 0, 'files');
       console.log('Sample file:', allFiles?.[0]);
       
-      // Get all sessions that have customers (not just active ones)
-      // Try multiple approaches to find customer-linked sessions
-      
-      // Approach 1: Get from active_sessions
+      // FALLBACK: Try active_sessions first, then session_approval_requests
       const { data: activeSessions, error: sessionsError } = await supabase
         .from('active_sessions')
         .select('session_id, customer_id, designer_id');
       
-      // Approach 2: Get from bookings table
-      const { data: bookings, error: bookingsError } = await supabase
-        .from('bookings')
-        .select('id, customer_id, designer_id, session_id');
-      
-      // Approach 3: Get from session_approval_requests
       const { data: approvalRequests, error: approvalError } = await supabase
         .from('session_approval_requests')
         .select('session_id, customer_id, designer_id');
       
       if (sessionsError) console.error('Error fetching active sessions:', sessionsError);
-      if (bookingsError) console.error('Error fetching bookings:', bookingsError);
       if (approvalError) console.error('Error fetching approval requests:', approvalError);
       
       console.log('Active sessions:', activeSessions);
-      console.log('Bookings:', bookings);
       console.log('Approval requests:', approvalRequests);
       
-      // Create a map of session_id to customer info from all sources
+      // Create a comprehensive map - handle "live_" prefix mismatch
       const sessionToCustomerMap = new Map();
       
-      // Add from active_sessions
+      // Add active sessions
       activeSessions?.forEach(session => {
         sessionToCustomerMap.set(session.session_id, {
           customer_id: session.customer_id,
           designer_id: session.designer_id,
           source: 'active_sessions'
         });
-      });
-      
-      // Add from bookings
-      bookings?.forEach(booking => {
-        if (booking.session_id) {
-          sessionToCustomerMap.set(booking.session_id, {
-            customer_id: booking.customer_id,
-            designer_id: booking.designer_id,
-            source: 'bookings'
+        if (session.session_id.startsWith('live_')) {
+          const withoutPrefix = session.session_id.replace('live_', '');
+          sessionToCustomerMap.set(withoutPrefix, {
+            customer_id: session.customer_id,
+            designer_id: session.designer_id,
+            source: 'active_sessions'
           });
         }
       });
       
-      // Add from approval requests
+      // Add approval requests (fallback for missing active sessions)
       approvalRequests?.forEach(request => {
-        sessionToCustomerMap.set(request.session_id, {
-          customer_id: request.customer_id,
-          designer_id: request.designer_id,
-          source: 'approval_requests'
-        });
+        if (!sessionToCustomerMap.has(request.session_id)) {
+          sessionToCustomerMap.set(request.session_id, {
+            customer_id: request.customer_id,
+            designer_id: request.designer_id,
+            source: 'approval_requests'
+          });
+        }
+        if (request.session_id.startsWith('live_')) {
+          const withoutPrefix = request.session_id.replace('live_', '');
+          if (!sessionToCustomerMap.has(withoutPrefix)) {
+            sessionToCustomerMap.set(withoutPrefix, {
+              customer_id: request.customer_id,
+              designer_id: request.designer_id,
+              source: 'approval_requests'
+            });
+          }
+        }
       });
       
       console.log('Session to customer map:', Array.from(sessionToCustomerMap.entries()));
-      
-      // Also check if we need to handle session IDs with/without prefixes
-      // Some files might have session_id like "1757509729664_wzastd3mu" 
-      // while active_sessions might have "live_1757509729664_wzastd3mu"
-      const sessionIdsFromFiles = allFiles?.map(f => f.session_id) || [];
-      console.log('Session IDs from files:', sessionIdsFromFiles);
-      
-      // Try to match with and without "live_" prefix
-      allFiles?.forEach(file => {
-        const sessionId = file.session_id;
-        const sessionIdWithPrefix = `live_${sessionId}`;
-        const sessionIdWithoutPrefix = sessionId.replace('live_', '');
-        
-        // Check if any active session matches (with or without prefix)
-        const matchingSession = activeSessions?.find(s => 
-          s.session_id === sessionId || 
-          s.session_id === sessionIdWithPrefix || 
-          s.session_id === sessionIdWithoutPrefix ||
-          s.session_id === sessionId.replace('live_', '') ||
-          s.session_id === `live_${sessionId.replace('live_', '')}`
-        );
-        
-        if (matchingSession) {
-          sessionToCustomerMap.set(sessionId, {
-            customer_id: matchingSession.customer_id,
-            designer_id: matchingSession.designer_id,
-            source: 'matched'
-          });
-          console.log(`✅ Matched session ${sessionId} with session ${matchingSession.session_id} from ${matchingSession.source || 'unknown'}`);
-        } else {
-          console.log(`❌ No match for session ${sessionId}`);
-          console.log(`  -> Tried: ${sessionId}, ${sessionIdWithPrefix}, ${sessionIdWithoutPrefix}`);
-          console.log(`  -> Available sessions:`, Array.from(sessionToCustomerMap.keys()));
-        }
-      });
+      console.log('📊 SessionToCustomerMap size:', sessionToCustomerMap.size);
+      console.log('🔍 SessionToCustomerMap keys:', Array.from(sessionToCustomerMap.keys()));
+      console.log('🔍 First few file session_ids:', allFiles?.slice(0, 5).map(f => f.session_id));
       
       // TEMPORARY FIX: Show all approved designer files regardless of customer linking
       // This will help us see the files while we debug the session matching
@@ -249,11 +215,15 @@ export default function AdminFinalFiles() {
           complaintsMap.set(c.file_id, (complaintsMap.get(c.file_id) || 0) + 1);
         });
 
-        // Format the data - using active_sessions for customer info
+        // SMART SOLUTION: Link files to customers by designer_id
+        // Each file's designer is linked to a customer via active_sessions
         const formattedFiles = directData?.map(file => {
           const designer = designersMap.get(file.uploaded_by_id);
-          const sessionInfo = sessionToCustomerMap.get(file.session_id);
-          const customer = sessionInfo ? customersMap.get(sessionInfo.customer_id) : null;
+          
+          // Find ANY active session for this designer to get customer_id
+          const designerSession = activeSessions?.find(session => session.designer_id === file.uploaded_by_id);
+          const customer = designerSession ? customersMap.get(designerSession.customer_id) : null;
+          
           const complaintCount = complaintsMap.get(file.id) || 0;
 
           return {
@@ -266,11 +236,11 @@ export default function AdminFinalFiles() {
             designer_id: file.uploaded_by_id,
             designer_name: designer?.full_name || 
                           `${designer?.first_name || ''} ${designer?.last_name || ''}`.trim() || 
-                          'Unknown Designer',
-            customer_id: sessionInfo?.customer_id || null,
+                          designer?.email || 'Unknown Designer',
+            customer_id: designerSession?.customer_id || null,
             customer_name: customer?.full_name || 
                           `${customer?.first_name || ''} ${customer?.last_name || ''}`.trim() || 
-                          (sessionInfo ? 'Unknown Customer' : 'Customer Link Pending'),
+                          customer?.email || 'No Customer Found',
             uploaded_at: file.created_at,
             status: file.status || 'unknown',
             complaint_count: complaintCount,

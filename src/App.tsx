@@ -26,6 +26,13 @@ import AdminRefunds from "./pages/admin/AdminRefunds"
 import DesignerVerification from "./pages/admin/DesignerVerification"
 import SessionControl from "./pages/admin/SessionControl"
 import AdminDesignerAvailability from "./pages/admin/DesignerAvailability"
+import AdminInvoiceManagement from "./pages/admin/AdminInvoiceManagement"
+import AdminCommissions from "./pages/admin/AdminCommissions"
+import AdminTaxes from "./pages/admin/AdminTaxes"
+import AdminTaxCollections from "./pages/admin/AdminTaxCollections"
+import AdminWalletRecharges from "./pages/admin/AdminWalletRecharges"
+import AdminWalletWithdrawals from "./pages/admin/AdminWalletWithdrawals"
+import AdminTDS from "./pages/admin/AdminTDS"
 // import CMSDashboard from "./pages/admin/CMSDashboard"
 // import FAQManagement from "./pages/admin/FAQManagement"
 import TermsManagement from "./pages/admin/TermsManagement"
@@ -72,6 +79,7 @@ import DesignerSessionHistory from "./pages/DesignerSessionHistory"
 import DesignerSettings from "./pages/DesignerSettings"
 import DesignerServices from "./pages/DesignerServices"
 import DesignerFileReviews from "./pages/DesignerFileReviews"
+import DesignerInvoices from "./pages/DesignerInvoices"
 import CallSession from "./pages/CallSession"
 import LiveCallSession from "./pages/LiveCallSession"
 import AIAssistant from "./pages/AIAssistant"
@@ -221,6 +229,55 @@ function AppContent() {
             <ProtectedAdminRoute>
               <AdminLayout>
                 <AdminDesignerAvailability />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/admin/invoice-management" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <AdminInvoiceManagement />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/admin/platform/commissions" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <AdminCommissions />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/admin/platform/taxes" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <AdminTaxes />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/admin/tax-collections" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <AdminTaxCollections />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/admin/wallet-recharges" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <AdminWalletRecharges />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/admin/wallet-withdrawals" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <AdminWalletWithdrawals />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/admin/tds-management" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <AdminTDS />
               </AdminLayout>
             </ProtectedAdminRoute>
           } />
@@ -410,6 +467,11 @@ function AppContent() {
               <CustomerComplaints />
             </ProtectedRoute>
           } />
+          <Route path="/customer/invoices" element={
+            <ProtectedRoute requireUserType="client">
+              <CustomerInvoices />
+            </ProtectedRoute>
+          } />
           <Route path="/customer-dashboard/recent-designers" element={
             <ProtectedRoute requireUserType="client">
               <CustomerRecentDesigners />
@@ -470,6 +532,11 @@ function AppContent() {
           <Route path="/designer/complaints" element={
             <ProtectedRoute requireUserType="designer">
               <DesignerComplaints />
+            </ProtectedRoute>
+          } />
+          <Route path="/designer/invoices" element={
+            <ProtectedRoute requireUserType="designer">
+              <DesignerInvoices />
             </ProtectedRoute>
           } />
           <Route path="/designer-dashboard/history" element={

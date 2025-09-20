@@ -363,3 +363,5 @@ export function useWallet() {
       type ? transactions.filter(t => t.transaction_type === type) : transactions
   };
 }
+
+

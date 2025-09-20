@@ -121,10 +121,10 @@ export default function AdminComplaints() {
           ...complaint,
           customer_name: customer?.full_name || 
                        `${customer?.first_name || ''} ${customer?.last_name || ''}`.trim() || 
-                       'Unknown Customer',
+                       customer?.email || 'Unknown Customer',
           designer_name: designer?.full_name || 
                         `${designer?.first_name || ''} ${designer?.last_name || ''}`.trim() || 
-                        'Unknown Designer',
+                        designer?.email || 'Unknown Designer',
           file_name: file?.name || 'Unknown File'
         };
       }) || [];

@@ -10,7 +10,8 @@ import {
   MessageSquare,
   Package,
   FileCheck,
-  AlertTriangle
+  AlertTriangle,
+  Receipt
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useDesignerProfile } from '@/hooks/useDesignerProfile';
@@ -34,6 +35,7 @@ const sidebarItems = [
   { title: "Messages", url: "/designer-dashboard/messages", icon: MessageSquare },
   // { title: "File Reviews", url: "/designer-dashboard/file-reviews", icon: FileCheck },
   { title: "Complaints", url: "/designer/complaints", icon: AlertTriangle },
+  { title: "Invoices", url: "/designer/invoices", icon: Receipt },
   { title: "Availability", url: "/designer-dashboard/availability", icon: Clock },
   { title: "Earnings", url: "/designer-dashboard/earnings", icon: DollarSign },
   { title: "Session History", url: "/designer-dashboard/history", icon: History },

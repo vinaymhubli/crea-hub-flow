@@ -103,15 +103,20 @@ serve(async (req) => {
       )
     }
 
+    // Designer withdrawal - NO TAXES APPLIED
+    // Designer gets the exact amount they want to withdraw
+    const finalAmount = amount
+    console.log('Designer withdrawal - no taxes applied, amount:', finalAmount)
+
     // Generate unique withdrawal ID
     const withdrawalId = `DESIGNER_WDR_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
-    // Create withdrawal transaction
+    // Create withdrawal transaction (no tax information)
     const { data: withdrawalTransaction, error: withdrawalError } = await supabase
       .from('wallet_transactions')
       .insert({
         user_id: user.id,
-        amount: amount,
+        amount: finalAmount,
         transaction_type: 'withdrawal',
         status: 'pending',
         description: description || `Designer earnings withdrawal to ${bankAccount.bank_name} - ${bankAccount.account_number.slice(-4)}`,
@@ -125,6 +130,7 @@ serve(async (req) => {
             ifsc_code: bankAccount.ifsc_code,
             account_holder_name: bankAccount.account_holder_name
           },
+          transaction_type: 'wallet_withdrawal',
           created_at: new Date().toISOString()
         }
       })
@@ -158,6 +164,27 @@ serve(async (req) => {
 
       if (updateError) {
         console.error('Failed to update withdrawal transaction:', updateError)
+      } else {
+        // Generate simple invoice for designer withdrawal (NO TAX)
+        try {
+          console.log('Generating simple invoice for designer withdrawal:', withdrawalId)
+          const { data: invoiceData, error: invoiceError } = await supabase.rpc('generate_wallet_withdrawal_invoice', {
+            p_user_id: user.id,
+            p_transaction_id: withdrawalId,
+            p_amount: amount,
+            p_description: `Designer Withdrawal - ${bankAccount.bank_name}`
+          })
+
+          if (invoiceError) {
+            console.error('Invoice generation failed:', invoiceError)
+            // Don't fail the withdrawal if invoice generation fails
+          } else {
+            console.log('Withdrawal invoice generated successfully:', invoiceData)
+          }
+        } catch (error) {
+          console.error('Invoice generation error:', error)
+          // Don't fail the withdrawal if invoice generation fails
+        }
       }
 
       // Create notification for designer
@@ -236,3 +263,5 @@ async function processDesignerBankTransfer(amount: number, bankAccount: any, wit
     estimatedCompletion: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString() // 1 day for designers
   }
 }
+
+

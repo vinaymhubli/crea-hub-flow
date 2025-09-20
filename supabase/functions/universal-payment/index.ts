@@ -109,21 +109,28 @@ serve(async (req) => {
       )
     }
 
+    // Wallet recharge - NO TAXES APPLIED
+    // User pays the exact amount they want to recharge
+    const finalAmount = amount
+    console.log('Wallet recharge - no taxes applied, amount:', finalAmount)
+
     // Simulate payment processing based on method
     const paymentResult = await processPaymentByMethod(paymentMethod, amount, transactionId, userDetails)
 
     if (paymentResult.success) {
-      // Update transaction to completed
+      // Update transaction to completed (no tax information for wallet recharge)
       const { error: updateError } = await supabase
         .from('wallet_transactions')
         .update({ 
           status: 'completed',
+          amount: finalAmount,
           metadata: {
             transaction_id: transactionId,
             payment_method: paymentMethod,
             payment_gateway: 'universal',
             user_details: userDetails || {},
             payment_result: paymentResult,
+            transaction_type: 'wallet_recharge',
             completed_at: new Date().toISOString()
           }
         })
@@ -131,6 +138,27 @@ serve(async (req) => {
 
       if (updateError) {
         console.error('Failed to update transaction:', updateError)
+      } else {
+        // Generate simple invoice for wallet recharge (NO TAX)
+        try {
+          console.log('Generating simple invoice for wallet recharge:', transactionId)
+          const { data: invoiceData, error: invoiceError } = await supabase.rpc('generate_wallet_recharge_invoice', {
+            p_user_id: user.id,
+            p_transaction_id: transactionId,
+            p_amount: amount,
+            p_description: `Wallet Recharge - ${paymentMethod.toUpperCase()}`
+          })
+
+          if (invoiceError) {
+            console.error('Invoice generation failed:', invoiceError)
+            // Don't fail the payment if invoice generation fails
+          } else {
+            console.log('Recharge invoice generated successfully:', invoiceData)
+          }
+        } catch (error) {
+          console.error('Invoice generation error:', error)
+          // Don't fail the payment if invoice generation fails
+        }
       }
     }
 

@@ -178,24 +178,25 @@ export default function CustomerFiles() {
               return null;
             }
 
-            // Get designer name from profiles table using designer_id
-            console.log('🔍 NEW CODE - Looking for designer profile with user_id:', customerSession.designer_id);
-            
+            // DYNAMIC SOLUTION: Get designer name from profiles table
             let designerName = 'Unknown Designer';
-            try {
-              const { data: designerProfile, error: profileError } = await (supabase as any)
-                .from('profiles')
-                .select('first_name, last_name')
-                .eq('user_id', customerSession.designer_id)
-                .maybeSingle(); // Use maybeSingle instead of single to avoid errors
-              
-              if (designerProfile && !profileError) {
-                designerName = `${designerProfile.first_name || ''} ${designerProfile.last_name || ''}`.trim();
-                if (!designerName) designerName = 'Unknown Designer';
+            if (customerSession?.designer_id) {
+              try {
+                const { data: designerProfile } = await (supabase as any)
+                  .from('profiles')
+                  .select('full_name, first_name, last_name, email')
+                  .eq('user_id', customerSession.designer_id)
+                  .maybeSingle();
+                
+                if (designerProfile) {
+                  designerName = designerProfile.full_name || 
+                               `${designerProfile.first_name || ''} ${designerProfile.last_name || ''}`.trim() ||
+                               designerProfile.email || 'Unknown Designer';
+                }
+              } catch (error) {
+                console.error('Error fetching designer profile:', error);
+                designerName = 'Designer Name Error';
               }
-              console.log('🔍 Designer profile result:', designerProfile, 'Error:', profileError);
-            } catch (error) {
-              console.error('🔍 Error fetching designer profile:', error);
             }
 
             // Get designer rating (skip if designers table doesn't exist)
@@ -537,7 +538,7 @@ export default function CustomerFiles() {
           fileId={selectedFile.id}
           sessionId={selectedFile.session_id}
           bookingId={selectedFile.booking_id || undefined}
-          designerId={selectedFile.designer_id || selectedFile.uploaded_by_id || ''}
+          designerId={selectedFile.uploaded_by_id || selectedFile.designer_id || ''}
           designerName={selectedFile.designer_name || 'Unknown Designer'}
           fileName={selectedFile.name}
         />

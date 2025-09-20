@@ -108,7 +108,7 @@ export default function DesignerComplaints() {
         const fileName = (fileMap[c.file_id]?.name) || 'Unknown File';
         return {
           ...c,
-          customer_name: fullName || 'Unknown Customer',
+          customer_name: fullName || prof.email || 'Unknown Customer',
           file_name: fileName,
         } as Complaint;
       });

@@ -347,3 +347,5 @@ async function verifyWithBankAPI(bankAccount: any): Promise<{success: boolean, e
     error: isValid ? undefined : 'Invalid account details'
   }
 }
+
+

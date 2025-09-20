@@ -86,19 +86,121 @@ serve(async (req) => {
       )
     }
 
+    // NEW TAX SYSTEM: Calculate GST, TDS, and Admin Commission
+    console.log('Calculating taxes and fees for session amount:', amount)
+    
+    // Get customer's state for GST calculation
+    const { data: customerProfile, error: customerError } = await supabase
+      .from('profiles')
+      .select('state, state_code')
+      .eq('user_id', customerId)
+      .single()
+
+    // Get active commission settings
+    const { data: commissionSettings, error: commissionError } = await supabase
+      .from('commission_settings')
+      .select('*')
+      .eq('is_active', true)
+      .lte('min_transaction_amount', amount)
+      .or(`max_transaction_amount.is.null,max_transaction_amount.gte.${amount}`)
+      .order('created_at', { ascending: false })
+      .limit(1)
+    
+    // Get TDS settings
+    const { data: tdsSettings, error: tdsError } = await supabase
+      .from('tds_settings')
+      .select('tds_rate')
+      .eq('is_active', true)
+      .single()
+
+    if (commissionError || tdsError) {
+      console.error('Settings error:', { commissionError, tdsError })
+      return new Response(
+        JSON.stringify({ error: 'Failed to retrieve settings' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Calculate Admin Commission
+    let commissionAmount = 0
+    let commissionSetting = null
+    
+    if (commissionSettings && commissionSettings.length > 0) {
+      commissionSetting = commissionSettings[0]
+      console.log('Using commission setting:', commissionSetting)
+      
+      if (commissionSetting.commission_type === 'percentage') {
+        commissionAmount = (amount * commissionSetting.commission_value) / 100
+      } else if (commissionSetting.commission_type === 'fixed') {
+        commissionAmount = commissionSetting.commission_value
+      }
+      
+      // Ensure commission doesn't exceed the transaction amount
+      commissionAmount = Math.min(commissionAmount, amount)
+    }
+
+    // Calculate TDS
+    const tdsRate = tdsSettings?.tds_rate || 10.00
+    const tdsAmount = (amount * tdsRate) / 100
+
+    // Calculate GST (CGST + SGST) based on customer's state
+    let gstRates = { cgst_rate: 0, sgst_rate: 0, igst_rate: 0 }
+    let gstAmounts = { cgst_amount: 0, sgst_amount: 0, igst_amount: 0, total_gst: 0 }
+    
+    if (customerProfile && customerProfile.state_code) {
+      // Get tax rates for customer's state
+      const { data: taxSettings, error: taxError } = await supabase
+        .from('invoice_settings')
+        .select('cgst_rate, sgst_rate, igst_rate')
+        .eq('state_code', customerProfile.state_code)
+        .eq('is_active', true)
+        .single()
+
+      if (taxSettings && !taxError) {
+        gstRates = {
+          cgst_rate: taxSettings.cgst_rate || 0,
+          sgst_rate: taxSettings.sgst_rate || 0,
+          igst_rate: taxSettings.igst_rate || 0
+        }
+
+        gstAmounts = {
+          cgst_amount: (amount * gstRates.cgst_rate) / 100,
+          sgst_amount: (amount * gstRates.sgst_rate) / 100,
+          igst_amount: (amount * gstRates.igst_rate) / 100,
+          total_gst: ((amount * gstRates.cgst_rate) / 100) + ((amount * gstRates.sgst_rate) / 100) + ((amount * gstRates.igst_rate) / 100)
+        }
+      }
+    }
+
+    // Calculate total amount customer needs to pay
+    const totalCustomerAmount = amount + gstAmounts.total_gst
+    const designerAmount = amount - commissionAmount - tdsAmount
+    
+    console.log('Session payment calculation:', {
+      sessionAmount: amount,
+      gstRates,
+      gstAmounts,
+      tdsRate,
+      tdsAmount,
+      commissionAmount,
+      totalCustomerAmount,
+      designerAmount
+    })
+
     // Generate unique transaction IDs
     const customerTransactionId = `SESSION_PAY_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     const designerTransactionId = `SESSION_EARN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    const commissionTransactionId = `COMMISSION_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
-    // Start transaction
+    // Customer pays total amount (session amount + GST)
     const { data: customerTransaction, error: customerError } = await supabase
       .from('wallet_transactions')
       .insert({
         user_id: customerId,
-        amount: amount,
+        amount: totalCustomerAmount, // Customer pays session amount + GST
         transaction_type: 'payment',
         status: 'completed',
-        description: `Session payment - ${sessionType || 'Design Session'}`,
+        description: `Session payment - ${sessionType || 'Design Session'} (including GST)`,
         metadata: {
           transaction_id: customerTransactionId,
           session_id: sessionId,
@@ -106,6 +208,12 @@ serve(async (req) => {
           session_type: sessionType,
           duration: duration,
           payment_type: 'session_completion',
+          tax_calculation: {
+            session_amount: amount,
+            gst_rates: gstRates,
+            gst_amounts: gstAmounts,
+            total_customer_amount: totalCustomerAmount
+          },
           created_at: new Date().toISOString()
         }
       })
@@ -120,15 +228,15 @@ serve(async (req) => {
       )
     }
 
-    // Add earnings to designer wallet
+    // Add earnings to designer wallet (amount minus commission and TDS)
     const { data: designerTransaction, error: designerError } = await supabase
       .from('wallet_transactions')
       .insert({
         user_id: designerId,
-        amount: amount,
+        amount: designerAmount,
         transaction_type: 'deposit',
         status: 'completed',
-        description: `Session earnings - ${sessionType || 'Design Session'}`,
+        description: `Session earnings - ${sessionType || 'Design Session'} (after commission & TDS)`,
         metadata: {
           transaction_id: designerTransactionId,
           session_id: sessionId,
@@ -136,6 +244,11 @@ serve(async (req) => {
           session_type: sessionType,
           duration: duration,
           earnings_type: 'session_completion',
+          original_amount: amount,
+          commission_amount: commissionAmount,
+          tds_amount: tdsAmount,
+          tds_rate: tdsRate,
+          final_amount: designerAmount,
           created_at: new Date().toISOString()
         }
       })
@@ -154,6 +267,36 @@ serve(async (req) => {
         JSON.stringify({ error: 'Failed to process designer earnings' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
+    }
+
+    // Record admin commission earnings if commission was charged
+    if (commissionAmount > 0 && commissionSetting) {
+      try {
+        console.log('Recording admin commission earnings:', commissionAmount)
+        
+        const { error: commissionError } = await supabase
+          .from('admin_earnings')
+          .insert({
+            transaction_id: commissionTransactionId,
+            commission_amount: commissionAmount,
+            commission_type: commissionSetting.commission_type,
+            commission_value: commissionSetting.commission_value,
+            original_amount: amount,
+            session_id: sessionId,
+            customer_id: customerId,
+            designer_id: designerId
+          })
+
+        if (commissionError) {
+          console.error('Failed to record commission earnings:', commissionError)
+          // Don't fail the payment if commission recording fails
+        } else {
+          console.log('Admin commission recorded successfully')
+        }
+      } catch (error) {
+        console.error('Commission recording error:', error)
+        // Don't fail the payment if commission recording fails
+      }
     }
 
     // Update session status if session table exists
@@ -187,16 +330,20 @@ serve(async (req) => {
           }
         })
 
-      // Designer notification
+      // Designer notification (show amount after commission)
       await supabase
         .from('notifications')
         .insert({
           user_id: designerId,
           type: 'session_earnings',
           title: 'Session Earnings Added',
-          message: `₹${amount} has been added to your wallet for the completed session.`,
+          message: commissionAmount > 0 
+            ? `₹${designerAmount} has been added to your wallet for the completed session (₹${commissionAmount} admin commission deducted).`
+            : `₹${designerAmount} has been added to your wallet for the completed session.`,
           data: {
-            amount: amount,
+            amount: designerAmount,
+            original_amount: amount,
+            commission_amount: commissionAmount,
             session_id: sessionId,
             transaction_id: designerTransactionId
           }
@@ -205,21 +352,57 @@ serve(async (req) => {
       console.log('Notification creation failed:', error)
     }
 
+    // Generate invoices for session payment (wallet-to-wallet with admin commission)
+    try {
+      console.log('Generating invoices for session payment:', sessionId)
+      const { data: invoiceData, error: invoiceError } = await supabase.rpc('generate_session_invoices', {
+        p_session_id: sessionId,
+        p_customer_id: customerId,
+        p_designer_id: designerId,
+        p_amount: amount,
+        p_booking_id: null
+      })
+
+      if (invoiceError) {
+        console.error('Invoice generation failed:', invoiceError)
+        // Don't fail the payment if invoice generation fails
+      } else {
+        console.log('Session payment invoices generated successfully:', invoiceData)
+      }
+    } catch (error) {
+      console.error('Invoice generation error:', error)
+      // Don't fail the payment if invoice generation fails
+    }
+
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         success: true,
         customerTransaction: {
           id: customerTransaction.id,
-          amount: amount,
+          amount: totalCustomerAmount, // Customer paid session amount + GST
           type: 'payment'
         },
         designerTransaction: {
           id: designerTransaction.id,
-          amount: amount,
+          amount: designerAmount, // Designer gets amount minus commission and TDS
           type: 'earnings'
         },
+        taxBreakdown: {
+          sessionAmount: amount,
+          gstAmount: gstAmounts.total_gst,
+          cgstAmount: gstAmounts.cgst_amount,
+          sgstAmount: gstAmounts.sgst_amount,
+          tdsAmount: tdsAmount,
+          tdsRate: tdsRate,
+          totalCustomerAmount: totalCustomerAmount
+        },
+        commission: {
+          amount: commissionAmount,
+          type: commissionSetting?.commission_type || 'none',
+          value: commissionSetting?.commission_value || 0
+        },
         sessionId: sessionId,
-        message: 'Session payment processed successfully'
+        message: `Session payment processed successfully. Customer paid ₹${totalCustomerAmount} (₹${amount} + ₹${gstAmounts.total_gst} GST). Designer received ₹${designerAmount} after ₹${commissionAmount} commission and ₹${tdsAmount} TDS deduction.`
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
@@ -232,3 +415,5 @@ serve(async (req) => {
     )
   }
 })
+
+

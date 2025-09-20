@@ -39,6 +39,9 @@ import {
   Database,
   Shield,
   Trophy,
+  ArrowUpCircle,
+  ArrowDownCircle,
+  Percent,
 } from "lucide-react";
 
 const mainSections = [
@@ -178,23 +181,51 @@ const analyticsSections = [
 ];
 
 // Platform Configuration section items
-const platformSections = [
-  {
-    title: "Platform Settings",
-    url: "/admin/platform/settings",
-    icon: Settings,
-  },
-  {
-    title: "Commissions",
-    url: "/admin/platform/commissions",
-    icon: DollarSign,
-  },
-  {
-    title: "Taxes",
-    url: "/admin/platform/taxes",
-    icon: Receipt,
-  },
-];
+  const platformSections = [
+    {
+      title: "Platform Settings",
+      url: "/admin/platform/settings",
+      icon: Settings,
+    },
+    {
+      title: "Invoice Management",
+      url: "/admin/invoice-management",
+      icon: FileText,
+    },
+    {
+      title: "Commissions",
+      url: "/admin/platform/commissions",
+      icon: DollarSign,
+    },
+    {
+      title: "Taxes",
+      url: "/admin/platform/taxes",
+      icon: Receipt,
+    },
+    {
+      title: "Tax Collections",
+      url: "/admin/tax-collections",
+      icon: TrendingUp,
+    },
+    {
+      title: "TDS Management",
+      url: "/admin/tds-management",
+      icon: Percent,
+    },
+  ];
+
+  const walletSections = [
+    {
+      title: "Wallet Recharges",
+      url: "/admin/wallet-recharges",
+      icon: ArrowUpCircle,
+    },
+    {
+      title: "Wallet Withdrawals",
+      url: "/admin/wallet-withdrawals",
+      icon: ArrowDownCircle,
+    },
+  ];
 
 // Communications section items
 const communicationSections = [
@@ -287,6 +318,28 @@ export function AdminSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {platformSections.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink to={item.url} className={getNavCls}>
+                      <item.icon className="h-4 w-4" />
+                      {!collapsed && <span>{item.title}</span>}
+                      {!collapsed && isActive(item.url) && (
+                        <ChevronRight className="h-4 w-4 ml-auto" />
+                      )}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Wallet Transactions Section */}
+        <SidebarGroup>
+          {!collapsed && <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Wallet Transactions</SidebarGroupLabel>}
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {walletSections.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink to={item.url} className={getNavCls}>
