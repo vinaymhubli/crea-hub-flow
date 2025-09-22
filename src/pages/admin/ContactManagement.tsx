@@ -218,7 +218,7 @@ export default function ContactManagement() {
       color_scheme: 'blue',
       sort_order: content.length + 1,
       is_published: true,
-      office_address: 'Meet My Designers Pvt Ltd\nPlot No. C-54, G Block\nBandra Kurla Complex\nMumbai, Maharashtra 400051',
+      office_address: 'Meet My Designers\nPlot No. C-54, G Block\nBandra Kurla Complex\nMumbai, Maharashtra 400051',
       office_hours: 'Monday - Friday: 9:00 AM - 7:00 PM\nSaturday: 10:00 AM - 4:00 PM\nSunday: Closed',
       public_transport: 'Kurla Station (5 min walk)\nBKC Metro Station (3 min walk)\nMultiple bus routes available',
       parking_info: 'Free visitor parking available\nValet service during business hours\nEV charging stations on-site',
@@ -613,7 +613,7 @@ export default function ContactManagement() {
                     value={editingItem.office_address || ''}
                     onChange={(e) => setEditingItem({ ...editingItem, office_address: e.target.value })}
                     rows={4}
-                    placeholder="Meet My Designers Pvt Ltd&#10;Plot No. C-54, G Block&#10;Bandra Kurla Complex&#10;Mumbai, Maharashtra 400051"
+                    placeholder="Meet My Designers&#10;Plot No. C-54, G Block&#10;Bandra Kurla Complex&#10;Mumbai, Maharashtra 400051"
                   />
                 </div>
                 

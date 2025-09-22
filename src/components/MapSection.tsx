@@ -24,7 +24,7 @@ export default function MapSection() {
                 <div>
                   <h4 className="font-semibold text-gray-900 mb-1">Address</h4>
                   <p className="text-gray-600">
-                    Meet My Designers Pvt Ltd<br />
+                    Meet My Designers<br />
                     Plot No. C-54, G Block<br />
                     Bandra Kurla Complex<br />
                     Mumbai, Maharashtra 400051

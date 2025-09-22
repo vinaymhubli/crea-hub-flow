@@ -151,7 +151,7 @@ const Terms = () => {
               <li>Email: legal@meetmydesigner.com</li>
               <li>Support: support@meetmydesigner.com</li>
               <li>Phone: +1 (555) 123-4567</li>
-              <li>Address: Meet My Designers Pvt Ltd, Plot No. C-54, G Block, Bandra Kurla Complex, Mumbai, Maharashtra 400051</li>
+              <li>Address: Meet My Designers, Plot No. C-54, G Block, Bandra Kurla Complex, Mumbai, Maharashtra 400051</li>
             </ul>
           </div>
         </div>

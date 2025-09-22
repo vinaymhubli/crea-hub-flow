@@ -72,7 +72,7 @@ export default function GeneralSettings() {
     allowed_file_types: ["jpg", "png", "pdf", "svg", "gif", "webp"],
     session_timeout_minutes: 60,
     contact_phone: "+1 (555) 123-4567",
-    contact_address: "Meet My Designers Pvt Ltd, Plot No. C-54, G Block, Bandra Kurla Complex, Mumbai, Maharashtra 400051",
+    contact_address: "Meet My Designers, Plot No. C-54, G Block, Bandra Kurla Complex, Mumbai, Maharashtra 400051",
     social_links: {
       facebook: "https://facebook.com/meetmydesigner",
       twitter: "https://twitter.com/meetmydesigner",
@@ -334,7 +334,7 @@ export default function GeneralSettings() {
         allowed_file_types: ["jpg", "png", "pdf", "svg", "gif", "webp"],
         session_timeout_minutes: 60,
         contact_phone: "+1 (555) 123-4567",
-        contact_address: "Meet My Designers Pvt Ltd, Plot No. C-54, G Block, Bandra Kurla Complex, Mumbai, Maharashtra 400051",
+        contact_address: "Meet My Designers, Plot No. C-54, G Block, Bandra Kurla Complex, Mumbai, Maharashtra 400051",
         social_links: {
           facebook: "https://facebook.com/meetmydesigner",
           twitter: "https://twitter.com/meetmydesigner",
