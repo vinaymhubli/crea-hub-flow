@@ -423,7 +423,7 @@ export default function Services() {
                     {service.delivery_time_days} days
                   </div>
                   <div className="text-lg font-bold text-green-600">
-                    From ${service.price}
+                    From ₹{service.price}
                   </div>
                 </div>
                 

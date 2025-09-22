@@ -9,12 +9,12 @@ import CTASection from '@/components/CTASection';
 const SuccessStories = () => {
   const stories = [
     {
-      title: "From Startup to $10M in Revenue",
+      title: "From Startup to ₹10M in Revenue",
       company: "TechFlow Solutions",
       industry: "SaaS",
       designer: "Sarah Chen",
       image: "/placeholder.svg",
-      revenue: "$10M+",
+      revenue: "₹10M+",
       growth: "300%",
       timeline: "18 months",
       quote: "Working with Sarah through Meet My Designer transformed our entire brand. Her strategic approach to UX design increased our conversion rate by 300% and helped us secure Series A funding.",
