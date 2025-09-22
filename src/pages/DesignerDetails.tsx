@@ -265,7 +265,7 @@ const DesignerDetails: React.FC = () => {
                 <CardContent className="p-6">
                   <div className="text-center mb-6">
                     <div className="text-3xl font-bold text-foreground mb-1">
-                      ${designer.hourly_rate}
+                      ₹{designer.hourly_rate}
                       <span className="text-lg font-normal text-muted-foreground">/hour</span>
                     </div>
                     <p className="text-muted-foreground">Starting from</p>
