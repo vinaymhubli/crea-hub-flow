@@ -90,7 +90,7 @@ export function WalletDashboard() {
 
   const formatAmount = (amount: number, type: string) => {
     const sign = type === 'deposit' || type === 'refund' ? '+' : '-';
-    return `${sign}$${amount.toFixed(2)}`;
+    return `${sign}₹${amount.toFixed(2)}`;
   };
 
   return (
@@ -199,19 +199,19 @@ export function WalletDashboard() {
               <div className="flex justify-between">
                 <span className="text-sm text-purple-700">Added:</span>
                 <span className="font-semibold text-purple-800">
-                  ${deposits.reduce((sum, t) => sum + t.amount, 0).toFixed(2)}
+                  ₹{deposits.reduce((sum, t) => sum + t.amount, 0).toFixed(2)}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-purple-700">Withdrawn:</span>
                 <span className="font-semibold text-purple-800">
-                  ${withdrawals.reduce((sum, t) => sum + t.amount, 0).toFixed(2)}
+                  ₹{withdrawals.reduce((sum, t) => sum + t.amount, 0).toFixed(2)}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-purple-700">Spent:</span>
                 <span className="font-semibold text-purple-800">
-                  ${payments.reduce((sum, t) => sum + t.amount, 0).toFixed(2)}
+                  ₹{payments.reduce((sum, t) => sum + t.amount, 0).toFixed(2)}
                 </span>
               </div>
             </div>

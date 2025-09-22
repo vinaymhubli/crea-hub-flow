@@ -489,7 +489,7 @@ export default function CustomerFiles() {
 
                           {file.total_amount && (
                             <div className="flex items-center text-sm text-gray-600">
-                              <span className="font-medium">Amount Paid: ${file.total_amount.toFixed(2)}</span>
+                              <span className="font-medium">Amount Paid: ₹{file.total_amount.toFixed(2)}</span>
                             </div>
                           )}
 

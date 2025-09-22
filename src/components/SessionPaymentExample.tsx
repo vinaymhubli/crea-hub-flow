@@ -81,7 +81,7 @@ export function SessionPaymentExample({
             ) : (
               <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
                 <p className="text-sm text-orange-800">
-                  ⚠️ You need ${(price - balance).toFixed(2)} more to book this session
+                  ⚠️ You need ₹{(price - balance).toFixed(2)} more to book this session
                 </p>
               </div>
             )}
@@ -137,5 +137,6 @@ export function ExampleUsage() {
     </div>
   );
 }
+
 
 

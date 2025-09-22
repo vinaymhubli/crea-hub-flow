@@ -1040,7 +1040,7 @@ export default function DesignerServices() {
               <div>
                 <p className="text-sm text-gray-600">Starting From</p>
                 <p className="text-2xl font-bold">
-                  ${services.length > 0 ? Math.min(...services.map(s => s.price)).toFixed(0) : '0'}
+                  ₹{services.length > 0 ? Math.min(...services.map(s => s.price)).toFixed(0) : '0'}
                 </p>
               </div>
             </div>

@@ -374,7 +374,7 @@ export default function RevenueAnalytics() {
                       </div>
                       <div className="flex items-center space-x-4">
                         <div className="text-sm text-muted-foreground">
-                          ${day.revenue.toFixed(0)}
+                          ₹{day.revenue.toFixed(0)}
                         </div>
                         <div className="w-32 bg-muted rounded-full h-2">
                           <div 
@@ -463,7 +463,7 @@ export default function RevenueAnalytics() {
                     <div className="text-sm font-medium">{category.category}</div>
                     <div className="flex items-center space-x-4">
                       <div className="text-sm text-muted-foreground">
-                        ${category.revenue.toLocaleString()}
+                        ₹{category.revenue.toLocaleString()}
                       </div>
                       <div className="w-24 bg-muted rounded-full h-2">
                         <div 

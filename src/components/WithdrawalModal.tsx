@@ -137,7 +137,7 @@ export function WithdrawalModal({ open, onOpenChange, onSuccess, userType = 'cus
       const result = await response.json();
 
       if (result.success) {
-        toast.success(`Withdrawal of $${amount} initiated successfully!`);
+        toast.success(`Withdrawal of ₹${amount} initiated successfully!`);
         onSuccess?.(parseFloat(amount));
         onOpenChange(false);
         setAmount('');
@@ -194,10 +194,10 @@ export function WithdrawalModal({ open, onOpenChange, onSuccess, userType = 'cus
             {/* Amount Selection */}
             <div className="space-y-4">
               <Label htmlFor="amount" className="text-lg font-semibold">
-                {userType === 'designer' ? 'Earnings Withdrawal Amount ($)' : 'Withdrawal Amount ($)'}
+                {userType === 'designer' ? 'Earnings Withdrawal Amount (₹)' : 'Withdrawal Amount (₹)'}
               </Label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-lg">$</span>
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-lg">₹</span>
                 <Input
                   id="amount"
                   placeholder="0.00"
@@ -211,7 +211,7 @@ export function WithdrawalModal({ open, onOpenChange, onSuccess, userType = 'cus
                 />
               </div>
               <p className="text-sm text-muted-foreground">
-                Maximum {userType === 'designer' ? 'earnings withdrawal' : 'withdrawal'}: ${walletBalance.toFixed(2)}
+                Maximum {userType === 'designer' ? 'earnings withdrawal' : 'withdrawal'}: ₹{walletBalance.toFixed(2)}
               </p>
 
               {/* Quick Amount Buttons */}
@@ -227,7 +227,7 @@ export function WithdrawalModal({ open, onOpenChange, onSuccess, userType = 'cus
                       disabled={quickAmount > walletBalance}
                       className="hover:bg-green-50 border-green-200 hover:border-green-300"
                     >
-                      ${quickAmount}
+                      ₹{quickAmount}
                     </Button>
                   ))}
                 </div>
@@ -362,7 +362,7 @@ export function WithdrawalModal({ open, onOpenChange, onSuccess, userType = 'cus
               ) : (
                 <>
                   <ArrowUpRight className="w-4 h-4 mr-2" />
-                  {userType === 'designer' ? 'Withdraw Earnings' : 'Withdraw'} ${amount || '0'}
+                  {userType === 'designer' ? 'Withdraw Earnings' : 'Withdraw'} ₹{amount || '0'}
                 </>
               )}
             </Button>

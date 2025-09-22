@@ -64,7 +64,7 @@ export function usePayment() {
       const result = await response.json();
 
       if (result.success) {
-        toast.success(`Payment of $${amount} processed successfully!`);
+        toast.success(`Payment of ₹${amount} processed successfully!`);
         return { 
           success: true, 
           newBalance: result.newBalance 
@@ -83,7 +83,7 @@ export function usePayment() {
   };
 
   const handleInsufficientBalance = (shortfall: number) => {
-    toast.error(`Insufficient balance. You need $${shortfall} more. Redirecting to recharge...`);
+    toast.error(`Insufficient balance. You need ₹${shortfall} more. Redirecting to recharge...`);
     // Redirect to wallet recharge page after a short delay
     setTimeout(() => {
       window.location.href = '/customer-dashboard/wallet';

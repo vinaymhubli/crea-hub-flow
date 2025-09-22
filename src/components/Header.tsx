@@ -105,7 +105,7 @@ export default function Header() {
                         <span className="text-xs text-gray-500">Loading...</span>
                       ) : (
                         <span className="text-xs font-semibold text-green-600">
-                          ${balance.toFixed(2)}
+                          ₹{balance.toFixed(2)}
                         </span>
                       )}
                     </div>

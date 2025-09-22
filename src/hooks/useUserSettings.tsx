@@ -26,7 +26,7 @@ export const useUserSettings = () => {
   const [settings, setSettings] = useState<UserSettings>({
     language: 'en',
     timezone: 'UTC',
-    currency: 'USD',
+    currency: 'INR',
     date_format: 'MM/DD/YYYY',
     time_format: '12h',
     notifications_email: true,

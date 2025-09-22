@@ -42,7 +42,7 @@ export function SessionCompletionButton({
 
   const handleCompleteSession = async () => {
     if (!hasSufficientBalance(amount)) {
-      toast.error(`Insufficient balance. You need $${(amount - balance).toFixed(2)} more.`);
+      toast.error(`Insufficient balance. You need ₹${(amount - balance).toFixed(2)} more.`);
       onPaymentError?.('Insufficient balance');
       return;
     }
@@ -124,10 +124,10 @@ export function SessionCompletionButton({
               <p className={`text-xs ${
                 canComplete ? 'text-green-700' : 'text-orange-700'
               }`}>
-                Wallet Balance: ${balance.toFixed(2)}
+                Wallet Balance: ₹{balance.toFixed(2)}
                 {!canComplete && (
                   <span className="block">
-                    You need ${(amount - balance).toFixed(2)} more
+                    You need ₹{(amount - balance).toFixed(2)} more
                   </span>
                 )}
               </p>
@@ -142,7 +142,7 @@ export function SessionCompletionButton({
             <div>
               <p className="text-sm font-medium text-blue-800">Payment Processing</p>
               <ul className="text-xs text-blue-700 mt-1 space-y-1">
-                <li>• ${amount} will be deducted from your wallet</li>
+                <li>• ₹{amount} will be deducted from your wallet</li>
                 <li>• Same amount will be added to designer's earnings</li>
                 <li>• Payment is processed automatically</li>
                 <li>• You'll receive confirmation notification</li>
@@ -169,7 +169,7 @@ export function SessionCompletionButton({
           ) : (
             <>
               <CheckCircle className="w-4 h-4 mr-2" />
-              Complete Session & Pay ${amount}
+              Complete Session & Pay ₹{amount}
             </>
           )}
         </Button>
@@ -183,5 +183,6 @@ export function SessionCompletionButton({
     </Card>
   );
 }
+
 
 

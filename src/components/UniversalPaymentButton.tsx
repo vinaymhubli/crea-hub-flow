@@ -55,7 +55,7 @@ export function UniversalPaymentButton({
         const result = await payDesigner(designerId, paymentAmount, sessionId);
         
         if (result.success) {
-          toast.success(`Payment of $${paymentAmount} processed successfully!`);
+          toast.success(`Payment of ₹${paymentAmount} processed successfully!`);
           onSuccess?.(paymentAmount, paymentMethod);
         } else {
           toast.error(result.error || 'Payment failed');
@@ -93,12 +93,12 @@ export function UniversalPaymentButton({
     
     if (designerId) {
       if (hasSufficientBalance(amount)) {
-        return `Pay $${amount} from Wallet`;
+        return `Pay ₹${amount} from Wallet`;
       } else {
-        return `Add Credits & Pay $${amount}`;
+        return `Add Credits & Pay ₹${amount}`;
       }
     } else {
-      return `Add $${amount} Credits`;
+      return `Add ₹${amount} Credits`;
     }
   };
 
@@ -173,7 +173,7 @@ export function UniversalPaymentButton({
         
         {designerId && !hasSufficientBalance(amount) && (
           <p className="text-xs text-orange-600">
-            You need ${(amount - balance).toFixed(2)} more. Click to add credits first.
+            You need ₹{(amount - balance).toFixed(2)} more. Click to add credits first.
           </p>
         )}
       </div>
@@ -186,5 +186,6 @@ export function UniversalPaymentButton({
     </>
   );
 }
+
 
 
