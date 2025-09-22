@@ -370,7 +370,7 @@ export default function DesignerSettings() {
                       <div>
                         <Label className="font-semibold text-gray-700">Hourly Rate</Label>
                         <div className="flex items-center space-x-2">
-                          <span className="text-gray-500">$</span>
+                          <span className="text-gray-500">₹</span>
                           <Input 
                             type="number"
                             value={designerProfile?.hourly_rate || 0}

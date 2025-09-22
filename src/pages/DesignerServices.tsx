@@ -514,7 +514,7 @@ export default function DesignerServices() {
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <Label htmlFor="price">Starting Price ($)</Label>
+                    <Label htmlFor="price">Starting Price (₹)</Label>
                     <Input
                       id="price"
                       type="number"
@@ -655,7 +655,7 @@ export default function DesignerServices() {
                           />
                         </div>
                         <div>
-                          <Label>Price ($)</Label>
+                          <Label>Price (₹)</Label>
                           <Input
                             type="number"
                             min="0"
@@ -781,7 +781,7 @@ export default function DesignerServices() {
                     
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <Label htmlFor="edit-price">Starting Price ($)</Label>
+                        <Label htmlFor="edit-price">Starting Price (₹)</Label>
                         <Input
                           id="edit-price"
                           type="number"
@@ -907,7 +907,7 @@ export default function DesignerServices() {
                               />
                             </div>
                             <div>
-                              <Label>Price ($)</Label>
+                              <Label>Price (₹)</Label>
                               <Input
                                 type="number"
                                 min="0"

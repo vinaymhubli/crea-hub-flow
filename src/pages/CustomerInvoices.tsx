@@ -147,10 +147,10 @@ export default function CustomerInvoices() {
   if (loading) {
     return (
       <div className="flex min-h-screen">
-        <CustomerSidebar />
+          <CustomerSidebar />
         <div className="flex-1 p-6">
           <div className="flex items-center justify-center h-64">
-            <div className="text-center">
+              <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
               <p className="mt-2 text-gray-600">Loading invoices...</p>
             </div>
@@ -162,11 +162,11 @@ export default function CustomerInvoices() {
 
   return (
     <div className="flex min-h-screen">
-      <CustomerSidebar />
+        <CustomerSidebar />
       <div className="flex-1 p-6 space-y-6">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">My Invoices</h1>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">My Invoices</h1>
             <p className="text-gray-600">View and download your invoices</p>
           </div>
           <Button onClick={fetchInvoices} variant="outline">
@@ -213,8 +213,8 @@ export default function CustomerInvoices() {
                 </SelectContent>
               </Select>
             </div>
-          </CardContent>
-        </Card>
+                  </CardContent>
+                </Card>
 
         {/* Invoices Table */}
         <Card>
@@ -228,7 +228,7 @@ export default function CustomerInvoices() {
             {filteredInvoices.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-gray-500">No invoices found</p>
-              </div>
+                          </div>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
@@ -281,10 +281,10 @@ export default function CustomerInvoices() {
                     ))}
                   </TableBody>
                 </Table>
-              </div>
+                          </div>
             )}
-          </CardContent>
-        </Card>
+                      </CardContent>
+                    </Card>
       </div>
     </div>
   )

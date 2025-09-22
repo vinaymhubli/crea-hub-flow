@@ -401,7 +401,7 @@ export default function ServiceDetail() {
                           }}
                         >
                           <Button className="w-full mt-4">
-                            Select ${pkg.price}
+                            Select ₹{pkg.price}
                           </Button>
                         </BookingDialog>
                       </div>
@@ -457,7 +457,7 @@ export default function ServiceDetail() {
                 <p className="text-sm text-gray-600 mb-4">{service.designer.bio || 'No bio available'}</p>
                 <div className="space-y-2 text-sm">
                   <div>Response time: {service.designer.response_time}</div>
-                  <div>Hourly rate: ${service.designer.hourly_rate}/hour</div>
+                  <div>Hourly rate: ₹{service.designer.hourly_rate}/hour</div>
                 </div>
                 <Separator className="my-4" />
                 <Button 

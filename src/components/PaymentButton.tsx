@@ -139,7 +139,7 @@ export function PaymentButton({
             ) : (
               <>
                 <CreditCard className="w-4 h-4 mr-2" />
-                Pay ${amount || '0'}
+                Pay ₹{amount || '0'}
               </>
             )}
           </Button>

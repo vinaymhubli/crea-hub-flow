@@ -340,7 +340,7 @@ export function UniversalPaymentModal({ open, onOpenChange, onSuccess }: Univers
             ) : (
               <>
                 <Wallet className="w-4 h-4 mr-2" />
-                Add ${amount || '0'} Credits
+                Add ₹{amount || '0'} Credits
                 <ArrowRight className="w-4 h-4 ml-2" />
               </>
             )}

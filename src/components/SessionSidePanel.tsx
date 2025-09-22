@@ -510,16 +510,16 @@ export default function SessionSidePanel({
               <tr>
                 <td>Design Session</td>
                 <td>₹{invoice.duration_minutes} minutes</td>
-                <td>$${invoice.rate_per_minute}/min</td>
-                <td>$${invoice.subtotal.toFixed(2)}</td>
+                <td>₹{invoice.rate_per_minute}/min</td>
+                <td>₹{invoice.subtotal.toFixed(2)}</td>
               </tr>
             </tbody>
           </table>
           
           <div class="total-section">
-            <div class="total-line">Subtotal: $${invoice.subtotal.toFixed(2)}</div>
-            <div class="total-line">GST (18%): $${invoice.gst_amount.toFixed(2)}</div>
-            <div class="total-line grand-total">Total: $${invoice.total_amount.toFixed(2)}</div>
+            <div class="total-line">Subtotal: ₹{invoice.subtotal.toFixed(2)}</div>
+            <div class="total-line">GST (18%): ₹{invoice.gst_amount.toFixed(2)}</div>
+            <div class="total-line grand-total">Total: ₹{invoice.total_amount.toFixed(2)}</div>
           </div>
         </body>
         </html>
@@ -814,7 +814,7 @@ export default function SessionSidePanel({
       const messageData = {
         conversation_id: sessionId,
         sender_id: userId,
-        content: `📄 Invoice generated for ${Math.ceil(duration / 60)} minutes of work. Total: $${total.toFixed(2)}`,
+        content: `📄 Invoice generated for ${Math.ceil(duration / 60)} minutes of work. Total: ₹${total.toFixed(2)}`,
         message_type: 'invoice'
       };
 
@@ -907,7 +907,7 @@ export default function SessionSidePanel({
                   </div>
                   <div class="detail-row">
                     <span class="detail-label">Rate:</span>
-                    <span class="detail-value">$${rate.toFixed(2)}/min</span>
+                    <span class="detail-value">₹{rate.toFixed(2)}/min</span>
                   </div>
                 </div>
               </div>
@@ -921,8 +921,8 @@ export default function SessionSidePanel({
                 </thead>
                 <tbody>
                   <tr>
-                    <td>Design Session (${Math.ceil(duration / 60)} minutes × $${rate.toFixed(2)}/min × ${formatMultiplier}x)</td>
-                    <td class="amount">$${subtotal.toFixed(2)}</td>
+                    <td>Design Session (${Math.ceil(duration / 60)} minutes × ₹{rate.toFixed(2)}/min × ${formatMultiplier}x)</td>
+                    <td class="amount">₹{subtotal.toFixed(2)}</td>
                   </tr>
                 </tbody>
               </table>
@@ -930,15 +930,15 @@ export default function SessionSidePanel({
               <div class="total-section">
                 <div class="total-row">
                   <span>Subtotal:</span>
-                  <span>$${subtotal.toFixed(2)}</span>
+                  <span>₹{subtotal.toFixed(2)}</span>
                 </div>
                 <div class="total-row">
                   <span>GST (18%):</span>
-                  <span>$${gstAmount.toFixed(2)}</span>
+                  <span>₹{gstAmount.toFixed(2)}</span>
                 </div>
                 <div class="total-row final-total">
                   <span>Total Amount:</span>
-                  <span>$${total.toFixed(2)}</span>
+                  <span>₹{total.toFixed(2)}</span>
                 </div>
               </div>
 
@@ -1015,7 +1015,7 @@ export default function SessionSidePanel({
         <TabsContent value="billing" className="flex-1 p-2 sm:p-4 space-y-3 sm:space-y-4 min-h-0">
           <Card className="h-full min-h-[20rem] flex flex-col min-h-">
             <CardHeader className="pb-2 sm:pb-3 shrink-0">
-              <CardTitle className="text-xs sm:text-sm font-medium">$ Session Billing</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium">₹ Session Billing</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 sm:space-y-3 flex-1 overflow-y-auto min-h-0">
               <div className="space-y-1 sm:space-y-2">
@@ -1467,14 +1467,14 @@ export default function SessionSidePanel({
                             <div className="flex-1 min-w-0">
                               <p className="text-xs sm:text-sm font-medium">Invoice #{invoice.id.slice(-8)}</p>
                               <p className="text-xs text-gray-500">
-                                {Math.ceil(invoice.duration_minutes)} minutes @ ${invoice.rate_per_minute}/min
+                                {Math.ceil(invoice.duration_minutes)} minutes @ ₹{invoice.rate_per_minute}/min
                               </p>
                               <p className="text-xs text-gray-400">
                                 {new Date(invoice.invoice_date).toLocaleDateString()}
                               </p>
                             </div>
                             <span className="text-xs sm:text-sm font-bold text-green-600">
-                              ${invoice.total_amount.toFixed(2)}
+                              ₹{invoice.total_amount.toFixed(2)}
                             </span>
                           </div>
                           

@@ -218,10 +218,10 @@ export default function Signup() {
 
                   <div>
                     <label htmlFor="ratePerMinute" className="block text-sm font-medium text-gray-700 mb-2">
-                      Rate per minute (USD)
+                      Rate per minute (INR)
                     </label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₹</span>
                       <input
                         type="number"
                         id="ratePerMinute"
@@ -237,7 +237,7 @@ export default function Signup() {
                       />
                     </div>
                     <p className="mt-1 text-xs text-gray-500">
-                      Set your consultation rate (recommended: $1.5 - $5.0 per minute)
+                      Set your consultation rate (recommended: ₹1.5 - ₹5.0 per minute)
                     </p>
                   </div>
                 </>

@@ -12,7 +12,7 @@ const ForDesigners = () => {
       icon: DollarSign,
       title: "Higher Earnings",
       description: "Earn 20-40% more than traditional freelance platforms with our premium client base",
-      stats: "Average $85/hour"
+      stats: "Average ₹850/hour"
     },
     {
       icon: Users,
@@ -74,7 +74,7 @@ const ForDesigners = () => {
       role: "UI/UX Designer",
       image: "/placeholder.svg",
       rating: 5,
-      earnings: "$150K+",
+      earnings: "₹150K+",
       quote: "Meet My Designer transformed my freelance career. I've tripled my income and work with amazing clients who truly value design."
     },
     {
@@ -82,7 +82,7 @@ const ForDesigners = () => {
       role: "Brand Designer",
       image: "/placeholder.svg",
       rating: 5,
-      earnings: "$120K+",
+      earnings: "₹120K+",
       quote: "The quality of clients here is unmatched. Every project is a learning opportunity with businesses that invest in great design."
     },
     {
@@ -90,7 +90,7 @@ const ForDesigners = () => {
       role: "Product Designer",
       image: "/placeholder.svg",
       rating: 5,
-      earnings: "$180K+",
+      earnings: "₹180K+",
       quote: "From startup MVP to enterprise solutions - I've worked on incredible projects that have shaped my career."
     }
   ];
@@ -98,7 +98,7 @@ const ForDesigners = () => {
   const stats = [
     { label: "Active Designers", value: "2,500+" },
     { label: "Projects Completed", value: "25,000+" },
-    { label: "Total Earnings", value: "$50M+" },
+    { label: "Total Earnings", value: "₹50M+" },
     { label: "Average Rating", value: "4.9/5" }
   ];
 

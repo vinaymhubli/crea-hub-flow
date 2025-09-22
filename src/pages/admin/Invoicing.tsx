@@ -517,7 +517,7 @@ export default function Invoicing() {
                           size="sm"
                           onClick={() => {
                             const url = window.URL.createObjectURL(
-                              new Blob([`Invoice ${invoice.invoice_number}\n\nCustomer: ${invoice.customer_name}\nDesigner: ${invoice.designer_name}\nAmount: $${invoice.amount.toFixed(2)}\nCommission: $${invoice.commission_amount.toFixed(2)}\nStatus: ${invoice.status}\nDue Date: ${new Date(invoice.due_date).toLocaleDateString()}`], 
+                              new Blob([`Invoice ${invoice.invoice_number}\n\nCustomer: ${invoice.customer_name}\nDesigner: ${invoice.designer_name}\nAmount: ₹${invoice.amount.toFixed(2)}\nCommission: ₹${invoice.commission_amount.toFixed(2)}\nStatus: ${invoice.status}\nDue Date: ${new Date(invoice.due_date).toLocaleDateString()}`], 
                               { type: 'text/plain' })
                             );
                             const a = document.createElement('a');

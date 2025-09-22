@@ -54,7 +54,7 @@ const StorySection = () => {
                 <div className="text-sm text-gray-600">Projects Completed</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600">$50Cr+</div>
+                <div className="text-3xl font-bold text-blue-600">₹50Cr+</div>
                 <div className="text-sm text-gray-600">Designer Earnings</div>
               </div>
               <div className="text-center">

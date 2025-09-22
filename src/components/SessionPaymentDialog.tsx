@@ -223,7 +223,7 @@ export default function SessionPaymentDialog({
               console.warn('Could not transfer to designer wallet, but payment was successful');
             } else {
               console.log('✅ Designer deposit transaction created successfully:', depositData);
-              console.log('✅ Designer should now have received $' + totalAmount);
+              console.log('✅ Designer should now have received ₹' + totalAmount);
             }
           } catch (error) {
             console.error('❌ Error creating designer deposit:', error);
@@ -421,7 +421,7 @@ export default function SessionPaymentDialog({
                   <span>Processing...</span>
                 </div>
               ) : (
-                `Pay $${totalAmount.toFixed(2)}`
+                `Pay ₹${totalAmount.toFixed(2)}`
               )}
             </Button>
             
@@ -438,7 +438,7 @@ export default function SessionPaymentDialog({
           {paymentMethod === 'wallet' && walletBalance < totalAmount && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
               <p className="text-sm text-red-600">
-                <strong>Insufficient Balance:</strong> You need ${(totalAmount - walletBalance).toFixed(2)} more in your wallet.
+                <strong>Insufficient Balance:</strong> You need ₹{(totalAmount - walletBalance).toFixed(2)} more in your wallet.
               </p>
             </div>
           )}

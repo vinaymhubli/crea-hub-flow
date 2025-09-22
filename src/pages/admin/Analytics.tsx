@@ -309,7 +309,7 @@ export default function Analytics() {
       recentBookings.forEach(booking => {
         activities.push({
           type: 'booking',
-          description: `New booking: $${booking.total_amount} - ${booking.status}`,
+          description: `New booking: ₹${booking.total_amount} - ${booking.status}`,
           timestamp: booking.created_at,
           status: booking.status
         });
@@ -351,11 +351,11 @@ export default function Analytics() {
     const csvContent = [
       headers.join(','),
       `Total Users,${analytics.totalUsers},${analytics.userGrowth > 0 ? '+' : ''}${analytics.userGrowth.toFixed(1)}%`,
-      `Total Revenue,$${analytics.totalRevenue.toLocaleString()},${analytics.revenueGrowth > 0 ? '+' : ''}${analytics.revenueGrowth.toFixed(1)}%`,
+      `Total Revenue,₹${analytics.totalRevenue.toLocaleString()},${analytics.revenueGrowth > 0 ? '+' : ''}${analytics.revenueGrowth.toFixed(1)}%`,
       `Total Bookings,${analytics.totalBookings},${analytics.monthlyGrowth > 0 ? '+' : ''}${analytics.monthlyGrowth.toFixed(1)}%`,
       `Completion Rate,${analytics.completionRate.toFixed(1)}%,`,
       `Average Rating,${analytics.averageRating.toFixed(1)},`,
-      `Average Booking Value,$${analytics.averageBookingValue.toFixed(2)},`
+      `Average Booking Value,₹${analytics.averageBookingValue.toFixed(2)},`
     ].join('\n');
 
     // Download CSV file
