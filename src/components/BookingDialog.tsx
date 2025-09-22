@@ -284,7 +284,7 @@ export function BookingDialog({ designer, children, service }: BookingDialogProp
             disabled={loading}
             className="w-full bg-gradient-to-r from-green-600 to-blue-600 text-white"
           >
-            {loading ? 'Creating Booking...' : `Confirm Booking - $${getCurrentPrice().toFixed(2)}`}
+            {loading ? 'Creating Booking...' : `Confirm Booking - ₹${getCurrentPrice().toFixed(2)}`}
           </Button>
         </div>
       </DialogContent>
