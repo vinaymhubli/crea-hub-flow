@@ -23,7 +23,7 @@ const SuccessStories = () => {
       results: [
         "300% increase in conversion rate",
         "50% reduction in user acquisition cost",
-        "Secured $5M Series A funding",
+        "Secured ₹5M Series A funding",
         "Award-winning design system"
       ]
     },
@@ -33,7 +33,7 @@ const SuccessStories = () => {
       industry: "E-commerce",
       designer: "Alex Kumar",
       image: "/placeholder.svg",
-      revenue: "$2M+",
+      revenue: "₹2M+",
       growth: "450%",
       timeline: "12 months",
       quote: "Alex completely reimagined our user experience. The new design not only looks amazing but increased our sales by 450% in just one year.",
@@ -52,7 +52,7 @@ const SuccessStories = () => {
       industry: "Healthcare",
       designer: "Maria Garcia",
       image: "/placeholder.svg",
-      revenue: "$5M+",
+      revenue: "₹5M+",
       growth: "200%",
       timeline: "24 months",
       quote: "Maria's expertise in healthcare UX was exactly what we needed. She helped us create an app that's both compliant and user-friendly, leading to rapid adoption.",
