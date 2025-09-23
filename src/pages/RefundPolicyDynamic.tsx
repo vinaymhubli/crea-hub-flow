@@ -60,13 +60,32 @@ const RefundPolicyDynamic = () => {
   };
 
   const renderFormattedContent = (content: string) => {
+    // First, handle template literal variables like ${value}
+    let processedContent = content;
+    
+    // Define common variables that might be used in the content
+    const variables: { [key: string]: any } = {
+      value: 1400, // Default value, you can make this dynamic
+      price: 1400,
+      amount: 1400,
+      fee: 50,
+      processingFee: 2.9,
+      currency: '₹',
+      // Add more variables as needed
+    };
+
+    // Replace template literal syntax ${variableName} with actual values
+    processedContent = processedContent.replace(/\$\{(\w+)\}/g, (match, variableName) => {
+      return variables[variableName] !== undefined ? variables[variableName] : match;
+    });
+
     // If content already contains HTML tags, use it directly
-    if (content.includes('<strong>') || content.includes('<em>') || content.includes('<ul>') || content.includes('<ol>')) {
-      return { __html: content };
+    if (processedContent.includes('<strong>') || processedContent.includes('<em>') || processedContent.includes('<ul>') || processedContent.includes('<ol>')) {
+      return { __html: processedContent };
     }
 
     // Convert markdown-style formatting to HTML for backward compatibility
-    let formattedContent = content
+    let formattedContent = processedContent
       // Convert **text** to <strong>text</strong>
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       // Convert *text* to <em>text</em>
@@ -81,7 +100,7 @@ const RefundPolicyDynamic = () => {
     // Wrap consecutive <li> elements in <ul>
     formattedContent = formattedContent.replace(/(<li>.*<\/li>)(<br><li>.*<\/li>)*/g, (match) => {
       const listItems = match.replace(/<br>/g, '').replace(/<li>/g, '<li>').replace(/<\/li>/g, '</li>');
-      return `<ul>₹{listItems}</ul>`;
+      return `<ul>${listItems}</ul>`;
     });
 
     return { __html: formattedContent };
