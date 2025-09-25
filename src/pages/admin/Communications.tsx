@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Announcement {
   id: string;
@@ -42,7 +43,7 @@ interface Announcement {
   created_at: string;
   scheduled_for?: string;
   sent_count: number;
-  read_count: number;
+  // read_count: number; // Disabled
   created_by?: string;
 }
 
@@ -58,6 +59,7 @@ interface AnnouncementTemplate {
 }
 
 export default function Communications() {
+  const { user } = useAuth();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -172,9 +174,9 @@ export default function Communications() {
           target: item.target as 'all' | 'designers' | 'clients' | 'admins',
           is_active: item.is_active,
           created_at: item.created_at,
-          scheduled_for: undefined, // Add when field exists in database
-          sent_count: 0, // Add when field exists in database
-          read_count: 0, // Add when field exists in database
+          scheduled_for: item.scheduled_for,
+          sent_count: item.sent_count || 0, // Use actual value from database
+          // read_count: item.read_count || 0, // Disabled
           created_by: item.created_by
         }));
         setAnnouncements(transformedData);
@@ -193,12 +195,15 @@ export default function Communications() {
     try {
       if (editingAnnouncement) {
         // Update existing announcement
+        const updateData = {
+          ...formData,
+          scheduled_for: formData.scheduled_for ? new Date(formData.scheduled_for).toISOString() : null,
+          updated_at: new Date().toISOString()
+        };
+        
         const { error } = await supabase
           .from('announcements')
-          .update({
-            ...formData,
-            updated_at: new Date().toISOString()
-          })
+          .update(updateData)
           .eq('id', editingAnnouncement.id);
 
         if (error) throw error;
@@ -213,13 +218,16 @@ export default function Communications() {
         ));
       } else {
         // Create new announcement
+        const announcementData = {
+          ...formData,
+          scheduled_for: formData.scheduled_for ? new Date(formData.scheduled_for).toISOString() : null,
+          created_at: new Date().toISOString(),
+          created_by: user?.id || null // Use the current user's ID
+        };
+        
         const { data, error } = await supabase
           .from('announcements')
-          .insert([{
-            ...formData,
-            created_at: new Date().toISOString(),
-            created_by: 'admin' // In a real app, this would be the current user's ID
-          }])
+          .insert([announcementData])
           .select()
           .single();
 
@@ -231,7 +239,7 @@ export default function Communications() {
             type: data.type as 'info' | 'warning' | 'success' | 'error',
             target: data.target as 'all' | 'designers' | 'clients' | 'admins',
             sent_count: 0,
-            read_count: 0
+            // read_count: 0 // Disabled
           };
           setAnnouncements([newAnnouncement, ...announcements]);
           toast.success('Announcement created successfully!');
@@ -631,10 +639,11 @@ export default function Communications() {
                           <Send className="w-4 h-4" />
                           {announcement.sent_count} sent
                         </div>
-                        <div className="flex items-center gap-1">
+                        {/* Read count disabled */}
+                        {/* <div className="flex items-center gap-1">
                           <Eye className="w-4 h-4" />
                           {announcement.read_count} read
-                        </div>
+                        </div> */}
                         {announcement.scheduled_for && (
                           <div className="flex items-center gap-1">
                             <Clock className="w-4 h-4" />
@@ -708,13 +717,14 @@ export default function Communications() {
                   {announcements.reduce((sum, a) => sum + a.sent_count, 0)}
                 </p>
               </div>
-              <div className="text-center p-4 border rounded-lg">
+              {/* Read count disabled */}
+              {/* <div className="text-center p-4 border rounded-lg">
                 <Eye className="w-8 h-8 text-orange-600 mx-auto mb-2" />
                 <h3 className="font-semibold">Total Read</h3>
                 <p className="text-2xl font-bold text-orange-600">
                   {announcements.reduce((sum, a) => sum + a.read_count, 0)}
                 </p>
-              </div>
+              </div> */}
             </div>
           </CardContent>
         </Card>

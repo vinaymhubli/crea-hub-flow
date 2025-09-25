@@ -76,14 +76,41 @@ export const useSessionHistory = () => {
         .eq('status', 'completed')
         .order('scheduled_date', { ascending: false });
 
+      // Also fetch completed live sessions
+      const { data: liveSessionsData, error: liveSessionsError } = await supabase
+        .from('active_sessions')
+        .select(`
+          id,
+          session_id,
+          customer_id,
+          designer_id,
+          started_at,
+          ended_at,
+          status,
+          created_at,
+          profiles!inner(
+            first_name,
+            last_name,
+            email,
+            avatar_url
+          )
+        `)
+        .eq('designer_id', designerData.id)
+        .eq('status', 'ended')
+        .order('ended_at', { ascending: false });
+
+      if (liveSessionsError) {
+        console.error('Error fetching live sessions:', liveSessionsError);
+      }
+
       if (bookingsError) {
         console.error('Error fetching sessions:', bookingsError);
         setError('Failed to fetch session history');
         return;
       }
 
-      // Transform data to match session format
-      const transformedSessions: SessionData[] = (bookingsData || []).map(booking => {
+      // Transform bookings data
+      const transformedBookings: SessionData[] = (bookingsData || []).map(booking => {
         const profile = Array.isArray(booking.profiles) ? booking.profiles[0] : booking.profiles;
         const clientName = `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() || 'Unknown Client';
         
@@ -111,6 +138,47 @@ export const useSessionHistory = () => {
           description: booking.description
         };
       });
+
+      // Transform live sessions data
+      const transformedLiveSessions: SessionData[] = (liveSessionsData || []).map(session => {
+        const profile = Array.isArray(session.profiles) ? session.profiles[0] : session.profiles;
+        const clientName = `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() || 'Unknown Client';
+        
+        // Calculate duration from started_at and ended_at
+        const startTime = new Date(session.started_at);
+        const endTime = new Date(session.ended_at);
+        const durationMs = endTime.getTime() - startTime.getTime();
+        const durationHours = Math.floor(durationMs / (1000 * 60 * 60));
+        const durationMinutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+        
+        return {
+          id: session.id,
+          client: {
+            name: clientName,
+            avatar: profile?.avatar_url || '',
+            email: profile?.email || 'No email'
+          },
+          project: 'Live Design Session',
+          date: new Date(session.ended_at).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+          }),
+          duration: `${durationHours}h ${durationMinutes}m`,
+          type: 'Live Session',
+          status: 'completed',
+          earnings: 0, // Live sessions don't have earnings in this table
+          hasRecording: Math.random() > 0.5, // Random for now
+          hasNotes: true,
+          tools: ['Figma', 'Adobe XD'], // Default tools for now
+          service: 'Live Design Session',
+          description: 'Live design consultation session'
+        };
+      });
+
+      // Combine both types of sessions
+      const transformedSessions = [...transformedBookings, ...transformedLiveSessions]
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
       setSessions(transformedSessions);
     } catch (err) {

@@ -9,7 +9,7 @@ import {
   FileText, Edit, Eye, Plus, Globe, HelpCircle, 
   MessageSquare, Bell, DollarSign, BookOpen,
   CheckCircle, Clock, AlertTriangle, TrendingUp,
-  LayoutDashboard
+  LayoutDashboard, Share2, Image
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -305,6 +305,34 @@ export default function CMSDashboard() {
                 Help Center
               </Button>
             </Link> */}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Social Media</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Link to="/admin/cms/social-media">
+              <Button variant="outline" className="w-full justify-start">
+                <Share2 className="h-4 w-4 mr-2" />
+                Social Media Links
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Branding</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Link to="/admin/cms/logos">
+              <Button variant="outline" className="w-full justify-start">
+                <Image className="h-4 w-4 mr-2" />
+                Logo Management
+              </Button>
+            </Link>
           </CardContent>
         </Card>
 

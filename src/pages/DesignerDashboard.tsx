@@ -46,6 +46,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { DesignerSidebar } from "@/components/DesignerSidebar";
 import { RingingBell } from "@/components/RingingBell";
+import NotificationBell from "@/components/NotificationBell";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -392,7 +393,7 @@ export default function DesignerDashboard() {
                     </span>
                   </div>
                 </div>
-                <RingingBell className="w-5 h-5 text-white/80" />
+                <NotificationBell />
                 <Popover>
                   <PopoverTrigger asChild>
                     <button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">

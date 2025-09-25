@@ -7,6 +7,7 @@ import { Menu, User, LogOut, Settings, LayoutDashboard, Wallet } from 'lucide-re
 import { useAuth } from '@/hooks/useAuth';
 import { useWallet } from '@/hooks/useWallet';
 import { WalletBalanceIndicator } from './WalletBalanceIndicator';
+import { supabase } from '@/integrations/supabase/client';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,12 +16,47 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+interface Logo {
+  id: string;
+  logo_type: string;
+  logo_url: string;
+  alt_text: string | null;
+  is_active: boolean;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
+  const [logos, setLogos] = useState<Logo[]>([]);
   const { user, profile, signOut } = useAuth();
   const { balance, loading: walletLoading } = useWallet();
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    fetchLogos();
+  }, []);
+
+  const fetchLogos = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('logo_management')
+        .select('*')
+        .eq('is_active', true)
+        .order('logo_type', { ascending: true });
+
+      if (error) throw error;
+      setLogos(data || []);
+    } catch (error) {
+      console.error('Error fetching logos:', error);
+    }
+  };
+
+  const getHeaderLogo = () => {
+    const headerLogo = logos.find(logo => logo.logo_type === 'header_logo');
+    return headerLogo?.logo_url || 'https://res.cloudinary.com/dknafpppp/image/upload/v1757697849/logo_final_2_x8c1wu.png';
+  };
 
   const getDesignersLink = () => {
     return profile?.user_type === 'client' ? '/customer-dashboard/designers' : '/designers';
@@ -60,7 +96,7 @@ export default function Header() {
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
             <img 
-              src="https://res.cloudinary.com/dknafpppp/image/upload/v1757697849/logo_final_2_x8c1wu.png" 
+              src={getHeaderLogo()} 
               alt="Meet My Designer" 
               className="h-10 w-auto"
             />

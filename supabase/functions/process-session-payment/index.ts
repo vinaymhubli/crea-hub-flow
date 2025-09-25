@@ -313,6 +313,26 @@ serve(async (req) => {
       console.log('Session table update failed (table may not exist):', error)
     }
 
+    // CRITICAL: Update bookings table to mark session as completed
+    // This is what the session history and recent designers queries use
+    try {
+      const { error: bookingError } = await supabase
+        .from('bookings')
+        .update({ 
+          status: 'completed',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', sessionId)
+
+      if (bookingError) {
+        console.error('Error updating booking status:', bookingError)
+      } else {
+        console.log('✅ Booking marked as completed for session history')
+      }
+    } catch (error) {
+      console.log('Booking table update failed:', error)
+    }
+
     // Create notifications
     try {
       // Customer notification
@@ -360,7 +380,9 @@ serve(async (req) => {
         p_customer_id: customerId,
         p_designer_id: designerId,
         p_amount: amount,
-        p_booking_id: null
+        p_booking_id: null,
+        p_session_duration: 60, // Default 60 minutes, can be made dynamic
+        p_place_of_supply: 'Inter-state' // Default, can be made dynamic based on user location
       })
 
       if (invoiceError) {

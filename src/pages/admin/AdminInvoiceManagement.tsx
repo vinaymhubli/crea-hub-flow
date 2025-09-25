@@ -452,7 +452,7 @@ export default function AdminInvoiceManagement() {
           <p className="text-gray-600">Manage invoices, templates, and design settings</p>
         </div>
         <div className="flex gap-2">
-          <Button 
+          {/* <Button 
             onClick={async () => {
               try {
                 const { data, error } = await supabase.rpc('generate_sample_invoices');
@@ -475,7 +475,7 @@ export default function AdminInvoiceManagement() {
           >
             <Plus className="w-4 h-4 mr-2" />
             Generate Sample Invoices
-          </Button>
+          </Button> */}
           <Button onClick={() => setShowPreviewDialog(true)}>
             <Eye className="w-4 h-4 mr-2" />
             Preview Invoices
@@ -960,7 +960,10 @@ export default function AdminInvoiceManagement() {
                 className="border-2 border-gray-200 rounded-lg p-8 bg-white"
                 style={{ backgroundColor: previewTemplate.background_color }}
               >
-                <div className="max-w-4xl mx-auto">
+                <div className="max-w-4xl mx-auto" style={{ width: '210mm', minHeight: '297mm' }}>
+                  <div className="text-xs text-gray-500 mb-4 text-center border-b pb-2">
+                    Invoice Size: A4 (210mm × 297mm) - Standard Business Invoice Format
+                  </div>
                   {/* Header */}
                   <div className="flex justify-between items-start mb-8">
                     <div>
@@ -1004,6 +1007,19 @@ export default function AdminInvoiceManagement() {
                         {previewTemplate.pan_number && (
                           <div>PAN: {previewTemplate.pan_number}</div>
                         )}
+                        {/* Show dispute resolution fields only for session-related invoices */}
+                        {(previewTemplate.invoice_type === 'session_payment' || previewTemplate.invoice_type === 'session_earnings') && (
+                          <div className="mt-2 pt-2 border-t border-gray-300">
+                            <div className="text-xs text-gray-500">
+                              <div>Customer ID: CUST-001</div>
+                              <div>Session ID: SESS-001</div>
+                              <div>Booking ID: BOOK-001</div>
+                              <div>Session Duration: 60 minutes</div>
+                              <div>HSN Code: 998314</div>
+                              <div>Place of Supply: Maharashtra</div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1038,6 +1054,9 @@ export default function AdminInvoiceManagement() {
                       <thead>
                         <tr className="bg-gray-50">
                           <th className="border border-gray-300 px-4 py-2 text-left">Description</th>
+                          {(previewTemplate.invoice_type === 'session_payment' || previewTemplate.invoice_type === 'session_earnings') && (
+                            <th className="border border-gray-300 px-4 py-2 text-center">HSN Code</th>
+                          )}
                           <th className="border border-gray-300 px-4 py-2 text-center">Qty</th>
                           <th className="border border-gray-300 px-4 py-2 text-right">Rate</th>
                           <th className="border border-gray-300 px-4 py-2 text-right">Amount</th>
@@ -1048,18 +1067,27 @@ export default function AdminInvoiceManagement() {
                           <>
                             <tr>
                               <td className="border border-gray-300 px-4 py-2">Session Earnings</td>
+                              {(previewTemplate.invoice_type === 'session_payment' || previewTemplate.invoice_type === 'session_earnings') && (
+                                <td className="border border-gray-300 px-4 py-2 text-center">998314</td>
+                              )}
                               <td className="border border-gray-300 px-4 py-2 text-center">1</td>
                               <td className="border border-gray-300 px-4 py-2 text-right">₹1,000.00</td>
                               <td className="border border-gray-300 px-4 py-2 text-right">₹1,000.00</td>
                             </tr>
                             <tr>
                               <td className="border border-gray-300 px-4 py-2">Platform Fee (Admin Commission)</td>
+                              {(previewTemplate.invoice_type === 'session_payment' || previewTemplate.invoice_type === 'session_earnings') && (
+                                <td className="border border-gray-300 px-4 py-2 text-center">998314</td>
+                              )}
                               <td className="border border-gray-300 px-4 py-2 text-center">1</td>
                               <td className="border border-gray-300 px-4 py-2 text-right">-₹100.00</td>
                               <td className="border border-gray-300 px-4 py-2 text-right">-₹100.00</td>
                             </tr>
                             <tr>
                               <td className="border border-gray-300 px-4 py-2">TDS Deduction</td>
+                              {(previewTemplate.invoice_type === 'session_payment' || previewTemplate.invoice_type === 'session_earnings') && (
+                                <td className="border border-gray-300 px-4 py-2 text-center">998314</td>
+                              )}
                               <td className="border border-gray-300 px-4 py-2 text-center">1</td>
                               <td className="border border-gray-300 px-4 py-2 text-right">-₹100.00</td>
                               <td className="border border-gray-300 px-4 py-2 text-right">-₹100.00</td>
@@ -1074,6 +1102,9 @@ export default function AdminInvoiceManagement() {
                                  previewTemplate.invoice_type === 'withdrawal' ? 'Withdrawal' :
                                  'Service Fee'}
                               </td>
+                              {(previewTemplate.invoice_type === 'session_payment' || previewTemplate.invoice_type === 'session_earnings') && (
+                                <td className="border border-gray-300 px-4 py-2 text-center">998314</td>
+                              )}
                               <td className="border border-gray-300 px-4 py-2 text-center">1</td>
                               <td className="border border-gray-300 px-4 py-2 text-right">₹1,000.00</td>
                               <td className="border border-gray-300 px-4 py-2 text-right">₹1,000.00</td>
@@ -1081,6 +1112,9 @@ export default function AdminInvoiceManagement() {
                             {previewTemplate.invoice_type === 'session_payment' && (
                               <tr>
                                 <td className="border border-gray-300 px-4 py-2">GST (18%)</td>
+                                {(previewTemplate.invoice_type === 'session_payment' || previewTemplate.invoice_type === 'session_earnings') && (
+                                  <td className="border border-gray-300 px-4 py-2 text-center">998314</td>
+                                )}
                                 <td className="border border-gray-300 px-4 py-2 text-center">1</td>
                                 <td className="border border-gray-300 px-4 py-2 text-right">₹180.00</td>
                                 <td className="border border-gray-300 px-4 py-2 text-right">₹180.00</td>

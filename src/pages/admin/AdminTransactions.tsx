@@ -68,30 +68,87 @@ export default function AdminTransactions() {
   const fetchTransactions = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      console.log('Fetching transactions...');
+      
+      // Fetch transactions
+      const { data: transactionData, error: transactionError } = await supabase
         .from('wallet_transactions')
-        .select(`
-          *,
-          user:profiles!wallet_transactions_user_id_fkey(first_name, last_name, full_name, role)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(1000);
-
-      if (error) throw error;
-
-      console.log('Raw transaction data:', data);
-      console.log('Sample transaction user data:', data?.[0]?.user);
-
-      const formattedTransactions = data?.map(transaction => ({
-        ...transaction,
-        user_name: transaction.user?.full_name || 
-                  `${transaction.user?.first_name || ''} ${transaction.user?.last_name || ''}`.trim() || 
-                  'Unknown User',
-        user_role: transaction.user?.role || 'unknown'
-      })) || [];
-
+        
+      if (transactionError) throw transactionError;
+      
+      console.log('Raw transaction data:', transactionData);
+      
+      // Get unique user IDs
+      const userIds = [...new Set(transactionData?.map(t => t.user_id) || [])];
+      console.log('User IDs found:', userIds);
+      
+      // Fetch user profiles
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('user_id, first_name, last_name, full_name, role, email')
+        .in('user_id', userIds);
+        
+      console.log('Profiles fetched:', profilesData);
+      console.log('Profile count:', profilesData?.length);
+      console.log('Sample profile:', profilesData?.[0]);
+      
+      // If no profiles found, try to get all profiles to see what's in the table
+      if (!profilesData || profilesData.length === 0) {
+        console.log('No profiles found, checking all profiles in table...');
+        const { data: allProfiles, error: allProfilesError } = await supabase
+          .from('profiles')
+          .select('user_id, first_name, last_name, full_name, role, email')
+          .limit(5);
+        console.log('All profiles sample:', allProfiles);
+      }
+      
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+      }
+      
+      // Combine data and format user names
+      const formattedTransactions = transactionData?.map(transaction => {
+        const profile = profilesData?.find(p => p.user_id === transaction.user_id);
+        
+        let userName = 'Unknown User';
+        let userRole = 'unknown';
+        
+        if (profile) {
+          // Get the name
+          if (profile.full_name) {
+            userName = profile.full_name;
+          } else if (profile.first_name || profile.last_name) {
+            const firstName = profile.first_name || '';
+            const lastName = profile.last_name || '';
+            userName = `${firstName} ${lastName}`.trim();
+          }
+          
+          userRole = profile.role || 'unknown';
+          
+          // Format exactly like UI: "Name email role"
+          const email = profile.email || '';
+          userName = email ? `${userName} ${email} ${userRole}` : `${userName} ${userRole}`;
+        } else {
+          // Fallback: use user_id as name if no profile found
+          userName = `User ${transaction.user_id.substring(0, 8)}`;
+          userRole = 'unknown';
+          console.warn(`No profile found for user_id: ${transaction.user_id}`);
+        }
+        
+        console.log(`Transaction ${transaction.id}: user_name = ${userName}`);
+        
+        return {
+          ...transaction,
+          user_name: userName,
+          user_role: userRole
+        };
+      }) || [];
+      
       console.log('Formatted transactions:', formattedTransactions);
-
       setTransactions(formattedTransactions);
     } catch (error) {
       console.error('Error fetching transactions:', error);
@@ -175,6 +232,11 @@ export default function AdminTransactions() {
   };
 
   const exportTransactions = () => {
+    console.log('Exporting transactions:', filteredTransactions);
+    console.log('Sample transaction for export:', filteredTransactions[0]);
+    console.log('User names in export:', filteredTransactions.map(t => t.user_name));
+    console.log('First 5 transactions user_name:', filteredTransactions.slice(0, 5).map(t => ({ id: t.id, user_name: t.user_name, user_role: t.user_role })));
+    
     const csvContent = [
       ['Date', 'User', 'Role', 'Type', 'Amount', 'Status', 'Description'].join(','),
       ...filteredTransactions.map(t => [
@@ -240,10 +302,20 @@ export default function AdminTransactions() {
           <h1 className="text-3xl font-bold">Transaction Management</h1>
           <p className="text-gray-600">View and manage all platform transactions and earnings</p>
         </div>
-        <Button onClick={exportTransactions} variant="outline">
-          <Download className="w-4 h-4 mr-2" />
-          Export CSV
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={exportTransactions} variant="outline">
+            <Download className="w-4 h-4 mr-2" />
+            Export CSV
+          </Button>
+          <Button onClick={() => {
+            console.log('Current transactions state:', transactions);
+            console.log('Current filtered transactions:', filteredTransactions);
+            console.log('Sample transaction user_name:', filteredTransactions[0]?.user_name);
+            console.log('First 3 transactions user_name:', filteredTransactions.slice(0, 3).map(t => ({ id: t.id, user_name: t.user_name, user_role: t.user_role })));
+          }} variant="outline">
+            Debug Data
+          </Button>
+        </div>
       </div>
 
       {/* Platform Earnings Summary */}

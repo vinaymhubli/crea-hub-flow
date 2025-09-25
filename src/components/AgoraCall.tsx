@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import AgoraRTC, { IAgoraRTCClient, ILocalAudioTrack, ILocalVideoTrack, IRemoteAudioTrack, IRemoteVideoTrack, ICameraVideoTrack, IMicrophoneAudioTrack } from 'agora-rtc-sdk-ng';
 import { Button } from '@/components/ui/button';
-import { Mic, MicOff, Video, VideoOff, ScreenShare, PhoneOff } from 'lucide-react';
+import { Mic, MicOff, Video, VideoOff, ScreenShare, PhoneOff, Pause, Play, DollarSign } from 'lucide-react';
 
 type RemoteUser = {
   uid: string | number;
@@ -23,11 +23,39 @@ interface AgoraCallProps {
   onScreenShareStarted?: () => void;
   onScreenShareStopped?: () => void;
   onSessionEnd?: () => void;
+  // New props for screen sharing control
+  remoteScreenSharing?: boolean;
+  onScreenShareRequest?: () => void;
+  // Props for pause and rate functionality
+  isPaused?: boolean;
+  onPauseSession?: () => void;
+  onResumeSession?: () => void;
+  onRateChange?: (rate: number) => void;
+  currentRate?: number;
 }
 
 // NOTE: We intentionally keep this component minimal and focused on A/V join/leave.
 // Screen-sharing continues to be handled by the existing ScreenShareModal to avoid regressions.
-const AgoraCall = forwardRef<any, AgoraCallProps>(({ sessionId, userId, isDesigner, onEndByDesigner, onLocalJoined, onRemoteUserJoined, onRemoteUserLeft, onOpenShare, onScreenShareStarted, onScreenShareStopped, onSessionEnd }, ref) => {
+const AgoraCall = forwardRef<any, AgoraCallProps>(({ 
+  sessionId, 
+  userId, 
+  isDesigner, 
+  onEndByDesigner, 
+  onLocalJoined, 
+  onRemoteUserJoined, 
+  onRemoteUserLeft, 
+  onOpenShare, 
+  onScreenShareStarted, 
+  onScreenShareStopped, 
+  onSessionEnd, 
+  remoteScreenSharing, 
+  onScreenShareRequest, 
+  isPaused, 
+  onPauseSession, 
+  onResumeSession, 
+  onRateChange, 
+  currentRate 
+}, ref) => {
   const clientRef = useRef<IAgoraRTCClient | null>(null);
   const [joined, setJoined] = useState(false);
 
@@ -86,10 +114,19 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({ sessionId, userId, isDesign
   const [muted, setMuted] = useState(false);
   const [cameraOff, setCameraOff] = useState(false);
   const [screenSharing, setScreenSharing] = useState(false);
-  const [remoteScreenSharing, setRemoteScreenSharing] = useState(false);
+  const [remoteScreenSharingState, setRemoteScreenSharingState] = useState(false);
   const [permissionError, setPermissionError] = useState<string | null>(null);
   const screenTrackRef = useRef<ILocalVideoTrack | null>(null);
   const screenSharingRef = useRef(false);
+  
+  // Store original state before screen sharing
+  const [originalVideoState, setOriginalVideoState] = useState<boolean>(true);
+  const [originalAudioState, setOriginalAudioState] = useState<boolean>(true);
+  const [screenShareBlocked, setScreenShareBlocked] = useState<boolean>(false);
+  
+  // Rate input state
+  const [rateInput, setRateInput] = useState<string>('');
+  const [showRateInput, setShowRateInput] = useState<boolean>(false);
   
   // State for fullscreen video selection
   const [fullscreenVideo, setFullscreenVideo] = useState<'local' | 'remote' | 'screen' | null>(null);
@@ -99,6 +136,54 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({ sessionId, userId, isDesign
     screenSharingRef.current = screenSharing;
     console.log('🖥️ ScreenSharing state changed to:', screenSharing);
   }, [screenSharing]);
+  
+  // Handle remote screen sharing state changes
+  useEffect(() => {
+    if (remoteScreenSharing && !screenSharingRef.current) {
+      console.log('🖥️ Remote user is screen sharing, blocking local screen share');
+      setScreenShareBlocked(true);
+    } else if (!remoteScreenSharing) {
+      console.log('🖥️ Remote screen sharing stopped, allowing local screen share');
+      setScreenShareBlocked(false);
+    }
+  }, [remoteScreenSharing]);
+
+  // Handle rate change
+  const handleRateSubmit = useCallback(() => {
+    const newRate = parseFloat(rateInput);
+    if (!isNaN(newRate) && newRate > 0 && onRateChange) {
+      onRateChange(newRate);
+      setShowRateInput(false);
+      setRateInput('');
+    }
+  }, [rateInput, onRateChange]);
+
+  const handleRateKeyPress = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleRateSubmit();
+    } else if (e.key === 'Escape') {
+      setShowRateInput(false);
+      setRateInput('');
+    }
+  }, [handleRateSubmit]);
+
+  // Close rate input when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showRateInput) {
+        const target = event.target as Element;
+        if (!target.closest('.rate-input-container')) {
+          setShowRateInput(false);
+          setRateInput('');
+        }
+      }
+    };
+
+    if (showRateInput) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showRateInput]);
 
   const tokenEndpoint = '/api/agora/token';
 
@@ -140,7 +225,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({ sessionId, userId, isDesign
             
             if (isScreenShare) {
               console.log('🖥️ REMOTE SCREEN SHARING DETECTED - track label:', track.label, 'trackMediaType:', user.videoTrack.trackMediaType);
-              setRemoteScreenSharing(true);
+              setRemoteScreenSharingState(true);
             } else {
               console.log('🖥️ Regular video track - track label:', track.label, 'trackMediaType:', user.videoTrack.trackMediaType);
             }
@@ -178,7 +263,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({ sessionId, userId, isDesign
                                  track.label.includes('Desktop');
             if (isScreenShare) {
               console.log('🖥️ REMOTE SCREEN SHARING STOPPED - track label:', track.label);
-              setRemoteScreenSharing(false);
+              setRemoteScreenSharingState(false);
             }
           }
         }
@@ -378,7 +463,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({ sessionId, userId, isDesign
       setRemoteUsers({});
       setJoined(false);
       setScreenSharing(false);
-      setRemoteScreenSharing(false);
+      setRemoteScreenSharingState(false);
       setMuted(false);
       setCameraOff(false);
       screenTrackRef.current = null;
@@ -425,6 +510,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({ sessionId, userId, isDesign
   const toggleScreenShare = useCallback(async () => {
     console.log('🖥️ ===== SCREEN SHARE BUTTON CLICKED =====');
     console.log('🖥️ Current screenSharing state:', screenSharing);
+    console.log('🖥️ Remote screen sharing:', remoteScreenSharing);
     console.log('🖥️ Client exists:', !!clientRef.current);
     console.log('🖥️ Joined state:', joined);
     
@@ -434,11 +520,26 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({ sessionId, userId, isDesign
       return;
     }
     
+    // Check if someone else is already screen sharing
+    if (!screenSharingRef.current && remoteScreenSharing) {
+      console.log('🚫 Screen share blocked: Remote user is already sharing');
+      setScreenShareBlocked(true);
+      if (onScreenShareRequest) {
+        onScreenShareRequest();
+      }
+      return;
+    }
+    
     console.log('🖥️ Toggle screen share clicked, current state:', screenSharing);
     
     try {
       if (!screenSharingRef.current) {
         console.log('🖥️ Starting screen share...');
+        
+        // Store original video and audio state before starting screen share
+        setOriginalVideoState(!cameraOff);
+        setOriginalAudioState(!muted);
+        console.log('📹 Stored original state - Video:', !cameraOff, 'Audio:', !muted);
         
         // Create screen track with system picker
         console.log('🖥️ Creating screen video track...');
@@ -519,8 +620,24 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({ sessionId, userId, isDesign
           await client.publish(localVideoTrack);
         }
         
+        // Restore original video and audio state
+        console.log('📹 Restoring original state - Video:', originalVideoState, 'Audio:', originalAudioState);
+        
+        // Restore video state
+        if (localVideoTrack) {
+          await localVideoTrack.setEnabled(originalVideoState);
+          setCameraOff(!originalVideoState);
+        }
+        
+        // Restore audio state
+        if (localAudioTrack) {
+          await localAudioTrack.setEnabled(originalAudioState);
+          setMuted(!originalAudioState);
+        }
+        
         setScreenSharing(false);
-        console.log('✅ Screen sharing stopped, camera restored');
+        setScreenShareBlocked(false);
+        console.log('✅ Screen sharing stopped, original state restored');
         
         // Notify that screen sharing stopped
         if (onScreenShareStopped) {
@@ -662,7 +779,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({ sessionId, userId, isDesign
             {/* Main video area */}
             <div className="w-full h-full relative bg-black">
               {/* Screen share or selected fullscreen video */}
-              {fullscreenVideo === 'screen' || (!fullscreenVideo && (screenSharing || remoteScreenSharing)) ? (
+              {fullscreenVideo === 'screen' || (!fullscreenVideo && (screenSharing || remoteScreenSharingState)) ? (
                 <div className="w-full h-full relative">
                   {screenSharing ? (
                     <div 
@@ -719,12 +836,32 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({ sessionId, userId, isDesign
                   </div>
                 </div>
               ) : (
-                /* Default screen share view */
-                <div className="w-full h-full flex items-center justify-center text-gray-400">
-                  <div className="text-center">
-                    <ScreenShare className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                    <p className="text-lg">No screen being shared</p>
-                  </div>
+                /* Default view - show camera videos or waiting screen */
+                <div className="w-full h-full relative">
+                  {Object.values(remoteUsers).filter(u => u.hasVideo).length > 0 ? (
+                    /* Show remote video if available */
+                    Object.values(remoteUsers).filter(u => u.hasVideo).map(u => (
+                      <div key={u.uid as any} className="absolute inset-0">
+                        <div 
+                          id={`remote-player-${u.uid}`} 
+                          className="absolute inset-0 cursor-pointer"
+                          onClick={() => handleVideoClick('remote')}
+                        />
+                        <div className="absolute top-4 left-4 bg-blue-500/90 backdrop-blur-sm text-white px-3 py-2 rounded-lg shadow-lg">
+                          <span className="text-sm font-medium">{isDesigner ? 'Customer' : 'Designer'}</span>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    /* Waiting for participant */
+                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      <div className="text-center">
+                        <Video className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                        <p className="text-lg">Waiting for participant</p>
+                        <p className="text-sm text-gray-400 mt-2">They will appear here when they join</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -953,18 +1090,80 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({ sessionId, userId, isDesign
             {cameraOff ? <VideoOff className="w-5 h-5" /> : <Video className="w-5 h-5" />}
           </Button>
           
-          {/* Screen share button - only for designer */}
-          {isDesigner && (
+          {/* Screen share button - for both designer and customer */}
+          <Button
+            variant={screenSharing ? 'destructive' : 'outline'}
+            size="lg"
+            className={`rounded-full w-12 h-12 p-0 transition-all duration-200 ${
+              screenSharing ? 'bg-red-600 hover:bg-red-700 text-white' : 
+              screenShareBlocked ? 'bg-gray-400 hover:bg-gray-500 text-white cursor-not-allowed' : 
+              'hover:bg-gray-100'
+            }`}
+            onClick={toggleScreenShare}
+            disabled={screenShareBlocked && !screenSharing}
+            title={screenShareBlocked ? 'Please ask the other participant to stop screen sharing first' : 
+                   screenSharing ? 'Stop screen sharing' : 'Start screen sharing'}
+          >
+            <ScreenShare className="w-5 h-5" />
+          </Button>
+
+          {/* Pause/Resume button - only for designer during screen sharing */}
+          {isDesigner && screenSharing && (
             <Button
-              variant={screenSharing ? 'destructive' : 'outline'}
+              variant={isPaused ? 'outline' : 'destructive'}
               size="lg"
               className={`rounded-full w-12 h-12 p-0 transition-all duration-200 ${
-                screenSharing ? 'bg-red-600 hover:bg-red-700 text-white' : 'hover:bg-gray-100'
+                isPaused ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-orange-600 hover:bg-orange-700 text-white'
               }`}
-              onClick={toggleScreenShare}
+              onClick={isPaused ? onResumeSession : onPauseSession}
+              title={isPaused ? 'Resume session' : 'Pause session'}
             >
-              <ScreenShare className="w-5 h-5" />
+              {isPaused ? <Play className="w-5 h-5" /> : <Pause className="w-5 h-5" />}
             </Button>
+          )}
+
+          {/* Rate change button - only for designer during screen sharing */}
+          {isDesigner && screenSharing && (
+            <div className="relative rate-input-container">
+              <Button
+                variant="outline"
+                size="lg"
+                className="rounded-full w-12 h-12 p-0 transition-all duration-200 hover:bg-gray-100"
+                onClick={() => setShowRateInput(!showRateInput)}
+                title="Change session rate"
+              >
+                <DollarSign className="w-5 h-5" />
+              </Button>
+              
+              {/* Rate input dropdown */}
+              {showRateInput && (
+                <div className="absolute bottom-14 left-1/2 transform -translate-x-1/2 bg-white border border-gray-200 rounded-lg shadow-lg p-3 min-w-[200px]">
+                  <div className="text-sm font-medium text-gray-700 mb-2">Change Rate</div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">₹</span>
+                    <input
+                      type="number"
+                      value={rateInput}
+                      onChange={(e) => setRateInput(e.target.value)}
+                      onKeyDown={handleRateKeyPress}
+                      placeholder={currentRate?.toString() || '0'}
+                      className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      autoFocus
+                    />
+                    <Button
+                      size="sm"
+                      onClick={handleRateSubmit}
+                      className="px-2 py-1 text-xs"
+                    >
+                      Set
+                    </Button>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    Current: ₹{currentRate || 0}/min
+                  </div>
+                </div>
+              )}
+            </div>
           )}
           
           {/* Stop & Send Request Approval button - only for designer */}

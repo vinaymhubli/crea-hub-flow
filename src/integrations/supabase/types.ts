@@ -148,6 +148,132 @@ export type Database = {
           },
         ]
       }
+      admin_activity_log: {
+        Row: {
+          action_type: string
+          admin_id: string
+          created_at: string | null
+          description: string
+          id: string
+          ip_address: unknown | null
+          metadata: Json | null
+          target_id: string | null
+          target_type: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action_type: string
+          admin_id: string
+          created_at?: string | null
+          description: string
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          target_id?: string | null
+          target_type?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action_type?: string
+          admin_id?: string
+          created_at?: string | null
+          description?: string
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          target_id?: string | null
+          target_type?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      admin_earnings: {
+        Row: {
+          commission_amount: number
+          commission_type: string
+          commission_value: number
+          created_at: string | null
+          customer_id: string | null
+          designer_id: string | null
+          id: string
+          original_amount: number
+          session_id: string | null
+          transaction_id: string
+        }
+        Insert: {
+          commission_amount: number
+          commission_type: string
+          commission_value: number
+          created_at?: string | null
+          customer_id?: string | null
+          designer_id?: string | null
+          id?: string
+          original_amount: number
+          session_id?: string | null
+          transaction_id: string
+        }
+        Update: {
+          commission_amount?: number
+          commission_type?: string
+          commission_value?: number
+          created_at?: string | null
+          customer_id?: string | null
+          designer_id?: string | null
+          id?: string
+          original_amount?: number
+          session_id?: string | null
+          transaction_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_earnings_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "admin_earnings_designer_id_fkey"
+            columns: ["designer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      admin_wallet: {
+        Row: {
+          amount: number
+          created_at: string | null
+          description: string
+          id: string
+          metadata: Json | null
+          reference_id: string | null
+          reference_type: string | null
+          transaction_type: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          description: string
+          id?: string
+          metadata?: Json | null
+          reference_id?: string | null
+          reference_type?: string | null
+          transaction_type: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          description?: string
+          id?: string
+          metadata?: Json | null
+          reference_id?: string | null
+          reference_type?: string | null
+          transaction_type?: string
+        }
+        Relationships: []
+      }
       announcements: {
         Row: {
           created_at: string
@@ -155,6 +281,9 @@ export type Database = {
           id: string
           is_active: boolean
           message: string
+          read_count: number | null
+          scheduled_for: string | null
+          sent_count: number | null
           target: string
           title: string
           type: string
@@ -166,6 +295,9 @@ export type Database = {
           id?: string
           is_active?: boolean
           message: string
+          read_count?: number | null
+          scheduled_for?: string | null
+          sent_count?: number | null
           target?: string
           title: string
           type?: string
@@ -177,6 +309,9 @@ export type Database = {
           id?: string
           is_active?: boolean
           message?: string
+          read_count?: number | null
+          scheduled_for?: string | null
+          sent_count?: number | null
           target?: string
           title?: string
           type?: string
@@ -361,50 +496,116 @@ export type Database = {
           },
         ]
       }
+      commission_settings: {
+        Row: {
+          commission_type: string
+          commission_value: number
+          created_at: string | null
+          id: string
+          is_active: boolean
+          max_transaction_amount: number | null
+          min_transaction_amount: number
+          updated_at: string | null
+        }
+        Insert: {
+          commission_type: string
+          commission_value: number
+          created_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_transaction_amount?: number | null
+          min_transaction_amount?: number
+          updated_at?: string | null
+        }
+        Update: {
+          commission_type?: string
+          commission_value?: number
+          created_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_transaction_amount?: number | null
+          min_transaction_amount?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       contact_page_content: {
         Row: {
           action_text: string | null
+          address_heading: string | null
+          booking_heading: string | null
+          booking_url: string | null
           color_scheme: string | null
           contact_info: string | null
           content: string | null
           created_at: string | null
           description: string | null
+          hours_heading: string | null
           icon: string | null
           id: string
           is_published: boolean | null
+          map_embed_url: string | null
+          office_address: string | null
+          office_hours: string | null
+          parking_heading: string | null
+          parking_info: string | null
+          public_transport: string | null
           section_type: string
           sort_order: number | null
           title: string | null
+          transport_heading: string | null
           updated_at: string | null
         }
         Insert: {
           action_text?: string | null
+          address_heading?: string | null
+          booking_heading?: string | null
+          booking_url?: string | null
           color_scheme?: string | null
           contact_info?: string | null
           content?: string | null
           created_at?: string | null
           description?: string | null
+          hours_heading?: string | null
           icon?: string | null
           id?: string
           is_published?: boolean | null
+          map_embed_url?: string | null
+          office_address?: string | null
+          office_hours?: string | null
+          parking_heading?: string | null
+          parking_info?: string | null
+          public_transport?: string | null
           section_type: string
           sort_order?: number | null
           title?: string | null
+          transport_heading?: string | null
           updated_at?: string | null
         }
         Update: {
           action_text?: string | null
+          address_heading?: string | null
+          booking_heading?: string | null
+          booking_url?: string | null
           color_scheme?: string | null
           contact_info?: string | null
           content?: string | null
           created_at?: string | null
           description?: string | null
+          hours_heading?: string | null
           icon?: string | null
           id?: string
           is_published?: boolean | null
+          map_embed_url?: string | null
+          office_address?: string | null
+          office_hours?: string | null
+          parking_heading?: string | null
+          parking_info?: string | null
+          public_transport?: string | null
           section_type?: string
           sort_order?: number | null
           title?: string | null
+          transport_heading?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -530,6 +731,81 @@ export type Database = {
             columns: ["designer_id"]
             isOneToOne: false
             referencedRelation: "designers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_complaints: {
+        Row: {
+          admin_notes: string | null
+          booking_id: string | null
+          complaint_type: string
+          created_at: string | null
+          customer_id: string
+          description: string
+          designer_id: string
+          file_id: string | null
+          id: string
+          priority: string
+          resolution: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          session_id: string
+          status: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          booking_id?: string | null
+          complaint_type: string
+          created_at?: string | null
+          customer_id: string
+          description: string
+          designer_id: string
+          file_id?: string | null
+          id?: string
+          priority?: string
+          resolution?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          session_id: string
+          status?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          booking_id?: string | null
+          complaint_type?: string
+          created_at?: string | null
+          customer_id?: string
+          description?: string
+          designer_id?: string
+          file_id?: string | null
+          id?: string
+          priority?: string
+          resolution?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          session_id?: string
+          status?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_complaints_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_complaints_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "session_files"
             referencedColumns: ["id"]
           },
         ]
@@ -669,6 +945,7 @@ export type Database = {
       designers: {
         Row: {
           available_for_urgent: boolean | null
+          average_rating: number | null
           bio: string | null
           completion_rate: number | null
           created_at: string
@@ -684,12 +961,14 @@ export type Database = {
           reviews_count: number | null
           skills: string[] | null
           specialty: string
+          total_reviews: number | null
           updated_at: string
           user_id: string
           verification_status: string
         }
         Insert: {
           available_for_urgent?: boolean | null
+          average_rating?: number | null
           bio?: string | null
           completion_rate?: number | null
           created_at?: string
@@ -705,12 +984,14 @@ export type Database = {
           reviews_count?: number | null
           skills?: string[] | null
           specialty: string
+          total_reviews?: number | null
           updated_at?: string
           user_id: string
           verification_status?: string
         }
         Update: {
           available_for_urgent?: boolean | null
+          average_rating?: number | null
           bio?: string | null
           completion_rate?: number | null
           created_at?: string
@@ -726,6 +1007,7 @@ export type Database = {
           reviews_count?: number | null
           skills?: string[] | null
           specialty?: string
+          total_reviews?: number | null
           updated_at?: string
           user_id?: string
           verification_status?: string
@@ -827,6 +1109,280 @@ export type Database = {
           },
         ]
       }
+      invoice_items: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          hsn_code: string | null
+          id: string
+          invoice_id: string
+          item_name: string
+          quantity: number | null
+          tax_rate: number | null
+          total_price: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          hsn_code?: string | null
+          id?: string
+          invoice_id: string
+          item_name: string
+          quantity?: number | null
+          tax_rate?: number | null
+          total_price: number
+          unit_price: number
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          hsn_code?: string | null
+          id?: string
+          invoice_id?: string
+          item_name?: string
+          quantity?: number | null
+          tax_rate?: number | null
+          total_price?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_settings: {
+        Row: {
+          cgst_rate: number | null
+          created_at: string | null
+          id: string
+          igst_rate: number | null
+          is_active: boolean | null
+          sgst_rate: number | null
+          state_code: string
+          state_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          cgst_rate?: number | null
+          created_at?: string | null
+          id?: string
+          igst_rate?: number | null
+          is_active?: boolean | null
+          sgst_rate?: number | null
+          state_code: string
+          state_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          cgst_rate?: number | null
+          created_at?: string | null
+          id?: string
+          igst_rate?: number | null
+          is_active?: boolean | null
+          sgst_rate?: number | null
+          state_code?: string
+          state_name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      invoice_templates: {
+        Row: {
+          admin_commission_rate: number | null
+          background_color: string | null
+          bank_details: Json | null
+          company_address: string | null
+          company_email: string | null
+          company_logo_url: string | null
+          company_name: string
+          company_phone: string | null
+          company_website: string | null
+          created_at: string | null
+          created_by: string | null
+          footer_text: string | null
+          gst_number: string | null
+          hsn_code: string | null
+          id: string
+          invoice_postfix: string | null
+          invoice_prefix: string | null
+          invoice_type: string | null
+          is_active: boolean | null
+          pan_number: string | null
+          template_name: string
+          terms_conditions: string | null
+          updated_at: string | null
+          yearly_reset: boolean | null
+        }
+        Insert: {
+          admin_commission_rate?: number | null
+          background_color?: string | null
+          bank_details?: Json | null
+          company_address?: string | null
+          company_email?: string | null
+          company_logo_url?: string | null
+          company_name: string
+          company_phone?: string | null
+          company_website?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          footer_text?: string | null
+          gst_number?: string | null
+          hsn_code?: string | null
+          id?: string
+          invoice_postfix?: string | null
+          invoice_prefix?: string | null
+          invoice_type?: string | null
+          is_active?: boolean | null
+          pan_number?: string | null
+          template_name: string
+          terms_conditions?: string | null
+          updated_at?: string | null
+          yearly_reset?: boolean | null
+        }
+        Update: {
+          admin_commission_rate?: number | null
+          background_color?: string | null
+          bank_details?: Json | null
+          company_address?: string | null
+          company_email?: string | null
+          company_logo_url?: string | null
+          company_name?: string
+          company_phone?: string | null
+          company_website?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          footer_text?: string | null
+          gst_number?: string | null
+          hsn_code?: string | null
+          id?: string
+          invoice_postfix?: string | null
+          invoice_prefix?: string | null
+          invoice_type?: string | null
+          is_active?: boolean | null
+          pan_number?: string | null
+          template_name?: string
+          terms_conditions?: string | null
+          updated_at?: string | null
+          yearly_reset?: boolean | null
+        }
+        Relationships: []
+      }
+      invoices: {
+        Row: {
+          booking_id: string | null
+          created_at: string | null
+          currency: string | null
+          customer_id: string | null
+          designer_id: string | null
+          due_date: string | null
+          hsn_code: string | null
+          id: string
+          invoice_number: string
+          invoice_type: string
+          metadata: Json | null
+          paid_at: string | null
+          payment_method: string | null
+          payment_reference: string | null
+          place_of_supply: string | null
+          session_duration: number | null
+          session_id: string
+          status: string | null
+          subtotal: number
+          tax_amount: number | null
+          tax_details: Json | null
+          template_id: string | null
+          total_amount: number
+          updated_at: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          designer_id?: string | null
+          due_date?: string | null
+          hsn_code?: string | null
+          id?: string
+          invoice_number: string
+          invoice_type: string
+          metadata?: Json | null
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          place_of_supply?: string | null
+          session_duration?: number | null
+          session_id: string
+          status?: string | null
+          subtotal: number
+          tax_amount?: number | null
+          tax_details?: Json | null
+          template_id?: string | null
+          total_amount: number
+          updated_at?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          designer_id?: string | null
+          due_date?: string | null
+          hsn_code?: string | null
+          id?: string
+          invoice_number?: string
+          invoice_type?: string
+          metadata?: Json | null
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          place_of_supply?: string | null
+          session_duration?: number | null
+          session_id?: string
+          status?: string | null
+          subtotal?: number
+          tax_amount?: number | null
+          tax_details?: Json | null
+          template_id?: string | null
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "invoices_designer_id_fkey"
+            columns: ["designer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "invoices_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       live_session_requests: {
         Row: {
           created_at: string | null
@@ -874,6 +1430,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      logo_management: {
+        Row: {
+          alt_text: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          logo_type: string
+          logo_url: string
+          updated_at: string | null
+        }
+        Insert: {
+          alt_text?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_type: string
+          logo_url: string
+          updated_at?: string | null
+        }
+        Update: {
+          alt_text?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_type?: string
+          logo_url?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       messages: {
         Row: {
@@ -961,95 +1547,88 @@ export type Database = {
           },
         ]
       }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          payment_date: string | null
+          payment_method: string
+          session_id: string
+          status: string
+          transaction_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          payment_date?: string | null
+          payment_method: string
+          session_id: string
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          payment_date?: string | null
+          payment_method?: string
+          session_id?: string
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       platform_settings: {
         Row: {
-          commission_rate: number
-          contact_phone: string | null
-          created_at: string
-          enable_analytics: boolean | null
-          enable_live_sessions: boolean | null
-          enable_notifications: boolean | null
-          enable_two_factor_auth: boolean | null
-          enable_wallet_system: boolean | null
-          featured_designers_limit: number
+          created_at: string | null
+          default_currency: string | null
+          description: string | null
           id: string
-          maintenance_mode: boolean
-          max_concurrent_sessions: number | null
-          max_file_upload_size_mb: number | null
-          maximum_withdrawal_amount: number | null
-          minimum_withdrawal_amount: number | null
-          new_registrations: boolean
-          password_min_length: number | null
-          platform_description: string | null
-          platform_name: string | null
-          require_email_verification: boolean | null
-          require_phone_verification: boolean | null
-          session_timeout_minutes: number | null
-          singleton: boolean
-          support_email: string | null
-          tax_rate: number | null
-          updated_at: string
+          is_active: boolean | null
+          setting_key: string
+          setting_value: Json
+          updated_at: string | null
           updated_by: string | null
         }
         Insert: {
-          commission_rate?: number
-          contact_phone?: string | null
-          created_at?: string
-          enable_analytics?: boolean | null
-          enable_live_sessions?: boolean | null
-          enable_notifications?: boolean | null
-          enable_two_factor_auth?: boolean | null
-          enable_wallet_system?: boolean | null
-          featured_designers_limit?: number
+          created_at?: string | null
+          default_currency?: string | null
+          description?: string | null
           id?: string
-          maintenance_mode?: boolean
-          max_concurrent_sessions?: number | null
-          max_file_upload_size_mb?: number | null
-          maximum_withdrawal_amount?: number | null
-          minimum_withdrawal_amount?: number | null
-          new_registrations?: boolean
-          password_min_length?: number | null
-          platform_description?: string | null
-          platform_name?: string | null
-          require_email_verification?: boolean | null
-          require_phone_verification?: boolean | null
-          session_timeout_minutes?: number | null
-          singleton?: boolean
-          support_email?: string | null
-          tax_rate?: number | null
-          updated_at?: string
+          is_active?: boolean | null
+          setting_key: string
+          setting_value: Json
+          updated_at?: string | null
           updated_by?: string | null
         }
         Update: {
-          commission_rate?: number
-          contact_phone?: string | null
-          created_at?: string
-          enable_analytics?: boolean | null
-          enable_live_sessions?: boolean | null
-          enable_notifications?: boolean | null
-          enable_two_factor_auth?: boolean | null
-          enable_wallet_system?: boolean | null
-          featured_designers_limit?: number
+          created_at?: string | null
+          default_currency?: string | null
+          description?: string | null
           id?: string
-          maintenance_mode?: boolean
-          max_concurrent_sessions?: number | null
-          max_file_upload_size_mb?: number | null
-          maximum_withdrawal_amount?: number | null
-          minimum_withdrawal_amount?: number | null
-          new_registrations?: boolean
-          password_min_length?: number | null
-          platform_description?: string | null
-          platform_name?: string | null
-          require_email_verification?: boolean | null
-          require_phone_verification?: boolean | null
-          session_timeout_minutes?: number | null
-          singleton?: boolean
-          support_email?: string | null
-          tax_rate?: number | null
-          updated_at?: string
+          is_active?: boolean | null
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string | null
           updated_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_platform_settings_updated_by"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       portfolio_items: {
         Row: {
@@ -1165,6 +1744,7 @@ export type Database = {
           display_name: string | null
           email: string | null
           first_name: string | null
+          full_name: string | null
           id: string
           is_admin: boolean | null
           last_name: string | null
@@ -1186,6 +1766,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           first_name?: string | null
+          full_name?: string | null
           id?: string
           is_admin?: boolean | null
           last_name?: string | null
@@ -1207,6 +1788,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           first_name?: string | null
+          full_name?: string | null
           id?: string
           is_admin?: boolean | null
           last_name?: string | null
@@ -1375,6 +1957,66 @@ export type Database = {
             columns: ["designer_id"]
             isOneToOne: false
             referencedRelation: "designers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_approval_requests: {
+        Row: {
+          created_at: string | null
+          customer_id: string
+          designer_id: string
+          file_downloaded_at: string | null
+          file_uploaded_at: string | null
+          id: string
+          payment_id: string | null
+          review_id: string | null
+          session_id: string
+          status: string
+          total_amount: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id: string
+          designer_id: string
+          file_downloaded_at?: string | null
+          file_uploaded_at?: string | null
+          id?: string
+          payment_id?: string | null
+          review_id?: string | null
+          session_id: string
+          status?: string
+          total_amount: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string
+          designer_id?: string
+          file_downloaded_at?: string | null
+          file_uploaded_at?: string | null
+          id?: string
+          payment_id?: string | null
+          review_id?: string | null
+          session_id?: string
+          status?: string
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_approval_requests_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_approval_requests_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "session_reviews"
             referencedColumns: ["id"]
           },
         ]
@@ -1638,6 +2280,42 @@ export type Database = {
           },
         ]
       }
+      session_reviews: {
+        Row: {
+          created_at: string | null
+          customer_id: string
+          designer_name: string
+          id: string
+          rating: number
+          review_date: string | null
+          review_text: string | null
+          session_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id: string
+          designer_name: string
+          id?: string
+          rating: number
+          review_date?: string | null
+          review_text?: string | null
+          session_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string
+          designer_name?: string
+          id?: string
+          rating?: number
+          review_date?: string | null
+          review_text?: string | null
+          session_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       session_work_reviews: {
         Row: {
           booking_id: string | null
@@ -1694,6 +2372,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      social_media_links: {
+        Row: {
+          created_at: string | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          platform: string
+          sort_order: number | null
+          updated_at: string | null
+          url: string
+        }
+        Insert: {
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          platform: string
+          sort_order?: number | null
+          updated_at?: string | null
+          url: string
+        }
+        Update: {
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          platform?: string
+          sort_order?: number | null
+          updated_at?: string | null
+          url?: string
+        }
+        Relationships: []
       }
       success_stories_content: {
         Row: {
@@ -1811,6 +2522,103 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      tax_collections: {
+        Row: {
+          cgst_amount: number
+          cgst_rate: number
+          created_at: string | null
+          id: string
+          igst_amount: number
+          igst_rate: number
+          original_amount: number
+          sgst_amount: number
+          sgst_rate: number
+          total_tax_amount: number
+          transaction_id: string
+          transaction_type: string
+          user_id: string | null
+          user_state: string
+          user_state_code: string
+        }
+        Insert: {
+          cgst_amount: number
+          cgst_rate: number
+          created_at?: string | null
+          id?: string
+          igst_amount: number
+          igst_rate: number
+          original_amount: number
+          sgst_amount: number
+          sgst_rate: number
+          total_tax_amount: number
+          transaction_id: string
+          transaction_type: string
+          user_id?: string | null
+          user_state: string
+          user_state_code: string
+        }
+        Update: {
+          cgst_amount?: number
+          cgst_rate?: number
+          created_at?: string | null
+          id?: string
+          igst_amount?: number
+          igst_rate?: number
+          original_amount?: number
+          sgst_amount?: number
+          sgst_rate?: number
+          total_tax_amount?: number
+          transaction_id?: string
+          transaction_type?: string
+          user_id?: string | null
+          user_state?: string
+          user_state_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_collections_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      tds_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          tds_rate: number
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          tds_rate?: number
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          tds_rate?: number
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tds_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       user_settings: {
         Row: {
@@ -2006,6 +2814,17 @@ export type Database = {
       }
     }
     Functions: {
+      add_platform_earning: {
+        Args: {
+          p_amount: number
+          p_description: string
+          p_metadata?: Json
+          p_reference_id?: string
+          p_reference_type?: string
+          p_transaction_type: string
+        }
+        Returns: string
+      }
       check_sufficient_balance: {
         Args: { required_amount: number; user_uuid: string }
         Returns: boolean
@@ -2023,21 +2842,175 @@ export type Database = {
           user_exists: boolean
         }[]
       }
+      delete_invoice: {
+        Args: { p_invoice_id: string }
+        Returns: boolean
+      }
+      deliver_announcement_to_users: {
+        Args: { p_announcement_id: string }
+        Returns: number
+      }
       expire_old_live_session_requests: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      generate_invoice_number: {
+        Args: { p_template_id?: string }
+        Returns: string
       }
       generate_live_session_channel: {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      generate_recharge_invoice: {
+        Args: {
+          p_amount: number
+          p_description?: string
+          p_transaction_id: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      generate_sample_invoices: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          invoice_id: string
+          invoice_number: string
+        }[]
+      }
+      generate_session_invoices: {
+        Args:
+          | {
+              p_amount: number
+              p_booking_id?: string
+              p_customer_id: string
+              p_designer_id: string
+              p_place_of_supply?: string
+              p_session_duration?: number
+              p_session_id: string
+              p_template_id?: string
+            }
+          | {
+              p_amount: number
+              p_booking_id?: string
+              p_customer_id: string
+              p_designer_id: string
+              p_session_id: string
+              p_template_id?: string
+            }
+        Returns: {
+          customer_invoice_id: string
+          customer_invoice_number: string
+          designer_invoice_id: string
+          designer_invoice_number: string
+        }[]
+      }
+      generate_wallet_invoice: {
+        Args: {
+          p_amount: number
+          p_description: string
+          p_template_id?: string
+          p_transaction_id: string
+          p_transaction_type: string
+          p_user_id: string
+        }
+        Returns: {
+          invoice_id: string
+          invoice_number: string
+        }[]
+      }
+      generate_wallet_recharge_invoice: {
+        Args:
+          | { p_amount: number; p_customer_id: string; p_template_id?: string }
+          | {
+              p_amount: number
+              p_description: string
+              p_template_id?: string
+              p_transaction_id: string
+              p_user_id: string
+            }
+        Returns: {
+          invoice_id: string
+          invoice_number: string
+        }[]
+      }
+      generate_wallet_withdrawal_invoice: {
+        Args:
+          | {
+              p_amount: number
+              p_description: string
+              p_template_id?: string
+              p_transaction_id: string
+              p_user_id: string
+            }
+          | { p_amount: number; p_designer_id: string; p_template_id?: string }
+        Returns: {
+          invoice_id: string
+          invoice_number: string
+        }[]
+      }
+      generate_withdrawal_invoice: {
+        Args: {
+          p_amount: number
+          p_description?: string
+          p_transaction_id: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      get_admin_final_files: {
+        Args: { p_limit?: number; p_offset?: number }
+        Returns: {
+          booking_id: string
+          complaint_count: number
+          customer_id: string
+          customer_name: string
+          designer_id: string
+          designer_name: string
+          file_id: string
+          file_name: string
+          file_size: number
+          file_url: string
+          has_complaints: boolean
+          session_id: string
+          uploaded_at: string
+        }[]
+      }
       get_admin_stats: {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      get_available_earnings: {
+        Args: { user_uuid: string }
+        Returns: number
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_earnings_history: {
+        Args: { designer_user_id: string; limit_count?: number }
+        Returns: {
+          amount: number
+          created_at: string
+          description: string
+          id: string
+          status: string
+        }[]
+      }
+      get_monthly_earnings: {
+        Args: { designer_user_id: string; target_month?: string }
+        Returns: number
+      }
+      get_platform_earnings_summary: {
+        Args: { p_end_date?: string; p_start_date?: string }
+        Returns: {
+          total_earnings: number
+          total_gst_collected: number
+          total_penalty_fees: number
+          total_platform_fees: number
+          transaction_count: number
+        }[]
       }
       get_recent_transactions: {
         Args: { limit_count?: number; user_uuid: string }
@@ -2051,9 +3024,31 @@ export type Database = {
           transaction_type: string
         }[]
       }
+      get_target_user_ids: {
+        Args: { p_announcement_id: string; p_target: string }
+        Returns: {
+          user_id: string
+        }[]
+      }
+      get_total_earnings: {
+        Args: { designer_user_id: string }
+        Returns: number
+      }
       get_total_withdrawals: {
         Args: { user_uuid: string }
         Returns: number
+      }
+      get_user_notifications: {
+        Args: { p_limit?: number; p_offset?: number; p_user_id: string }
+        Returns: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          related_id: string
+          title: string
+          type: string
+        }[]
       }
       get_wallet_balance: {
         Args: { user_uuid: string }
@@ -2081,6 +3076,49 @@ export type Database = {
       is_designer_in_live_session: {
         Args: { designer_user_id: string }
         Returns: boolean
+      }
+      log_admin_activity: {
+        Args: {
+          p_action_type: string
+          p_admin_id: string
+          p_description: string
+          p_metadata?: Json
+          p_target_id?: string
+          p_target_type?: string
+        }
+        Returns: string
+      }
+      mark_notification_read: {
+        Args: { p_notification_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      process_admin_refund: {
+        Args: {
+          p_admin_id: string
+          p_amount: number
+          p_customer_id: string
+          p_designer_id: string
+          p_metadata?: Json
+          p_reason: string
+          p_reference_id?: string
+          p_reference_type?: string
+        }
+        Returns: {
+          message: string
+          refund_id: string
+          success: boolean
+        }[]
+      }
+      send_notification: {
+        Args: {
+          p_action_url?: string
+          p_message: string
+          p_metadata?: Json
+          p_title: string
+          p_type: string
+          p_user_id: string
+        }
+        Returns: string
       }
     }
     Enums: {

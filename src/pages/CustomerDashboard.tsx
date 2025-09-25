@@ -41,6 +41,7 @@ import { Separator } from "@/components/ui/separator";
 // Use the shared CustomerSidebar component
 import { CustomerSidebar } from '@/components/CustomerSidebar';
 import { RingingBell } from '@/components/RingingBell';
+import NotificationBell from '@/components/NotificationBell';
 import SessionRatingDialog from '@/components/SessionRatingDialog';
 
 export default function CustomerDashboard() {
@@ -100,7 +101,8 @@ export default function CustomerDashboard() {
 
   const fetchRecentDesigners = async () => {
     try {
-      const { data, error } = await supabase
+      // Fetch from bookings table
+      const { data: bookingsData, error: bookingsError } = await supabase
         .from('bookings')
         .select(`
           designer_id,
@@ -118,21 +120,48 @@ export default function CustomerDashboard() {
         .eq('customer_id', user.id)
         .limit(3);
       
-      if (error) throw error;
+      if (bookingsError) throw bookingsError;
+
+      // Also fetch from live sessions
+      const { data: liveSessionsData, error: liveSessionsError } = await supabase
+        .from('active_sessions')
+        .select(`
+          designer_id,
+          designers (
+            id,
+            specialty,
+            rating,
+            profiles (
+              first_name,
+              last_name,
+              avatar_url
+            )
+          )
+        `)
+        .eq('customer_id', user.id)
+        .eq('status', 'ended')
+        .limit(3);
+
+      if (liveSessionsError) {
+        console.error('Error fetching live sessions:', liveSessionsError);
+      }
       
-      const uniqueDesigners = data?.reduce((acc, booking) => {
-        if (booking.designers && !acc.find(d => d.id === booking.designers.id)) {
+      // Combine both data sources
+      const allDesigners = [...(bookingsData || []), ...(liveSessionsData || [])];
+      
+      const uniqueDesigners = allDesigners.reduce((acc, item) => {
+        if (item.designers && !acc.find(d => d.id === item.designers.id)) {
           acc.push({
-            id: booking.designers.id,
-            name: `${booking.designers.profiles?.first_name} ${booking.designers.profiles?.last_name}`,
-            rating: booking.designers.rating || 4.5,
-            specialty: booking.designers.specialty || 'Design',
-            initials: `${booking.designers.profiles?.first_name?.[0] || 'D'}${booking.designers.profiles?.last_name?.[0] || 'R'}`,
-            avatar_url: booking.designers.profiles?.avatar_url
+            id: item.designers.id,
+            name: `${item.designers.profiles?.first_name} ${item.designers.profiles?.last_name}`,
+            rating: item.designers.rating || 4.5,
+            specialty: item.designers.specialty || 'Design',
+            initials: `${item.designers.profiles?.first_name?.[0] || 'D'}${item.designers.profiles?.last_name?.[0] || 'R'}`,
+            avatar_url: item.designers.profiles?.avatar_url
           });
         }
         return acc;
-      }, []) || [];
+      }, []);
       
       setRecentDesigners(uniqueDesigners);
     } catch (error) {
@@ -222,7 +251,7 @@ export default function CustomerDashboard() {
                   <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
                   <span className="text-white/80 text-sm font-medium">Online</span>
                 </div>
-                <RingingBell className="w-5 h-5 text-white/80" />
+                <NotificationBell />
                 <Popover>
                   <PopoverTrigger asChild>
                     <button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">

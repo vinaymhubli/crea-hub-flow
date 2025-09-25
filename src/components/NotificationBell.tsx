@@ -14,10 +14,8 @@ interface Notification {
   title: string;
   message: string;
   is_read: boolean;
-  action_url: string | null;
-  metadata: any;
+  related_id: string | null;
   created_at: string;
-  read_at: string | null;
 }
 
 export default function NotificationBell() {
@@ -87,7 +85,7 @@ export default function NotificationBell() {
       setNotifications(prev => 
         prev.map(n => 
           n.id === notificationId 
-            ? { ...n, is_read: true, read_at: new Date().toISOString() }
+            ? { ...n, is_read: true }
             : n
         )
       );
@@ -109,7 +107,7 @@ export default function NotificationBell() {
       }
 
       setNotifications(prev => 
-        prev.map(n => ({ ...n, is_read: true, read_at: new Date().toISOString() }))
+        prev.map(n => ({ ...n, is_read: true }))
       );
       setUnreadCount(0);
     } catch (error) {
@@ -122,8 +120,10 @@ export default function NotificationBell() {
       markAsRead(notification.id);
     }
     
-    if (notification.action_url) {
-      window.location.href = notification.action_url;
+    // Handle navigation based on notification type
+    if (notification.type === 'announcement') {
+      // For announcements, just mark as read and close
+      return;
     }
     
     setIsOpen(false);
@@ -147,6 +147,15 @@ export default function NotificationBell() {
         return '📢';
       case 'system_alert':
         return '🔔';
+      case 'announcement':
+      case 'announcement_info':
+        return 'ℹ️';
+      case 'announcement_warning':
+        return '⚠️';
+      case 'announcement_success':
+        return '✅';
+      case 'announcement_error':
+        return '❌';
       default:
         return '📢';
     }

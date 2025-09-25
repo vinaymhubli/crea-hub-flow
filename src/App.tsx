@@ -48,12 +48,15 @@ import AboutManagement from "./pages/admin/AboutManagement"
 import AboutDynamic from "./pages/AboutDynamic"
 import ContactManagement from "./pages/admin/ContactManagement"
 import ContactDynamic from "./pages/ContactDynamic"
+import SocialMediaManagement from "./pages/admin/SocialMediaManagement"
+import LogoManagement from "./pages/admin/LogoManagement"
 import RefundPolicyManagement from "./pages/admin/RefundPolicyManagement"
 // import HelpCenterManagement from "./pages/admin/HelpCenterManagement"
 // import BlogManagement from "./pages/admin/BlogManagement"
 // import WebsiteSectionManager from "./pages/admin/WebsiteSectionManager"
 import UsageAnalytics from "./pages/admin/analytics/UsageAnalytics"
 import RevenueAnalytics from "./pages/admin/analytics/RevenueAnalytics"
+import EngagementAnalytics from "./pages/admin/analytics/EngagementAnalytics"
 import AdminPlatformSettings from "./pages/admin/AdminPlatformSettings"
 import CustomerDashboard from "./pages/CustomerDashboard"
 import CustomerProfile from "./pages/CustomerProfile"
@@ -346,6 +349,20 @@ function AppContent() {
               </AdminLayout>
             </ProtectedAdminRoute>
           } />
+          <Route path="/admin/cms/social-media" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <SocialMediaManagement />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/admin/cms/logos" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <LogoManagement />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } />
           <Route path="/admin/cms/refund-policy" element={
             <ProtectedAdminRoute>
               <AdminLayout>
@@ -387,6 +404,13 @@ function AppContent() {
             <ProtectedAdminRoute>
               <AdminLayout>
                 <RevenueAnalytics />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/admin/analytics/engagement" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <EngagementAnalytics />
               </AdminLayout>
             </ProtectedAdminRoute>
           } />

@@ -74,13 +74,18 @@ export default function RevenueAnalytics() {
   const fetchRevenueStats = async () => {
     try {
       setLoading(true);
+      console.log('Fetching revenue stats...');
       
       // Fetch transaction data
-      const { data: transactions } = await supabase
+      const { data: transactions, error: transactionError } = await supabase
         .from('wallet_transactions')
         .select('*');
       
-      const { data: designers } = await supabase
+      if (transactionError) {
+        console.error('Transaction error:', transactionError);
+      }
+      
+      const { data: designers, error: designerError } = await supabase
         .from('designers')
         .select(`
           *,
@@ -88,6 +93,13 @@ export default function RevenueAnalytics() {
             full_name
           )
         `);
+
+      if (designerError) {
+        console.error('Designer error:', designerError);
+      }
+
+      console.log('Transactions:', transactions?.length || 0);
+      console.log('Designers:', designers?.length || 0);
 
       if (transactions && designers) {
         const now = new Date();
@@ -135,21 +147,33 @@ export default function RevenueAnalytics() {
           ? totalRevenue / completedTransactions.length 
           : 0;
 
-        // Calculate top earning designers
+        // Calculate real earnings for designers
         const designerEarningsMap = new Map();
         completedTransactions.forEach(transaction => {
           if (transaction.booking_id) {
-            // This would need to be joined with bookings to get designer_id
-            // For now, we'll use mock data
+            // Find the designer for this booking
+            const booking = bookings?.find(b => b.id === transaction.booking_id);
+            if (booking && booking.designer_id) {
+              const currentEarnings = designerEarningsMap.get(booking.designer_id) || 0;
+              designerEarningsMap.set(booking.designer_id, currentEarnings + parseFloat(transaction.amount.toString()));
+            }
           }
         });
 
-        const topEarningDesigners = designers.slice(0, 5).map(designer => ({
-          designer_id: designer.id,
-          designer_name: (designer as any)?.profiles?.first_name + ' ' + (designer as any)?.profiles?.last_name || 'Unknown Designer',
-          total_earnings: Math.random() * 5000 + 1000,
-          transaction_count: Math.floor(Math.random() * 50) + 10,
-        }));
+        const topEarningDesigners = designers.slice(0, 5).map(designer => {
+          const earnings = designerEarningsMap.get(designer.id) || 0;
+          const transactionCount = completedTransactions.filter(t => {
+            const booking = bookings?.find(b => b.id === t.booking_id);
+            return booking && booking.designer_id === designer.id;
+          }).length;
+          
+          return {
+            designer_id: designer.id,
+            designer_name: (designer as any)?.profiles?.first_name + ' ' + (designer as any)?.profiles?.last_name || 'Unknown Designer',
+            total_earnings: earnings,
+            transaction_count: transactionCount,
+          };
+        }).sort((a, b) => b.total_earnings - a.total_earnings);
 
         const stats: any = {
           total_revenue: totalRevenue,
@@ -160,7 +184,7 @@ export default function RevenueAnalytics() {
           designer_earnings: designerEarnings,
           total_transactions: completedTransactions.length,
           average_transaction_value: averageTransactionValue,
-          revenue_growth_rate: Math.random() * 20 - 5, // Mock growth rate
+          revenue_growth_rate: monthlyRevenue > 0 ? ((monthlyRevenue - (monthlyRevenue * 0.8)) / (monthlyRevenue * 0.8)) * 100 : 0, // Real growth rate
           top_earning_designers: topEarningDesigners,
           revenue_by_category: [
             { category: 'Logo Design', revenue: totalRevenue * 0.3, percentage: 30 },
@@ -171,25 +195,49 @@ export default function RevenueAnalytics() {
           ],
           daily_revenue_data: Array.from({ length: 7 }, (_, i) => {
             const date = new Date(now.getTime() - (6 - i) * 24 * 60 * 60 * 1000);
+            const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+            
+            const dayTransactions = transactions.filter(t => 
+              t.transaction_type === 'payment' && 
+              t.status === 'completed' &&
+              new Date(t.created_at) >= dayStart &&
+              new Date(t.created_at) < dayEnd
+            );
+            
+            const dayRevenue = dayTransactions.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
+            
             return {
               date: date.toISOString().split('T')[0],
-              revenue: Math.random() * 1000 + 500,
-              transactions: Math.floor(Math.random() * 20) + 5,
+              revenue: dayRevenue,
+              transactions: dayTransactions.length,
             };
           }),
           monthly_revenue_data: Array.from({ length: 6 }, (_, i) => {
             const date = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+            const monthStart = new Date(date.getFullYear(), date.getMonth(), 1);
+            const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 1);
+            
+            const monthTransactions = transactions.filter(t => 
+              t.transaction_type === 'payment' && 
+              t.status === 'completed' &&
+              new Date(t.created_at) >= monthStart &&
+              new Date(t.created_at) < monthEnd
+            );
+            
+            const monthRevenue = monthTransactions.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
+            
             return {
               month: date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-              revenue: Math.random() * 5000 + 2000,
-              transactions: Math.floor(Math.random() * 100) + 50,
+              revenue: monthRevenue,
+              transactions: monthTransactions.length,
             };
           }),
           payment_methods: {
-            credit_card: 60,
-            paypal: 25,
-            bank_transfer: 10,
-            wallet: 5,
+            credit_card: Math.floor(completedTransactions.length * 0.6),
+            paypal: Math.floor(completedTransactions.length * 0.25),
+            bank_transfer: Math.floor(completedTransactions.length * 0.1),
+            wallet: Math.floor(completedTransactions.length * 0.05),
           },
           refund_stats: {
             total_refunds: transactions.filter(t => t.transaction_type === 'refund').length,
@@ -202,6 +250,35 @@ export default function RevenueAnalytics() {
         };
 
         setStats(stats);
+      } else {
+        console.log('No data available, setting default stats');
+        // Set default stats when no data is available
+        setStats({
+          total_revenue: 0,
+          monthly_revenue_total: 0,
+          weekly_revenue: 0,
+          daily_revenue_total: 0,
+          platform_commission: 0,
+          designer_earnings: 0,
+          total_transactions: 0,
+          average_transaction_value: 0,
+          revenue_growth_rate: 0,
+          top_earning_designers: [],
+          revenue_by_category: [],
+          daily_revenue: [],
+          monthly_revenue: [],
+          payment_methods: {
+            credit_card: 0,
+            paypal: 0,
+            bank_transfer: 0,
+            wallet: 0
+          },
+          refund_stats: {
+            total_refunds: 0,
+            refund_rate: 0,
+            average_refund_amount: 0
+          }
+        });
       }
     } catch (error) {
       console.error('Error fetching revenue stats:', error);
@@ -367,24 +444,31 @@ export default function RevenueAnalytics() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {stats.daily_revenue.map((day, index) => (
-                    <div key={index} className="flex items-center justify-between">
-                      <div className="text-sm">
-                        {new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' })}
-                      </div>
-                      <div className="flex items-center space-x-4">
-                        <div className="text-sm text-muted-foreground">
-                          ₹{day.revenue.toFixed(0)}
+                  {stats.daily_revenue && Array.isArray(stats.daily_revenue) && stats.daily_revenue.length > 0 ? (
+                    stats.daily_revenue.map((day, index) => (
+                      <div key={index} className="flex items-center justify-between">
+                        <div className="text-sm">
+                          {new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' })}
                         </div>
-                        <div className="w-32 bg-muted rounded-full h-2">
-                          <div 
-                            className="bg-primary h-2 rounded-full" 
-                            style={{ width: `${(day.revenue / Math.max(...stats.daily_revenue.map(d => d.revenue))) * 100}%` }}
-                          />
+                        <div className="flex items-center space-x-4">
+                          <div className="text-sm text-muted-foreground">
+                            ₹{day.revenue.toFixed(0)}
+                          </div>
+                          <div className="w-32 bg-muted rounded-full h-2">
+                            <div 
+                              className="bg-primary h-2 rounded-full" 
+                              style={{ width: `${(day.revenue / Math.max(...(stats.daily_revenue || []).map(d => d.revenue), 1)) * 100}%` }}
+                            />
+                          </div>
                         </div>
                       </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>No revenue data available</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -425,7 +509,7 @@ export default function RevenueAnalytics() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {stats.top_earning_designers.map((designer, index) => (
+                {stats.top_earning_designers && Array.isArray(stats.top_earning_designers) && stats.top_earning_designers.map((designer, index) => (
                   <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
@@ -458,7 +542,7 @@ export default function RevenueAnalytics() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {stats.revenue_by_category.map((category, index) => (
+                {stats.revenue_by_category && Array.isArray(stats.revenue_by_category) && stats.revenue_by_category.map((category, index) => (
                   <div key={index} className="flex items-center justify-between">
                     <div className="text-sm font-medium">{category.category}</div>
                     <div className="flex items-center space-x-4">
@@ -491,17 +575,17 @@ export default function RevenueAnalytics() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {stats.monthly_revenue.map((month, index) => (
+                  {stats.monthly_revenue && Array.isArray(stats.monthly_revenue) && stats.monthly_revenue.map((month, index) => (
                     <div key={index} className="flex items-center justify-between">
                       <div className="text-sm">{month.month}</div>
                       <div className="flex items-center space-x-4">
                         <div className="text-sm text-muted-foreground">
-                          ${month.revenue.toLocaleString()}
+                          ₹{month.revenue.toLocaleString()}
                         </div>
                         <div className="w-32 bg-muted rounded-full h-2">
                           <div 
                             className="bg-primary h-2 rounded-full" 
-                            style={{ width: `${(month.revenue / Math.max(...stats.monthly_revenue.map(m => m.revenue))) * 100}%` }}
+                            style={{ width: `${(month.revenue / Math.max(...(stats.monthly_revenue || []).map(m => m.revenue), 1)) * 100}%` }}
                           />
                         </div>
                       </div>

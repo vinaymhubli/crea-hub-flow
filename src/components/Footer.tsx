@@ -1,9 +1,91 @@
 
-import React from 'react';
-import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin, Globe } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+
+interface SocialMediaLink {
+  id: string;
+  platform: string;
+  url: string;
+  icon: string | null;
+  is_active: boolean | null;
+  sort_order: number | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+interface Logo {
+  id: string;
+  logo_type: string;
+  logo_url: string;
+  alt_text: string | null;
+  is_active: boolean;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+const PLATFORM_ICONS = {
+  facebook: Facebook,
+  twitter: Twitter,
+  instagram: Instagram,
+  linkedin: Linkedin,
+  default: Globe
+};
 
 const Footer = () => {
+  const [socialLinks, setSocialLinks] = useState<SocialMediaLink[]>([]);
+  const [logos, setLogos] = useState<Logo[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchSocialLinks();
+    fetchLogos();
+  }, []);
+
+  const fetchSocialLinks = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('social_media_links')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true });
+
+      if (error) throw error;
+      setSocialLinks(data || []);
+    } catch (error) {
+      console.error('Error fetching social media links:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchLogos = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('logo_management')
+        .select('*')
+        .eq('is_active', true)
+        .order('logo_type', { ascending: true });
+
+      if (error) throw error;
+      setLogos(data || []);
+    } catch (error) {
+      console.error('Error fetching logos:', error);
+    }
+  };
+
+  const getPlatformIcon = (icon: string | null) => {
+    const iconKey = icon || 'default';
+    const IconComponent = PLATFORM_ICONS[iconKey as keyof typeof PLATFORM_ICONS] || PLATFORM_ICONS.default;
+    return <IconComponent className="w-5 h-5" />;
+  };
+
+  const getFooterLogo = () => {
+    const footerLogo = logos.find(logo => logo.logo_type === 'footer_logo');
+    return footerLogo?.logo_url || 'https://res.cloudinary.com/dknafpppp/image/upload/v1757697849/logo_final_2_x8c1wu.png';
+  };
+
   return (
     <footer className="bg-gray-900 text-white">
       <div className="max-w-7xl mx-auto px-6 py-16">
@@ -11,7 +93,7 @@ const Footer = () => {
           <div className="lg:col-span-1">
             <Link to="/" className="flex items-center space-x-3 mb-6">
               <img 
-                src="https://res.cloudinary.com/dknafpppp/image/upload/v1757697849/logo_final_2_x8c1wu.png" 
+                src={getFooterLogo()} 
                 alt="Meet My Designer" 
                 className="h-10 w-auto"
               />
@@ -20,18 +102,37 @@ const Footer = () => {
               Connect with top designers worldwide. Build amazing products with our trusted marketplace of creative professionals.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="w-10 h-10 flex items-center justify-center bg-gray-800 rounded-full hover:bg-green-600 transition-colors">
-                <Twitter className="w-5 h-5" />
-              </a>
-              <a href="#" className="w-10 h-10 flex items-center justify-center bg-gray-800 rounded-full hover:bg-green-600 transition-colors">
-                <Linkedin className="w-5 h-5" />
-              </a>
-              <a href="#" className="w-10 h-10 flex items-center justify-center bg-gray-800 rounded-full hover:bg-green-600 transition-colors">
-                <Instagram className="w-5 h-5" />
-              </a>
-              <a href="#" className="w-10 h-10 flex items-center justify-center bg-gray-800 rounded-full hover:bg-green-600 transition-colors">
-                <Facebook className="w-5 h-5" />
-              </a>
+              {loading ? (
+                // Show loading state with default icons
+                <>
+                  <div className="w-10 h-10 flex items-center justify-center bg-gray-800 rounded-full animate-pulse">
+                    <Twitter className="w-5 h-5" />
+                  </div>
+                  <div className="w-10 h-10 flex items-center justify-center bg-gray-800 rounded-full animate-pulse">
+                    <Linkedin className="w-5 h-5" />
+                  </div>
+                  <div className="w-10 h-10 flex items-center justify-center bg-gray-800 rounded-full animate-pulse">
+                    <Instagram className="w-5 h-5" />
+                  </div>
+                  <div className="w-10 h-10 flex items-center justify-center bg-gray-800 rounded-full animate-pulse">
+                    <Facebook className="w-5 h-5" />
+                  </div>
+                </>
+              ) : (
+                // Show dynamic social media links
+                socialLinks.map((link) => (
+                  <a 
+                    key={link.id}
+                    href={link.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="w-10 h-10 flex items-center justify-center bg-gray-800 rounded-full hover:bg-green-600 transition-colors"
+                    title={link.platform}
+                  >
+                    {getPlatformIcon(link.icon)}
+                  </a>
+                ))
+              )}
             </div>
           </div>
 

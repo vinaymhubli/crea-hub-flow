@@ -42,6 +42,8 @@ import {
   ArrowUpCircle,
   ArrowDownCircle,
   Percent,
+  Share2,
+  Image,
 } from "lucide-react";
 
 const mainSections = [
@@ -148,6 +150,16 @@ const contentSections = [
     title: "Refund Policy",
     url: "/admin/cms/refund-policy",
     icon: DollarSign,
+  },
+  {
+    title: "Social Media",
+    url: "/admin/cms/social-media",
+    icon: Share2,
+  },
+  {
+    title: "Logo Management",
+    url: "/admin/cms/logos",
+    icon: Image,
   },
   // {
   //   title: "Help Center",

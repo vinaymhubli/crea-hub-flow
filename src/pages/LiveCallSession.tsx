@@ -35,6 +35,7 @@ export default function LiveCallSession() {
     string | null
   >(null);
   const [customerBalance, setCustomerBalance] = useState(0);
+  const [remoteScreenSharing, setRemoteScreenSharing] = useState(false);
   const agoraCallRef = useRef<any>(null);
   const [bookingData, setBookingData] = useState<{
     id: string;
@@ -240,6 +241,18 @@ export default function LiveCallSession() {
            // Don't show rating dialog here anymore - will show on dashboard
            console.log("📡 Session ended, customer will see review on dashboard");
          }
+       })
+       .on("broadcast", { event: "screen_share_started" }, (p) => {
+         console.log("📡 Screen share started notification:", p.payload);
+         setRemoteScreenSharing(true);
+       })
+       .on("broadcast", { event: "screen_share_stopped" }, (p) => {
+         console.log("📡 Screen share stopped notification:", p.payload);
+         setRemoteScreenSharing(false);
+       })
+       .on("broadcast", { event: "screen_share_request" }, (p) => {
+         console.log("📡 Screen share request notification:", p.payload);
+         toast.info(p.payload.message);
        })
       .subscribe();
     return () => {
@@ -576,12 +589,31 @@ export default function LiveCallSession() {
     });
   }, [channel, isDesigner, designerName, customerName]);
 
+  const handleScreenShareRequest = useCallback(() => {
+    const userName = isDesigner ? designerName : customerName;
+    const otherUserName = isDesigner ? customerName : designerName;
+    
+    // Show notification to the other user
+    channel.send({
+      type: "broadcast",
+      event: "screen_share_request",
+      payload: { 
+        userName,
+        otherUserName,
+        message: `${userName} wants to share their screen. Please stop your screen sharing first.`
+      },
+    });
+    
+    // Show local notification
+    toast.info(`Please ask ${otherUserName} to stop screen sharing first`);
+  }, [channel, isDesigner, designerName, customerName]);
+
   const handleRateChange = useCallback(
     (newRate: number) => {
       console.log("💰 Rate changed to:", newRate);
       setRate(newRate);
 
-      // Broadcast rate change to sync with customer - EXACT copy from ScreenShare
+      // Broadcast rate change to sync with customer - no approval needed
       channel.send({
         type: "broadcast",
         event: "pricing_change",
@@ -590,6 +622,11 @@ export default function LiveCallSession() {
           changedBy: isDesigner ? designerName : customerName,
         },
       });
+
+      // Show notification to designer that rate was changed
+      if (isDesigner) {
+        toast.success(`Session rate updated to ₹${newRate}/min`);
+      }
     },
     [channel, isDesigner, designerName, customerName]
   );
@@ -725,6 +762,24 @@ export default function LiveCallSession() {
 
         if (approvalError) {
           console.error('Error updating approval request:', approvalError);
+        }
+      }
+
+      // CRITICAL: Update bookings table to mark session as completed
+      // This is what the session history and recent designers queries use
+      if (bookingData) {
+        const { error: bookingError } = await supabase
+          .from('bookings')
+          .update({ 
+            status: 'completed',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', bookingData.id);
+
+        if (bookingError) {
+          console.error('Error updating booking status:', bookingError);
+        } else {
+          console.log('✅ Booking marked as completed for session history');
         }
       }
 
@@ -945,6 +1000,13 @@ export default function LiveCallSession() {
           onRemoteUserLeft={handleRemoteLeft}
           onScreenShareStarted={handleScreenShareStarted}
           onScreenShareStopped={handleScreenShareStopped}
+          remoteScreenSharing={remoteScreenSharing}
+          onScreenShareRequest={handleScreenShareRequest}
+          isPaused={isPaused}
+          onPauseSession={handlePauseSession}
+          onResumeSession={handleResumeSession}
+          onRateChange={handleRateChange}
+          currentRate={rate}
         />
         {/* Remove old screen share modal - using native Agora sharing */}
       </div>
@@ -986,7 +1048,6 @@ export default function LiveCallSession() {
         designerName={designerName}
         designerId={sessionApprovalRequest?.designer_id}
       />
-      {console.log('🔍 LiveCallSession - Passing designerId to SessionPaymentDialog:', sessionApprovalRequest?.designer_id)}
 
       <PaymentCompletionNotification
         isOpen={showPaymentCompletionNotification}
