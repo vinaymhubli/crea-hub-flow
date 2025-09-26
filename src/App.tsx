@@ -2,6 +2,7 @@
 import { Toaster } from "@/components/ui/toaster"
 import { Toaster as Sonner } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { SidebarProvider } from "@/components/ui/sidebar"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom"
 import { AuthProvider } from "@/hooks/useAuth"
@@ -625,11 +626,13 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
-          <BrowserRouter>
-            <AppContent />
-            <Toaster />
-            <Sonner />
-          </BrowserRouter>
+          <SidebarProvider>
+            <BrowserRouter>
+              <AppContent />
+              <Toaster />
+              <Sonner />
+            </BrowserRouter>
+          </SidebarProvider>
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>

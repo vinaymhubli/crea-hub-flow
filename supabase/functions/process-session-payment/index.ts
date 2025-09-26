@@ -113,12 +113,17 @@ serve(async (req) => {
       .eq('is_active', true)
       .single()
 
-    if (commissionError || tdsError) {
-      console.error('Settings error:', { commissionError, tdsError })
+    if (commissionError) {
+      console.error('Commission settings error:', commissionError)
       return new Response(
-        JSON.stringify({ error: 'Failed to retrieve settings' }),
+        JSON.stringify({ error: 'Failed to retrieve commission settings' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
+    }
+
+    // TDS error is not critical - we can continue with default TDS rate
+    if (tdsError) {
+      console.warn('TDS settings not found, using default rate:', tdsError)
     }
 
     // Calculate Admin Commission

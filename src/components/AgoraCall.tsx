@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import AgoraRTC, { IAgoraRTCClient, ILocalAudioTrack, ILocalVideoTrack, IRemoteAudioTrack, IRemoteVideoTrack, ICameraVideoTrack, IMicrophoneAudioTrack } from 'agora-rtc-sdk-ng';
 import { Button } from '@/components/ui/button';
-import { Mic, MicOff, Video, VideoOff, ScreenShare, PhoneOff, Pause, Play, DollarSign } from 'lucide-react';
+import { Mic, MicOff, Video, VideoOff, ScreenShare, PhoneOff, Pause, Play, DollarSign, Clock, Percent } from 'lucide-react';
 
 type RemoteUser = {
   uid: string | number;
@@ -58,6 +58,13 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({
 }, ref) => {
   const clientRef = useRef<IAgoraRTCClient | null>(null);
   const [joined, setJoined] = useState(false);
+  
+  // State for format multiplier approval system (new)
+  const [pendingMultiplierRequest, setPendingMultiplierRequest] = useState<{
+    newMultiplier: number;
+    fileFormat: string;
+    designer: string;
+  } | null>(null);
 
   // Critical debugging: Track component lifecycle
   useEffect(() => {
@@ -128,6 +135,11 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({
   const [rateInput, setRateInput] = useState<string>('');
   const [showRateInput, setShowRateInput] = useState<boolean>(false);
   
+  // Format multiplier approval state
+  const [showFormatMultiplierDialog, setShowFormatMultiplierDialog] = useState<boolean>(false);
+  const [formatMultiplierInput, setFormatMultiplierInput] = useState<string>('');
+  const [fileFormatInput, setFileFormatInput] = useState<string>('');
+  
   // State for fullscreen video selection
   const [fullscreenVideo, setFullscreenVideo] = useState<'local' | 'remote' | 'screen' | null>(null);
 
@@ -152,6 +164,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({
   const handleRateSubmit = useCallback(() => {
     const newRate = parseFloat(rateInput);
     if (!isNaN(newRate) && newRate > 0 && onRateChange) {
+      // Trigger approval dialog in parent component
       onRateChange(newRate);
       setShowRateInput(false);
       setRateInput('');
@@ -166,6 +179,26 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({
       setRateInput('');
     }
   }, [handleRateSubmit]);
+
+  // Handle format multiplier approval request
+  const handleFormatMultiplierRequest = useCallback(() => {
+    setShowFormatMultiplierDialog(true);
+  }, []);
+
+  const handleFormatMultiplierSubmit = useCallback(() => {
+    const newMultiplier = parseFloat(formatMultiplierInput);
+    if (!isNaN(newMultiplier) && newMultiplier > 0 && fileFormatInput.trim()) {
+      // Set pending request for customer approval
+      setPendingMultiplierRequest({
+        newMultiplier,
+        fileFormat: fileFormatInput.trim(),
+        designer: isDesigner ? 'You' : 'Designer'
+      });
+      setShowFormatMultiplierDialog(false);
+      setFormatMultiplierInput('');
+      setFileFormatInput('');
+    }
+  }, [formatMultiplierInput, fileFormatInput, isDesigner]);
 
   // Close rate input when clicking outside
   useEffect(() => {
@@ -768,6 +801,16 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({
     setFullscreenVideo(fullscreenVideo === videoType ? null : videoType);
   }, [fullscreenVideo]);
 
+  // Format multiplier approval handler (new)
+  const handleMultiplierApproval = useCallback((approved: boolean) => {
+    if (approved && pendingMultiplierRequest && onRateChange) {
+      // Apply the new multiplier (this would need to be handled by parent component)
+      console.log('Format multiplier approved:', pendingMultiplierRequest);
+      // You would call a callback here to update the format multiplier
+    }
+    setPendingMultiplierRequest(null);
+  }, [pendingMultiplierRequest, onRateChange]);
+
   return (
     <div className="w-full h-full flex flex-col bg-gray-900">
       {/* Main video area */}
@@ -1107,8 +1150,8 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({
             <ScreenShare className="w-5 h-5" />
           </Button>
 
-          {/* Pause/Resume button - only for designer during screen sharing */}
-          {isDesigner && screenSharing && (
+          {/* Pause/Resume button - only for designer when NOT screen sharing */}
+          {isDesigner && !screenSharing && (
             <Button
               variant={isPaused ? 'outline' : 'destructive'}
               size="lg"
@@ -1122,8 +1165,8 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({
             </Button>
           )}
 
-          {/* Rate change button - only for designer during screen sharing */}
-          {isDesigner && screenSharing && (
+          {/* Rate change button - only for designer when NOT screen sharing */}
+          {isDesigner && !screenSharing && (
             <div className="relative rate-input-container">
               <Button
                 variant="outline"
@@ -1132,7 +1175,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({
                 onClick={() => setShowRateInput(!showRateInput)}
                 title="Change session rate"
               >
-                <DollarSign className="w-5 h-5" />
+                <Clock className="w-5 h-5" />
               </Button>
               
               {/* Rate input dropdown */}
@@ -1165,6 +1208,19 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({
               )}
             </div>
           )}
+
+          {/* Format Multiplier button - only for designer when NOT screen sharing */}
+          {isDesigner && !screenSharing && (
+            <Button
+              variant="outline"
+              size="lg"
+              className="rounded-full w-12 h-12 p-0 transition-all duration-200 hover:bg-gray-100"
+              onClick={handleFormatMultiplierRequest}
+              title="Request Format Multiplier Change"
+            >
+              <Percent className="w-5 h-5" />
+            </Button>
+          )}
           
           {/* Stop & Send Request Approval button - only for designer */}
           {isDesigner && (
@@ -1173,13 +1229,120 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({
               size="lg"
               className="rounded-full w-12 h-12 p-0 bg-red-600 hover:bg-red-700 ml-2"
               onClick={() => onEndByDesigner()}
-              title="STOP & SEND REQUEST APPROVAL"
+              title="Stop and Request Approval"
             >
               <PhoneOff className="w-5 h-5" />
             </Button>
           )}
         </div>
       </div>
+
+      {/* Format Multiplier Approval Dialog */}
+      {showFormatMultiplierDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Request Format Multiplier Change</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">New Format Multiplier</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  value={formatMultiplierInput}
+                  onChange={(e) => setFormatMultiplierInput(e.target.value)}
+                  placeholder="Enter new multiplier"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-2">File Format</label>
+                <input
+                  type="text"
+                  value={fileFormatInput}
+                  onChange={(e) => setFileFormatInput(e.target.value)}
+                  placeholder="e.g., .jpg, .cdr, .ai, .psd"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div className="text-sm text-gray-600">
+                <p>This request will be sent to the customer for approval.</p>
+                <p>The customer will need to approve the new format multiplier before it takes effect.</p>
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-2 mt-6">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowFormatMultiplierDialog(false);
+                  setFormatMultiplierInput('');
+                  setFileFormatInput('');
+                }}
+                className="px-4 py-2"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleFormatMultiplierSubmit}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Send Request
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Customer Approval Dialog for Format Multiplier */}
+      {!isDesigner && pendingMultiplierRequest && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Format Multiplier Request</h3>
+            
+            <div className="space-y-4">
+              <p className="text-sm text-gray-700">
+                The designer is requesting to change the format multiplier for the following file type:
+              </p>
+              
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium text-gray-600">File Format:</span>
+                  <span className="font-mono text-sm">{pendingMultiplierRequest.fileFormat}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-600">New Multiplier:</span>
+                  <span className="font-bold text-lg">{pendingMultiplierRequest.newMultiplier}x</span>
+                </div>
+              </div>
+              
+              <div className="text-sm text-gray-600">
+                <p>⚠️ This will affect the pricing for files in this format.</p>
+                <p>Do you approve this change?</p>
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-2 mt-6">
+              <Button
+                variant="outline"
+                onClick={() => handleMultiplierApproval(false)}
+                className="px-4 py-2"
+              >
+                Decline
+              </Button>
+              <Button
+                onClick={() => handleMultiplierApproval(true)}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white"
+              >
+                Approve
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 });

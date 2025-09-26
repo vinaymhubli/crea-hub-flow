@@ -63,6 +63,12 @@ export default function LiveCallSession() {
   const [sessionApprovalRequest, setSessionApprovalRequest] = useState<any>(null);
   const [uploadedFile, setUploadedFile] = useState<{url: string, name: string} | null>(null);
   const [sessionData, setSessionData] = useState<any>(null);
+  
+  // Rate and multiplier approval dialogs
+  const [showRateApprovalDialog, setShowRateApprovalDialog] = useState(false);
+  const [showMultiplierApprovalDialog, setShowMultiplierApprovalDialog] = useState(false);
+  const [pendingRateChange, setPendingRateChange] = useState<number | null>(null);
+  const [pendingMultiplierChange, setPendingMultiplierChange] = useState<number | null>(null);
 
   // Broadcast helper
   const channel = useMemo(
@@ -110,6 +116,44 @@ export default function LiveCallSession() {
       .on("broadcast", { event: "multiplier_change" }, (p) =>
         setFormatMultiplier(p.payload.newMultiplier)
       )
+      .on("broadcast", { event: "rate_change_request" }, (p) => {
+        console.log("📡 Customer received rate change request:", p.payload);
+        console.log("📡 Is designer:", isDesigner);
+        if (!isDesigner) {
+          console.log("📡 Setting rate approval dialog for customer");
+          setPendingRateChange(p.payload.newRate);
+          setShowRateApprovalDialog(true);
+        }
+      })
+      .on("broadcast", { event: "multiplier_change_request" }, (p) => {
+        console.log("📡 Customer received multiplier change request:", p.payload);
+        if (!isDesigner) {
+          console.log("📡 Setting multiplier approval dialog for customer");
+          setPendingMultiplierChange(p.payload.newMultiplier);
+          setShowMultiplierApprovalDialog(true);
+          toast.info(`Designer ${p.payload.requestedBy} is requesting to change format multiplier to ${p.payload.newMultiplier}x. Please approve.`);
+        }
+      })
+      .on("broadcast", { event: "rate_change_response" }, (p) => {
+        console.log("📡 Designer received rate change response:", p.payload);
+        if (isDesigner) {
+          if (p.payload.approved) {
+            toast.success(`Rate change approved by ${p.payload.respondedBy}`);
+          } else {
+            toast.error(`Rate change declined by ${p.payload.respondedBy}`);
+          }
+        }
+      })
+      .on("broadcast", { event: "multiplier_change_response" }, (p) => {
+        console.log("📡 Designer received multiplier change response:", p.payload);
+        if (isDesigner) {
+          if (p.payload.approved) {
+            toast.success(`Format multiplier change approved by ${p.payload.respondedBy}`);
+          } else {
+            toast.error(`Format multiplier change declined by ${p.payload.respondedBy}`);
+          }
+        }
+      })
       .on("broadcast", { event: "timer_sync" }, (p) => {
         if (!isDesigner) setDuration(p.payload.duration);
       })
@@ -610,21 +654,31 @@ export default function LiveCallSession() {
 
   const handleRateChange = useCallback(
     (newRate: number) => {
-      console.log("💰 Rate changed to:", newRate);
-      setRate(newRate);
-
-      // Broadcast rate change to sync with customer - no approval needed
-      channel.send({
-        type: "broadcast",
-        event: "pricing_change",
-        payload: {
-          newRate: newRate,
-          changedBy: isDesigner ? designerName : customerName,
-        },
-      });
-
-      // Show notification to designer that rate was changed
+      console.log("💰 Rate change requested:", newRate);
+      
       if (isDesigner) {
+        // Designer is requesting rate change - broadcast to customer for approval
+        console.log("🎯 Designer sending rate change request:", { newRate, designerName });
+        channel.send({
+          type: "broadcast",
+          event: "rate_change_request",
+          payload: {
+            newRate: newRate,
+            requestedBy: designerName,
+          },
+        });
+        toast.info("Rate change request sent to customer for approval");
+      } else {
+        // Customer is changing rate - apply directly
+        setRate(newRate);
+        channel.send({
+          type: "broadcast",
+          event: "pricing_change",
+          payload: {
+            newRate: newRate,
+            changedBy: customerName,
+          },
+        });
         toast.success(`Session rate updated to ₹${newRate}/min`);
       }
     },
@@ -633,21 +687,99 @@ export default function LiveCallSession() {
 
   const handleMultiplierChange = useCallback(
     (newMultiplier: number) => {
-      console.log("📊 Multiplier changed to:", newMultiplier);
-      setFormatMultiplier(newMultiplier);
+      console.log("📊 Multiplier change requested:", newMultiplier);
+      
+      if (isDesigner) {
+        // Designer is requesting multiplier change - broadcast to customer for approval
+        console.log("🎯 Designer sending multiplier change request:", { newMultiplier, designerName });
+        channel.send({
+          type: "broadcast",
+          event: "multiplier_change_request",
+          payload: {
+            newMultiplier: newMultiplier,
+            requestedBy: designerName,
+          },
+        });
+        toast.info("Format multiplier change request sent to customer for approval");
+      } else {
+        // Customer is changing multiplier - apply directly
+        setFormatMultiplier(newMultiplier);
+        channel.send({
+          type: "broadcast",
+          event: "multiplier_change",
+          payload: {
+            newMultiplier: newMultiplier,
+            changedBy: customerName,
+          },
+        });
+        toast.success(`Format multiplier updated to ${newMultiplier}x`);
+      }
+    },
+    [channel, isDesigner, designerName, customerName]
+  );
 
-      // Broadcast multiplier change to sync with customer - EXACT copy from ScreenShare
+  // Rate and multiplier approval handlers
+  const handleRateApproval = (approved: boolean) => {
+    if (approved && pendingRateChange !== null) {
+      setRate(pendingRateChange);
+      channel.send({
+        type: "broadcast",
+        event: "pricing_change",
+        payload: {
+          newRate: pendingRateChange,
+          changedBy: customerName,
+        },
+      });
+      toast.success(`Session rate updated to ₹${pendingRateChange}/min`);
+    } else {
+      toast.info("Rate change request declined");
+    }
+    
+    // Broadcast approval result to designer
+    channel.send({
+      type: "broadcast",
+      event: "rate_change_response",
+      payload: {
+        approved: approved,
+        newRate: pendingRateChange,
+        respondedBy: customerName,
+      },
+    });
+    
+    setShowRateApprovalDialog(false);
+    setPendingRateChange(null);
+  };
+
+  const handleMultiplierApproval = (approved: boolean) => {
+    if (approved && pendingMultiplierChange !== null) {
+      setFormatMultiplier(pendingMultiplierChange);
       channel.send({
         type: "broadcast",
         event: "multiplier_change",
         payload: {
-          newMultiplier: newMultiplier,
-          changedBy: isDesigner ? designerName : customerName,
+          newMultiplier: pendingMultiplierChange,
+          changedBy: customerName,
         },
       });
-    },
-    [channel, isDesigner, designerName, customerName]
-  );
+      toast.success(`Format multiplier updated to ${pendingMultiplierChange}x`);
+    } else {
+      toast.info("Format multiplier change request declined");
+    }
+    
+    // Broadcast approval result to designer
+    channel.send({
+      type: "broadcast",
+      event: "multiplier_change_response",
+      payload: {
+        approved: approved,
+        newMultiplier: pendingMultiplierChange,
+        respondedBy: customerName,
+      },
+    });
+    
+    setShowMultiplierApprovalDialog(false);
+    setPendingMultiplierChange(null);
+  };
 
   // Enhanced session flow handlers
   const handleApprovalAccept = () => {
@@ -783,6 +915,56 @@ export default function LiveCallSession() {
         }
       }
 
+      // Process session payment based on session duration and rate
+      if (duration > 0 && rate > 0) {
+        console.log('💰 Processing session payment...');
+        console.log(`Duration: ${duration} seconds, Rate: ₹${rate}/min`);
+        
+        // Calculate payment amount: (duration in minutes) * rate per minute * format multiplier
+        const sessionMinutes = Math.ceil(duration / 60);
+        const sessionAmount = sessionMinutes * rate * formatMultiplier;
+        
+        console.log(`Session payment calculation: ${sessionMinutes} min × ₹${rate}/min × ${formatMultiplier} = ₹${sessionAmount}`);
+        
+        // Get session data for customer and designer IDs
+        const { data: activeSession, error: activeSessionError } = await supabase
+          .from('active_sessions')
+          .select('customer_id, designer_id')
+          .eq('session_id', sessionIdWithPrefix)
+          .single();
+
+        if (activeSessionError || !activeSession) {
+          console.error('Error getting session data:', activeSessionError);
+          toast.error("Session ended but payment processing failed");
+        } else {
+          try {
+            const { data: paymentResult, error: paymentError } = await supabase.functions.invoke('process-session-payment', {
+              body: {
+                sessionId: sessionIdWithPrefix,
+                customerId: activeSession.customer_id,
+                designerId: activeSession.designer_id,
+                amount: sessionAmount,
+                bookingId: bookingData?.id || null
+              }
+            });
+
+            if (paymentError) {
+              console.error('Payment processing error:', paymentError);
+              toast.error("Session ended but payment processing failed");
+            } else {
+              console.log('✅ Payment processed successfully:', paymentResult);
+              toast.success("Session ended and payment processed!");
+            }
+          } catch (paymentErr) {
+            console.error('Error calling payment function:', paymentErr);
+            toast.error("Session ended but payment processing failed");
+          }
+        }
+      } else {
+        console.log('No payment processing needed - duration or rate is 0');
+        toast.success("Session ended successfully!");
+      }
+
       // Broadcast session ended to both users
       channel.send({
         type: "broadcast",
@@ -792,7 +974,6 @@ export default function LiveCallSession() {
         }
       });
 
-      toast.success("Session ended successfully!");
       
       // Navigate to dashboard after a short delay
       setTimeout(() => {
@@ -952,13 +1133,14 @@ export default function LiveCallSession() {
         </div>
       )}
       <div className="flex-1 min-w-0 flex flex-col">
-        {/* Top status bar with timer and pause/resume */}
+        {/* Top status bar with timer - pause button commented out */}
         <div className="w-full flex items-center justify-end gap-3 px-3 py-2 border-b bg-white/80 backdrop-blur">
           <div className="text-sm font-medium tabular-nums">
             {Math.floor(duration / 60)}:
             {(duration % 60).toString().padStart(2, "0")}
           </div>
-          {isDesigner &&
+          {/* Pause button commented out - using bottom controls only */}
+          {/* {isDesigner &&
             (isPaused ? (
               <button
                 onClick={() => {
@@ -987,7 +1169,7 @@ export default function LiveCallSession() {
               >
                 Pause
               </button>
-            ))}
+            ))} */}
         </div>
         <AgoraCall
           ref={agoraCallRef}
@@ -1010,24 +1192,22 @@ export default function LiveCallSession() {
         />
         {/* Remove old screen share modal - using native Agora sharing */}
       </div>
-      <div className="w-[380px] max-w-full border-l">
-        <SessionSidePanel
-          sessionId={sessionId}
-          designerName={designerName}
-          customerName={customerName}
-          isDesigner={!!isDesigner}
-          duration={duration}
-          rate={rate}
-          balance={customerBalance}
-          onPauseSession={handlePauseSession}
-          onResumeSession={handleResumeSession}
-          isPaused={isPaused}
-          userId={user.id}
-          onRateChange={handleRateChange}
-          onMultiplierChange={handleMultiplierChange}
-          formatMultiplier={formatMultiplier}
-        />
-      </div>
+      <SessionSidePanel
+        sessionId={sessionId}
+        designerName={designerName}
+        customerName={customerName}
+        isDesigner={!!isDesigner}
+        duration={duration}
+        rate={rate}
+        balance={customerBalance}
+        onPauseSession={handlePauseSession}
+        onResumeSession={handleResumeSession}
+        isPaused={isPaused}
+        userId={user.id}
+        onRateChange={handleRateChange}
+        onMultiplierChange={handleMultiplierChange}
+        formatMultiplier={formatMultiplier}
+      />
 
       {/* Enhanced Session Flow Dialogs */}
       <SessionApprovalDialog
@@ -1048,6 +1228,82 @@ export default function LiveCallSession() {
         designerName={designerName}
         designerId={sessionApprovalRequest?.designer_id}
       />
+
+      {/* Rate Change Approval Dialog */}
+      {showRateApprovalDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Rate Change Request</h3>
+            <div className="space-y-4">
+              <p className="text-sm text-gray-700">
+                The designer is requesting to change the session rate:
+              </p>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-600">New Rate:</span>
+                  <span className="font-bold text-lg">₹{pendingRateChange}/min</span>
+                </div>
+              </div>
+              <div className="text-sm text-gray-600">
+                <p>⚠️ This will affect the total session cost.</p>
+                <p>Do you approve this change?</p>
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2 mt-6">
+              <button
+                onClick={() => handleRateApproval(false)}
+                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Decline
+              </button>
+              <button
+                onClick={() => handleRateApproval(true)}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md"
+              >
+                Approve
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Format Multiplier Approval Dialog */}
+      {showMultiplierApprovalDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Format Multiplier Change Request</h3>
+            <div className="space-y-4">
+              <p className="text-sm text-gray-700">
+                The designer is requesting to change the format multiplier:
+              </p>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-600">New Multiplier:</span>
+                  <span className="font-bold text-lg">{pendingMultiplierChange}x</span>
+                </div>
+              </div>
+              <div className="text-sm text-gray-600">
+                <p>⚠️ This will affect the pricing for files in this format.</p>
+                <p>Do you approve this change?</p>
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2 mt-6">
+              <button
+                onClick={() => handleMultiplierApproval(false)}
+                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Decline
+              </button>
+              <button
+                onClick={() => handleMultiplierApproval(true)}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md"
+              >
+                Approve
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <PaymentCompletionNotification
         isOpen={showPaymentCompletionNotification}

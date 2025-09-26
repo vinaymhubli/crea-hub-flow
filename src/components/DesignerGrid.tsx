@@ -11,6 +11,7 @@ import { cleanupStaleSessions } from '@/utils/sessionCleanup';
 import { FilterState } from '../pages/Designers';
 import { useAuth } from '@/hooks/useAuth';
 import { Video, MessageCircle, Calendar, Eye } from 'lucide-react';
+import { checkDesignerBookingAvailability } from '@/utils/availabilityUtils';
 
 interface DesignerGridProps {
   filters: FilterState;
@@ -394,18 +395,18 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
       return;
     }
 
-    // Check if designer is online (both from designer table and activity table)
-    const isDesignerOnline = designer.is_online || designer.activity?.is_online;
+    // Check designer availability based on their schedule
+    const availabilityResult = await checkDesignerBookingAvailability(designer.id);
     
-    if (!isDesignerOnline) {
-      toast.error('Designer is currently offline and not available for live sessions');
+    if (!availabilityResult.isAvailable) {
+      toast.error(availabilityResult.reason || 'Designer is not available for live sessions');
       return;
     }
 
-    console.log('✅ Designer is online, checking availability...', {
-      designer_is_online: designer.is_online,
-      activity_is_online: designer.activity?.is_online,
-      activity_status: designer.activity?.activity_status
+    console.log('✅ Designer is available, checking session availability...', {
+      isInSchedule: availabilityResult.isInSchedule,
+      isOnline: availabilityResult.isOnline,
+      reason: availabilityResult.reason
     });
 
     // Check if designer is free

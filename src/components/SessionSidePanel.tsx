@@ -122,6 +122,15 @@ export default function SessionSidePanel({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  
+  // New state for sidebar visibility
+  const [showSidebar, setShowSidebar] = useState(true);
+  
+  // State for approval dialogs
+  const [showRateApprovalDialog, setShowRateApprovalDialog] = useState(false);
+  const [showMultiplierApprovalDialog, setShowMultiplierApprovalDialog] = useState(false);
+  const [pendingRateChange, setPendingRateChange] = useState<number | null>(null);
+  const [pendingMultiplierChange, setPendingMultiplierChange] = useState<number | null>(null);
 
   const pauseSession = async () => {
     if (!isDesigner) return;
@@ -137,6 +146,41 @@ export default function SessionSidePanel({
       await supabase.channel(`session_control_${sessionId}`).send({ type: 'broadcast', event: 'session_resume', payload: {} });
       onResumeSession();
     } catch {}
+  };
+
+  // Approval handlers
+  const handleRateChangeRequest = (newRate: number) => {
+    setPendingRateChange(newRate);
+    setShowRateApprovalDialog(true);
+  };
+
+  const handleMultiplierChangeRequest = (newMultiplier: number) => {
+    setPendingMultiplierChange(newMultiplier);
+    setShowMultiplierApprovalDialog(true);
+  };
+
+  const handleRateApproval = (approved: boolean) => {
+    if (approved && pendingRateChange !== null) {
+      onRateChange?.(pendingRateChange);
+      toast({
+        title: "Rate Updated",
+        description: `Session rate updated to ₹${pendingRateChange}/min`,
+      });
+    }
+    setShowRateApprovalDialog(false);
+    setPendingRateChange(null);
+  };
+
+  const handleMultiplierApproval = (approved: boolean) => {
+    if (approved && pendingMultiplierChange !== null) {
+      onMultiplierChange?.(pendingMultiplierChange);
+      toast({
+        title: "Format Multiplier Updated",
+        description: `Format multiplier updated to ${pendingMultiplierChange}x`,
+      });
+    }
+    setShowMultiplierApprovalDialog(false);
+    setPendingMultiplierChange(null);
   };
 
   // Load initial data and set up real-time subscriptions
@@ -158,6 +202,7 @@ export default function SessionSidePanel({
           filter: `session_id=eq.${sessionId}`
         },
         (payload) => {
+          console.log('🔥 Real-time subscription triggered for message:', payload);
           const newMessage = payload.new as {
             id: string;
             content: string;
@@ -174,7 +219,11 @@ export default function SessionSidePanel({
             content: newMessage.content,
             sender_type: (newMessage.sender_type as 'designer' | 'customer') || (newMessage.sender_id === userId ? (isDesigner ? 'designer' : 'customer') : (isDesigner ? 'customer' : 'designer')),
             sender_id: newMessage.sender_id,
-            sender_name: newMessage.sender_name || (newMessage.sender_id === userId ? (isDesigner ? designerName : customerName) : (isDesigner ? customerName : designerName)),
+            sender_name: newMessage.sender_name && newMessage.sender_name.trim() !== '' ? 
+              newMessage.sender_name : 
+              (newMessage.sender_id === userId ? 
+                (isDesigner ? (designerName || 'Designer') : (customerName || 'Customer')) : 
+                (isDesigner ? (customerName || 'Customer') : (designerName || 'Designer'))),
             created_at: newMessage.created_at
           };
           
@@ -183,7 +232,10 @@ export default function SessionSidePanel({
             const exists = prev.some(msg => msg.id === transformedMessage.id);
             if (!exists) {
               console.log('Adding new message to list. Total messages before:', prev.length);
-              return [...prev, transformedMessage];
+              console.log('New message details:', transformedMessage);
+              const newMessages = [...prev, transformedMessage];
+              console.log('Total messages after adding:', newMessages.length);
+              return newMessages;
             }
             console.log('Message already exists, skipping');
             return prev;
@@ -208,6 +260,11 @@ export default function SessionSidePanel({
       })
       .subscribe((status) => {
         console.log('Messages subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Messages subscription is active');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Messages subscription failed');
+        }
       });
 
     const filesSubscription = supabase
@@ -224,14 +281,19 @@ export default function SessionSidePanel({
 
   const loadMessages = async () => {
     try {
-      console.log('Loading messages for session:', sessionId);
+      console.log('🔄 Loading messages for session:', sessionId);
       const { data, error } = await (supabase as any)
         .from('session_messages')
         .select('*')
         .eq('session_id', sessionId)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading messages:', error);
+        setMessages([]);
+        return;
+      }
+      
       console.log('Loaded messages:', data);
       
       // Transform the data to match our ChatMessage interface
@@ -247,11 +309,18 @@ export default function SessionSidePanel({
         content: msg.content,
         sender_type: (msg.sender_type as 'designer' | 'customer') || (msg.sender_id === userId ? (isDesigner ? 'designer' : 'customer') : (isDesigner ? 'customer' : 'designer')),
         sender_id: msg.sender_id,
-        sender_name: msg.sender_name || (msg.sender_id === userId ? (isDesigner ? designerName : customerName) : (isDesigner ? customerName : designerName)),
+        sender_name: msg.sender_name && msg.sender_name.trim() !== '' ? 
+          msg.sender_name : 
+          (msg.sender_id === userId ? 
+            (isDesigner ? (designerName || 'Designer') : (customerName || 'Customer')) : 
+            (isDesigner ? (customerName || 'Customer') : (designerName || 'Designer'))),
         created_at: msg.created_at
       }));
       
+      console.log('Transformed messages:', transformedMessages);
+      console.log('Setting messages count:', transformedMessages.length);
       setMessages(transformedMessages);
+      console.log('✅ Messages set in state');
     } catch (error) {
       console.error('Error loading messages:', error);
       setMessages([]);
@@ -323,7 +392,10 @@ export default function SessionSidePanel({
         .eq('user_id', userId)
         .single();
 
-      const senderName = profile ? `${profile.first_name} ${profile.last_name}`.trim() : 'User';
+      const senderName = profile ? 
+        `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 
+        (isDesigner ? (designerName || 'Designer') : (customerName || 'Customer')) : 
+        (isDesigner ? (designerName || 'Designer') : (customerName || 'Customer'));
 
       const messageData = {
         session_id: sessionId,
@@ -789,26 +861,63 @@ export default function SessionSidePanel({
       const gstAmount = subtotal * 0.18;
       const total = subtotal + gstAmount;
 
-      const invoiceData = {
-        session_id: sessionId,
-        designer_name: designerName,
-        customer_name: customerName,
-        duration_minutes: Math.ceil(duration / 60),
-        rate_per_minute: rate,
-        subtotal: subtotal,
-        gst_amount: gstAmount,
-        total_amount: total,
-        invoice_date: new Date().toISOString()
-      };
-
-      // Save invoice to database
-      const { data: invoice, error } = await supabase
-        .from('session_invoices')
-        .insert(invoiceData)
-        .select()
+      // Get active invoice template from admin settings
+      const { data: template, error: templateError } = await supabase
+        .from('invoice_templates')
+        .select('*')
+        .eq('is_active', true)
         .single();
 
-      if (error) throw error;
+      if (templateError) {
+        console.error('Template error:', templateError);
+        toast({
+          title: "Error",
+          description: "Failed to load invoice template",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Get the actual designer ID from the session
+      const { data: sessionData, error: sessionError } = await supabase
+        .from('active_sessions')
+        .select('designer_id')
+        .eq('session_id', sessionId)
+        .single();
+
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        toast({
+          title: "Error",
+          description: "Failed to get session data",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Generate proper invoice using the existing invoice system
+      const { data: invoiceData, error: invoiceError } = await supabase.rpc('generate_session_invoices', {
+        p_session_id: sessionId,
+        p_customer_id: userId,
+        p_designer_id: sessionData.designer_id,
+        p_amount: subtotal,
+        p_booking_id: bookingId || null,
+        p_template_id: template.id,
+        p_session_duration: Math.ceil(duration / 60),
+        p_place_of_supply: 'Inter-state'
+      });
+
+      if (invoiceError) {
+        console.error('Invoice generation error:', invoiceError);
+        toast({
+          title: "Error",
+          description: "Failed to generate invoice",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('Invoice generated:', invoiceData);
 
       // Send invoice as a message in chat
       const messageData = {
@@ -831,141 +940,33 @@ export default function SessionSidePanel({
         .from('session_invoice_messages')
         .insert({
           session_id: sessionId,
-          invoice_id: invoice.id,
+          invoice_id: invoiceData[0].customer_invoice_id,
           message_id: message.id
         });
 
       if (linkError) throw linkError;
 
-      // Generate beautiful HTML invoice
-      const invoiceHTML = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <title>Invoice - ${sessionId}</title>
-          <style>
-            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: #f8fafc; }
-            .invoice-container { max-width: 800px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); overflow: hidden; }
-            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; }
-            .header h1 { margin: 0; font-size: 2.5em; font-weight: 300; }
-            .header p { margin: 10px 0 0 0; opacity: 0.9; font-size: 1.1em; }
-            .content { padding: 40px; }
-            .invoice-details { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; }
-            .section h3 { color: #374151; margin-bottom: 15px; font-size: 1.2em; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; }
-            .detail-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
-            .detail-label { color: #6b7280; }
-            .detail-value { font-weight: 500; color: #111827; }
-            .billing-table { width: 100%; border-collapse: collapse; margin: 30px 0; }
-            .billing-table th { background: #f3f4f6; padding: 15px; text-align: left; font-weight: 600; color: #374151; }
-            .billing-table td { padding: 15px; border-bottom: 1px solid #e5e7eb; }
-            .billing-table .total-row { background: #f9fafb; font-weight: 600; }
-            .amount { text-align: right; }
-            .total-section { background: #f8fafc; padding: 20px; border-radius: 8px; margin-top: 30px; }
-            .total-row { display: flex; justify-content: space-between; margin-bottom: 10px; }
-            .final-total { font-size: 1.5em; font-weight: 700; color: #1f2937; border-top: 2px solid #e5e7eb; padding-top: 15px; }
-            .footer { background: #f9fafb; padding: 20px; text-align: center; color: #6b7280; font-size: 0.9em; }
-            .payment-info { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 15px; margin-top: 20px; }
-            .payment-info h4 { margin: 0 0 10px 0; color: #92400e; }
-            .payment-info p { margin: 5px 0; color: #92400e; }
-          </style>
-        </head>
-        <body>
-          <div class="invoice-container">
-            <div class="header">
-              <h1>INVOICE</h1>
-              <p>Design Session Payment</p>
-            </div>
-            
-            <div class="content">
-              <div class="invoice-details">
-                <div>
-                  <h3>Designer Details</h3>
-                  <div class="detail-row">
-                    <span class="detail-label">Name:</span>
-                    <span class="detail-value">₹{designerName}</span>
-                  </div>
-                  <div class="detail-row">
-                    <span class="detail-label">Session ID:</span>
-                    <span class="detail-value">₹{sessionId}</span>
-                  </div>
-                  <div class="detail-row">
-                    <span class="detail-label">Date:</span>
-                    <span class="detail-value">₹{new Date().toLocaleDateString()}</span>
-                  </div>
-                </div>
-                
-                <div>
-                  <h3>Customer Details</h3>
-                  <div class="detail-row">
-                    <span class="detail-label">Name:</span>
-                    <span class="detail-value">₹{customerName}</span>
-                  </div>
-                  <div class="detail-row">
-                    <span class="detail-label">Duration:</span>
-                    <span class="detail-value">₹{Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}</span>
-                  </div>
-                  <div class="detail-row">
-                    <span class="detail-label">Rate:</span>
-                    <span class="detail-value">₹{rate.toFixed(2)}/min</span>
-                  </div>
-                </div>
-              </div>
+      // Generate invoice using the proper template system
+      const { data: customerInvoice, error: customerInvoiceError } = await supabase
+        .from('invoices')
+        .select('*')
+        .eq('id', invoiceData[0].customer_invoice_id)
+        .single();
 
-              <table class="billing-table">
-                <thead>
-                  <tr>
-                    <th>Description</th>
-                    <th class="amount">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Design Session (${Math.ceil(duration / 60)} minutes × ₹{rate.toFixed(2)}/min × ${formatMultiplier}x)</td>
-                    <td class="amount">₹{subtotal.toFixed(2)}</td>
-                  </tr>
-                </tbody>
-              </table>
+      if (customerInvoiceError) {
+        console.error('Customer invoice error:', customerInvoiceError);
+        throw customerInvoiceError;
+      }
 
-              <div class="total-section">
-                <div class="total-row">
-                  <span>Subtotal:</span>
-                  <span>₹{subtotal.toFixed(2)}</span>
-                </div>
-                <div class="total-row">
-                  <span>GST (18%):</span>
-                  <span>₹{gstAmount.toFixed(2)}</span>
-                </div>
-                <div class="total-row final-total">
-                  <span>Total Amount:</span>
-                  <span>₹{total.toFixed(2)}</span>
-                </div>
-              </div>
-
-              <div class="payment-info">
-                <h4>💳 Payment Information</h4>
-                <p><strong>Payment Status:</strong> Pending</p>
-                <p><strong>Due Date:</strong> ${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString()}</p>
-                <p><strong>Payment Method:</strong> Bank Transfer / UPI / Card</p>
-                <p><strong>Contact Designer:</strong> For payment details and bank information</p>
-              </div>
-            </div>
-            
-            <div class="footer">
-              <p>Thank you for choosing our design services!</p>
-              <p>Generated on ${new Date().toLocaleString()}</p>
-            </div>
-          </div>
-        </body>
-        </html>
-      `;
+      // Generate HTML invoice using the template
+      const invoiceHTML = generateInvoiceHTML(customerInvoice, template);
 
       // Create and download the invoice
       const blob = new Blob([invoiceHTML], { type: 'text/html' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `invoice-${sessionId}.html`;
+      a.download = `invoice-${customerInvoice.invoice_number}.html`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -973,7 +974,7 @@ export default function SessionSidePanel({
 
       toast({
         title: "Invoice generated",
-        description: "Beautiful invoice has been downloaded",
+        description: "Invoice has been generated using admin template",
       });
     } catch (error) {
       console.error('Error generating invoice:', error);
@@ -983,6 +984,132 @@ export default function SessionSidePanel({
         variant: "destructive",
       });
     }
+  };
+
+  // Helper function to generate invoice HTML using admin template
+  const generateInvoiceHTML = (invoice: any, template: any) => {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Invoice - ${invoice.invoice_number}</title>
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: #f8fafc; }
+          .invoice-container { max-width: 800px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); overflow: hidden; }
+          .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; }
+          .header h1 { margin: 0; font-size: 2.5em; font-weight: 300; }
+          .header p { margin: 10px 0 0 0; opacity: 0.9; font-size: 1.1em; }
+          .content { padding: 40px; }
+          .invoice-details { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; }
+          .section h3 { color: #374151; margin-bottom: 15px; font-size: 1.2em; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; }
+          .detail-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+          .detail-label { color: #6b7280; }
+          .detail-value { font-weight: 500; color: #111827; }
+          .billing-table { width: 100%; border-collapse: collapse; margin: 30px 0; }
+          .billing-table th { background: #f3f4f6; padding: 15px; text-align: left; font-weight: 600; color: #374151; }
+          .billing-table td { padding: 15px; border-bottom: 1px solid #e5e7eb; }
+          .billing-table .total-row { background: #f9fafb; font-weight: 600; }
+          .amount { text-align: right; }
+          .total-section { background: #f8fafc; padding: 20px; border-radius: 8px; margin-top: 30px; }
+          .total-row { display: flex; justify-content: space-between; margin-bottom: 10px; }
+          .final-total { font-size: 1.5em; font-weight: 700; color: #1f2937; border-top: 2px solid #e5e7eb; padding-top: 15px; }
+          .footer { background: #f9fafb; padding: 20px; text-align: center; color: #6b7280; font-size: 0.9em; }
+          .payment-info { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 15px; margin-top: 20px; }
+          .payment-info h4 { margin: 0 0 10px 0; color: #92400e; }
+          .payment-info p { margin: 5px 0; color: #92400e; }
+        </style>
+      </head>
+      <body>
+        <div class="invoice-container">
+          <div class="header">
+            <h1>INVOICE</h1>
+            <p>${template.company_name}</p>
+            <p>Invoice #${invoice.invoice_number}</p>
+          </div>
+          
+          <div class="content">
+            <div class="invoice-details">
+              <div>
+                <h3>Company Details</h3>
+                <div class="detail-row">
+                  <span class="detail-label">Company:</span>
+                  <span class="detail-value">${template.company_name}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">GST:</span>
+                  <span class="detail-value">${template.gst_number || 'N/A'}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Address:</span>
+                  <span class="detail-value">${template.company_address || 'N/A'}</span>
+                </div>
+              </div>
+              
+              <div>
+                <h3>Session Details</h3>
+                <div class="detail-row">
+                  <span class="detail-label">Session ID:</span>
+                  <span class="detail-value">${invoice.session_id}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Date:</span>
+                  <span class="detail-value">${new Date(invoice.created_at).toLocaleDateString()}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Duration:</span>
+                  <span class="detail-value">${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}</span>
+                </div>
+              </div>
+            </div>
+
+            <table class="billing-table">
+              <thead>
+                <tr>
+                  <th>Description</th>
+                  <th class="amount">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Design Session (${Math.ceil(duration / 60)} minutes × ₹${rate.toFixed(2)}/min × ${formatMultiplier}x)</td>
+                  <td class="amount">₹${invoice.subtotal.toFixed(2)}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="total-section">
+              <div class="total-row">
+                <span>Subtotal:</span>
+                <span>₹${invoice.subtotal.toFixed(2)}</span>
+              </div>
+              <div class="total-row">
+                <span>GST (18%):</span>
+                <span>₹${invoice.tax_amount.toFixed(2)}</span>
+              </div>
+              <div class="total-row final-total">
+                <span>Total Amount:</span>
+                <span>₹${invoice.total_amount.toFixed(2)}</span>
+              </div>
+            </div>
+
+            <div class="payment-info">
+              <h4>💳 Payment Information</h4>
+              <p><strong>Payment Status:</strong> ${invoice.status}</p>
+              <p><strong>Due Date:</strong> ${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString()}</p>
+              <p><strong>Payment Method:</strong> Bank Transfer / UPI / Card</p>
+              <p><strong>Contact:</strong> ${template.company_email || 'support@creahubflow.com'}</p>
+            </div>
+          </div>
+          
+          <div class="footer">
+            <p>${template.footer_text || 'Thank you for choosing our design services!'}</p>
+            <p>Generated on ${new Date().toLocaleString()}</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
   };
 
   // Auto-scroll to bottom of messages
@@ -1000,16 +1127,41 @@ export default function SessionSidePanel({
   }, [formatMultiplier]);
 
   return (
-    <div className={mobileMode ? "w-full bg-white flex flex-col h-full" : "w-full lg:w-80 xl:w-96 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col max-h-full overflow-auto md:overflow-hidden md:h-full h-[40vh]"}>
-      <Tabs defaultValue={defaultTab} className="flex-1 flex flex-col h-full min-h-0">
+    <>
+      {/* Sidebar Toggle Button */}
+      {!mobileMode && (
+        <button
+          onClick={() => setShowSidebar(!showSidebar)}
+          className="fixed top-1/2 right-4 z-50 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full shadow-lg transition-all duration-200"
+          title={showSidebar ? "Hide Sidebar" : "Show Sidebar"}
+        >
+          {showSidebar ? (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          ) : (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          )}
+        </button>
+      )}
+
+      {/* Sidebar */}
+      {showSidebar && (
+        <div className={mobileMode ? "w-full bg-white flex flex-col h-full" : "w-[380px] bg-white border-l border-gray-200 flex flex-col h-full overflow-hidden"}>
+          <Tabs defaultValue={defaultTab} className="flex-1 flex flex-col h-full min-h-0">
         {!mobileMode && (
-          <TabsList className="grid w-full grid-cols-5 h-10 shrink-0">
-            <TabsTrigger value="billing" className="text-xs sm:text-sm px-1 sm:px-3">Billing</TabsTrigger>
-            <TabsTrigger value="files" className="text-xs sm:text-sm px-1 sm:px-3">Files</TabsTrigger>
-            <TabsTrigger value="chat" className="text-xs sm:text-sm px-1 sm:px-3">Chat</TabsTrigger>
-            <TabsTrigger value="review" className="text-xs sm:text-sm px-1 sm:px-3">Review</TabsTrigger>
-            <TabsTrigger value="invoice" className="text-xs sm:text-sm px-1 sm:px-3">Invoice</TabsTrigger>
-          </TabsList>
+          <div className="shrink-0">
+            <TabsList className="grid w-full grid-cols-5 h-10">
+              <TabsTrigger value="billing" className="text-xs sm:text-sm px-1 sm:px-3">Billing</TabsTrigger>
+              <TabsTrigger value="files" className="text-xs sm:text-sm px-1 sm:px-3">Files</TabsTrigger>
+              <TabsTrigger value="chat" className="text-xs sm:text-sm px-1 sm:px-3">Chat</TabsTrigger>
+              <TabsTrigger value="review" className="text-xs sm:text-sm px-1 sm:px-3">Review</TabsTrigger>
+              <TabsTrigger value="invoice" className="text-xs sm:text-sm px-1 sm:px-3">Invoice</TabsTrigger>
+            </TabsList>
+            
+          </div>
         )}
 
         <TabsContent value="billing" className="flex-1 p-2 sm:p-4 space-y-3 sm:space-y-4 min-h-0">
@@ -1033,111 +1185,11 @@ export default function SessionSidePanel({
                 </div>
                 <div className="flex justify-between text-xs sm:text-sm">
                   <span className="text-gray-600">Rate per minute:</span>
-                  {isDesigner && isEditingRate ? (
-                    <div className="flex items-center space-x-1">
-                      <Input
-                        type="number"
-                        step=".1"
-                        min="0"
-                        value={newRate}
-                        onChange={(e) => setNewRate(parseFloat(e.target.value) || 0)}
-                        className="w-16 h-6 text-xs"
-                      />
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 w-6 p-0"
-                        onClick={() => {
-                          onRateChange?.(newRate);
-                          setIsEditingRate(false);
-                        }}
-                      >
-                        <Check className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 w-6 p-0"
-                        onClick={() => {
-                          setNewRate(rate);
-                          setIsEditingRate(false);
-                        }}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center space-x-1">
-                      <span>₹{rate.toFixed(2)}</span>
-                      {isDesigner && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-4 w-4 p-0"
-                          onClick={() => {
-                            console.log('Edit rate clicked');
-                            setIsEditingRate(true);
-                          }}
-                        >
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                      )}
-                    </div>
-                  )}
+                  <span>₹{rate.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-xs sm:text-sm">
                   <span className="text-gray-600">Format Multiplier:</span>
-                  {isDesigner && isEditingMultiplier ? (
-                    <div className="flex items-center space-x-1">
-                      <Input
-                        type="number"
-                        step=".1"
-                        min="0"
-                        value={newMultiplier}
-                        onChange={(e) => setNewMultiplier(parseFloat(e.target.value) || 1)}
-                        className="w-16 h-6 text-xs"
-                      />
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 w-6 p-0"
-                        onClick={() => {
-                          onMultiplierChange?.(newMultiplier);
-                          setIsEditingMultiplier(false);
-                        }}
-                      >
-                        <Check className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 w-6 p-0"
-                        onClick={() => {
-                          setNewMultiplier(formatMultiplier);
-                          setIsEditingMultiplier(false);
-                        }}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center space-x-1">
-                      <span>{formatMultiplier}x</span>
-                      {isDesigner && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-4 w-4 p-0"
-                          onClick={() => {
-                            console.log('Edit multiplier clicked');
-                            setIsEditingMultiplier(true);
-                          }}
-                        >
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                      )}
-                    </div>
-                  )}
+                  <span>{formatMultiplier}x</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between font-medium text-xs sm:text-sm">
@@ -1652,6 +1704,86 @@ export default function SessionSidePanel({
           </div>
         </div>
       )}
-    </div>
+        </div>
+      )}
+
+      {/* Rate Change Approval Dialog */}
+      {showRateApprovalDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Rate Change Request</h3>
+            <div className="space-y-4">
+              <p className="text-sm text-gray-700">
+                The designer is requesting to change the session rate:
+              </p>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-600">New Rate:</span>
+                  <span className="font-bold text-lg">₹{pendingRateChange}/min</span>
+                </div>
+              </div>
+              <div className="text-sm text-gray-600">
+                <p>⚠️ This will affect the total session cost.</p>
+                <p>Do you approve this change?</p>
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2 mt-6">
+              <Button
+                variant="outline"
+                onClick={() => handleRateApproval(false)}
+                className="px-4 py-2"
+              >
+                Decline
+              </Button>
+              <Button
+                onClick={() => handleRateApproval(true)}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white"
+              >
+                Approve
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Format Multiplier Approval Dialog */}
+      {showMultiplierApprovalDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Format Multiplier Change Request</h3>
+            <div className="space-y-4">
+              <p className="text-sm text-gray-700">
+                The designer is requesting to change the format multiplier:
+              </p>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-600">New Multiplier:</span>
+                  <span className="font-bold text-lg">{pendingMultiplierChange}x</span>
+                </div>
+              </div>
+              <div className="text-sm text-gray-600">
+                <p>⚠️ This will affect the pricing for files in this format.</p>
+                <p>Do you approve this change?</p>
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2 mt-6">
+              <Button
+                variant="outline"
+                onClick={() => handleMultiplierApproval(false)}
+                className="px-4 py-2"
+              >
+                Decline
+              </Button>
+              <Button
+                onClick={() => handleMultiplierApproval(true)}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white"
+              >
+                Approve
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

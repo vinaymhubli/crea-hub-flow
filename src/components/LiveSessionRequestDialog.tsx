@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
 import { Video, MessageCircle, Clock, User, X, Check, Send } from 'lucide-react';
+import { checkDesignerBookingAvailability } from '@/utils/availabilityUtils';
 
 interface LiveSessionRequestDialogProps {
   isOpen: boolean;
@@ -174,13 +175,13 @@ export default function LiveSessionRequestDialog({
   const sendSessionRequest = async () => {
     if (!user || !requestMessage.trim()) return;
 
-    // Check if designer is online before sending request
-    const isDesignerOnline = designer.is_online || designer.activity?.is_online;
+    // Check if designer is available based on their schedule
+    const availabilityResult = await checkDesignerBookingAvailability(designer.id);
     
-    if (!isDesignerOnline) {
+    if (!availabilityResult.isAvailable) {
       toast({
-        title: "Designer Offline",
-        description: "This designer is currently offline and not available for live sessions",
+        title: "Designer Not Available",
+        description: availabilityResult.reason || "This designer is not available for live sessions",
         variant: "destructive",
       });
       return;

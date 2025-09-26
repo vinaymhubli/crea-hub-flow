@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { checkDesignerAvailabilityForDateTime } from '@/utils/availabilityUtils';
 
 interface BookingDialogProps {
   designer: any;
@@ -68,15 +69,17 @@ export function BookingDialog({ designer, children, service }: BookingDialogProp
       return;
     }
 
-    // Check if designer is online
-    if (!designer.is_online) {
-      toast.error('This designer is currently offline. Please try again when they are online.');
-      return;
-    }
-
     try {
       setLoading(true);
       const scheduledDateTime = new Date(bookingData.scheduled_date).toISOString();
+      
+      // Check if designer is available for the scheduled time
+      const availabilityResult = await checkDesignerAvailabilityForDateTime(designer.id, scheduledDateTime);
+      
+      if (!availabilityResult.isAvailable) {
+        toast.error(availabilityResult.reason || 'This designer is not available at the scheduled time.');
+        return;
+      }
       const currentPackage = getCurrentPackage();
       
       const { data, error } = await supabase

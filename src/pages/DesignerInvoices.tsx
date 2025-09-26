@@ -48,7 +48,7 @@ export default function DesignerInvoices() {
         .from('invoices')
         .select('*')
         .eq('designer_id', user.id)
-        .in('invoice_type', ['withdrawal', 'session_earnings'])
+        .in('invoice_type', ['withdrawal', 'session_earnings', 'designer'])
         .order('created_at', { ascending: false })
 
       if (invoicesError) throw invoicesError
@@ -59,6 +59,12 @@ export default function DesignerInvoices() {
           return {
             ...invoice,
             customer_name: 'Designer Withdrawal',
+            customer_email: 'system@creahub.com'
+          }
+        } else if (invoice.invoice_type === 'designer') {
+          return {
+            ...invoice,
+            customer_name: 'Session Earnings',
             customer_email: 'system@creahub.com'
           }
         } else {
@@ -88,6 +94,7 @@ export default function DesignerInvoices() {
     switch (type) {
       case 'withdrawal': return 'Designer Withdrawal'
       case 'session_earnings': return 'Session Earnings'
+      case 'designer': return 'Session Earnings'
       default: return type
     }
   }
@@ -95,7 +102,8 @@ export default function DesignerInvoices() {
   const getInvoiceTypeBadge = (type: string) => {
     const colors = {
       'withdrawal': 'bg-orange-100 text-orange-800',
-      'session_earnings': 'bg-green-100 text-green-800'
+      'session_earnings': 'bg-green-100 text-green-800',
+      'designer': 'bg-green-100 text-green-800'
     }
     
     return (

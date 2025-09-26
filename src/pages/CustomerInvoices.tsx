@@ -48,7 +48,7 @@ export default function CustomerInvoices() {
         .from('invoices')
         .select('*')
         .eq('customer_id', user.id)
-        .in('invoice_type', ['recharge', 'session_payment'])
+        .in('invoice_type', ['recharge', 'session_payment', 'customer'])
         .order('created_at', { ascending: false })
 
       if (invoicesError) throw invoicesError
@@ -59,6 +59,12 @@ export default function CustomerInvoices() {
           return {
             ...invoice,
             designer_name: 'Wallet Recharge',
+            designer_email: 'system@creahub.com'
+          }
+        } else if (invoice.invoice_type === 'customer') {
+          return {
+            ...invoice,
+            designer_name: 'Session Payment',
             designer_email: 'system@creahub.com'
           }
         } else {
