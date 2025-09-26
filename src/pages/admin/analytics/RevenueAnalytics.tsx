@@ -98,10 +98,20 @@ export default function RevenueAnalytics() {
         console.error('Designer error:', designerError);
       }
 
+      // Fetch bookings data
+      const { data: bookings, error: bookingsError } = await supabase
+        .from('bookings')
+        .select('*');
+
+      if (bookingsError) {
+        console.error('Bookings error:', bookingsError);
+      }
+
       console.log('Transactions:', transactions?.length || 0);
       console.log('Designers:', designers?.length || 0);
+      console.log('Bookings:', bookings?.length || 0);
 
-      if (transactions && designers) {
+      if (transactions && designers && bookings) {
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
