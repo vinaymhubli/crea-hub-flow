@@ -9,7 +9,8 @@ import {
   Badge as BadgeIcon,
   Heart,
   Bell,
-  LogOut
+  LogOut,
+  Video
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -27,6 +28,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import LiveSessionRequestDialog from "@/components/LiveSessionRequestDialog";
+import { checkDesignerBookingAvailability } from "@/utils/availabilityUtils";
 
 interface RecentDesigner {
   id: string;
@@ -53,12 +56,13 @@ interface RecentDesigner {
   latestBookingId?: string;
 }
 
-function DesignerCard({ designer, favorites, onToggleFavorite, onMessage, onBookAgain }: { 
+function DesignerCard({ designer, favorites, onToggleFavorite, onMessage, onBookAgain, onLiveSession }: { 
   designer: RecentDesigner; 
   favorites: Set<string>;
   onToggleFavorite: (designerId: string) => void;
   onMessage: (designerId: string, bookingId?: string) => void;
   onBookAgain: (designerId: string) => void;
+  onLiveSession: (designer: RecentDesigner) => void;
 }) {
   const designerName = designer.profile 
     ? `${designer.profile.first_name} ${designer.profile.last_name}`
@@ -97,7 +101,7 @@ function DesignerCard({ designer, favorites, onToggleFavorite, onMessage, onBook
             </div>
           </div>
           <div className="text-right">
-            <p className="font-semibold text-gray-900 bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">₹{designer.hourly_rate}/hour</p>
+            <p className="font-semibold text-gray-900 bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">₹{designer.hourly_rate}/min</p>
             {designer.location && (
               <div className="flex items-center space-x-1 mt-1">
                 <MapPin className="w-3 h-3 text-gray-400" />
@@ -192,6 +196,15 @@ function DesignerCard({ designer, favorites, onToggleFavorite, onMessage, onBook
           <Button 
             type="button"
             variant="outline" 
+            className="flex-1 border-2 border-gradient-to-r from-purple-400 to-pink-400 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50"
+            onClick={() => onLiveSession(designer)}
+          >
+            <Video className="w-4 h-4 mr-2" />
+            Live Session
+          </Button>
+          <Button 
+            type="button"
+            variant="outline" 
             size="icon" 
             className={`border-2 transition-all duration-200 ${
               isFavorite 
@@ -215,6 +228,8 @@ export default function CustomerRecentDesigners() {
   const [recentDesigners, setRecentDesigners] = useState<RecentDesigner[]>([]);
   const [loading, setLoading] = useState(true);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [showLiveSessionDialog, setShowLiveSessionDialog] = useState(false);
+  const [selectedDesigner, setSelectedDesigner] = useState<RecentDesigner | null>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -349,6 +364,23 @@ export default function CustomerRecentDesigners() {
 
   const handleBookAgain = (designerId: string) => {
     navigate(`/designer/${designerId}`);
+  };
+
+  const handleLiveSession = async (designer: RecentDesigner) => {
+    try {
+      // Check if designer is available based on their schedule
+      const availabilityResult = await checkDesignerBookingAvailability(designer.id);
+      
+      if (!availabilityResult.isAvailable) {
+        // Show error message
+        return;
+      }
+
+      setSelectedDesigner(designer);
+      setShowLiveSessionDialog(true);
+    } catch (error) {
+      console.error('Error checking designer availability:', error);
+    }
   };
 
   const filteredDesigners = recentDesigners
@@ -560,6 +592,7 @@ export default function CustomerRecentDesigners() {
                      onToggleFavorite={toggleFavorite}
                      onMessage={handleMessage}
                      onBookAgain={handleBookAgain}
+                     onLiveSession={handleLiveSession}
                    />
                  ))}
               </div>
@@ -567,6 +600,23 @@ export default function CustomerRecentDesigners() {
           </div>
         </main>
       </div>
+
+      {/* Live Session Dialog */}
+      {selectedDesigner && (
+        <LiveSessionRequestDialog
+          isOpen={showLiveSessionDialog}
+          onClose={() => {
+            setShowLiveSessionDialog(false);
+            setSelectedDesigner(null);
+          }}
+          designer={selectedDesigner}
+          onSessionStart={(sessionId) => {
+            setShowLiveSessionDialog(false);
+            setSelectedDesigner(null);
+            navigate(`/live-call-session/${sessionId}`);
+          }}
+        />
+      )}
     </SidebarProvider>
   );
 }

@@ -28,7 +28,7 @@ const RefundPolicy = () => {
           <div className="prose prose-lg max-w-none">
             <h2>Overview</h2>
             <p>
-              At Meet My Designer, we strive to provide excellent service and ensure customer satisfaction. 
+              At meetmydesigners, we strive to provide excellent service and ensure customer satisfaction. 
               This policy outlines our refund and cancellation procedures for all services and transactions.
             </p>
 

@@ -602,7 +602,7 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
                   {/* Right Side - Price and Actions */}
                   <div className="flex-shrink-0 lg:text-right">
                     <div className="text-2xl font-bold text-foreground mb-1">
-                    ₹{designer.hourly_rate}<span className="text-base font-normal text-muted-foreground">/hr</span>
+                    ₹{designer.hourly_rate}<span className="text-base font-normal text-muted-foreground">/min</span>
                     </div>
                     <p className="text-sm text-muted-foreground mb-4">Usually responds in {designer.response_time || '1 hour'}</p>
 
@@ -619,31 +619,59 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
                         <Eye className="w-4 h-4" />
                         <span>View Profile</span>
                       </Link>
-                      <button 
-                        onClick={() => handleChat(designer.id)}
-                        className="bg-background border border-green-600 text-green-600 py-2 px-4 rounded-xl text-sm font-medium hover:bg-green-50 transition-all duration-200 flex items-center justify-center space-x-2"
-                      >
-                        <MessageCircle className="w-4 h-4" />
-                        <span>Chat</span>
-                      </button>
-                      <BookingDialog designer={designer}>
-                        <Button className="bg-background border border-blue-600 text-blue-600 py-2 px-4 rounded-xl text-sm font-medium hover:bg-blue-50 transition-all duration-200 w-full flex items-center justify-center space-x-2">
-                          <Calendar className="w-4 h-4" />
-                          <span>Book Session</span>
-                        </Button>
-                      </BookingDialog>
-                      <button 
-                        onClick={() => handleLiveSessionRequest(designer)}
-                        disabled={!(designer.activity?.is_online || designer.is_online)}
-                        className={`py-2 px-4 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center space-x-2 ${
-                          (designer.activity?.is_online || designer.is_online)
-                            ? 'bg-background border border-purple-600 text-purple-600 hover:bg-purple-50' 
-                            : 'bg-gray-100 border border-gray-300 text-gray-400 cursor-not-allowed'
-                        }`}
-                      >
-                        <Video className="w-4 h-4" />
-                        <span>Live Design Session</span>
-                      </button>
+                      {user ? (
+                        <>
+                          <button 
+                            onClick={() => handleChat(designer.id)}
+                            className="bg-background border border-green-600 text-green-600 py-2 px-4 rounded-xl text-sm font-medium hover:bg-green-50 transition-all duration-200 flex items-center justify-center space-x-2"
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                            <span>Chat</span>
+                          </button>
+                          <BookingDialog designer={designer}>
+                            <Button className="bg-background border border-blue-600 text-blue-600 py-2 px-4 rounded-xl text-sm font-medium hover:bg-blue-50 transition-all duration-200 w-full flex items-center justify-center space-x-2">
+                              <Calendar className="w-4 h-4" />
+                              <span>Book Session</span>
+                            </Button>
+                          </BookingDialog>
+                          <button 
+                            onClick={() => handleLiveSessionRequest(designer)}
+                            disabled={!(designer.activity?.is_online || designer.is_online)}
+                            className={`py-2 px-4 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center space-x-2 ${
+                              (designer.activity?.is_online || designer.is_online)
+                                ? 'bg-background border border-purple-600 text-purple-600 hover:bg-purple-50' 
+                                : 'bg-gray-100 border border-gray-300 text-gray-400 cursor-not-allowed'
+                            }`}
+                          >
+                            <Video className="w-4 h-4" />
+                            <span>Live Design Session</span>
+                          </button>
+                        </>
+                      ) : (
+                        <div className="space-y-2">
+                          <button 
+                            onClick={() => navigate('/auth')}
+                            className="bg-background border border-green-600 text-green-600 py-2 px-4 rounded-xl text-sm font-medium hover:bg-green-50 transition-all duration-200 flex items-center justify-center space-x-2 w-full"
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                            <span>Chat (Sign in required)</span>
+                          </button>
+                          <button 
+                            onClick={() => navigate('/auth')}
+                            className="bg-background border border-blue-600 text-blue-600 py-2 px-4 rounded-xl text-sm font-medium hover:bg-blue-50 transition-all duration-200 flex items-center justify-center space-x-2 w-full"
+                          >
+                            <Calendar className="w-4 h-4" />
+                            <span>Book Session (Sign in required)</span>
+                          </button>
+                          <button 
+                            onClick={() => navigate('/auth')}
+                            className="bg-background border border-purple-600 text-purple-600 py-2 px-4 rounded-xl text-sm font-medium hover:bg-purple-50 transition-all duration-200 flex items-center justify-center space-x-2 w-full"
+                          >
+                            <Video className="w-4 h-4" />
+                            <span>Live Session (Sign in required)</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -653,22 +681,6 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
         ))}
       </div>
 
-      {/* Pagination */}
-      <div className="mt-16 flex justify-center">
-        <nav className="flex items-center space-x-2 bg-background rounded-2xl p-2 shadow-sm border border-border">
-          <button className="px-4 py-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-xl transition-all duration-200">
-            ←
-          </button>
-          <button className="px-4 py-2 bg-green-600 text-white rounded-xl font-medium min-w-[40px]">1</button>
-          <button className="px-4 py-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-xl transition-all duration-200 min-w-[40px]">2</button>
-          <button className="px-4 py-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-xl transition-all duration-200 min-w-[40px]">3</button>
-          <span className="px-2 text-muted-foreground">...</span>
-          <button className="px-4 py-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-xl transition-all duration-200 min-w-[40px]">12</button>
-          <button className="px-4 py-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-xl transition-all duration-200">
-            →
-          </button>
-        </nav>
-      </div>
 
       {/* Live Session Request Dialog */}
       {selectedDesigner && (

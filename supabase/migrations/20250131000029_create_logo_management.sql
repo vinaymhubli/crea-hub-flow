@@ -31,8 +31,8 @@ GRANT SELECT ON public.logo_management TO anon;
 
 -- Insert default logos
 INSERT INTO public.logo_management (logo_type, logo_url, alt_text) VALUES
-  ('header_logo', 'https://res.cloudinary.com/dknafpppp/image/upload/v1757697849/logo_final_2_x8c1wu.png', 'Meet My Designer'),
-  ('footer_logo', 'https://res.cloudinary.com/dknafpppp/image/upload/v1757697849/logo_final_2_x8c1wu.png', 'Meet My Designer')
+  ('header_logo', 'https://res.cloudinary.com/dknafpppp/image/upload/v1757697849/logo_final_2_x8c1wu.png', 'meetmydesigners'),
+  ('footer_logo', 'https://res.cloudinary.com/dknafpppp/image/upload/v1757697849/logo_final_2_x8c1wu.png', 'meetmydesigners')
 ON CONFLICT (logo_type) DO NOTHING;
 
 -- Create function to update updated_at

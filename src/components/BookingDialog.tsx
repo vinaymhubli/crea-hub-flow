@@ -268,7 +268,7 @@ export function BookingDialog({ designer, children, service }: BookingDialogProp
               <>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm text-gray-600">Rate:</span>
-                  <span className="font-medium">₹{designer.hourly_rate}/hour</span>
+                  <span className="font-medium">₹{designer.hourly_rate}/min</span>
                 </div>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm text-gray-600">Duration:</span>

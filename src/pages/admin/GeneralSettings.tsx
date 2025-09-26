@@ -65,14 +65,14 @@ export default function GeneralSettings() {
     new_registrations: true,
     commission_rate: 15,
     featured_designers_limit: 6,
-    platform_name: "Meet My Designer",
+    platform_name: "meetmydesigners",
     platform_description: "Connect with amazing designers worldwide",
     support_email: "support@meetmydesigner.com",
     max_file_size_mb: 10,
     allowed_file_types: ["jpg", "png", "pdf", "svg", "gif", "webp"],
     session_timeout_minutes: 60,
     contact_phone: "+1 (555) 123-4567",
-    contact_address: "Meet My Designers, Plot No. C-54, G Block, Bandra Kurla Complex, Mumbai, Maharashtra 400051",
+    contact_address: "meetmydesigners, Plot No. C-54, G Block, Bandra Kurla Complex, Mumbai, Maharashtra 400051",
     social_links: {
       facebook: "https://facebook.com/meetmydesigner",
       twitter: "https://twitter.com/meetmydesigner",
@@ -80,7 +80,7 @@ export default function GeneralSettings() {
       linkedin: "https://linkedin.com/company/meetmydesigner"
     },
     seo_settings: {
-      meta_title: "Meet My Designer - Connect with Amazing Designers Worldwide",
+      meta_title: "meetmydesigners - Connect with Amazing Designers Worldwide",
       meta_description: "Find and collaborate with talented designers for your next project. Real-time design collaboration platform.",
       meta_keywords: "design, designer, collaboration, portfolio, creative, design services"
     }
@@ -327,14 +327,14 @@ export default function GeneralSettings() {
         new_registrations: true,
         commission_rate: 15,
         featured_designers_limit: 6,
-        platform_name: "Meet My Designer",
+        platform_name: "meetmydesigners",
         platform_description: "Connect with amazing designers worldwide",
         support_email: "support@meetmydesigner.com",
         max_file_size_mb: 10,
         allowed_file_types: ["jpg", "png", "pdf", "svg", "gif", "webp"],
         session_timeout_minutes: 60,
         contact_phone: "+1 (555) 123-4567",
-        contact_address: "Meet My Designers, Plot No. C-54, G Block, Bandra Kurla Complex, Mumbai, Maharashtra 400051",
+        contact_address: "meetmydesigners, Plot No. C-54, G Block, Bandra Kurla Complex, Mumbai, Maharashtra 400051",
         social_links: {
           facebook: "https://facebook.com/meetmydesigner",
           twitter: "https://twitter.com/meetmydesigner",
@@ -342,7 +342,7 @@ export default function GeneralSettings() {
           linkedin: "https://linkedin.com/company/meetmydesigner"
         },
         seo_settings: {
-          meta_title: "Meet My Designer - Connect with Amazing Designers Worldwide",
+          meta_title: "meetmydesigners - Connect with Amazing Designers Worldwide",
           meta_description: "Find and collaborate with talented designers for your next project. Real-time design collaboration platform.",
           meta_keywords: "design, designer, collaboration, portfolio, creative, design services"
         }

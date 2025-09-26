@@ -64,11 +64,9 @@ export default function Header() {
 
   const navigationItems = [
     { name: 'Home', href: '/' },
-    { name: 'About', href: '/about' },
     { name: 'Designers', href: getDesignersLink() },
     { name: 'Services', href: '/services' },
     { name: 'How It Works', href: '/how-to-use' },
-    { name: 'Contact Us', href: '/contact' },
   ];
 
   const handleSignOut = async () => {
@@ -97,7 +95,7 @@ export default function Header() {
           <Link to="/" className="flex items-center space-x-2">
             <img 
               src={getHeaderLogo()} 
-              alt="Meet My Designer" 
+              alt="meetmydesigners" 
               className="h-10 w-auto"
             />
           </Link>

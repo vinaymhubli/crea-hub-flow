@@ -195,8 +195,8 @@ export default function DesignerVerification() {
                     </div>
                     
                     <div>
-                      <h4 className="font-medium text-sm text-muted-foreground mb-1">Hourly Rate</h4>
-                      <p className="font-medium">₹{designer.hourly_rate}/hour</p>
+                      <h4 className="font-medium text-sm text-muted-foreground mb-1">Per Minute Rate</h4>
+                      <p className="font-medium">₹{designer.hourly_rate}/min</p>
                     </div>
                     
                     <div>

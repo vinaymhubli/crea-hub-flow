@@ -12,7 +12,7 @@ const ForDesigners = () => {
       icon: DollarSign,
       title: "Higher Earnings",
       description: "Earn 20-40% more than traditional freelance platforms with our premium client base",
-      stats: "Average ₹850/hour"
+      stats: "Average ₹14/min"
     },
     {
       icon: Users,

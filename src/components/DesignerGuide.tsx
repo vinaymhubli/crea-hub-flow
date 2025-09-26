@@ -20,7 +20,7 @@ export default function DesignerGuide() {
           title: 'Create Your Designer Profile',
           description: 'Complete your professional profile with skills, experience, and portfolio',
           icon: 'ri-user-settings-line',
-          details: ['Upload professional headshot', 'Add detailed bio and experience', 'Set your hourly rates and availability', 'Verify your identity and skills']
+          details: ['Upload professional headshot', 'Add detailed bio and experience', 'Set your per minute rates and availability', 'Verify your identity and skills']
         },
         {
           title: 'Build Your Portfolio',

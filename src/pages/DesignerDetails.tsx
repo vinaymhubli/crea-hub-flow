@@ -266,7 +266,7 @@ const DesignerDetails: React.FC = () => {
                   <div className="text-center mb-6">
                     <div className="text-3xl font-bold text-foreground mb-1">
                       ₹{designer.hourly_rate}
-                      <span className="text-lg font-normal text-muted-foreground">/hour</span>
+                      <span className="text-lg font-normal text-muted-foreground">/min</span>
                     </div>
                     <p className="text-muted-foreground">Starting from</p>
                   </div>

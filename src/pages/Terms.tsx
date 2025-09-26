@@ -28,7 +28,7 @@ const Terms = () => {
           <div className="prose prose-lg max-w-none">
             <h2>Acceptance of Terms</h2>
             <p>
-              By accessing and using Meet My Designer, you accept and agree to be bound by the terms and conditions of this agreement. 
+              By accessing and using meetmydesigners, you accept and agree to be bound by the terms and conditions of this agreement. 
               If you do not agree to these terms, please do not use our services.
             </p>
 
@@ -151,7 +151,7 @@ const Terms = () => {
               <li>Email: legal@meetmydesigner.com</li>
               <li>Support: support@meetmydesigner.com</li>
               <li>Phone: +1 (555) 123-4567</li>
-              <li>Address: Meet My Designers, Plot No. C-54, G Block, Bandra Kurla Complex, Mumbai, Maharashtra 400051</li>
+              <li>Address: meetmydesigners, Plot No. C-54, G Block, Bandra Kurla Complex, Mumbai, Maharashtra 400051</li>
             </ul>
           </div>
         </div>

@@ -41,6 +41,7 @@ import { useAuth } from "@/hooks/useAuth";
 export default function DesignerSettings() {
   const [activeTab, setActiveTab] = useState("general");
   const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   
   const { user } = useAuth();
   const { settings: userSettings, loading: settingsLoading, updateSetting } = useUserSettings();
@@ -368,7 +369,7 @@ export default function DesignerSettings() {
                     </CardHeader>
                     <CardContent className="p-6 space-y-4">
                       <div>
-                        <Label className="font-semibold text-gray-700">Hourly Rate</Label>
+                        <Label className="font-semibold text-gray-700">Per Minute Rate</Label>
                         <div className="flex items-center space-x-2">
                           <span className="text-gray-500">₹</span>
                           <Input 
@@ -377,7 +378,7 @@ export default function DesignerSettings() {
                             onChange={(e) => updateDesignerProfile({ hourly_rate: Number(e.target.value) })}
                             className="flex-1 border-gray-200 focus:border-green-400"
                           />
-                          <span className="text-gray-500">/hour</span>
+                          <span className="text-gray-500">/min</span>
                         </div>
                       </div>
 
@@ -434,11 +435,22 @@ export default function DesignerSettings() {
 
                       <div>
                         <Label className="font-semibold text-gray-700">New Password</Label>
-                        <Input 
-                          type="password"
-                          placeholder="Enter new password"
-                          className="border-gray-200 focus:border-green-400"
-                        />
+                        <div className="relative">
+                          <Input 
+                            type={showNewPassword ? 'text' : 'password'}
+                            placeholder="Enter new password"
+                            className="border-gray-200 focus:border-green-400 pr-10"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                            onClick={() => setShowNewPassword(!showNewPassword)}
+                          >
+                            {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </Button>
+                        </div>
                       </div>
 
                       <div className="flex items-center justify-between">

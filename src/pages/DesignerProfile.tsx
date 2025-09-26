@@ -531,7 +531,7 @@ export default function DesignerProfile() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <Label htmlFor="hourlyRate" className="text-sm font-semibold text-gray-700">Hourly Rate (₹)</Label>
+                        <Label htmlFor="hourlyRate" className="text-sm font-semibold text-gray-700">Per Minute Rate (₹)</Label>
                         <Input 
                           id="hourlyRate" 
                           type="number" 
@@ -540,13 +540,13 @@ export default function DesignerProfile() {
                           value={formData.hourly_rate}
                           onChange={(e) => handleInputChange('hourly_rate', parseFloat(e.target.value) || 0)}
                         />
-                        <p className="text-sm text-gray-500">The rate you charge per hour for your design services</p>
+                        <p className="text-sm text-gray-500">The rate you charge per minute for your design services</p>
                       </div>
                       <div className="space-y-4">
                         <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
                           <div>
-                            <Label className="font-semibold text-gray-700">Display Hourly Rate</Label>
-                            <p className="text-sm text-gray-500">Show your hourly rate on your public profile</p>
+                            <Label className="font-semibold text-gray-700">Display Per Minute Rate</Label>
+                            <p className="text-sm text-gray-500">Show your per minute rate on your public profile</p>
                           </div>
                           <Switch 
                             checked={formData.display_hourly_rate} 
@@ -573,6 +573,7 @@ export default function DesignerProfile() {
                           <SelectValue placeholder="Select your typical response time" />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="5-15 minutes">Within 5-15 minutes</SelectItem>
                           <SelectItem value="1 hour">Within 1 hour</SelectItem>
                           <SelectItem value="2 hours">Within 2 hours</SelectItem>
                           <SelectItem value="6 hours">Within 6 hours</SelectItem>

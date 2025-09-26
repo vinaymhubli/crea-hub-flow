@@ -28,7 +28,7 @@ const Privacy = () => {
           <div className="prose prose-lg max-w-none">
             <h2>Information We Collect</h2>
             <p>
-              At Meet My Designer, we collect information you provide directly to us, such as when you create an account, 
+              At meetmydesigners, we collect information you provide directly to us, such as when you create an account, 
               update your profile, make a purchase, or contact us for support.
             </p>
 

@@ -9,12 +9,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { User, Mail, Lock, UserPlus, LogIn, Palette, Users } from 'lucide-react';
+import { User, Mail, Lock, UserPlus, LogIn, Palette, Users, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
 export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
@@ -198,14 +199,27 @@ export default function Auth() {
                       <Lock className="w-4 h-4" />
                       Password
                     </Label>
-                    <Input
-                      id="signin-password"
-                      name="password"
-                      type="password"
-                      placeholder="Enter your password"
-                      required
-                      className="border-gray-200 focus:border-teal-400 focus:ring-teal-400/20"
-                    />
+                    <div className="relative">
+                      <Input
+                        id="signin-password"
+                        name="password"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Enter your password"
+                        required
+                        className="border-gray-200 focus:border-teal-400 focus:ring-teal-400/20 pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                        ) : (
+                          <Eye className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                        )}
+                      </button>
+                    </div>
                   </div>
                   <Button 
                     type="submit" 
@@ -251,15 +265,28 @@ export default function Auth() {
                       <Lock className="w-4 h-4" />
                       Password
                     </Label>
-                    <Input
-                      id="signup-password"
-                      name="password"
-                      type="password"
-                      placeholder="Create a password"
-                      required
-                      minLength={6}
-                      className="border-gray-200 focus:border-teal-400 focus:ring-teal-400/20"
-                    />
+                    <div className="relative">
+                      <Input
+                        id="signup-password"
+                        name="password"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Create a password"
+                        required
+                        minLength={6}
+                        className="border-gray-200 focus:border-teal-400 focus:ring-teal-400/20 pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                        ) : (
+                          <Eye className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                        )}
+                      </button>
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-role" className="flex items-center gap-2">
