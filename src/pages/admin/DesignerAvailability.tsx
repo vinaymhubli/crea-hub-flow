@@ -7,9 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Switch } from '@/components/ui/switch';
-import { Calendar, Clock, Search, Users, Settings } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Calendar, Clock, Search, Users, Settings, Save, X } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface DesignerWithAvailability {
   id: string;
@@ -45,6 +49,11 @@ const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Fri
 
 export default function DesignerAvailability() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedDesigner, setSelectedDesigner] = useState<DesignerWithAvailability | null>(null);
+  const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
+  const [scheduleData, setScheduleData] = useState<{[key: number]: {is_available: boolean, start_time: string, end_time: string}}>({});
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: designers = [], isLoading } = useQuery({
     queryKey: ['admin-designer-availability', searchTerm],
@@ -122,20 +131,131 @@ export default function DesignerAvailability() {
     },
   });
 
-  const toggleDesignerOnlineStatus = async (designerId: string, currentStatus: boolean | null) => {
-    try {
+  // Mutation for updating online status
+  const updateOnlineStatusMutation = useMutation({
+    mutationFn: async ({ designerId, isOnline }: { designerId: string; isOnline: boolean }) => {
       const { error } = await supabase
         .from('designers')
-        .update({ is_online: !currentStatus })
+        .update({ is_online: isOnline })
         .eq('id', designerId);
 
       if (error) throw error;
-      
-      // Refetch data
-      window.location.reload();
-    } catch (error) {
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-designer-availability'] });
+      toast({
+        title: "Success",
+        description: "Designer online status updated successfully",
+      });
+    },
+    onError: (error) => {
       console.error('Error updating online status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update online status",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation for updating schedule
+  const updateScheduleMutation = useMutation({
+    mutationFn: async ({ designerId, scheduleData }: { designerId: string; scheduleData: any }) => {
+      // Delete existing schedule
+      await supabase
+        .from('designer_weekly_schedule')
+        .delete()
+        .eq('designer_id', designerId);
+
+      // Insert new schedule
+      const scheduleEntries = Object.entries(scheduleData).map(([day, data]: [string, any]) => ({
+        designer_id: designerId,
+        day_of_week: parseInt(day),
+        is_available: data.is_available,
+        start_time: data.start_time,
+        end_time: data.end_time,
+      }));
+
+      if (scheduleEntries.length > 0) {
+        const { error } = await supabase
+          .from('designer_weekly_schedule')
+          .insert(scheduleEntries);
+
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-weekly-schedules'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-designer-availability'] });
+      toast({
+        title: "Success",
+        description: "Designer schedule updated successfully",
+      });
+      setIsScheduleDialogOpen(false);
+    },
+    onError: (error) => {
+      console.error('Error updating schedule:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update schedule",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const toggleDesignerOnlineStatus = (designerId: string, currentStatus: boolean | null) => {
+    updateOnlineStatusMutation.mutate({ 
+      designerId, 
+      isOnline: !currentStatus 
+    });
+  };
+
+  const openScheduleDialog = (designer: DesignerWithAvailability) => {
+    setSelectedDesigner(designer);
+    
+    // Load existing schedule
+    const existingSchedule = getDesignerSchedule(designer.id);
+    const scheduleMap: {[key: number]: {is_available: boolean, start_time: string, end_time: string}} = {};
+    
+    // Initialize with default values
+    for (let i = 0; i < 7; i++) {
+      scheduleMap[i] = {
+        is_available: false,
+        start_time: '09:00',
+        end_time: '17:00'
+      };
     }
+    
+    // Override with existing data
+    existingSchedule.forEach(day => {
+      scheduleMap[day.day_of_week] = {
+        is_available: day.is_available,
+        start_time: day.start_time,
+        end_time: day.end_time
+      };
+    });
+    
+    setScheduleData(scheduleMap);
+    setIsScheduleDialogOpen(true);
+  };
+
+  const saveSchedule = () => {
+    if (!selectedDesigner) return;
+    
+    updateScheduleMutation.mutate({
+      designerId: selectedDesigner.id,
+      scheduleData
+    });
+  };
+
+  const updateScheduleDay = (day: number, field: string, value: any) => {
+    setScheduleData(prev => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        [field]: value
+      }
+    }));
   };
 
   const getDesignerSchedule = (designerId: string) => {
@@ -316,7 +436,12 @@ export default function DesignerAvailability() {
                   )}
 
                   <div className="pt-4">
-                    <Button variant="outline" size="sm" className="w-full">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full"
+                      onClick={() => openScheduleDialog(designer)}
+                    >
                       <Settings className="w-4 h-4 mr-1" />
                       Manage Schedule
                     </Button>
@@ -336,6 +461,73 @@ export default function DesignerAvailability() {
             </div>
           </div>
         )}
+
+        {/* Schedule Management Dialog */}
+        <Dialog open={isScheduleDialogOpen} onOpenChange={setIsScheduleDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Calendar className="w-5 h-5" />
+                Manage Schedule - {selectedDesigner?.user?.first_name} {selectedDesigner?.user?.last_name}
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              {daysOfWeek.map((day, index) => (
+                <div key={index} className="border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <Label className="text-sm font-medium">{day}</Label>
+                    <Switch
+                      checked={scheduleData[index]?.is_available || false}
+                      onCheckedChange={(checked) => updateScheduleDay(index, 'is_available', checked)}
+                    />
+                  </div>
+                  
+                  {scheduleData[index]?.is_available && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Start Time</Label>
+                        <Input
+                          type="time"
+                          value={scheduleData[index]?.start_time || '09:00'}
+                          onChange={(e) => updateScheduleDay(index, 'start_time', e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">End Time</Label>
+                        <Input
+                          type="time"
+                          value={scheduleData[index]?.end_time || '17:00'}
+                          onChange={(e) => updateScheduleDay(index, 'end_time', e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+              
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsScheduleDialogOpen(false)}
+                  disabled={updateScheduleMutation.isPending}
+                >
+                  <X className="w-4 h-4 mr-1" />
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={saveSchedule}
+                  disabled={updateScheduleMutation.isPending}
+                >
+                  <Save className="w-4 h-4 mr-1" />
+                  {updateScheduleMutation.isPending ? 'Saving...' : 'Save Schedule'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );
