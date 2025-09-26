@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 interface PlatformSettings {
   id?: string;
@@ -40,6 +41,7 @@ interface PlatformSettings {
   session_timeout_minutes: number;
   contact_phone?: string;
   contact_address?: string;
+  show_free_demo_button: boolean;
   social_links?: {
     facebook?: string;
     twitter?: string;
@@ -60,6 +62,7 @@ interface ValidationErrors {
 }
 
 export default function GeneralSettings() {
+  const { user } = useAuth();
   const [settings, setSettings] = useState<PlatformSettings>({
     maintenance_mode: false,
     new_registrations: true,
@@ -73,6 +76,7 @@ export default function GeneralSettings() {
     session_timeout_minutes: 60,
     contact_phone: "+1 (555) 123-4567",
     contact_address: "meetmydesigners, Plot No. C-54, G Block, Bandra Kurla Complex, Mumbai, Maharashtra 400051",
+    show_free_demo_button: true,
     social_links: {
       facebook: "https://facebook.com/meetmydesigner",
       twitter: "https://twitter.com/meetmydesigner",
@@ -166,18 +170,33 @@ export default function GeneralSettings() {
 
   const createDefaultSettings = async () => {
     try {
-      const { error } = await supabase
-        .from('platform_settings')
-        .insert([settings]);
+      const defaultSettings = [
+        { setting_key: 'maintenance_mode', setting_value: false },
+        { setting_key: 'new_registrations', setting_value: true },
+        { setting_key: 'show_free_demo_button', setting_value: true },
+        { setting_key: 'commission_rate', setting_value: 15 },
+        { setting_key: 'featured_designers_limit', setting_value: 6 }
+      ];
 
-      if (error) {
-        console.error('Error creating default settings:', error);
-        toast.error('Failed to create default settings');
-      } else {
-        toast.success('Default platform settings created successfully!');
+      for (const setting of defaultSettings) {
+        const { error } = await supabase
+          .from('platform_settings')
+          .upsert({
+            setting_key: setting.setting_key,
+            setting_value: setting.setting_value,
+            updated_at: new Date().toISOString(),
+            updated_by: user?.id
+          }, {
+            onConflict: 'setting_key'
+          });
+
+        if (error) throw error;
       }
+
+      toast.success('Default platform settings created successfully!');
     } catch (error) {
       console.error('Error creating default settings:', error);
+      toast.error('Failed to create default settings');
     }
   };
 
@@ -231,23 +250,28 @@ export default function GeneralSettings() {
     try {
       setSaving(true);
       
-      // Only save fields that exist in the current database schema
-      const updateData = {
-        maintenance_mode: settings.maintenance_mode,
-        new_registrations: settings.new_registrations,
-        commission_rate: settings.commission_rate,
-        featured_designers_limit: settings.featured_designers_limit,
-        updated_at: new Date().toISOString()
-      };
+      // Save settings using key-value structure
+      const settingsToUpdate = [
+        { setting_key: 'maintenance_mode', setting_value: settings.maintenance_mode },
+        { setting_key: 'new_registrations', setting_value: settings.new_registrations },
+        { setting_key: 'show_free_demo_button', setting_value: settings.show_free_demo_button },
+        { setting_key: 'commission_rate', setting_value: settings.commission_rate },
+        { setting_key: 'featured_designers_limit', setting_value: settings.featured_designers_limit }
+      ];
 
-      const { error } = await supabase
-        .from('platform_settings')
-        .upsert(updateData, {
-          onConflict: 'id'
-        });
+      for (const setting of settingsToUpdate) {
+        const { error } = await supabase
+          .from('platform_settings')
+          .upsert({
+            setting_key: setting.setting_key,
+            setting_value: setting.setting_value,
+            updated_at: new Date().toISOString(),
+            updated_by: user?.id
+          }, {
+            onConflict: 'setting_key'
+          });
 
-      if (error) {
-        throw error;
+        if (error) throw error;
       }
 
       toast.success('Platform settings saved successfully!');
@@ -325,6 +349,7 @@ export default function GeneralSettings() {
       const defaultSettings: PlatformSettings = {
         maintenance_mode: false,
         new_registrations: true,
+        show_free_demo_button: true,
         commission_rate: 15,
         featured_designers_limit: 6,
         platform_name: "meetmydesigners",
@@ -491,6 +516,17 @@ export default function GeneralSettings() {
                 id="new_registrations"
                 checked={settings.new_registrations}
                 onCheckedChange={(checked) => setSettings({...settings, new_registrations: checked})}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="show_free_demo_button">Free Demo Button</Label>
+                <p className="text-sm text-muted-foreground">Show free demo session button in header</p>
+              </div>
+              <Switch
+                id="show_free_demo_button"
+                checked={settings.show_free_demo_button}
+                onCheckedChange={(checked) => setSettings({...settings, show_free_demo_button: checked})}
               />
             </div>
             <div>

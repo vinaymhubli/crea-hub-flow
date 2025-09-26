@@ -66,6 +66,19 @@ export default function Auth() {
     const role = formData.get('role') as string;
 
     try {
+      // Check if email already exists
+      const { data: existingUser, error: checkError } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('email', email)
+        .single();
+
+      if (existingUser) {
+        setError('An account with this email already exists. Please use a different email or try signing in.');
+        setLoading(false);
+        return;
+      }
+
       const { error } = await supabase.auth.signUp({
         email,
         password,

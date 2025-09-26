@@ -412,7 +412,7 @@ export function ScreenShareModal({
 
             setBookingData(data);
             if (data.designer?.hourly_rate) {
-                setDesignerRate(data.designer.hourly_rate / 60); // Convert hourly to per minute
+                setDesignerRate(data.designer.hourly_rate); // Rate is already per minute
             }
             // Note: balance column doesn't exist in profiles table, using default value
             setCustomerBalance(0);
@@ -443,7 +443,7 @@ export function ScreenShareModal({
                 .single();
 
             if (!designerError && designerData?.hourly_rate) {
-                setDesignerRate(designerData.hourly_rate / 60);
+                setDesignerRate(designerData.hourly_rate);
             }
 
             // Note: balance column doesn't exist in profiles table, using default value

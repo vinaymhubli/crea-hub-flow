@@ -390,10 +390,10 @@ export default function LiveCallSession() {
 
       setBookingData(data);
       if (data.designer?.hourly_rate) {
-        setRate(data.designer.hourly_rate / 60); // Convert hourly to per minute
+        setRate(data.designer.hourly_rate); // Rate is already per minute
         console.log(
           "💰 Loaded rate from booking:",
-          data.designer.hourly_rate / 60,
+          data.designer.hourly_rate,
           "per minute"
         );
       } else {
@@ -418,10 +418,10 @@ export default function LiveCallSession() {
           .single();
 
         if (!designerError && designerData?.hourly_rate) {
-          setRate(designerData.hourly_rate / 60);
+          setRate(designerData.hourly_rate);
           console.log(
             "💰 Loaded designer rate from user data:",
-            designerData.hourly_rate / 60,
+            designerData.hourly_rate,
             "per minute"
           );
         } else {

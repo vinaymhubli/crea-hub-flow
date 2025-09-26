@@ -35,6 +35,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFiltersChange,
       selectedRating: null,
       isOnlineOnly: false,
       isAvailableNow: false,
+      availabilityStatus: 'all',
     });
   };
 
@@ -59,8 +60,8 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFiltersChange,
   };
 
   return (
-    <div className="bg-card rounded-2xl shadow-sm border border-border sticky top-6 overflow-hidden">
-      <div className="p-6 border-b border-border">
+    <div className="bg-card rounded-2xl shadow-sm border border-border sticky top-6 overflow-hidden max-h-[calc(100vh-2rem)] flex flex-col">
+      <div className="p-6 border-b border-border flex-shrink-0">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-foreground flex items-center space-x-2">
             <span>🔍</span>
@@ -88,13 +89,13 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFiltersChange,
         )}
       </div>
       
-      <div className={`${isCollapsed ? 'hidden' : 'block'} lg:block`}>
+      <div className={`${isCollapsed ? 'hidden' : 'block'} lg:block flex-1 overflow-y-auto`}>
         <div className="p-6 space-y-8">
           {/* Price Range */}
           <div>
             <h4 className="font-medium text-foreground mb-4 flex items-center space-x-2">
               <span>💰</span>
-              <span>Price Range (per hour)</span>
+              <span>Price Range (per minute)</span>
             </h4>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -216,24 +217,56 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFiltersChange,
             <div className="space-y-3">
               <label className="flex items-center cursor-pointer group hover:bg-accent -mx-2 px-2 py-2 rounded-lg transition-colors">
                 <input 
-                  type="checkbox" 
-                  checked={filters.isAvailableNow}
-                  onChange={(e) => handleAvailabilityChange('isAvailableNow', e.target.checked)}
-                  className="w-4 h-4 text-green-600 border-border rounded focus:ring-green-500" 
+                  type="radio" 
+                  name="availability"
+                  value="all"
+                  checked={filters.availabilityStatus === 'all'}
+                  onChange={(e) => onFiltersChange({ ...filters, availabilityStatus: e.target.value as 'all' | 'available' | 'active' | 'offline' })}
+                  className="w-4 h-4 text-green-600 border-border focus:ring-green-500" 
+                />
+                <span className="ml-3 text-sm text-foreground">All</span>
+              </label>
+              <label className="flex items-center cursor-pointer group hover:bg-accent -mx-2 px-2 py-2 rounded-lg transition-colors">
+                <input 
+                  type="radio" 
+                  name="availability"
+                  value="available"
+                  checked={filters.availabilityStatus === 'available'}
+                  onChange={(e) => onFiltersChange({ ...filters, availabilityStatus: e.target.value as 'all' | 'available' | 'active' | 'offline' })}
+                  className="w-4 h-4 text-green-600 border-border focus:ring-green-500" 
                 />
                 <div className="ml-3 flex items-center space-x-2">
                   <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                  <span className="text-sm text-foreground">Available now</span>
+                  <span className="text-sm text-foreground">Available</span>
                 </div>
               </label>
               <label className="flex items-center cursor-pointer group hover:bg-accent -mx-2 px-2 py-2 rounded-lg transition-colors">
                 <input 
-                  type="checkbox" 
-                  checked={filters.isOnlineOnly}
-                  onChange={(e) => handleAvailabilityChange('isOnlineOnly', e.target.checked)}
-                  className="w-4 h-4 text-green-600 border-border rounded focus:ring-green-500" 
+                  type="radio" 
+                  name="availability"
+                  value="active"
+                  checked={filters.availabilityStatus === 'active'}
+                  onChange={(e) => onFiltersChange({ ...filters, availabilityStatus: e.target.value as 'all' | 'available' | 'active' | 'offline' })}
+                  className="w-4 h-4 text-green-600 border-border focus:ring-green-500" 
                 />
-                <span className="ml-3 text-sm text-foreground">Online now</span>
+                <div className="ml-3 flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                  <span className="text-sm text-foreground">Active</span>
+                </div>
+              </label>
+              <label className="flex items-center cursor-pointer group hover:bg-accent -mx-2 px-2 py-2 rounded-lg transition-colors">
+                <input 
+                  type="radio" 
+                  name="availability"
+                  value="offline"
+                  checked={filters.availabilityStatus === 'offline'}
+                  onChange={(e) => onFiltersChange({ ...filters, availabilityStatus: e.target.value as 'all' | 'available' | 'active' | 'offline' })}
+                  className="w-4 h-4 text-green-600 border-border focus:ring-green-500" 
+                />
+                <div className="ml-3 flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                  <span className="text-sm text-foreground">Offline</span>
+                </div>
               </label>
             </div>
           </div>

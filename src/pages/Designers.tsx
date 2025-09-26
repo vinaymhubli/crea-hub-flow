@@ -14,6 +14,7 @@ export interface FilterState {
   selectedRating: number | null;
   isOnlineOnly: boolean;
   isAvailableNow: boolean;
+  availabilityStatus: 'all' | 'available' | 'active' | 'offline';
 }
 
 const Designers = () => {
@@ -29,6 +30,7 @@ const Designers = () => {
     selectedRating: null,
     isOnlineOnly: false,
     isAvailableNow: false,
+    availabilityStatus: 'all',
   });
   const [categories, setCategories] = useState<Array<{ name: string; count: number }>>([]);
   const [skills, setSkills] = useState<string[]>([]);

@@ -3,10 +3,11 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, User, LogOut, Settings, LayoutDashboard, Wallet } from 'lucide-react';
+import { Menu, User, LogOut, Settings, LayoutDashboard, Wallet, Calendar } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useWallet } from '@/hooks/useWallet';
 import { WalletBalanceIndicator } from './WalletBalanceIndicator';
+import FreeDemoSessionDialog from './FreeDemoSessionDialog';
 import { supabase } from '@/integrations/supabase/client';
 import {
   DropdownMenu,
@@ -29,6 +30,8 @@ interface Logo {
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [logos, setLogos] = useState<Logo[]>([]);
+  const [showDemoDialog, setShowDemoDialog] = useState(false);
+  const [showDemoButton, setShowDemoButton] = useState(true);
   const { user, profile, signOut } = useAuth();
   const { balance, loading: walletLoading } = useWallet();
   const navigate = useNavigate();
@@ -36,6 +39,7 @@ export default function Header() {
 
   useEffect(() => {
     fetchLogos();
+    fetchPlatformSettings();
   }, []);
 
   const fetchLogos = async () => {
@@ -50,6 +54,23 @@ export default function Header() {
       setLogos(data || []);
     } catch (error) {
       console.error('Error fetching logos:', error);
+    }
+  };
+
+  const fetchPlatformSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('platform_settings')
+        .select('setting_value')
+        .eq('setting_key', 'show_free_demo_button')
+        .single();
+
+      if (error) throw error;
+      setShowDemoButton(data?.setting_value ?? true);
+    } catch (error) {
+      console.error('Error fetching platform settings:', error);
+      // Default to true if error occurs
+      setShowDemoButton(true);
     }
   };
 
@@ -116,6 +137,20 @@ export default function Header() {
               </Link>
             ))}
           </nav>
+
+          {/* Free Demo Session Button */}
+          {showDemoButton && (
+            <div className="hidden md:block">
+              <Button
+                variant="outline"
+                onClick={() => setShowDemoDialog(true)}
+                className="flex items-center space-x-2 text-green-600 border-green-200 hover:bg-green-50"
+              >
+                <Calendar className="w-4 h-4" />
+                <span>Free Demo Session</span>
+              </Button>
+            </div>
+          )}
 
           {/* Auth Section */}
           <div className="flex items-center space-x-4">
@@ -222,6 +257,21 @@ export default function Header() {
                       {item.name}
                     </Link>
                   ))}
+                  {showDemoButton && (
+                    <div className="pt-4">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setShowDemoDialog(true);
+                          setIsOpen(false);
+                        }}
+                        className="w-full flex items-center space-x-2 text-green-600 border-green-200 hover:bg-green-50"
+                      >
+                        <Calendar className="w-4 h-4" />
+                        <span>Free Demo Session</span>
+                      </Button>
+                    </div>
+                  )}
                   {!user && (
                     <div className="pt-4 space-y-2">
                       <Link to="/auth" onClick={() => setIsOpen(false)}>
@@ -242,6 +292,12 @@ export default function Header() {
           </div>
         </div>
       </div>
+      
+      {/* Free Demo Session Dialog */}
+      <FreeDemoSessionDialog 
+        isOpen={showDemoDialog} 
+        onClose={() => setShowDemoDialog(false)} 
+      />
     </header>
   );
 }

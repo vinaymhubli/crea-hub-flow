@@ -174,7 +174,26 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
       // Apply client-side filters
       let filteredData = designersWithProfiles;
       
-      // Apply online filter based on activity
+      // Apply availability filter based on activity status
+      if (filters.availabilityStatus !== 'all') {
+        filteredData = filteredData.filter(designer => {
+          const isOnline = designer.activity?.is_online || designer.is_online;
+          const activityStatus = designer.activity?.activity_status || 'offline';
+          
+          switch (filters.availabilityStatus) {
+            case 'available':
+              return isOnline && (activityStatus === 'available' || activityStatus === 'online');
+            case 'active':
+              return isOnline && activityStatus === 'active';
+            case 'offline':
+              return !isOnline || activityStatus === 'offline';
+            default:
+              return true;
+          }
+        });
+      }
+      
+      // Keep the old isOnlineOnly filter for backward compatibility
       if (filters.isOnlineOnly) {
         filteredData = filteredData.filter(designer => 
           designer.activity?.is_online || designer.is_online
