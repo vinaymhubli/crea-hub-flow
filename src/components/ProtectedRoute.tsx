@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { DesignerVerificationGuard } from './DesignerVerificationGuard';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -45,6 +46,11 @@ export const ProtectedRoute = ({ children, requireUserType }: ProtectedRouteProp
         : '/customer-dashboard';
       return <Navigate to={redirectPath} replace />;
     }
+  }
+
+  // Apply designer verification guard for designer routes
+  if (requireUserType === 'designer') {
+    return <DesignerVerificationGuard>{children}</DesignerVerificationGuard>;
   }
 
   return <>{children}</>;

@@ -93,7 +93,7 @@ export const useDesignerProfile = () => {
         return existingDesigner.id;
       }
 
-      // Create designer row with minimal data
+      // Create designer row with minimal data - PENDING VERIFICATION
       const { data: newDesigner, error } = await supabase
         .from('designers')
         .insert({
@@ -103,12 +103,16 @@ export const useDesignerProfile = () => {
           bio: '',
           location: '',
           skills: [],
-          portfolio_images: []
+          portfolio_images: [],
+          verification_status: 'pending' // NEW: Require admin approval
         })
         .select('id')
         .single();
 
       if (error) throw error;
+      
+      // Notify admins about new designer signup
+      await notifyAdminsNewDesigner(user.id);
       
       await fetchDesignerProfile(); // Refresh data
       return newDesigner.id;
@@ -300,4 +304,46 @@ export const useDesignerProfile = () => {
     deletePortfolioImage,
     ensureDesignerRow
   };
+};
+
+// Helper function to notify admins about new designer signup
+const notifyAdminsNewDesigner = async (designerUserId: string) => {
+  try {
+    // Get designer profile info
+    const { data: designerProfile } = await supabase
+      .from('profiles')
+      .select('first_name, last_name, email')
+      .eq('user_id', designerUserId)
+      .single();
+
+    if (!designerProfile) return;
+
+    // Get all admin users
+    const { data: admins } = await supabase
+      .from('profiles')
+      .select('user_id')
+      .eq('is_admin', true);
+
+    if (!admins || admins.length === 0) return;
+
+    // Send notification to each admin
+    for (const admin of admins) {
+      await supabase.rpc('send_notification', {
+        p_user_id: admin.user_id,
+        p_type: 'new_designer_signup',
+        p_title: 'New Designer Signup',
+        p_message: `New designer ${designerProfile.first_name} ${designerProfile.last_name} (${designerProfile.email}) has signed up and is pending verification.`,
+        p_action_url: '/admin/designer-verification',
+        p_metadata: { 
+          designer_user_id: designerUserId,
+          designer_name: `${designerProfile.first_name} ${designerProfile.last_name}`,
+          designer_email: designerProfile.email
+        }
+      });
+    }
+
+    console.log('✅ Admin notifications sent for new designer signup');
+  } catch (error) {
+    console.error('❌ Error notifying admins about new designer:', error);
+  }
 };
