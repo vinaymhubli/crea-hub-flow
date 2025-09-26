@@ -50,6 +50,23 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
       console.log('Fetching designers with filters:', filters);
       setLoading(true);
       
+      // First, get featured designers with their positions
+      const { data: featuredDesigners, error: featuredError } = await (supabase as any)
+        .from('featured_designers')
+        .select('designer_id, position')
+        .eq('is_active', true)
+        .order('position', { ascending: true });
+
+      if (featuredError) {
+        console.error('Error fetching featured designers:', featuredError);
+      }
+
+      // Create a map of featured designer IDs to their positions
+      const featuredMap = new Map<string, number>();
+      (featuredDesigners || []).forEach((fd: any) => {
+        featuredMap.set(fd.designer_id, fd.position);
+      });
+
       // If categories are selected, first get designers who have services in those categories
       let designerIds: string[] = [];
       if (filters.selectedCategories.length > 0) {
@@ -187,8 +204,40 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
         );
       }
 
-      console.log('Filtered designers:', filteredData.length);
-      setDesigners(filteredData);
+      // Sort designers with featured ones first, then by the selected sort criteria
+      const sortedData = filteredData.sort((a, b) => {
+        const aFeaturedPosition = featuredMap.get(a.user_id);
+        const bFeaturedPosition = featuredMap.get(b.user_id);
+        
+        // If both are featured, sort by their position (1-10)
+        if (aFeaturedPosition && bFeaturedPosition) {
+          return aFeaturedPosition - bFeaturedPosition;
+        }
+        
+        // If only one is featured, it comes first
+        if (aFeaturedPosition && !bFeaturedPosition) {
+          return -1;
+        }
+        if (!aFeaturedPosition && bFeaturedPosition) {
+          return 1;
+        }
+        
+        // If neither is featured, apply the original sorting logic
+        switch (sortBy) {
+          case 'hourly_rate':
+            return a.hourly_rate - b.hourly_rate;
+          case 'hourly_rate_desc':
+            return b.hourly_rate - a.hourly_rate;
+          case 'created_at':
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+          case 'rating':
+          default:
+            return b.rating - a.rating;
+        }
+      });
+
+      console.log('Filtered designers:', sortedData.length);
+      setDesigners(sortedData);
     } catch (error) {
       console.error('Error fetching designers:', error);
       toast.error('Failed to load designers');

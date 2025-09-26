@@ -44,6 +44,8 @@ import {
   Percent,
   Share2,
   Image,
+  Crown,
+  Megaphone,
 } from "lucide-react";
 
 const mainSections = [
@@ -160,6 +162,16 @@ const contentSections = [
     title: "Logo Management",
     url: "/admin/cms/logos",
     icon: Image,
+  },
+  {
+    title: "Featured Designers",
+    url: "/admin/featured-designers",
+    icon: Crown,
+  },
+  {
+    title: "Promotions & Offers",
+    url: "/admin/promotions",
+    icon: Megaphone,
   },
   // {
   //   title: "Help Center",

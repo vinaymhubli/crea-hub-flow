@@ -51,6 +51,8 @@ import ContactDynamic from "./pages/ContactDynamic"
 import SocialMediaManagement from "./pages/admin/SocialMediaManagement"
 import LogoManagement from "./pages/admin/LogoManagement"
 import RefundPolicyManagement from "./pages/admin/RefundPolicyManagement"
+import AdminFeaturedDesigners from "./pages/admin/FeaturedDesigners"
+import AdminPromotions from "./pages/admin/Promotions"
 // import HelpCenterManagement from "./pages/admin/HelpCenterManagement"
 // import BlogManagement from "./pages/admin/BlogManagement"
 // import WebsiteSectionManager from "./pages/admin/WebsiteSectionManager"
@@ -367,6 +369,20 @@ function AppContent() {
             <ProtectedAdminRoute>
               <AdminLayout>
                 <RefundPolicyManagement />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/admin/featured-designers" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <AdminFeaturedDesigners />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/admin/promotions" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <AdminPromotions />
               </AdminLayout>
             </ProtectedAdminRoute>
           } />
