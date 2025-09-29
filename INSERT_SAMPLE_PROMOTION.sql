@@ -43,3 +43,5 @@ INSERT INTO public.promotions (
   'Welcome promotion for new customers - 20% off first session'
 );
 
+
+

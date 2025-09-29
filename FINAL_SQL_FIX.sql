@@ -191,3 +191,5 @@ CREATE POLICY "Admins can manage TDS settings" ON public.tds_settings
 
 -- Enable RLS on TDS settings if not already enabled
 ALTER TABLE public.tds_settings ENABLE ROW LEVEL SECURITY;
+
+

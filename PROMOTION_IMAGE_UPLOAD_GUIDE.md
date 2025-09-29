@@ -115,3 +115,5 @@ Colors: Purple background, white text
 
 The image upload system is now fully integrated and ready to use!
 
+
+

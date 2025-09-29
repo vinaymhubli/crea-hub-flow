@@ -59,7 +59,7 @@ export default function UserManagement() {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState('all');
+  const [roleFilter, setRoleFilter] = useState('designer');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -98,6 +98,7 @@ export default function UserManagement() {
             is_online
           )
         `)
+        .eq('role', 'designer')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -280,8 +281,8 @@ export default function UserManagement() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">User Management</h1>
-          <p className="text-muted-foreground">Manage all user accounts and their information</p>
+          <h1 className="text-3xl font-bold">Designer Management</h1>
+          <p className="text-muted-foreground">Manage designer accounts and their information</p>
         </div>
         <div className="flex gap-2">
           <Button onClick={exportUsers} variant="outline">
@@ -372,11 +373,9 @@ export default function UserManagement() {
               <Label htmlFor="role-filter">Role</Label>
               <Select value={roleFilter} onValueChange={setRoleFilter}>
                 <SelectTrigger>
-                  <SelectValue placeholder="All Roles" />
+                  <SelectValue placeholder="Designers" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Roles</SelectItem>
-                  <SelectItem value="customer">Customers</SelectItem>
                   <SelectItem value="designer">Designers</SelectItem>
                 </SelectContent>
               </Select>

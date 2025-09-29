@@ -16,15 +16,40 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
+  const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
+  const [isPasswordReset, setIsPasswordReset] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   
   // Get role from URL parameter
   const roleFromUrl = searchParams.get('role') as 'designer' | 'client' | null;
+  const mode = searchParams.get('mode');
+
+  // Check if this is a password reset flow
+  useEffect(() => {
+    if (mode === 'reset-password') {
+      setIsPasswordReset(true);
+    }
+  }, [mode]);
 
   // Check if user is already logged in - but allow manual override
   useEffect(() => {
+    // Check if this is a password reset flow
+    const urlParams = new URLSearchParams(window.location.search);
+    const mode = urlParams.get('mode');
+    
+    if (mode === 'reset-password') {
+      // Don't redirect if it's a password reset flow
+      return;
+    }
+    
     // Only auto-redirect if coming from another page, not if directly visiting /auth
     if (window.location.pathname === '/auth' && !document.referrer.includes(window.location.origin)) {
       return; // Don't auto-redirect when directly visiting /auth
@@ -154,6 +179,197 @@ export default function Auth() {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setForgotPasswordLoading(true);
+    setError(null);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(forgotPasswordEmail, {
+        redirectTo: `${window.location.origin}/auth?mode=reset-password`,
+      });
+
+      if (error) {
+        if (error.message.includes('User not found') || error.message.includes('Invalid email')) {
+          setError('No account found with this email address. Please check your email or sign up for a new account.');
+        } else {
+          setError(error.message);
+        }
+        return;
+      }
+
+      toast({
+        title: "Password Reset Email Sent",
+        description: "Please check your email for password reset instructions.",
+      });
+
+      setShowForgotPassword(false);
+      setForgotPasswordEmail('');
+    } catch (error: any) {
+      setError(error.message);
+    } finally {
+      setForgotPasswordLoading(false);
+    }
+  };
+
+  const handlePasswordReset = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match');
+      setLoading(false);
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setError('Password must be at least 6 characters long');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Password Updated Successfully",
+        description: "Your password has been updated. You can now sign in with your new password.",
+      });
+
+      // Reset the form and redirect to sign in
+      setIsPasswordReset(false);
+      setNewPassword('');
+      setConfirmPassword('');
+      navigate('/auth');
+    } catch (error: any) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // If this is a password reset flow, only show the password reset form
+  if (isPasswordReset) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-teal-50 to-blue-50 flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Palette className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">DesignHub</h1>
+            <p className="text-gray-600">Set your new password</p>
+          </div>
+
+          <Card className="backdrop-blur-sm bg-white/80 border-white/50 shadow-xl">
+            <CardHeader>
+              <CardTitle className="text-center text-gray-900">Set New Password</CardTitle>
+              <CardDescription className="text-center">
+                Enter your new password below
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handlePasswordReset} className="space-y-4">
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="new-password" className="flex items-center gap-2">
+                    <Lock className="w-4 h-4" />
+                    New Password
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="new-password"
+                      type={showNewPassword ? 'text' : 'password'}
+                      placeholder="Enter your new password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      required
+                      className="border-gray-200 focus:border-teal-400 focus:ring-teal-400/20 pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
+                    >
+                      {showNewPassword ? (
+                        <EyeOff className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                      ) : (
+                        <Eye className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-password" className="flex items-center gap-2">
+                    <Lock className="w-4 h-4" />
+                    Confirm Password
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="confirm-password"
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      placeholder="Confirm your new password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      className="border-gray-200 focus:border-teal-400 focus:ring-teal-400/20 pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                      ) : (
+                        <Eye className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 hover:from-green-500 hover:via-teal-600 hover:to-blue-600 text-white"
+                  disabled={loading}
+                >
+                  {loading ? 'Updating Password...' : 'Update Password'}
+                </Button>
+
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsPasswordReset(false);
+                      setNewPassword('');
+                      setConfirmPassword('');
+                      setError(null);
+                      navigate('/auth');
+                    }}
+                    className="text-sm text-teal-600 hover:text-teal-700 hover:underline"
+                  >
+                    ← Back to Sign In
+                  </button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-teal-50 to-blue-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -241,6 +457,16 @@ export default function Auth() {
                   >
                     {loading ? 'Signing in...' : 'Sign In'}
                   </Button>
+                  
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowForgotPassword(true)}
+                      className="text-sm text-teal-600 hover:text-teal-700 hover:underline"
+                    >
+                      Forgot your password?
+                    </button>
+                  </div>
                 </form>
               </TabsContent>
 
@@ -334,6 +560,68 @@ export default function Auth() {
             </div>
           </CardContent>
         </Card>
+
+
+        {/* Forgot Password Dialog */}
+        {showForgotPassword && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <Card className="w-full max-w-md">
+              <CardHeader>
+                <CardTitle className="text-center">Reset Password</CardTitle>
+                <CardDescription className="text-center">
+                  Enter your email address and we'll send you a password reset link
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleForgotPassword} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="forgot-email" className="flex items-center gap-2">
+                      <Mail className="w-4 h-4" />
+                      Email Address
+                    </Label>
+                    <Input
+                      id="forgot-email"
+                      type="email"
+                      placeholder="Enter your email address"
+                      value={forgotPasswordEmail}
+                      onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                      required
+                      className="border-gray-200 focus:border-teal-400 focus:ring-teal-400/20"
+                    />
+                  </div>
+                  
+                  {error && (
+                    <Alert variant="destructive">
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  )}
+
+                  <div className="flex space-x-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setShowForgotPassword(false);
+                        setForgotPasswordEmail('');
+                        setError(null);
+                      }}
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      className="flex-1 bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 hover:from-green-500 hover:via-teal-600 hover:to-blue-600 text-white"
+                      disabled={forgotPasswordLoading}
+                    >
+                      {forgotPasswordLoading ? 'Sending...' : 'Send Reset Link'}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );
