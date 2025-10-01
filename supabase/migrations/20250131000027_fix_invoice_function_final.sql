@@ -145,3 +145,5 @@ $$;
 GRANT EXECUTE ON FUNCTION public.generate_session_invoices(TEXT, UUID, UUID, DECIMAL, UUID, UUID, INTEGER, TEXT) TO authenticated;
 
 
+
+

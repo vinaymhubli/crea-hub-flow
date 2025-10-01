@@ -321,15 +321,23 @@ export default function DesignerAvailability() {
   };
 
   // Calculate total hours and active days
+  console.log('🔍 Weekly Schedule Data:', weeklySchedule);
+  console.log('🔍 Available Schedules:', weeklySchedule.filter(schedule => schedule.is_available));
+  
   const totalHours = weeklySchedule
     .filter(schedule => schedule.is_available)
     .reduce((total, schedule) => {
       const start = new Date(`1970-01-01T${schedule.start_time}`);
       const end = new Date(`1970-01-01T${schedule.end_time}`);
-      return total + (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+      const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+      console.log(`📅 Day ${schedule.day_of_week}: ${schedule.start_time} - ${schedule.end_time} = ${hours} hours`);
+      return total + hours;
     }, 0);
 
   const activeDays = weeklySchedule.filter(schedule => schedule.is_available).length;
+  
+  console.log('📊 Total Hours:', totalHours);
+  console.log('📊 Active Days:', activeDays);
 
   return (
     <SidebarProvider>

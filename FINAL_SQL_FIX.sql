@@ -193,3 +193,5 @@ CREATE POLICY "Admins can manage TDS settings" ON public.tds_settings
 ALTER TABLE public.tds_settings ENABLE ROW LEVEL SECURITY;
 
 
+
+

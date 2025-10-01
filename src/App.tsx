@@ -6,6 +6,7 @@ import { SidebarProvider } from "@/components/ui/sidebar"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom"
 import { AuthProvider } from "@/hooks/useAuth"
+import { useBlockedUserCheck } from "@/hooks/useBlockedUserCheck"
 import Index from "./pages/Index"
 import About from "./pages/About"
 import HowToUse from "./pages/HowToUse"
@@ -119,6 +120,9 @@ const queryClient = new QueryClient()
 
 function AppContent() {
   const location = useLocation();
+  
+  // Check for blocked users and handle auto-logout
+  useBlockedUserCheck();
   
   // Hide header/footer only on dashboard and session routes, or when coming from dashboard
   const hideGlobalChrome = location.pathname.startsWith('/customer-dashboard') ||

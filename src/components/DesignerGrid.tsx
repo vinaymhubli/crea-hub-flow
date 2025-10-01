@@ -89,7 +89,11 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
 
       let query = supabase
         .from('designers')
-        .select('*');
+        .select(`
+          *,
+          user:profiles!user_id(blocked)
+        `)
+        .eq('user.blocked', false); // Only show non-blocked designers
 
       // Filter by designers who have services in selected categories
       if (designerIds.length > 0) {

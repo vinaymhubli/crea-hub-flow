@@ -99,6 +99,7 @@ export default function UserManagement() {
           )
         `)
         .eq('role', 'designer')
+        .eq('blocked', false)
         .order('created_at', { ascending: false });
 
       if (error) throw error;

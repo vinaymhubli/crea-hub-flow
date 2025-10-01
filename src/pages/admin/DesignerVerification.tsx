@@ -29,6 +29,7 @@ interface DesignerWithProfile {
     last_name: string;
     email: string;
     avatar_url?: string;
+    blocked?: boolean;
   };
 }
 
@@ -60,6 +61,7 @@ export default function DesignerVerification() {
       const { data, error } = await query.order('created_at', { ascending: false });
       
       if (error) throw error;
+      
       return data as DesignerWithProfile[];
     },
   });
@@ -94,8 +96,69 @@ export default function DesignerVerification() {
     updateVerificationMutation.mutate({ designerId, status: 'approved' });
   };
 
-  const handleReject = (designerId: string) => {
-    updateVerificationMutation.mutate({ designerId, status: 'rejected' });
+  const handleReject = async (designerId: string) => {
+    try {
+      // First update the designer status to rejected
+      await updateVerificationMutation.mutateAsync({ designerId, status: 'rejected' });
+      
+      // Then block the user account
+      const { error: blockError } = await supabase
+        .from('profiles')
+        .update({
+          blocked: true,
+          blocked_at: new Date().toISOString(),
+          blocked_reason: 'Account rejected by admin'
+        } as any)
+        .eq('user_id', designerId);
+      
+      if (blockError) {
+        console.error('Error blocking user:', blockError);
+        toast({
+          title: "Warning",
+          description: "Designer rejected but blocking failed. Please check manually.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Designer rejected and account blocked successfully.",
+        });
+      }
+    } catch (error) {
+      console.error('Error rejecting designer:', error);
+    }
+  };
+
+  const handleBlockDesigner = async (designerId: string) => {
+    try {
+      // Block the user account
+      const { error: blockError } = await supabase
+        .from('profiles')
+        .update({
+          blocked: true,
+          blocked_at: new Date().toISOString(),
+          blocked_reason: 'Account blocked by admin'
+        } as any)
+        .eq('user_id', designerId);
+      
+      if (blockError) {
+        console.error('Error blocking user:', blockError);
+        toast({
+          title: "Error",
+          description: "Failed to block designer account.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Designer account blocked successfully.",
+        });
+        // Refresh the data
+        queryClient.invalidateQueries({ queryKey: ['admin-designers'] });
+      }
+    } catch (error) {
+      console.error('Error blocking designer:', error);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -278,16 +341,27 @@ export default function DesignerVerification() {
                       {designer.verification_status !== 'pending' && (
                         <div className="flex gap-2">
                           {designer.verification_status === 'approved' && (
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleReject(designer.id)}
-                              disabled={updateVerificationMutation.isPending}
-                              className="flex-1"
-                            >
-                              <XCircle className="w-4 h-4 mr-1" />
-                              Reject
-                            </Button>
+                            <>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleReject(designer.id)}
+                                disabled={updateVerificationMutation.isPending}
+                                className="flex-1"
+                              >
+                                <XCircle className="w-4 h-4 mr-1" />
+                                Reject
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleBlockDesigner(designer.id)}
+                                className="flex-1"
+                              >
+                                <XCircle className="w-4 h-4 mr-1" />
+                                Block
+                              </Button>
+                            </>
                           )}
                           
                           {designer.verification_status === 'rejected' && (

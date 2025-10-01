@@ -41,7 +41,13 @@ export const useDesignerAvailability = () => {
 
   // Fetch availability data
   const fetchAvailabilityData = async () => {
-    if (!designerProfile?.id) return;
+    console.log('🔍 Designer Profile:', designerProfile);
+    console.log('🔍 Designer ID:', designerProfile?.id);
+    
+    if (!designerProfile?.id) {
+      console.log('❌ No designer profile ID available');
+      return;
+    }
 
     try {
       setLoading(true);
@@ -67,6 +73,7 @@ export const useDesignerAvailability = () => {
         .order('day_of_week');
 
       if (scheduleError) throw scheduleError;
+      console.log('📅 Fetched Weekly Schedule:', scheduleData);
       setWeeklySchedule(scheduleData || []);
 
       // Fetch special days
@@ -135,12 +142,15 @@ export const useDesignerAvailability = () => {
         ...scheduleData
       };
 
+      console.log('💾 Updating weekly schedule:', data);
+
       const { error } = await supabase
         .from('designer_weekly_schedule')
         .upsert(data, { onConflict: 'designer_id,day_of_week' });
 
       if (error) throw error;
 
+      console.log('✅ Weekly schedule updated successfully');
       await fetchAvailabilityData();
       toast({
         title: "Schedule updated",
