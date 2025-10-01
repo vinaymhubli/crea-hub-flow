@@ -824,22 +824,22 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({
               {/* Screen share or selected fullscreen video */}
               {fullscreenVideo === 'screen' || (!fullscreenVideo && (screenSharing || remoteScreenSharingState)) ? (
                 <div className="w-full h-full relative">
-                  {screenSharing ? (
+              {screenSharing ? (
                     <div 
                       id="local-player" 
                       className="absolute inset-0 cursor-pointer"
                       onClick={() => handleVideoClick('screen')}
                     />
                   ) : (
-                    Object.values(remoteUsers).filter(u => u.hasVideo).map(u => (
-                      <div key={u.uid as any} className="absolute inset-0">
+                Object.values(remoteUsers).filter(u => u.hasVideo).map(u => (
+                  <div key={u.uid as any} className="absolute inset-0">
                         <div 
                           id={`remote-player-${u.uid}`} 
                           className="absolute inset-0 cursor-pointer"
                           onClick={() => handleVideoClick('screen')}
                         />
-                      </div>
-                    ))
+                  </div>
+                ))
                   )}
                   
                   {/* Screen sharing indicator */}
@@ -903,12 +903,12 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({
                         <p className="text-lg">Waiting for participant</p>
                         <p className="text-sm text-gray-400 mt-2">They will appear here when they join</p>
                       </div>
-                    </div>
-                  )}
+                </div>
+              )}
                 </div>
               )}
             </div>
-
+            
             {/* Video thumbnails strip at bottom */}
             <div className="absolute bottom-4 left-4 right-4 flex gap-3 justify-center">
               {/* Local video thumbnail */}
@@ -959,9 +959,9 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({
                   )}
                 </div>
               ))}
-            </div>
-          </div>
-        ) : (
+                  </div>
+                </div>
+              ) : (
           /* Normal video call layout */
           <div className="w-full h-full relative">
             {fullscreenVideo ? (
@@ -981,7 +981,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({
                 ) : (
                   <div className="w-full h-full relative">
                     {Object.values(remoteUsers).filter(u => u.hasVideo).map(u => (
-                      <div key={u.uid as any} className="absolute inset-0">
+                  <div key={u.uid as any} className="absolute inset-0">
                         <div 
                           id={`remote-player-${u.uid}`} 
                           className="absolute inset-0 cursor-pointer"
@@ -1007,10 +1007,10 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({
                       >
                         <div id={`remote-player-${u.uid}-thumb`} className="absolute inset-0" />
                         <div className="absolute bottom-1 left-1 bg-blue-500/90 text-white px-1.5 py-0.5 text-xs rounded backdrop-blur-sm">
-                          {isDesigner ? 'Customer' : 'Designer'}
-                        </div>
-                      </div>
-                    ))
+                      {isDesigner ? 'Customer' : 'Designer'}
+                    </div>
+                  </div>
+                ))
                   ) : localVideoTrack ? (
                     /* Show local as thumbnail */
                     <div 
@@ -1020,21 +1020,21 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({
                       <div id="local-player-thumb" className="absolute inset-0" />
                       <div className="absolute bottom-1 left-1 bg-green-500/90 text-white px-1.5 py-0.5 text-xs rounded backdrop-blur-sm">
                         You
-                      </div>
+                </div>
                     </div>
                   ) : null}
-                </div>
-              </div>
-            ) : (
+            </div>
+          </div>
+        ) : (
               /* Grid layout - responsive */
               <div className="w-full h-full p-4">
                 <div className="w-full h-full grid gap-4 grid-cols-1 lg:grid-cols-2">
-                  {/* Local video */}
+            {/* Local video */}
                   <div 
                     className="relative bg-black rounded-xl overflow-hidden shadow-lg cursor-pointer hover:shadow-2xl transition-all duration-200 hover:scale-[1.02]"
                     onClick={() => handleVideoClick('local')}
                   >
-                    <div id="local-player" className="absolute inset-0" />
+              <div id="local-player" className="absolute inset-0" />
                     {!localVideoTrack ? (
                       <div className="w-full h-full flex items-center justify-center bg-gray-800">
                         <div className="text-center text-gray-300">
@@ -1042,41 +1042,41 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({
                             <VideoOff className="w-8 h-8" />
                           </div>
                           <p className="text-lg font-medium">Camera Off</p>
-                          {permissionError && (
+                  {permissionError && (
                             <div className="mt-4 p-3 bg-red-900/30 rounded-lg border border-red-500/30">
                               <p className="text-red-300 text-sm mb-2">{permissionError}</p>
-                              <button 
+                      <button 
                                 onClick={(e) => { 
                                   e.stopPropagation(); 
                                   setPermissionError(null); 
                                   join(); 
                                 }} 
                                 className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-sm transition-colors"
-                              >
-                                Retry
-                              </button>
-                            </div>
-                          )}
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  )}
                         </div>
                       </div>
                     ) : (
                       <div className="absolute bottom-4 left-4 bg-green-500/90 backdrop-blur-sm text-white px-3 py-2 rounded-lg shadow-lg">
                         <span className="text-sm font-medium">You</span>
-                      </div>
-                    )}
+                </div>
+              )}
                     {muted && (
                       <div className="absolute top-4 right-4 bg-red-500/90 backdrop-blur-sm text-white p-2 rounded-lg shadow-lg">
                         <MicOff className="w-4 h-4" />
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Remote video */}
+                </div>
+              )}
+            </div>
+            
+            {/* Remote video */}
                   <div 
                     className="relative bg-black rounded-xl overflow-hidden shadow-lg cursor-pointer hover:shadow-2xl transition-all duration-200 hover:scale-[1.02]"
                     onClick={() => handleVideoClick('remote')}
                   >
-                    {Object.values(remoteUsers).filter(u => u.hasVideo).length === 0 ? (
+              {Object.values(remoteUsers).filter(u => u.hasVideo).length === 0 ? (
                       <div className="w-full h-full flex items-center justify-center bg-gray-800">
                         <div className="text-center text-gray-300">
                           <div className="w-16 h-16 mx-auto mb-4 bg-gray-700 rounded-full flex items-center justify-center">
@@ -1086,23 +1086,23 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({
                           <p className="text-sm text-gray-400 mt-2">They will appear here when they join</p>
                         </div>
                       </div>
-                    ) : (
-                      <>
-                        {Object.values(remoteUsers).filter(u => u.hasVideo).map(u => (
-                          <div key={u.uid as any} className="absolute inset-0">
-                            <div id={`remote-player-${u.uid}`} className="absolute inset-0" />
+              ) : (
+                <>
+                  {Object.values(remoteUsers).filter(u => u.hasVideo).map(u => (
+                    <div key={u.uid as any} className="absolute inset-0">
+                      <div id={`remote-player-${u.uid}`} className="absolute inset-0" />
                             <div className="absolute bottom-4 left-4 bg-blue-500/90 backdrop-blur-sm text-white px-3 py-2 rounded-lg shadow-lg">
                               <span className="text-sm font-medium">{isDesigner ? 'Customer' : 'Designer'}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </>
-                    )}
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
                   </div>
-                </div>
-              </div>
-            )}
+            </div>
           </div>
+        )}
+      </div>
         )}
       </div>
 
@@ -1119,7 +1119,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({
             onClick={toggleMic}
           >
             {muted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
-          </Button>
+        </Button>
           
           {/* Camera button */}
           <Button 
@@ -1131,11 +1131,11 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({
             onClick={toggleCamera}
           >
             {cameraOff ? <VideoOff className="w-5 h-5" /> : <Video className="w-5 h-5" />}
-          </Button>
+        </Button>
           
           {/* Screen share button - for both designer and customer */}
-          <Button
-            variant={screenSharing ? 'destructive' : 'outline'}
+                     <Button
+                       variant={screenSharing ? 'destructive' : 'outline'}
             size="lg"
             className={`rounded-full w-12 h-12 p-0 transition-all duration-200 ${
               screenSharing ? 'bg-red-600 hover:bg-red-700 text-white' : 
@@ -1162,14 +1162,14 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({
               title={isPaused ? 'Resume session' : 'Pause session'}
             >
               {isPaused ? <Play className="w-5 h-5" /> : <Pause className="w-5 h-5" />}
-            </Button>
-          )}
+                     </Button>
+                   )}
 
           {/* Rate change button - only for designer when NOT screen sharing */}
           {isDesigner && !screenSharing && (
             <div className="relative rate-input-container">
-              <Button
-                variant="outline"
+                   <Button
+                     variant="outline"
                 size="lg"
                 className="rounded-full w-12 h-12 p-0 transition-all duration-200 hover:bg-gray-100"
                 onClick={() => setShowRateInput(!showRateInput)}
@@ -1194,12 +1194,12 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({
                       autoFocus
                     />
                     <Button
-                      size="sm"
+                     size="sm"
                       onClick={handleRateSubmit}
                       className="px-2 py-1 text-xs"
                     >
                       Set
-                    </Button>
+                   </Button>
                   </div>
                   <div className="text-xs text-gray-500 mt-1">
                     Current: ₹{currentRate || 0}/min
@@ -1211,8 +1211,8 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({
 
           {/* Format Multiplier button - only for designer when NOT screen sharing */}
           {isDesigner && !screenSharing && (
-            <Button
-              variant="outline"
+                   <Button
+                     variant="outline"
               size="lg"
               className="rounded-full w-12 h-12 p-0 transition-all duration-200 hover:bg-gray-100"
               onClick={handleFormatMultiplierRequest}
@@ -1277,21 +1277,21 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({
             <div className="flex justify-end space-x-2 mt-6">
               <Button
                 variant="outline"
-                onClick={() => {
+                     onClick={() => {
                   setShowFormatMultiplierDialog(false);
                   setFormatMultiplierInput('');
                   setFileFormatInput('');
-                }}
+                     }}
                 className="px-4 py-2"
-              >
+                   >
                 Cancel
-              </Button>
+                   </Button>
               <Button
                 onClick={handleFormatMultiplierSubmit}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white"
               >
                 Send Request
-              </Button>
+          </Button>
             </div>
           </div>
         </div>
@@ -1312,7 +1312,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(({
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-medium text-gray-600">File Format:</span>
                   <span className="font-mono text-sm">{pendingMultiplierRequest.fileFormat}</span>
-                </div>
+      </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-gray-600">New Multiplier:</span>
                   <span className="font-bold text-lg">{pendingMultiplierRequest.newMultiplier}x</span>

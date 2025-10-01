@@ -419,6 +419,8 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
     }
 
     // Check designer availability based on their schedule
+    console.log('🔍 Designer object for availability check:', designer);
+    console.log('🆔 Using designer ID:', designer.id);
     const availabilityResult = await checkDesignerBookingAvailability(designer.id);
     
     if (!availabilityResult.isAvailable) {
