@@ -69,6 +69,7 @@ export default function LiveCallSession() {
   const [showMultiplierApprovalDialog, setShowMultiplierApprovalDialog] = useState(false);
   const [pendingRateChange, setPendingRateChange] = useState<number | null>(null);
   const [pendingMultiplierChange, setPendingMultiplierChange] = useState<number | null>(null);
+  const [pendingFileFormat, setPendingFileFormat] = useState<string>('');
 
   // Broadcast helper
   const channel = useMemo(
@@ -126,12 +127,26 @@ export default function LiveCallSession() {
         }
       })
       .on("broadcast", { event: "multiplier_change_request" }, (p) => {
-        console.log("📡 Customer received multiplier change request:", p.payload);
+        console.log("📡 ===== MULTIPLIER CHANGE REQUEST RECEIVED =====");
+        console.log("📡 Full payload object:", p);
+        console.log("📡 Payload data:", p.payload);
+        console.log("📡 isDesigner check:", isDesigner);
+        console.log("📡 newMultiplier value:", p.payload?.newMultiplier);
+        console.log("📡 fileFormat value:", p.payload?.fileFormat);
+        console.log("📡 requestedBy value:", p.payload?.requestedBy);
+        
         if (!isDesigner) {
-          console.log("📡 Setting multiplier approval dialog for customer");
+          console.log("✅ Customer confirmed - showing dialog");
+          console.log("📡 Setting pendingMultiplierChange to:", p.payload.newMultiplier);
           setPendingMultiplierChange(p.payload.newMultiplier);
+          console.log("📡 Setting pendingFileFormat to:", p.payload.fileFormat);
+          setPendingFileFormat(p.payload.fileFormat || '');
+          console.log("📡 Setting showMultiplierApprovalDialog to: true");
           setShowMultiplierApprovalDialog(true);
-          toast.info(`Designer ${p.payload.requestedBy} is requesting to change format multiplier to ${p.payload.newMultiplier}x. Please approve.`);
+          console.log("✅ State updated, dialog should appear");
+          toast.info(`Designer ${p.payload.requestedBy} is requesting to change format multiplier for ${p.payload.fileFormat} to ${p.payload.newMultiplier}x. Please approve.`);
+        } else {
+          console.log("⚠️ Received on designer side, ignoring (isDesigner=true)");
         }
       })
       .on("broadcast", { event: "rate_change_response" }, (p) => {
@@ -686,29 +701,46 @@ export default function LiveCallSession() {
   );
 
   const handleMultiplierChange = useCallback(
-    (newMultiplier: number) => {
+    (newMultiplier: number, fileFormat?: string) => {
+      console.log("📊 ===== MULTIPLIER CHANGE HANDLER CALLED =====");
       console.log("📊 Multiplier change requested:", newMultiplier);
+      console.log("📊 File format:", fileFormat);
+      console.log("📊 isDesigner:", isDesigner);
+      console.log("📊 designerName:", designerName);
+      console.log("📊 customerName:", customerName);
+      console.log("📊 channel exists:", !!channel);
       
       if (isDesigner) {
         // Designer is requesting multiplier change - broadcast to customer for approval
-        console.log("🎯 Designer sending multiplier change request:", { newMultiplier, designerName });
-        channel.send({
-          type: "broadcast",
-          event: "multiplier_change_request",
-          payload: {
-            newMultiplier: newMultiplier,
-            requestedBy: designerName,
-          },
-        });
-        toast.info("Format multiplier change request sent to customer for approval");
+        console.log("🎯 Designer sending multiplier change request:", { newMultiplier, fileFormat, designerName });
+        
+        try {
+          channel.send({
+            type: "broadcast",
+            event: "multiplier_change_request",
+            payload: {
+              newMultiplier: newMultiplier,
+              fileFormat: fileFormat || '',
+              requestedBy: designerName,
+            },
+          });
+          console.log("✅ Broadcast sent successfully");
+          toast.info("Format multiplier change request sent to customer for approval");
+          console.log("✅ Toast shown");
+        } catch (error) {
+          console.error("❌ Error sending broadcast:", error);
+          toast.error("Failed to send multiplier change request");
+        }
       } else {
         // Customer is changing multiplier - apply directly
+        console.log("👤 Customer applying multiplier change directly");
         setFormatMultiplier(newMultiplier);
         channel.send({
           type: "broadcast",
           event: "multiplier_change",
           payload: {
             newMultiplier: newMultiplier,
+            fileFormat: fileFormat || '',
             changedBy: customerName,
           },
         });
@@ -1188,6 +1220,7 @@ export default function LiveCallSession() {
           onPauseSession={handlePauseSession}
           onResumeSession={handleResumeSession}
           onRateChange={handleRateChange}
+          onMultiplierChange={handleMultiplierChange}
           currentRate={rate}
         />
         {/* Remove old screen share modal - using native Agora sharing */}
@@ -1276,14 +1309,24 @@ export default function LiveCallSession() {
               <p className="text-sm text-gray-700">
                 The designer is requesting to change the format multiplier:
               </p>
-              <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+                {pendingFileFormat && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-600">File Format:</span>
+                    <span className="font-mono text-base font-semibold text-blue-600">{pendingFileFormat}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-gray-600">New Multiplier:</span>
-                  <span className="font-bold text-lg">{pendingMultiplierChange}x</span>
+                  <span className="font-bold text-lg text-green-600">{pendingMultiplierChange}x</span>
                 </div>
               </div>
-              <div className="text-sm text-gray-600">
-                <p>⚠️ This will affect the pricing for files in this format.</p>
+              <div className="text-sm text-gray-600 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <p className="font-medium text-amber-800">⚠️ Pricing Impact</p>
+                <p className="mt-1">This will affect the pricing for <span className="font-mono font-semibold">{pendingFileFormat}</span> files.</p>
+                <p className="mt-1">Current rate × {pendingMultiplierChange}x = Higher final cost</p>
+              </div>
+              <div className="text-sm text-gray-700">
                 <p>Do you approve this change?</p>
               </div>
             </div>
@@ -1366,3 +1409,4 @@ export default function LiveCallSession() {
     </div>
   );
 }
+

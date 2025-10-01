@@ -24,7 +24,7 @@ interface SessionSidePanelProps {
   bookingId?: string;
   userId?: string;
   onRateChange?: (newRate: number) => void;
-  onMultiplierChange?: (newMultiplier: number) => void;
+  onMultiplierChange?: (newMultiplier: number, fileFormat?: string) => void;
   formatMultiplier?: number;
   defaultTab?: string;
   mobileMode?: boolean;
