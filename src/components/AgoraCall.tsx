@@ -756,7 +756,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
 
           // Store original video and audio state before starting screen share
           setOriginalVideoState(!cameraOff);
-          setOriginalAudioState(!muted);
+          setOriginalAudioState(muted);
           console.log(
             "📹 Stored original state - Video:",
             !cameraOff,
@@ -869,8 +869,8 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
 
           // Restore audio state
           if (localAudioTrack) {
-            await localAudioTrack.setEnabled(originalAudioState);
-            setMuted(!originalAudioState);
+            await localAudioTrack.setEnabled(!originalAudioState);
+            setMuted(originalAudioState);
           }
 
           setScreenSharing(false);
