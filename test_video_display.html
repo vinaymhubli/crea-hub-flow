@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Video Display Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .video-container { max-width: 800px; margin: 20px 0; }
+        .video-thumbnail { width: 100%; height: 400px; object-fit: cover; border-radius: 10px; }
+        .play-button { 
+            position: absolute; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            background: white; 
+            border-radius: 50%; 
+            width: 80px; 
+            height: 80px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .video-wrapper { position: relative; }
+    </style>
+</head>
+<body>
+    <h1>Video Display Test</h1>
+    <p>Testing if the video from your database should be visible:</p>
+    
+    <div class="video-container">
+        <h2>Video from Database:</h2>
+        <p><strong>URL:</strong> https://youtu.be/H73Gy4Y8ENY</p>
+        <p><strong>Thumbnail:</strong> https://img.youtube.com/vi/H73Gy4Y8ENY/maxresdefault.jpg</p>
+        
+        <div class="video-wrapper">
+            <img src="https://img.youtube.com/vi/H73Gy4Y8ENY/maxresdefault.jpg" 
+                 alt="Video thumbnail" 
+                 class="video-thumbnail">
+            <div class="play-button">▶</div>
+        </div>
+    </div>
+    
+    <script>
+        console.log('🎥 Video test loaded');
+        console.log('📺 Video URL: https://youtu.be/H73Gy4Y8ENY');
+        console.log('🖼️ Thumbnail URL: https://img.youtube.com/vi/H73Gy4Y8ENY/maxresdefault.jpg');
+    </script>
+</body>
+</html>

@@ -17,6 +17,7 @@ import {
   UserCheck,
   Calendar,
   PlayCircle,
+  Play,
   BookOpen,
   Wallet,
   CreditCard,
@@ -172,6 +173,11 @@ const contentSections = [
     title: "Promotions & Offers",
     url: "/admin/promotions",
     icon: Megaphone,
+  },
+  {
+    title: "How It Works Video",
+    url: "/admin/homepage-video",
+    icon: Play,
   },
   // {
   //   title: "Help Center",

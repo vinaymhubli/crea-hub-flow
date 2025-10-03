@@ -55,6 +55,7 @@ import LogoManagement from "./pages/admin/LogoManagement"
 import RefundPolicyManagement from "./pages/admin/RefundPolicyManagement"
 import AdminFeaturedDesigners from "./pages/admin/FeaturedDesigners"
 import AdminPromotions from "./pages/admin/Promotions"
+import HomepageVideoManagement from "./pages/admin/HomepageVideoManagement"
 // import HelpCenterManagement from "./pages/admin/HelpCenterManagement"
 // import BlogManagement from "./pages/admin/BlogManagement"
 // import WebsiteSectionManager from "./pages/admin/WebsiteSectionManager"
@@ -388,6 +389,13 @@ function AppContent() {
             <ProtectedAdminRoute>
               <AdminLayout>
                 <AdminPromotions />
+              </AdminLayout>
+            </ProtectedAdminRoute>
+          } />
+          <Route path="/admin/homepage-video" element={
+            <ProtectedAdminRoute>
+              <AdminLayout>
+                <HomepageVideoManagement />
               </AdminLayout>
             </ProtectedAdminRoute>
           } />
