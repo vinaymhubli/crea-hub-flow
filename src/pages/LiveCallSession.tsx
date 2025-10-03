@@ -302,12 +302,22 @@ export default function LiveCallSession() {
          }
        })
        .on("broadcast", { event: "screen_share_started" }, (p) => {
-         console.log("📡 Screen share started notification:", p.payload);
+         console.log("📡 ===== RECEIVED SCREEN_SHARE_STARTED BROADCAST =====");
+         console.log("📡 Payload:", p.payload);
+         console.log("📡 userName:", p.payload?.userName);
+         console.log("📡 Current isDesigner:", isDesigner);
+         console.log("📡 Setting remoteScreenSharing to TRUE");
          setRemoteScreenSharing(true);
+         console.log("✅ remoteScreenSharing state updated to TRUE");
        })
        .on("broadcast", { event: "screen_share_stopped" }, (p) => {
-         console.log("📡 Screen share stopped notification:", p.payload);
+         console.log("📡 ===== RECEIVED SCREEN_SHARE_STOPPED BROADCAST =====");
+         console.log("📡 Payload:", p.payload);
+         console.log("📡 userName:", p.payload?.userName);
+         console.log("📡 Current isDesigner:", isDesigner);
+         console.log("📡 Setting remoteScreenSharing to FALSE");
          setRemoteScreenSharing(false);
+         console.log("✅ remoteScreenSharing state updated to FALSE - AgoraCall should re-enable button");
        })
        .on("broadcast", { event: "screen_share_request" }, (p) => {
          console.log("📡 Screen share request notification:", p.payload);
@@ -631,21 +641,31 @@ export default function LiveCallSession() {
   }, [isDesigner, channel]);
 
   const handleScreenShareStarted = useCallback(() => {
+    console.log("🖥️ ===== SCREEN SHARE STARTED HANDLER CALLED =====");
     const userName = isDesigner ? designerName : customerName;
+    console.log("🖥️ Broadcasting screen_share_started by:", userName);
+    console.log("🖥️ isDesigner:", isDesigner);
+    
     channel.send({
       type: "broadcast",
       event: "screen_share_started",
       payload: { userName },
     });
+    console.log("✅ screen_share_started broadcast sent");
   }, [channel, isDesigner, designerName, customerName]);
 
   const handleScreenShareStopped = useCallback(() => {
+    console.log("🖥️ ===== SCREEN SHARE STOPPED HANDLER CALLED =====");
     const userName = isDesigner ? designerName : customerName;
+    console.log("🖥️ Broadcasting screen_share_stopped by:", userName);
+    console.log("🖥️ isDesigner:", isDesigner);
+    
     channel.send({
       type: "broadcast",
       event: "screen_share_stopped",
       payload: { userName },
     });
+    console.log("✅ screen_share_stopped broadcast sent");
   }, [channel, isDesigner, designerName, customerName]);
 
   const handleScreenShareRequest = useCallback(() => {

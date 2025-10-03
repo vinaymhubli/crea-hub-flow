@@ -196,18 +196,31 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
 
     // Handle remote screen sharing state changes
     useEffect(() => {
+      console.log("🖥️ ===== REMOTE SCREEN SHARE STATE CHANGED =====");
+      console.log("🖥️ remoteScreenSharing (prop):", remoteScreenSharing);
+      console.log("🖥️ screenSharingRef.current (local sharing):", screenSharingRef.current);
+      console.log("🖥️ Current screenShareBlocked:", screenShareBlocked);
+      
       if (remoteScreenSharing && !screenSharingRef.current) {
         console.log(
           "🖥️ Remote user is screen sharing, blocking local screen share"
         );
         setScreenShareBlocked(true);
+        console.log("🖥️ Set screenShareBlocked to TRUE");
       } else if (!remoteScreenSharing) {
         console.log(
           "🖥️ Remote screen sharing stopped, allowing local screen share"
         );
         setScreenShareBlocked(false);
+        console.log("🖥️ Set screenShareBlocked to FALSE - button should be enabled now");
       }
     }, [remoteScreenSharing]);
+
+    // Debug effect to track screenShareBlocked changes
+    useEffect(() => {
+      console.log("🔍 screenShareBlocked state changed to:", screenShareBlocked);
+      console.log("🔍 Button should be:", screenShareBlocked ? "DISABLED" : "ENABLED");
+    }, [screenShareBlocked]);
 
     // Handle rate change
     const handleRateSubmit = useCallback(() => {
@@ -409,6 +422,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
                     track.label
                   );
                   setRemoteScreenSharingState(false);
+                  setFullscreenVideo(null); // Reset fullscreen state when remote screen sharing stops
                 }
               }
             }
@@ -861,11 +875,17 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
 
           setScreenSharing(false);
           setScreenShareBlocked(false);
+          setFullscreenVideo(null); // Reset fullscreen state to return to grid layout
           console.log("✅ Screen sharing stopped, original state restored");
 
           // Notify that screen sharing stopped
+          console.log("📡 Calling onScreenShareStopped callback...");
           if (onScreenShareStopped) {
+            console.log("✅ onScreenShareStopped exists, calling it now");
             onScreenShareStopped();
+            console.log("✅ onScreenShareStopped called successfully");
+          } else {
+            console.warn("⚠️ onScreenShareStopped is not defined");
           }
         }
       } catch (error) {
@@ -1025,118 +1045,45 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
         {/* Main video area */}
         <div className="flex-1 relative overflow-hidden">
           {/* Google Meet style video layout */}
-          {screenSharing || remoteScreenSharing ? (
-            /* Screen sharing layout */
+          {screenSharing || remoteScreenSharingState ? (
+            /* Screen sharing layout - ALWAYS show screen share as main content */
             <div className="w-full h-full relative">
-              {/* Main video area */}
+              {/* Main screen share area - takes full space */}
               <div className="w-full h-full relative bg-black">
-                {/* Screen share or selected fullscreen video */}
-                {fullscreenVideo === "screen" ||
-                (!fullscreenVideo &&
-                  (screenSharing || remoteScreenSharingState)) ? (
-                  <div className="w-full h-full relative">
-                    {screenSharing ? (
-                      <div
-                        id="local-player"
-                        className="absolute inset-0 cursor-pointer"
-                        onClick={() => handleVideoClick("screen")}
-                      />
-                    ) : (
-                      Object.values(remoteUsers)
-                        .filter((u) => u.hasVideo)
-                        .map((u) => (
-                          <div key={u.uid as any} className="absolute inset-0">
-                            <div
-                              id={`remote-player-${u.uid}`}
-                              className="absolute inset-0 cursor-pointer"
-                              onClick={() => handleVideoClick("screen")}
-                            />
-                          </div>
-                        ))
-                    )}
-
-                    {/* Screen sharing indicator */}
-                    <div className="absolute top-4 left-4 bg-red-500/90 backdrop-blur-sm text-white px-3 py-2 rounded-lg flex items-center gap-2 shadow-lg">
-                      <ScreenShare className="w-4 h-4" />
-                      <span className="text-sm font-medium">
-                        {screenSharing
-                          ? "You are presenting"
-                          : `${
-                              isDesigner ? "Customer" : "Designer"
-                            } is presenting`}
-                      </span>
-                    </div>
-                  </div>
-                ) : fullscreenVideo === "local" ? (
-                  /* Local video fullscreen */
-                  <div className="w-full h-full relative">
+                {/* Screen share content - always full size when screen sharing is active */}
+                <div className="w-full h-full relative">
+                  {screenSharing ? (
                     <div
                       id="local-player"
                       className="absolute inset-0 cursor-pointer"
-                      onClick={() => handleVideoClick("local")}
+                      onClick={() => handleVideoClick("screen")}
                     />
-                    <div className="absolute top-4 left-4 bg-green-500/90 backdrop-blur-sm text-white px-3 py-2 rounded-lg shadow-lg">
-                      <span className="text-sm font-medium">
-                        You (Fullscreen)
-                      </span>
-                    </div>
-                  </div>
-                ) : fullscreenVideo === "remote" ? (
-                  /* Remote video fullscreen */
-                  <div className="w-full h-full relative">
-                    {Object.values(remoteUsers)
+                  ) : (
+                    Object.values(remoteUsers)
                       .filter((u) => u.hasVideo)
                       .map((u) => (
                         <div key={u.uid as any} className="absolute inset-0">
                           <div
                             id={`remote-player-${u.uid}`}
                             className="absolute inset-0 cursor-pointer"
-                            onClick={() => handleVideoClick("remote")}
+                            onClick={() => handleVideoClick("screen")}
                           />
                         </div>
-                      ))}
-                    <div className="absolute top-4 left-4 bg-blue-500/90 backdrop-blur-sm text-white px-3 py-2 rounded-lg shadow-lg">
-                      <span className="text-sm font-medium">
-                        {isDesigner ? "Customer" : "Designer"} (Fullscreen)
-                      </span>
-                    </div>
+                      ))
+                  )}
+
+                  {/* Screen sharing indicator */}
+                  <div className="absolute top-4 left-4 bg-red-500/90 backdrop-blur-sm text-white px-3 py-2 rounded-lg flex items-center gap-2 shadow-lg">
+                    <ScreenShare className="w-4 h-4" />
+                    <span className="text-sm font-medium">
+                      {screenSharing
+                        ? "You are presenting"
+                        : `${
+                            isDesigner ? "Customer" : "Designer"
+                          } is presenting`}
+                    </span>
                   </div>
-                ) : (
-                  /* Default view - show camera videos or waiting screen */
-                  <div className="w-full h-full relative">
-                    {Object.values(remoteUsers).filter((u) => u.hasVideo)
-                      .length > 0 ? (
-                      /* Show remote video if available */
-                      Object.values(remoteUsers)
-                        .filter((u) => u.hasVideo)
-                        .map((u) => (
-                          <div key={u.uid as any} className="absolute inset-0">
-                            <div
-                              id={`remote-player-${u.uid}`}
-                              className="absolute inset-0 cursor-pointer"
-                              onClick={() => handleVideoClick("remote")}
-                            />
-                            <div className="absolute top-4 left-4 bg-blue-500/90 backdrop-blur-sm text-white px-3 py-2 rounded-lg shadow-lg">
-                              <span className="text-sm font-medium">
-                                {isDesigner ? "Customer" : "Designer"}
-                              </span>
-                            </div>
-                          </div>
-                        ))
-                    ) : (
-                      /* Waiting for participant */
-                      <div className="w-full h-full flex items-center justify-center text-gray-400">
-                        <div className="text-center">
-                          <Video className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                          <p className="text-lg">Waiting for participant</p>
-                          <p className="text-sm text-gray-400 mt-2">
-                            They will appear here when they join
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
+                </div>
               </div>
 
               {/* Video thumbnails strip at bottom */}
@@ -1148,7 +1095,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
                       fullscreenVideo === "local"
                         ? "border-green-400 shadow-lg shadow-green-400/30"
                         : "border-white/20"
-                    } ${fullscreenVideo ? "w-24 h-16" : "w-32 h-20"}`}
+                    } w-32 h-20`}
                     onClick={() => handleVideoClick("local")}
                   >
                     <div id="local-player-thumb" className="absolute inset-0" />
@@ -1181,7 +1128,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
                         fullscreenVideo === "remote"
                           ? "border-blue-400 shadow-lg shadow-blue-400/30"
                           : "border-white/20"
-                      } ${fullscreenVideo ? "w-24 h-16" : "w-32 h-20"}`}
+                      } w-32 h-20`}
                       onClick={() => handleVideoClick("remote")}
                     >
                       <div
@@ -1434,7 +1381,14 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
                   ? "bg-gray-400 hover:bg-gray-500 text-white cursor-not-allowed"
                   : "hover:bg-gray-100"
               }`}
-              onClick={toggleScreenShare}
+              onClick={() => {
+                console.log("🖥️ Screen share button clicked");
+                console.log("🖥️ screenSharing:", screenSharing);
+                console.log("🖥️ screenShareBlocked:", screenShareBlocked);
+                console.log("🖥️ remoteScreenSharing:", remoteScreenSharing);
+                console.log("🖥️ Button disabled:", screenShareBlocked && !screenSharing);
+                toggleScreenShare();
+              }}
               disabled={screenShareBlocked && !screenSharing}
               title={
                 screenShareBlocked
