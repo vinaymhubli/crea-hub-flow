@@ -17,6 +17,7 @@ import {
   UserCheck,
   Calendar,
   PlayCircle,
+  Play,
   BookOpen,
   Wallet,
   CreditCard,
@@ -178,6 +179,11 @@ const contentSections = [
     url: "/admin/pricing",
     icon: DollarSign,
   },
+  {
+    title: "How It Works Video",
+    url: "/admin/homepage-video",
+    icon: Play,
+  },
   // {
   //   title: "Help Center",
   //   url: "/admin/cms/help-center",
@@ -210,51 +216,51 @@ const analyticsSections = [
 ];
 
 // Platform Configuration section items
-  const platformSections = [
-    {
-      title: "Platform Settings",
-      url: "/admin/platform/settings",
-      icon: Settings,
-    },
-    {
-      title: "Invoice Management",
-      url: "/admin/invoice-management",
-      icon: FileText,
-    },
-    {
-      title: "Commissions",
-      url: "/admin/platform/commissions",
-      icon: DollarSign,
-    },
-    {
-      title: "Taxes",
-      url: "/admin/platform/taxes",
-      icon: Receipt,
-    },
-    {
-      title: "Tax Collections",
-      url: "/admin/tax-collections",
-      icon: TrendingUp,
-    },
-    {
-      title: "TDS Management",
-      url: "/admin/tds-management",
-      icon: Percent,
-    },
-  ];
+const platformSections = [
+  {
+    title: "Platform Settings",
+    url: "/admin/platform/settings",
+    icon: Settings,
+  },
+  {
+    title: "Invoice Management",
+    url: "/admin/invoice-management",
+    icon: FileText,
+  },
+  {
+    title: "Commissions",
+    url: "/admin/platform/commissions",
+    icon: DollarSign,
+  },
+  {
+    title: "Taxes",
+    url: "/admin/platform/taxes",
+    icon: Receipt,
+  },
+  {
+    title: "Tax Collections",
+    url: "/admin/tax-collections",
+    icon: TrendingUp,
+  },
+  {
+    title: "TDS Management",
+    url: "/admin/tds-management",
+    icon: Percent,
+  },
+];
 
-  const walletSections = [
-    {
-      title: "Wallet Recharges",
-      url: "/admin/wallet-recharges",
-      icon: ArrowUpCircle,
-    },
-    {
-      title: "Wallet Withdrawals",
-      url: "/admin/wallet-withdrawals",
-      icon: ArrowDownCircle,
-    },
-  ];
+const walletSections = [
+  {
+    title: "Wallet Recharges",
+    url: "/admin/wallet-recharges",
+    icon: ArrowUpCircle,
+  },
+  {
+    title: "Wallet Withdrawals",
+    url: "/admin/wallet-withdrawals",
+    icon: ArrowDownCircle,
+  },
+];
 
 // Communications section items
 const communicationSections = [
@@ -269,13 +275,13 @@ export function AdminSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
   const currentPath = location.pathname;
-  
+
   const collapsed = state === "collapsed";
 
   const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
-    isActive 
-      ? "bg-primary/10 text-primary font-medium border-r-2 border-primary" 
+    isActive
+      ? "bg-primary/10 text-primary font-medium border-r-2 border-primary"
       : "hover:bg-muted/50 text-muted-foreground hover:text-foreground";
 
   return (
@@ -290,7 +296,9 @@ export function AdminSidebar() {
               <h2 className="text-lg font-semibold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                 Admin Panel
               </h2>
-              <p className="text-xs text-muted-foreground">Platform Management</p>
+              <p className="text-xs text-muted-foreground">
+                Platform Management
+              </p>
             </div>
           )}
           <SidebarTrigger className="ml-auto" />
@@ -321,7 +329,11 @@ export function AdminSidebar() {
 
         {/* Content Management Section */}
         <SidebarGroup>
-          {!collapsed && <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Content Management</SidebarGroupLabel>}
+          {!collapsed && (
+            <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Content Management
+            </SidebarGroupLabel>
+          )}
           <SidebarGroupContent>
             <SidebarMenu>
               {contentSections.map((item) => (
@@ -343,7 +355,11 @@ export function AdminSidebar() {
 
         {/* Platform Configuration Section */}
         <SidebarGroup>
-          {!collapsed && <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Platform Config</SidebarGroupLabel>}
+          {!collapsed && (
+            <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Platform Config
+            </SidebarGroupLabel>
+          )}
           <SidebarGroupContent>
             <SidebarMenu>
               {platformSections.map((item) => (
@@ -365,7 +381,11 @@ export function AdminSidebar() {
 
         {/* Wallet Transactions Section */}
         <SidebarGroup>
-          {!collapsed && <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Wallet Transactions</SidebarGroupLabel>}
+          {!collapsed && (
+            <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Wallet Transactions
+            </SidebarGroupLabel>
+          )}
           <SidebarGroupContent>
             <SidebarMenu>
               {walletSections.map((item) => (
@@ -387,7 +407,11 @@ export function AdminSidebar() {
 
         {/* Analytics Section */}
         <SidebarGroup>
-          {!collapsed && <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Analytics</SidebarGroupLabel>}
+          {!collapsed && (
+            <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Analytics
+            </SidebarGroupLabel>
+          )}
           <SidebarGroupContent>
             <SidebarMenu>
               {analyticsSections.map((item) => (
@@ -409,7 +433,11 @@ export function AdminSidebar() {
 
         {/* Communications Section */}
         <SidebarGroup>
-          {!collapsed && <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Communications</SidebarGroupLabel>}
+          {!collapsed && (
+            <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Communications
+            </SidebarGroupLabel>
+          )}
           <SidebarGroupContent>
             <SidebarMenu>
               {communicationSections.map((item) => (

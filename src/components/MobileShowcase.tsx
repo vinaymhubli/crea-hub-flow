@@ -5,22 +5,32 @@ import { Search, UserPlus } from 'lucide-react';
 
 const MobileShowcase = () => {
   const [isVisible, setIsVisible] = useState(false);
-  const [showDesignerMessage, setShowDesignerMessage] = useState(false);
+  const [visibleMessages, setVisibleMessages] = useState([]);
+  const [isLooping, setIsLooping] = useState(false);
   const [showTyping, setShowTyping] = useState(false);
-  const [showCustomerMessage, setShowCustomerMessage] = useState(false);
+
+  // Single conversation from customer's perspective
+  const conversation = [
+    { id: 1, type: 'customer', message: 'Hi! I need a logo for my new coffee shop ☕', time: '10:30 AM' },
+    { id: 2, type: 'designer', name: 'Sarah Designer', message: 'Hello! I\'d love to help with your coffee shop logo! What style are you thinking?', time: '10:32 AM', avatar: 'S' },
+    { id: 3, type: 'customer', message: 'Something modern but cozy, maybe with coffee beans?', time: '10:35 AM' },
+    { id: 4, type: 'designer', name: 'Sarah Designer', message: 'Perfect! I\'ll create a few concepts for you. Give me 30 minutes!', time: '10:36 AM', avatar: 'S' },
+    { id: 5, type: 'customer', message: 'Thank you! Can\'t wait to see them! 😊', time: '10:38 AM' },
+    { id: 6, type: 'designer', name: 'Sarah Designer', message: 'Here are 3 logo concepts! Which direction do you like?', time: '11:15 AM', avatar: 'S' },
+    { id: 7, type: 'customer', message: 'I love the second one! Can we try it in blue?', time: '11:18 AM' },
+    { id: 8, type: 'designer', name: 'Sarah Designer', message: 'Absolutely! I\'ll create the blue version for you right now!', time: '11:20 AM', avatar: 'S' }
+  ];
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           setIsVisible(true);
-          // Start chat animation sequence
-          setTimeout(() => setShowDesignerMessage(true), 1000);
-          setTimeout(() => setShowTyping(true), 3000);
+          // Start the looping chat animation
           setTimeout(() => {
-            setShowTyping(false);
-            setShowCustomerMessage(true);
-          }, 5000);
+            setIsLooping(true);
+            startChatLoop();
+          }, 1000);
         }
       },
       { threshold: 0.3 }
@@ -31,6 +41,60 @@ const MobileShowcase = () => {
 
     return () => observer.disconnect();
   }, []);
+
+  const startChatLoop = () => {
+    let messageIndex = 0;
+    
+    const addNextMessage = () => {
+      if (messageIndex >= conversation.length) {
+        // Reset conversation
+        messageIndex = 0;
+        setVisibleMessages([]);
+        return;
+      }
+      
+      const currentMessage = conversation[messageIndex];
+      
+      // Show typing indicator for designer messages
+      if (currentMessage && currentMessage.type === 'designer') {
+        setShowTyping(true);
+        setTimeout(() => {
+          setShowTyping(false);
+          setVisibleMessages(prev => {
+            // Check if message already exists to prevent duplicates
+            const exists = prev.some(msg => msg.id === currentMessage.id);
+            if (exists) return prev;
+            return [...prev, currentMessage];
+          });
+          messageIndex++;
+        }, 1500);
+      } else {
+        setVisibleMessages(prev => {
+          // Check if message already exists to prevent duplicates
+          const exists = prev.some(msg => msg.id === currentMessage.id);
+          if (exists) return prev;
+          return [...prev, currentMessage];
+        });
+        messageIndex++;
+      }
+    };
+
+    // Start the first message
+    addNextMessage();
+    
+    const interval = setInterval(() => {
+      addNextMessage();
+    }, 3000); // Add new message every 3 seconds
+
+    return () => clearInterval(interval);
+  };
+
+  useEffect(() => {
+    if (isLooping) {
+      const cleanup = startChatLoop();
+      return cleanup;
+    }
+  }, [isLooping]);
 
   return (
     <section id="mobile-showcase" className="py-24 bg-white overflow-hidden">
@@ -63,52 +127,66 @@ const MobileShowcase = () => {
                         <h4 className="text-lg font-bold text-gray-900">Live Project</h4>
                         <div className="flex items-center space-x-2">
                           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                          <span className="text-xs text-green-600 font-medium">Online</span>
+                          <span className="text-xs text-green-600 font-medium">
+                            {isLooping ? 'Live Chat' : 'Online'}
+                          </span>
                         </div>
                       </div>
                     </div>
 
                     {/* Chat Container */}
-                    <div className="bg-white h-full rounded-b-2xl p-4 flex flex-col justify-end space-y-4">
-                      {/* Designer Message */}
-                      <div className={`transform transition-all duration-700 ${showDesignerMessage ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
-                        <div className="flex items-start space-x-3">
-                          <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center flex-shrink-0">
-                            <span className="text-xs font-bold text-white">S</span>
+                    <div className="bg-white h-full rounded-b-2xl p-4 flex flex-col">
+                      {/* Messages Display (WhatsApp Style) */}
+                      <div className="flex-1 overflow-y-auto space-y-4">
+                        {/* Show all visible messages */}
+                        {visibleMessages.map((message, index) => (
+                          <div key={message.id} className="transform transition-all duration-500 ease-in-out">
+                            {message.type === 'designer' ? (
+                              <div className="flex items-start space-x-3">
+                                <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                  <span className="text-xs font-bold text-white">{message.avatar}</span>
+                                </div>
+                                <div className="flex-1">
+                                  <div className="bg-gray-100 rounded-2xl rounded-tl-md px-4 py-3">
+                                    <div className="text-xs font-medium text-gray-800 mb-1">{message.name}</div>
+                                    <div className="text-sm text-gray-700">{message.message}</div>
+                                  </div>
+                                  <div className="text-xs text-gray-500 mt-1 ml-2">{message.time}</div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-end justify-end">
+                                <div className="flex-1 flex justify-end">
+                                  <div className="bg-green-500 rounded-2xl rounded-br-md px-4 py-3 max-w-xs">
+                                    <div className="text-sm text-white">{message.message}</div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                            {message.type === 'customer' && (
+                              <div className="text-xs text-gray-500 mt-1 mr-2 text-right">{message.time}</div>
+                            )}
                           </div>
-                          <div className="flex-1">
+                        ))}
+
+                        {/* Show typing indicator if active */}
+                        {showTyping && (
+                          <div className="flex items-start space-x-3">
+                            <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                              <span className="text-xs font-bold text-white">S</span>
+                            </div>
                             <div className="bg-gray-100 rounded-2xl rounded-tl-md px-4 py-3">
-                              <div className="text-xs font-medium text-gray-800 mb-1">Sarah Designer</div>
-                              <div className="text-sm text-gray-700">Working on your logo design... Here's the first concept! 🎨</div>
-                            </div>
-                            <div className="text-xs text-gray-500 mt-1 ml-2">Just now</div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Typing Indicator */}
-                      {showTyping && (
-                        <div className="flex items-end justify-end">
-                          <div className="bg-green-500 rounded-2xl rounded-br-md px-4 py-3 max-w-xs">
-                            <div className="flex space-x-1">
-                              <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
-                              <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                              <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                              <div className="text-xs font-medium text-gray-600 mb-1">
+                                Sarah Designer is typing...
+                              </div>
+                              <div className="flex space-x-1">
+                                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      )}
-
-                      {/* Customer Message */}
-                      <div className={`transform transition-all duration-700 ${showCustomerMessage ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
-                        <div className="flex items-end justify-end">
-                          <div className="flex-1 flex justify-end">
-                            <div className="bg-green-500 rounded-2xl rounded-br-md px-4 py-3 max-w-xs">
-                              <div className="text-sm text-white">Looks amazing! Can we try it in blue? Love the concept! 💙</div>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-xs text-gray-500 mt-1 mr-2 text-right">2 min ago</div>
+                        )}
                       </div>
 
                       {/* Input Area */}
