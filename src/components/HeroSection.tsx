@@ -32,15 +32,15 @@ const HeroSection = () => {
       
       <div className="relative z-10 w-full">
         <div className="max-w-7xl mx-auto px-6 py-20 text-center">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white mb-8 leading-tight tracking-tight">
+          <div className="max-w-4xl mx-auto pb-4">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white mb-8 leading-relaxed tracking-tight" style={{ lineHeight: '1.2' }}>
               Connect with
               <span className="block bg-gradient-to-r from-green-400 via-green-300 to-green-500 bg-clip-text text-transparent">
                 Amazing Designers
               </span>
               <span className="text-green-100">Worldwide</span>
             </h1>
-            <p className="text-xl md:text-2xl text-gray-200 mb-12 leading-relaxed max-w-3xl mx-auto font-light">
+            <p className="text-xl md:text-2xl text-gray-200 mb-12 leading-relaxed max-w-3xl mx-auto font-light pb-2">
               Connect with top designers instantly. Experience real-time collaboration, 
               browse portfolios, and bring your vision to life with our innovative platform.
             </p>
