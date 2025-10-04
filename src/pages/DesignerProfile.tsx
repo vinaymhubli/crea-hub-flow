@@ -29,11 +29,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDesignerProfile } from '@/hooks/useDesignerProfile';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 
 export default function DesignerProfile() {
-  const { user } = useAuth();
+  const { user, refetchProfile } = useAuth();
   const { profile, loading: profileLoading } = useProfile();
+  const { toast } = useToast();
+  
+  // Local state for avatar image to ensure instant UI updates
+  const [avatarImage, setAvatarImage] = useState<string | null>(null);
   const { 
     designerProfile, 
     loading: designerLoading, 
@@ -43,6 +49,15 @@ export default function DesignerProfile() {
     uploadPortfolioImage,
     deletePortfolioImage
   } = useDesignerProfile();
+
+  // Initialize avatar image when profile loads
+  useEffect(() => {
+    if (profile?.avatar_url) {
+      setAvatarImage(profile.avatar_url);
+    } else {
+      setAvatarImage(null);
+    }
+  }, [profile?.avatar_url]);
 
   const [activeTab, setActiveTab] = useState("personal");
   const [isSaving, setIsSaving] = useState(false);
@@ -115,7 +130,7 @@ export default function DesignerProfile() {
     }
   }, [designerProfile]);
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: string, value: string | number | boolean | string[]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -169,7 +184,56 @@ export default function DesignerProfile() {
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      await uploadAvatar(file);
+      try {
+        const result = await uploadAvatar(file);
+        if (result) {
+          // Update local state immediately for instant UI update
+          setAvatarImage(result);
+          // Also refresh the profile data in the background
+          refetchProfile();
+        }
+      } catch (error) {
+        console.error('Error uploading avatar:', error);
+      }
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    try {
+      console.log('Removing avatar...');
+      
+      // Direct Supabase call to set avatar_url to null
+      const { error } = await supabase
+        .from('profiles')
+        .update({ avatar_url: null })
+        .eq('user_id', user?.id);
+
+      if (error) {
+        console.error('Error removing avatar:', error);
+        toast({
+          title: "Error",
+          description: "Failed to remove profile image",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('Avatar removed successfully');
+      // Update local state immediately for instant UI update
+      setAvatarImage(null);
+      // Also refresh the profile data in the background
+      refetchProfile();
+      toast({
+        title: "Success",
+        description: "Profile image removed successfully",
+      });
+    } catch (error) {
+      console.error('Error removing avatar:', error);
+      toast({
+        title: "Error",
+        description: "Failed to remove profile image",
+        variant: "destructive",
+      });
     }
   };
 
@@ -240,9 +304,9 @@ export default function DesignerProfile() {
               <div className="flex items-center space-x-6">
                 <SidebarTrigger className="text-white hover:bg-white/20 rounded-lg p-2" />
                 <div className="flex items-center space-x-4">
-                  {profile?.avatar_url ? (
+                  {avatarImage ? (
                     <img 
-                      src={profile.avatar_url} 
+                      src={avatarImage} 
                       alt="Profile" 
                       className="w-16 h-16 rounded-2xl object-cover border border-white/30 shadow-xl"
                     />
@@ -331,9 +395,9 @@ export default function DesignerProfile() {
                       </CardHeader>
                       <CardContent className="p-8 text-center">
                         <div className="relative group">
-                          {profile?.avatar_url ? (
+                          {avatarImage ? (
                             <img 
-                              src={profile.avatar_url} 
+                              src={avatarImage} 
                               alt="Profile" 
                               className="w-32 h-32 rounded-full object-cover mx-auto shadow-2xl group-hover:scale-105 transition-transform duration-300"
                             />
@@ -353,13 +417,25 @@ export default function DesignerProfile() {
                           onChange={handleAvatarUpload}
                           className="hidden"
                         />
-                        <Button 
-                          onClick={() => avatarInputRef.current?.click()}
-                          className="mt-6 bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 w-full"
-                        >
-                          <Camera className="w-4 h-4 mr-2" />
-                          Change Photo
-                        </Button>
+                        <div className="space-y-3 mt-6">
+                          <Button 
+                            onClick={() => avatarInputRef.current?.click()}
+                            className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 w-full"
+                          >
+                            <Camera className="w-4 h-4 mr-2" />
+                            Change Photo
+                          </Button>
+                          {avatarImage && (
+                            <Button 
+                              onClick={handleRemoveAvatar}
+                              variant="outline"
+                              className="w-full border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 transition-all duration-200"
+                            >
+                              <X className="w-4 h-4 mr-2" />
+                              Remove Photo
+                            </Button>
+                          )}
+                        </div>
                         <p className="text-sm text-gray-500 mt-3">Upload a professional headshot</p>
                       </CardContent>
                     </Card>

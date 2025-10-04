@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useLocation, NavLink } from "react-router-dom";
+import { useLocation, NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Sidebar,
   SidebarContent,
@@ -47,6 +48,7 @@ import {
   Image,
   Crown,
   Megaphone,
+  LogOut,
 } from "lucide-react";
 
 const mainSections = [
@@ -274,9 +276,20 @@ const communicationSections = [
 export function AdminSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { signOut } = useAuth();
   const currentPath = location.pathname;
 
   const collapsed = state === "collapsed";
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      navigate("/admin-login");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
 
   const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
@@ -453,6 +466,23 @@ export function AdminSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Logout Section */}
+        <SidebarGroup className="mt-auto">
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  onClick={handleLogout}
+                  className="w-full text-red-600 hover:bg-red-50 hover:text-red-700 border-t border-gray-200 pt-4 mt-4"
+                >
+                  <LogOut className="h-4 w-4" />
+                  {!collapsed && <span>Logout</span>}
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
