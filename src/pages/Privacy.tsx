@@ -7,16 +7,16 @@ const Privacy = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary/10 via-background to-secondary/10 py-20">
+      <section className="bg-gradient-to-br from-green-50 to-blue-50 py-20">
         <div className="max-w-4xl mx-auto px-6 text-center">
-          <Badge className="mb-4" variant="secondary">
+          <Badge className="mb-4 bg-green-100 text-green-800 border-green-200">
             <Shield className="w-4 h-4 mr-2" />
             Privacy Policy
           </Badge>
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">
+          <h1 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900">
             Your Privacy Matters
           </h1>
-          <p className="text-xl text-muted-foreground mb-8">
+          <p className="text-xl text-gray-600 mb-8">
             Last updated: January 1, 2024
           </p>
         </div>
@@ -26,8 +26,8 @@ const Privacy = () => {
       <section className="py-20">
         <div className="max-w-4xl mx-auto px-6">
           <div className="prose prose-lg max-w-none">
-            <h2>Information We Collect</h2>
-            <p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Information We Collect</h2>
+            <p className="text-gray-700 mb-6">
               At meetmydesigners, we collect information you provide directly to us, such as when you create an account, 
               update your profile, make a purchase, or contact us for support.
             </p>
@@ -50,8 +50,8 @@ const Privacy = () => {
               </CardContent>
             </Card>
 
-            <h2>How We Use Your Information</h2>
-            <p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">How We Use Your Information</h2>
+            <p className="text-gray-700 mb-6">
               We use the information we collect to provide, maintain, and improve our services, 
               process transactions, and communicate with you.
             </p>
@@ -74,14 +74,14 @@ const Privacy = () => {
               </CardContent>
             </Card>
 
-            <h2>Information Sharing</h2>
-            <p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Information Sharing</h2>
+            <p className="text-gray-700 mb-6">
               We do not sell, trade, or otherwise transfer your personal information to third parties without your consent, 
               except as described in this policy.
             </p>
 
-            <h2>Data Security</h2>
-            <p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Data Security</h2>
+            <p className="text-gray-700 mb-6">
               We implement appropriate security measures to protect your personal information against unauthorized access, 
               alteration, disclosure, or destruction.
             </p>
@@ -104,20 +104,20 @@ const Privacy = () => {
               </CardContent>
             </Card>
 
-            <h2>Your Rights</h2>
-            <p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Your Rights</h2>
+            <p className="text-gray-700 mb-6">
               You have the right to access, update, or delete your personal information. You can also opt out of certain 
               communications and request a copy of your data.
             </p>
 
-            <h2>Cookies and Tracking</h2>
-            <p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Cookies and Tracking</h2>
+            <p className="text-gray-700 mb-6">
               We use cookies and similar technologies to enhance your experience, analyze usage patterns, and provide 
               personalized content.
             </p>
 
-            <h2>Contact Us</h2>
-            <p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Contact Us</h2>
+            <p className="text-gray-700 mb-6">
               If you have any questions about this Privacy Policy, please contact us at privacy@meetmydesigner.com 
               or through our support channels.
             </p>

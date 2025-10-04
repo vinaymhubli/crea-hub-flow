@@ -66,7 +66,7 @@ const TermsDynamic = () => {
     // Wrap consecutive <li> elements in <ul>
     formattedContent = formattedContent.replace(/(<li>.*<\/li>)(<br><li>.*<\/li>)*/g, (match) => {
       const listItems = match.replace(/<br>/g, '').replace(/<li>/g, '<li>').replace(/<\/li>/g, '</li>');
-      return `<ul>₹{listItems}</ul>`;
+      return `<ul>${listItems}</ul>`;
     });
 
     return { __html: formattedContent };

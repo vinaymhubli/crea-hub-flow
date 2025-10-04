@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Check, Star, Zap, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,67 +6,78 @@ import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import CTASection from '@/components/CTASection';
 import FAQSection from '@/components/FAQSection';
+import { supabase } from '@/integrations/supabase/client';
+
+interface PricingPlan {
+  id: string;
+  name: string;
+  price: string;
+  period?: string;
+  description: string;
+  features: string[];
+  button_text: string;
+  button_url: string;
+  is_popular: boolean;
+  is_published: boolean;
+  sort_order: number;
+}
+
+interface DesignerPricing {
+  id: string;
+  title: string;
+  description: string;
+  platform_fee_percentage: number;
+  features: string[];
+  button_text: string;
+  button_url: string;
+  is_published: boolean;
+}
 
 const Pricing = () => {
-  const plans = [
-    {
-      name: "Starter",
-      price: "Free",
-      description: "Perfect for trying out our platform",
-      features: [
-        "Browse designer profiles",
-        "View portfolios and reviews",
-        "Send 3 consultation requests per month",
-        "Basic messaging",
-        "Community access"
-      ],
-      buttonText: "Get Started",
-      popular: false
-    },
-    {
-      name: "Professional",
-      price: "₹29",
-      period: "/month",
-      description: "Best for regular design projects",
-      features: [
-        "Everything in Starter",
-        "Unlimited consultation requests",
-        "Priority designer matching",
-        "Advanced messaging features",
-        "Project management tools",
-        "24/7 support",
-        "Custom project templates"
-      ],
-      buttonText: "Start Free Trial",
-      popular: true
-    },
-    {
-      name: "Enterprise",
-      price: "Custom",
-      description: "For teams and large organizations",
-      features: [
-        "Everything in Professional",
-        "Dedicated account manager",
-        "Custom integrations",
-        "Advanced analytics",
-        "Team collaboration tools",
-        "Custom contracts",
-        "SLA guarantee",
-        "White-label options"
-      ],
-      buttonText: "Contact Sales",
-      popular: false
-    }
-  ];
+  const [plans, setPlans] = useState<PricingPlan[]>([]);
+  const [designerPricing, setDesignerPricing] = useState<DesignerPricing | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const designerFeatures = [
-    "0% platform fee for first 30 days",
-    "5% platform fee after trial",
-    "Weekly payments",
-    "Designer verification badge",
-    "Portfolio showcase",
-    "Client matching algorithm"
-  ];
+  useEffect(() => {
+    fetchPricingData();
+  }, []);
+
+  const fetchPricingData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch customer pricing plans
+      const { data: plansData, error: plansError } = await supabase
+        .from('pricing_plans' as any)
+        .select('*')
+        .eq('is_published', true)
+        .eq('plan_type', 'customer')
+        .order('sort_order', { ascending: true });
+
+      if (plansError) throw plansError;
+
+      // Fetch designer pricing
+      const { data: designerData, error: designerError } = await supabase
+        .from('designer_pricing' as any)
+        .select('*')
+        .eq('is_published', true)
+        .order('sort_order', { ascending: true })
+        .limit(1)
+        .single();
+
+      if (designerError && designerError.code !== 'PGRST116') throw designerError;
+
+      setPlans((plansData as PricingPlan[]) || []);
+      setDesignerPricing((designerData as DesignerPricing) || null);
+    } catch (error) {
+      console.error('Error fetching pricing data:', error);
+      // Fallback to empty arrays if database fetch fails
+      setPlans([]);
+      setDesignerPricing(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen">
@@ -95,43 +106,54 @@ const Pricing = () => {
             <p className="text-muted-foreground">Whether you're just starting out or running a design team</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {plans.map((plan, index) => (
-              <Card key={index} className={`relative ${plan.popular ? 'border-primary shadow-lg scale-105' : ''}`}>
-                {plan.popular && (
-                  <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2" variant="default">
-                    <Zap className="w-3 h-3 mr-1" />
-                    Most Popular
-                  </Badge>
-                )}
-                <CardHeader className="text-center">
-                  <CardTitle className="text-2xl">{plan.name}</CardTitle>
-                  <CardDescription>{plan.description}</CardDescription>
-                  <div className="py-4">
-                    <span className="text-4xl font-bold">{plan.price}</span>
-                    {plan.period && <span className="text-muted-foreground">{plan.period}</span>}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3 mb-6">
-                    {plan.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-center">
-                        <Check className="w-5 h-5 text-primary mr-3 flex-shrink-0" />
-                        <span className="text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button 
-                    className="w-full" 
-                    variant={plan.popular ? "default" : "outline"}
-                    asChild
-                  >
-                    <Link to="/auth">{plan.buttonText}</Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p>Loading pricing plans...</p>
+            </div>
+          ) : plans.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {plans.map((plan, index) => (
+                <Card key={plan.id} className={`relative ${plan.is_popular ? 'border-primary shadow-lg scale-105' : ''}`}>
+                  {plan.is_popular && (
+                    <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2" variant="default">
+                      <Zap className="w-3 h-3 mr-1" />
+                      Most Popular
+                    </Badge>
+                  )}
+                  <CardHeader className="text-center">
+                    <CardTitle className="text-2xl">{plan.name}</CardTitle>
+                    <CardDescription>{plan.description}</CardDescription>
+                    <div className="py-4">
+                      <span className="text-4xl font-bold">{plan.price}</span>
+                      {plan.period && <span className="text-muted-foreground">{plan.period}</span>}
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-3 mb-6">
+                      {plan.features.map((feature, featureIndex) => (
+                        <li key={featureIndex} className="flex items-center">
+                          <Check className="w-5 h-5 text-primary mr-3 flex-shrink-0" />
+                          <span className="text-sm">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <Button 
+                      className="w-full" 
+                      variant={plan.is_popular ? "default" : "outline"}
+                      asChild
+                    >
+                      <Link to={plan.button_url}>{plan.button_text}</Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-gray-500">No pricing plans available at the moment.</p>
+            </div>
+          )}
         </div>
       </section>
 
@@ -143,31 +165,42 @@ const Pricing = () => {
             <p className="text-muted-foreground">Grow your business with our designer-friendly pricing</p>
           </div>
 
-          <div className="max-w-2xl mx-auto">
-            <Card>
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl">Designer Plan</CardTitle>
-                <CardDescription>Everything you need to succeed as a designer</CardDescription>
-                <div className="py-4">
-                  <span className="text-4xl font-bold">5%</span>
-                  <span className="text-muted-foreground"> platform fee</span>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-3 mb-6">
-                  {designerFeatures.map((feature, index) => (
-                    <li key={index} className="flex items-center">
-                      <Check className="w-5 h-5 text-primary mr-3 flex-shrink-0" />
-                      <span className="text-sm">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Button className="w-full" asChild>
-                  <Link to="/auth">Join as Designer</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p>Loading designer pricing...</p>
+            </div>
+          ) : designerPricing ? (
+            <div className="max-w-2xl mx-auto">
+              <Card>
+                <CardHeader className="text-center">
+                  <CardTitle className="text-2xl">{designerPricing.title}</CardTitle>
+                  <CardDescription>{designerPricing.description}</CardDescription>
+                  <div className="py-4">
+                    <span className="text-4xl font-bold">{designerPricing.platform_fee_percentage}%</span>
+                    <span className="text-muted-foreground"> platform fee</span>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-3 mb-6">
+                    {designerPricing.features.map((feature, index) => (
+                      <li key={index} className="flex items-center">
+                        <Check className="w-5 h-5 text-primary mr-3 flex-shrink-0" />
+                        <span className="text-sm">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button className="w-full" asChild>
+                    <Link to={designerPricing.button_url}>{designerPricing.button_text}</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-gray-500">Designer pricing information not available at the moment.</p>
+            </div>
+          )}
         </div>
       </section>
 

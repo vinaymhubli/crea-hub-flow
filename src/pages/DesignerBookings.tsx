@@ -89,17 +89,20 @@ export default function DesignerBookings() {
     
     switch (status) {
       case 'upcoming':
-        // Include all confirmed or in_progress bookings (no date restriction)
+        // Include only confirmed bookings that haven't been completed yet
         filtered = allBookings.filter(booking => 
-          booking.status === 'confirmed' || booking.status === 'in_progress'
+          booking.status === 'confirmed'
         );
         break;
       case 'pending':
         filtered = allBookings.filter(booking => booking.status === 'pending');
         break;
       case 'completed':
-        // Only include bookings explicitly marked as completed
-        filtered = allBookings.filter(booking => booking.status === 'completed');
+        // Include bookings marked as completed, and also in_progress bookings 
+        // (which should be treated as completed if the session has ended)
+        filtered = allBookings.filter(booking => 
+          booking.status === 'completed' || booking.status === 'in_progress'
+        );
         break;
       case 'cancelled':
         filtered = allBookings.filter(booking => booking.status === 'cancelled');
@@ -226,7 +229,8 @@ export default function DesignerBookings() {
       case 'confirmed':
         return <Badge className="bg-green-100 text-green-800 border-green-200">Confirmed</Badge>;
       case 'in_progress':
-        return <Badge className="bg-blue-100 text-blue-800 border-blue-200">In Progress</Badge>;
+        // For in_progress bookings, show as completed since they should be in the completed tab
+        return <Badge className="bg-blue-100 text-blue-800 border-blue-200">Completed</Badge>;
       case 'pending':
         return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">Pending</Badge>;
       case 'completed':

@@ -612,7 +612,7 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
                     </div>
 
                     {/* Bio */}
-                    <p className="text-muted-foreground text-sm leading-relaxed mb-4">{designer.bio || 'Passionate designer ready to help you bring your vision to life.'}</p>
+                    <p className="text-muted-foreground text-sm leading-relaxed mb-4 line-clamp-3 text-ellipsis">{designer.bio || 'Passionate designer ready to help you bring your vision to life.'}</p>
 
                     {/* Skills */}
                     <div className="flex flex-wrap gap-2">

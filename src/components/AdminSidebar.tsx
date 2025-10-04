@@ -173,6 +173,11 @@ const contentSections = [
     url: "/admin/promotions",
     icon: Megaphone,
   },
+  {
+    title: "Pricing Management",
+    url: "/admin/pricing",
+    icon: DollarSign,
+  },
   // {
   //   title: "Help Center",
   //   url: "/admin/cms/help-center",

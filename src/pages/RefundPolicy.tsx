@@ -7,16 +7,16 @@ const RefundPolicy = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary/10 via-background to-secondary/10 py-20">
+      <section className="bg-gradient-to-br from-green-50 to-blue-50 py-20">
         <div className="max-w-4xl mx-auto px-6 text-center">
-          <Badge className="mb-4" variant="secondary">
+          <Badge className="mb-4 bg-green-100 text-green-800 border-green-200">
             <Scale className="w-4 h-4 mr-2" />
             Refund & Cancellation Policy
           </Badge>
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">
+          <h1 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900">
             Refund & Cancellation Policy
           </h1>
-          <p className="text-xl text-muted-foreground mb-8">
+          <p className="text-xl text-gray-600 mb-8">
             Last updated: January 1, 2024
           </p>
         </div>
@@ -26,8 +26,8 @@ const RefundPolicy = () => {
       <section className="py-20">
         <div className="max-w-4xl mx-auto px-6">
           <div className="prose prose-lg max-w-none">
-            <h2>Overview</h2>
-            <p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Overview</h2>
+            <p className="text-gray-700 mb-6">
               At meetmydesigners, we strive to provide excellent service and ensure customer satisfaction. 
               This policy outlines our refund and cancellation procedures for all services and transactions.
             </p>
@@ -50,8 +50,8 @@ const RefundPolicy = () => {
               </CardContent>
             </Card>
 
-            <h2>Session Cancellation Policy</h2>
-            <p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Session Cancellation Policy</h2>
+            <p className="text-gray-700 mb-6">
               You may cancel or reschedule your design session under the following conditions:
             </p>
 
@@ -80,8 +80,8 @@ const RefundPolicy = () => {
               </CardContent>
             </Card>
 
-            <h2>Design Project Refunds</h2>
-            <p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Design Project Refunds</h2>
+            <p className="text-gray-700 mb-6">
               For ongoing design projects, refunds are calculated based on work completed and project milestones.
             </p>
 
@@ -103,8 +103,8 @@ const RefundPolicy = () => {
               </CardContent>
             </Card>
 
-            <h2>Subscription and Membership Refunds</h2>
-            <p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Subscription and Membership Refunds</h2>
+            <p className="text-gray-700 mb-6">
               Monthly and annual subscriptions can be cancelled at any time with the following terms:
             </p>
 
@@ -125,8 +125,8 @@ const RefundPolicy = () => {
               </CardContent>
             </Card>
 
-            <h2>Refund Request Process</h2>
-            <p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Refund Request Process</h2>
+            <p className="text-gray-700 mb-6">
               To request a refund, please follow these steps:
             </p>
 
@@ -148,8 +148,8 @@ const RefundPolicy = () => {
               </CardContent>
             </Card>
 
-            <h2>Non-Refundable Items</h2>
-            <p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Non-Refundable Items</h2>
+            <p className="text-gray-700 mb-6">
               The following items are generally not eligible for refunds:
             </p>
 
@@ -171,24 +171,24 @@ const RefundPolicy = () => {
               </CardContent>
             </Card>
 
-            <h2>Dispute Resolution</h2>
-            <p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Dispute Resolution</h2>
+            <p className="text-gray-700 mb-6">
               If you're not satisfied with our refund decision, you can escalate your case through our 
               dispute resolution process. We're committed to fair and transparent resolution of all issues.
             </p>
 
-            <h2>Contact Information</h2>
-            <p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Contact Information</h2>
+            <p className="text-gray-700 mb-4">
               For questions about refunds or cancellations, please contact us at:
             </p>
-            <ul>
+            <ul className="text-gray-700 space-y-2">
               <li>Email: support@meetmydesigner.com</li>
               <li>Phone: +1 (555) 123-4567</li>
               <li>Live Chat: Available on our website</li>
             </ul>
 
-            <h2>Policy Updates</h2>
-            <p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Policy Updates</h2>
+            <p className="text-gray-700 mb-6">
               We reserve the right to update this refund and cancellation policy at any time. 
               Changes will be posted on this page with an updated revision date. Continued use 
               of our services after changes constitutes acceptance of the updated policy.

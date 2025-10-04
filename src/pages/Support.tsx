@@ -93,28 +93,28 @@ const Support = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary/10 via-background to-secondary/10 py-20">
+      <section className="bg-gradient-to-br from-green-50 to-blue-50 py-20">
         <div className="max-w-4xl mx-auto px-6 text-center">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
             How can we help you?
           </h1>
-          <p className="text-xl text-muted-foreground mb-8">
+          <p className="text-xl text-gray-600 mb-8">
             Find answers, get support, and make the most of Meet My Designer
           </p>
           
           <div className="relative max-w-2xl mx-auto">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <Input
               placeholder="Search for help articles, guides, or FAQs..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 h-14 text-lg"
+              className="pl-12 h-14 text-lg border-gray-300 focus:border-green-500 focus:ring-green-500"
             />
           </div>
 
           <div className="flex flex-wrap justify-center gap-2 mt-6">
             {quickLinks.map((link, index) => (
-              <Badge key={index} variant="secondary" className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors">
+              <Badge key={index} className="bg-green-100 text-green-800 border-green-200 cursor-pointer hover:bg-green-200 transition-colors">
                 {link.icon} {link.title}
               </Badge>
             ))}
@@ -126,8 +126,8 @@ const Support = () => {
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold mb-4">Get Support Your Way</h2>
-            <p className="text-muted-foreground">Choose the support channel that works best for you</p>
+            <h2 className="text-3xl font-bold mb-4 text-gray-900">Get Support Your Way</h2>
+            <p className="text-gray-600">Choose the support channel that works best for you</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -136,22 +136,22 @@ const Support = () => {
               return (
                 <Card key={index} className="text-center hover:shadow-lg transition-shadow">
                   <CardHeader>
-                    <Icon className="w-12 h-12 text-primary mx-auto mb-4" />
-                    <CardTitle className="text-xl">{channel.title}</CardTitle>
-                    <CardDescription>{channel.description}</CardDescription>
+                    <Icon className="w-12 h-12 text-green-600 mx-auto mb-4" />
+                    <CardTitle className="text-xl text-gray-900">{channel.title}</CardTitle>
+                    <CardDescription className="text-gray-600">{channel.description}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2 mb-4">
                       <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Availability:</span>
-                        <span className="text-sm font-medium">{channel.availability}</span>
+                        <span className="text-sm text-gray-600">Availability:</span>
+                        <span className="text-sm font-medium text-gray-900">{channel.availability}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Response:</span>
-                        <span className="text-sm font-medium">{channel.responseTime}</span>
+                        <span className="text-sm text-gray-600">Response:</span>
+                        <span className="text-sm font-medium text-gray-900">{channel.responseTime}</span>
                       </div>
                     </div>
-                    <Button className="w-full">{channel.action}</Button>
+                    <Button className="w-full bg-green-600 hover:bg-green-700">{channel.action}</Button>
                   </CardContent>
                 </Card>
               );
@@ -161,7 +161,7 @@ const Support = () => {
       </section>
 
       {/* Support Resources */}
-      <section className="py-20 bg-muted/50">
+      <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-6">
           <Tabs defaultValue="faq" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
@@ -173,7 +173,7 @@ const Support = () => {
 
             <TabsContent value="faq" className="mt-8">
               <div className="max-w-4xl mx-auto">
-                <h3 className="text-2xl font-bold mb-6 text-center">Frequently Asked Questions</h3>
+                <h3 className="text-2xl font-bold mb-6 text-center text-gray-900">Frequently Asked Questions</h3>
                 <Accordion type="single" collapsible className="w-full">
                   {faqs.map((faq, index) => (
                     <AccordionItem key={index} value={`item-${index}`}>
@@ -215,17 +215,17 @@ const Support = () => {
 
             <TabsContent value="status" className="mt-8">
               <div className="max-w-4xl mx-auto">
-                <h3 className="text-2xl font-bold mb-6 text-center">System Status</h3>
+                <h3 className="text-2xl font-bold mb-6 text-center text-gray-900">System Status</h3>
                 <Card>
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle>All Systems Operational</CardTitle>
+                      <CardTitle className="text-gray-900">All Systems Operational</CardTitle>
                       <Badge className="bg-green-100 text-green-800">
                         <CheckCircle className="w-4 h-4 mr-2" />
                         Healthy
                       </Badge>
                     </div>
-                    <CardDescription>Last updated: {new Date().toLocaleString()}</CardDescription>
+                    <CardDescription className="text-gray-600">Last updated: {new Date().toLocaleString()}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
@@ -233,11 +233,11 @@ const Support = () => {
                         <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
                           <div className="flex items-center">
                             <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
-                            <span className="font-medium">{service.service}</span>
+                            <span className="font-medium text-gray-900">{service.service}</span>
                           </div>
                           <div className="flex items-center gap-4">
-                            <span className="text-sm text-muted-foreground">Uptime: {service.uptime}</span>
-                            <Badge variant="secondary">{service.status}</Badge>
+                            <span className="text-sm text-gray-600">Uptime: {service.uptime}</span>
+                            <Badge className="bg-green-100 text-green-800">{service.status}</Badge>
                           </div>
                         </div>
                       ))}
@@ -249,7 +249,7 @@ const Support = () => {
 
             <TabsContent value="contact" className="mt-8">
               <div className="max-w-2xl mx-auto">
-                <h3 className="text-2xl font-bold mb-6 text-center">Contact Our Support Team</h3>
+                <h3 className="text-2xl font-bold mb-6 text-center text-gray-900">Contact Our Support Team</h3>
                 <ContactForm />
               </div>
             </TabsContent>
@@ -258,14 +258,14 @@ const Support = () => {
       </section>
 
       {/* Emergency Support */}
-      <section className="py-12 bg-primary/5">
+      <section className="py-12 bg-green-50">
         <div className="max-w-4xl mx-auto px-6 text-center">
-          <Clock className="w-12 h-12 text-primary mx-auto mb-4" />
-          <h3 className="text-xl font-bold mb-2">Need Urgent Help?</h3>
-          <p className="text-muted-foreground mb-4">
+          <Clock className="w-12 h-12 text-green-600 mx-auto mb-4" />
+          <h3 className="text-xl font-bold mb-2 text-gray-900">Need Urgent Help?</h3>
+          <p className="text-gray-600 mb-4">
             For critical issues affecting live projects or urgent technical problems
           </p>
-          <Button size="lg" variant="outline">
+          <Button size="lg" variant="outline" className="border-green-600 text-green-600 hover:bg-green-50">
             <Phone className="w-4 h-4 mr-2" />
             Emergency Support: +1 (555) 123-4567
           </Button>

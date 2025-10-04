@@ -99,7 +99,7 @@ export function CustomerBookingDetailsDialog({
       { label: 'Booking Placed', status: 'completed' },
       { label: 'Designer Confirmation', status: booking.status === 'pending' ? 'current' : 'completed' },
       { label: 'Session Ready', status: booking.status === 'confirmed' ? 'current' : booking.status === 'pending' ? 'pending' : 'completed' },
-      { label: 'Session Complete', status: booking.status === 'completed' ? 'current' : booking.status === 'in_progress' ? 'current' : 'pending' }
+      { label: 'Session Complete', status: booking.status === 'completed' ? 'completed' : booking.status === 'in_progress' ? 'current' : 'pending' }
     ];
     return steps;
   };
