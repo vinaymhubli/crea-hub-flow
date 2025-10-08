@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   LayoutDashboard, 
   User, 
@@ -87,28 +87,11 @@ export default function CustomerWallet() {
   const [loading, setLoading] = useState(true);
   const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
   const [showBankManager, setShowBankManager] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const itemsPerPage = 10;
 
-  useEffect(() => {
-    if (user) {
-      fetchWalletData();
-    }
-  }, [user]);
-
-  // Handle payment success callback
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('payment_success') === 'true' || urlParams.get('mock_payment_success') === 'true') {
-      // Refresh wallet data after successful payment
-      fetchWalletData();
-      // Show success message
-      const amount = urlParams.get('amount') || '';
-      alert(`Payment successful! ₹${amount} has been added to your wallet.`);
-      // Clean up URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-  }, []);
-
-  const fetchWalletData = async () => {
+  const fetchWalletData = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -117,12 +100,41 @@ export default function CustomerWallet() {
       if (balanceError) throw balanceError;
       setWalletBalance(balanceData || 0);
 
-      // Fetch transactions
-      const { data: transactionsData, error: transactionsError } = await supabase
+      // Build query based on active tab
+      let countQuery = supabase
+        .from('wallet_transactions')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+
+      let dataQuery = supabase
         .from('wallet_transactions')
         .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .eq('user_id', user.id);
+
+      // Apply filters based on active tab
+      if (activeTab === 'deposits') {
+        countQuery = countQuery.eq('transaction_type', 'deposit');
+        dataQuery = dataQuery.eq('transaction_type', 'deposit');
+      } else if (activeTab === 'payments') {
+        countQuery = countQuery.eq('transaction_type', 'payment');
+        dataQuery = dataQuery.eq('transaction_type', 'payment');
+      } else if (activeTab === 'refunds') {
+        countQuery = countQuery.eq('transaction_type', 'refund');
+        dataQuery = dataQuery.eq('transaction_type', 'refund');
+      }
+
+      // Get total count
+      const { count, error: countError } = await countQuery;
+      if (countError) throw countError;
+      setTotalCount(count || 0);
+
+      // Calculate offset for pagination
+      const offset = (currentPage - 1) * itemsPerPage;
+
+      // Fetch paginated transactions
+      const { data: transactionsData, error: transactionsError } = await dataQuery
+        .order('created_at', { ascending: false })
+        .range(offset, offset + itemsPerPage - 1);
       
       if (transactionsError) throw transactionsError;
       
@@ -149,15 +161,46 @@ export default function CustomerWallet() {
     } finally {
       setLoading(false);
     }
+  }, [user, activeTab, currentPage, itemsPerPage]);
+
+  useEffect(() => {
+    if (user) {
+      fetchWalletData();
+    }
+  }, [user, fetchWalletData]);
+
+  // Handle payment success callback
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('payment_success') === 'true' || urlParams.get('mock_payment_success') === 'true') {
+      // Refresh wallet data after successful payment
+      fetchWalletData();
+      // Show success message
+      const amount = urlParams.get('amount') || '';
+      alert(`Payment successful! ₹${amount} has been added to your wallet.`);
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [fetchWalletData]);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setCurrentPage(1); // Reset to first page when changing tabs
   };
 
-  const filteredTransactions = transactions.filter(transaction => {
-    if (activeTab === "all") return true;
-    if (activeTab === "deposits") return transaction.type === "deposit";
-    if (activeTab === "payments") return transaction.type === "payment";
-    if (activeTab === "refunds") return transaction.type === "refund";
-    return true;
-  });
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
+
+  const handlePreviousPage = () => {
+    setCurrentPage(prev => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage(prev => Math.min(prev + 1, totalPages));
+  };
+
+  const handlePageClick = (page: number) => {
+    setCurrentPage(page);
+  };
 
   const userDisplayName = profile?.first_name && profile?.last_name 
     ? `${profile.first_name} ${profile.last_name}`
@@ -247,7 +290,7 @@ export default function CustomerWallet() {
 
           <div className="p-6 space-y-8">
             {/* Balance and Payment Methods */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
               {/* Your Balance */}
               <Card className="bg-gradient-to-br from-card via-teal-50/20 to-blue-50/10 border border-teal-200/30 shadow-xl">
                 <CardHeader>
@@ -280,7 +323,7 @@ export default function CustomerWallet() {
               </Card>
 
               {/* Payment Methods */}
-              <Card className="bg-gradient-to-br from-card via-teal-50/20 to-blue-50/10 border border-teal-200/30 shadow-xl">
+              {/* <Card className="bg-gradient-to-br from-card via-teal-50/20 to-blue-50/10 border border-teal-200/30 shadow-xl">
                 <CardHeader>
                   <CardTitle className="text-2xl text-foreground flex items-center space-x-2">
                     <div className="w-8 h-8 bg-gradient-to-r from-teal-400 to-blue-500 rounded-full flex items-center justify-center">
@@ -313,7 +356,7 @@ export default function CustomerWallet() {
                     </Button>
                   </div>
                 </CardContent>
-              </Card>
+              </Card> */}
             </div>
 
             {/* Transaction History */}
@@ -325,7 +368,7 @@ export default function CustomerWallet() {
                 </div>
               </CardHeader>
               <CardContent>
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
                   <TabsList className="grid w-full grid-cols-4 bg-gradient-to-r from-teal-50 to-blue-50">
                     <TabsTrigger value="all" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-teal-500 data-[state=active]:text-white">All</TabsTrigger>
                     <TabsTrigger value="deposits" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-teal-500 data-[state=active]:text-white">Deposits</TabsTrigger>
@@ -339,7 +382,7 @@ export default function CustomerWallet() {
                       </div>
                     ) : (
                       <div className="space-y-3">
-                        {filteredTransactions.length > 0 ? filteredTransactions.map((transaction) => (
+                        {transactions.length > 0 ? transactions.map((transaction) => (
                         <div key={transaction.id} className="flex items-center justify-between p-4 border border-teal-200/30 rounded-lg hover:bg-gradient-to-r hover:from-teal-50/50 hover:to-blue-50/50 transition-all duration-300">
                           <div className="flex items-center space-x-4">
                             <div className={`w-12 h-12 ${transaction.color} rounded-full flex items-center justify-center shadow-lg`}>
@@ -384,11 +427,67 @@ export default function CustomerWallet() {
                         )}
                       </div>
                     )}
-                    <div className="text-center mt-8">
-                      <Button variant="outline" className="hover:bg-gradient-to-r hover:from-teal-50 hover:to-blue-100 border-teal-300/50">
-                        View All Transactions
-                      </Button>
-                    </div>
+                    
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-between mt-8 pt-6 border-t border-teal-200/30">
+                        <div className="text-sm text-muted-foreground">
+                          Showing {Math.min((currentPage - 1) * itemsPerPage + 1, totalCount)} to {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount} transactions
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handlePreviousPage}
+                            disabled={currentPage === 1}
+                            className="hover:bg-gradient-to-r hover:from-teal-50 hover:to-blue-100 border-teal-300/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Previous
+                          </Button>
+                          
+                          <div className="flex items-center space-x-1">
+                            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                              let pageNumber;
+                              if (totalPages <= 5) {
+                                pageNumber = i + 1;
+                              } else if (currentPage <= 3) {
+                                pageNumber = i + 1;
+                              } else if (currentPage >= totalPages - 2) {
+                                pageNumber = totalPages - 4 + i;
+                              } else {
+                                pageNumber = currentPage - 2 + i;
+                              }
+                              
+                              return (
+                                <Button
+                                  key={pageNumber}
+                                  variant={currentPage === pageNumber ? "default" : "outline"}
+                                  size="sm"
+                                  onClick={() => handlePageClick(pageNumber)}
+                                  className={
+                                    currentPage === pageNumber
+                                      ? "bg-gradient-to-r from-green-400 to-teal-500 text-white hover:from-green-500 hover:to-teal-600"
+                                      : "hover:bg-gradient-to-r hover:from-teal-50 hover:to-blue-100 border-teal-300/50"
+                                  }
+                                >
+                                  {pageNumber}
+                                </Button>
+                              );
+                            })}
+                          </div>
+                          
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleNextPage}
+                            disabled={currentPage === totalPages}
+                            className="hover:bg-gradient-to-r hover:from-teal-50 hover:to-blue-100 border-teal-300/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Next
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </TabsContent>
                 </Tabs>
               </CardContent>

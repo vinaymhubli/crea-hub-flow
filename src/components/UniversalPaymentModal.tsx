@@ -171,7 +171,7 @@ export function UniversalPaymentModal({ open, onOpenChange, onSuccess }: Univers
           </div>
 
           {/* Payment Methods */}
-          <div className="space-y-4">
+          {/* <div className="space-y-4">
             <Label className="text-lg font-semibold">Choose Payment Method</Label>
             <div className="grid grid-cols-2 gap-4">
               {Object.entries(PAYMENT_METHODS).map(([key, method]) => {
@@ -212,7 +212,7 @@ export function UniversalPaymentModal({ open, onOpenChange, onSuccess }: Univers
                 );
               })}
             </div>
-          </div>
+          </div> */}
 
           {/* Payment Method Details */}
           {selectedMethod && (
