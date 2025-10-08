@@ -35,6 +35,7 @@ interface DesignerWithAvailability {
     first_name: string | null;
     last_name: string | null;
     avatar_url?: string | null;
+    email?: string | null;
   } | null;
   availability_settings?: {
     auto_accept_bookings: boolean;
@@ -56,18 +57,14 @@ export default function DesignerAvailability() {
   const queryClient = useQueryClient();
 
   const { data: designers = [], isLoading } = useQuery({
-    queryKey: ['admin-designer-availability', searchTerm],
+    queryKey: ['admin-designer-availability'],
     queryFn: async () => {
-      let query = supabase
+      const query = supabase
         .from('designers')
         .select(`
           *,
-          user:profiles!user_id(first_name, last_name, avatar_url)
+          user:profiles!user_id(first_name, last_name, avatar_url, email)
         `);
-
-      if (searchTerm) {
-        query = query.or(`specialty.ilike.%${searchTerm}%`);
-      }
 
       const { data, error } = await query.order('created_at', { ascending: false });
       
@@ -160,7 +157,10 @@ export default function DesignerAvailability() {
 
   // Mutation for updating schedule
   const updateScheduleMutation = useMutation({
-    mutationFn: async ({ designerId, scheduleData }: { designerId: string; scheduleData: any }) => {
+    mutationFn: async ({ designerId, scheduleData }: { 
+      designerId: string; 
+      scheduleData: {[key: number]: {is_available: boolean, start_time: string, end_time: string}} 
+    }) => {
       // Delete existing schedule
       await supabase
         .from('designer_weekly_schedule')
@@ -168,7 +168,7 @@ export default function DesignerAvailability() {
         .eq('designer_id', designerId);
 
       // Insert new schedule
-      const scheduleEntries = Object.entries(scheduleData).map(([day, data]: [string, any]) => ({
+      const scheduleEntries = Object.entries(scheduleData).map(([day, data]) => ({
         designer_id: designerId,
         day_of_week: parseInt(day),
         is_available: data.is_available,
@@ -248,7 +248,7 @@ export default function DesignerAvailability() {
     });
   };
 
-  const updateScheduleDay = (day: number, field: string, value: any) => {
+  const updateScheduleDay = (day: number, field: string, value: boolean | string) => {
     setScheduleData(prev => ({
       ...prev,
       [day]: {
@@ -267,9 +267,12 @@ export default function DesignerAvailability() {
   };
 
   const filteredDesigners = designers.filter(designer => {
-    const fullName = `${designer.user?.first_name || ''} ${designer.user?.last_name || ''}`.toLowerCase();
-    return fullName.includes(searchTerm.toLowerCase()) ||
-           designer.specialty.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = designer.specialty.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         designer.bio?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         designer.user?.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         designer.user?.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         designer.user?.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
   });
 
   if (isLoading) {
@@ -283,7 +286,7 @@ export default function DesignerAvailability() {
   }
 
   return (
-    <AdminLayout>
+    // <AdminLayout>
       <div className="container mx-auto p-6 max-w-7xl">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -529,6 +532,6 @@ export default function DesignerAvailability() {
           </DialogContent>
         </Dialog>
       </div>
-    </AdminLayout>
+    // </AdminLayout>
   );
 }

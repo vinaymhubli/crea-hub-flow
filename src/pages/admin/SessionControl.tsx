@@ -25,6 +25,7 @@ interface SessionBooking {
     first_name: string;
     last_name: string;
     avatar_url?: string;
+    email?: string;
   };
   designer: {
     user_id: string;
@@ -33,6 +34,7 @@ interface SessionBooking {
       first_name: string;
       last_name: string;
       avatar_url?: string;
+      email?: string;
     };
   };
 }
@@ -44,17 +46,17 @@ export default function SessionControl() {
   const queryClient = useQueryClient();
 
   const { data: sessions = [], isLoading } = useQuery({
-    queryKey: ['admin-sessions', statusFilter, searchTerm],
+    queryKey: ['admin-sessions', statusFilter],
     queryFn: async () => {
       let query = supabase
         .from('bookings')
         .select(`
           *,
-          customer:profiles!customer_id(first_name, last_name, avatar_url),
+          customer:profiles!customer_id(first_name, last_name, avatar_url, email),
           designer:designers!designer_id(
             user_id,
             specialty,
-            user:profiles!user_id(first_name, last_name, avatar_url)
+            user:profiles!user_id(first_name, last_name, avatar_url, email)
           )
         `);
 
@@ -78,10 +80,6 @@ export default function SessionControl() {
           break;
         case 'all':
           break;
-      }
-
-      if (searchTerm) {
-        query = query.or(`service.ilike.%${searchTerm}%`);
       }
 
       const { data, error } = await query.order('scheduled_date', { ascending: true });
@@ -167,11 +165,15 @@ export default function SessionControl() {
   };
 
   const filteredSessions = sessions.filter(session => {
-    return session.service.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = session.service.toLowerCase().includes(searchTerm.toLowerCase()) ||
            session.customer.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
            session.customer.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           session.customer.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
            session.designer.user.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           session.designer.user.last_name?.toLowerCase().includes(searchTerm.toLowerCase());
+           session.designer.user.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           session.designer.user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           session.designer.specialty?.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
   });
 
   if (isLoading) {
@@ -185,7 +187,7 @@ export default function SessionControl() {
   }
 
   return (
-    <AdminLayout>
+    // <AdminLayout>
       <div className="container mx-auto p-6 max-w-7xl">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -395,6 +397,6 @@ export default function SessionControl() {
           </TabsContent>
         </Tabs>
       </div>
-    </AdminLayout>
+    // </AdminLayout>
   );
 }

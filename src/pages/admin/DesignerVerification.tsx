@@ -40,7 +40,7 @@ export default function DesignerVerification() {
   const queryClient = useQueryClient();
 
   const { data: designers = [], isLoading } = useQuery({
-    queryKey: ['admin-designers', statusFilter, searchTerm],
+    queryKey: ['admin-designers', statusFilter],
     queryFn: async () => {
       let query = supabase
         .from('designers')
@@ -51,11 +51,6 @@ export default function DesignerVerification() {
 
       if (statusFilter !== 'all') {
         query = query.eq('verification_status', statusFilter);
-      }
-
-      if (searchTerm) {
-        // This is a simplified search - in production you might want full-text search
-        query = query.or(`specialty.ilike.%${searchTerm}%,bio.ilike.%${searchTerm}%`);
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
@@ -108,7 +103,7 @@ export default function DesignerVerification() {
           blocked: true,
           blocked_at: new Date().toISOString(),
           blocked_reason: 'Account rejected by admin'
-        } as any)
+        } as Record<string, unknown>)
         .eq('user_id', designerId);
       
       if (blockError) {
@@ -138,7 +133,7 @@ export default function DesignerVerification() {
           blocked: true,
           blocked_at: new Date().toISOString(),
           blocked_reason: 'Account blocked by admin'
-        } as any)
+        } as Record<string, unknown>)
         .eq('user_id', designerId);
       
       if (blockError) {
@@ -178,7 +173,8 @@ export default function DesignerVerification() {
     const matchesSearch = designer.specialty.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          designer.bio?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          designer.user.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         designer.user.last_name?.toLowerCase().includes(searchTerm.toLowerCase());
+                         designer.user.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         designer.user.email?.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
 
@@ -193,7 +189,7 @@ export default function DesignerVerification() {
   }
 
   return (
-    <AdminLayout>
+    // <AdminLayout>
       <div className="container mx-auto p-6 max-w-7xl">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -400,6 +396,6 @@ export default function DesignerVerification() {
           </TabsContent>
         </Tabs>
       </div>
-    </AdminLayout>
+    // </AdminLayout>
   );
 }
