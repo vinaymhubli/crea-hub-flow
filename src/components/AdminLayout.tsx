@@ -10,7 +10,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-background via-background to-primary/5">
         <AdminSidebar />
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 w-full overflow-auto">
           {children}
         </main>
       </div>
