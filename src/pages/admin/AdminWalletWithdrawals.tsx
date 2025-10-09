@@ -20,6 +20,7 @@ interface WalletWithdrawal {
   created_at: string
   user_name?: string
   user_email?: string
+  user_role?: string
   bank_name?: string
   account_number?: string
   tax_applied?: boolean
@@ -42,7 +43,8 @@ export default function AdminWalletWithdrawals() {
     try {
       setLoading(true)
       
-      // Fetch wallet withdrawal transactions
+      // Fetch ONLY actual wallet withdrawal transactions (money withdrawn by customers/designers)
+      // Only include transactions that are actual withdrawals, not internal transfers
       const { data: transactionsData, error: transactionsError } = await supabase
         .from('wallet_transactions')
         .select(`
@@ -51,21 +53,41 @@ export default function AdminWalletWithdrawals() {
             full_name,
             first_name,
             last_name,
-            email
+            email,
+            role
           )
         `)
         .eq('transaction_type', 'withdrawal')
+        .or('description.ilike.%withdrawal%,description.ilike.%bank transfer%,description.ilike.%payout%,description.ilike.%withdraw%')
         .order('created_at', { ascending: false })
 
       if (transactionsError) throw transactionsError
 
-      // Format the data
-      const formattedWithdrawals = transactionsData?.map(transaction => ({
+      // Format the data and filter for actual withdrawals only
+      const formattedWithdrawals = transactionsData?.filter(transaction => {
+        // Only include transactions that are actual withdrawals (not internal transfers)
+        const description = transaction.description?.toLowerCase() || '';
+        const hasBankDetails = transaction.metadata?.bank_details?.bank_name;
+        const isWithdrawal = description.includes('withdrawal') || 
+                            description.includes('bank transfer') || 
+                            description.includes('payout') ||
+                            description.includes('withdraw') ||
+                            hasBankDetails;
+        
+        // Exclude session-related transactions
+        const isNotSessionRelated = !description.includes('session') && 
+                                   !description.includes('commission') && 
+                                   !description.includes('earnings') &&
+                                   !description.includes('payment');
+        
+        return isWithdrawal && isNotSessionRelated;
+      }).map(transaction => ({
         ...transaction,
         user_name: transaction.user?.full_name || 
                   `${transaction.user?.first_name || ''} ${transaction.user?.last_name || ''}`.trim() ||
                   transaction.user?.email || 'Unknown User',
         user_email: transaction.user?.email || 'Unknown Email',
+        user_role: transaction.user?.role || 'unknown',
         bank_name: transaction.metadata?.bank_details?.bank_name || 'Unknown Bank',
         account_number: transaction.metadata?.bank_details?.account_number || '****',
         tax_applied: transaction.metadata?.tax_calculation?.total_tax > 0,
@@ -163,7 +185,7 @@ export default function AdminWalletWithdrawals() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Wallet Withdrawals</h1>
-          <p className="text-gray-600">Monitor all designer withdrawal transactions and tax collections</p>
+          <p className="text-gray-600">Monitor customer and designer wallet withdrawal transactions</p>
         </div>
         <Button onClick={fetchWalletWithdrawals} variant="outline">
           <RefreshCw className="w-4 h-4 mr-2" />

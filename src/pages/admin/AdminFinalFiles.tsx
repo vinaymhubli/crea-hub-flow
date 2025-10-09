@@ -115,7 +115,17 @@ export default function AdminFinalFiles() {
       if (approvalError) console.error('Error fetching approval requests:', approvalError);
       
       console.log('Active sessions:', activeSessions);
+      console.log('Active sessions count:', activeSessions?.length || 0);
       console.log('Approval requests:', approvalRequests);
+      console.log('Approval requests count:', approvalRequests?.length || 0);
+      
+      // DEBUG: Check sample session data
+      if (activeSessions && activeSessions.length > 0) {
+        console.log('Sample active session:', activeSessions[0]);
+      }
+      if (approvalRequests && approvalRequests.length > 0) {
+        console.log('Sample approval request:', approvalRequests[0]);
+      }
       
       // Create a comprehensive map - handle "live_" prefix mismatch
       const sessionToCustomerMap = new Map();
@@ -181,25 +191,170 @@ export default function AdminFinalFiles() {
       
       console.log('Filtered designer files:', directData.length, 'files');
       console.log('Sample filtered file:', directData[0]);
+      
+      // DEBUG: Check if files have session_ids
+      console.log('Files with session_ids:', directData?.map(f => ({ 
+        name: f.name, 
+        session_id: f.session_id, 
+        has_session_id: !!f.session_id 
+      })));
 
-        // Get designer and customer names separately
-        const fileIds = directData?.map(f => f.uploaded_by_id) || [];
-        const customerIds = directData?.map(f => {
-          const sessionInfo = sessionToCustomerMap.get(f.session_id);
-          return sessionInfo?.customer_id;
-        }).filter(Boolean) || [];
+      // Get designer and customer names separately
+      const fileIds = directData?.map(f => f.uploaded_by_id) || [];
+      const customerIds = directData?.map(f => {
+        // Try exact match first
+        let sessionData = sessionToCustomerMap.get(f.session_id);
+        
+        // If no exact match, try with "live_" prefix
+        if (!sessionData && !f.session_id.startsWith('live_')) {
+          sessionData = sessionToCustomerMap.get(`live_${f.session_id}`);
+        }
+        
+        // If still no match, try without "live_" prefix
+        if (!sessionData && f.session_id.startsWith('live_')) {
+          sessionData = sessionToCustomerMap.get(f.session_id.replace('live_', ''));
+        }
+        
+        return sessionData?.customer_id;
+      }).filter(Boolean) || [];
 
-        // Get designer profiles
-        const { data: designers } = await supabase
-          .from('profiles')
-          .select('user_id, first_name, last_name, full_name')
-          .in('user_id', fileIds);
+      console.log('Customer IDs to fetch:', customerIds);
+      console.log('Session to customer map entries:', Array.from(sessionToCustomerMap.entries()));
+      console.log('Sample file session_ids:', directData?.slice(0, 3).map(f => ({ file: f.name, session_id: f.session_id })));
+      
+      // Debug: Check if session_ids match
+      directData?.slice(0, 3).forEach(file => {
+        const sessionData = sessionToCustomerMap.get(file.session_id);
+        console.log(`File: ${file.name}, Session ID: ${file.session_id}, Found in map: ${!!sessionData}, Customer ID: ${sessionData?.customer_id}`);
+      });
 
-        // Get customer profiles
-        const { data: customers } = customerIds.length > 0 ? await supabase
-          .from('profiles')
-          .select('user_id, first_name, last_name, full_name')
-          .in('user_id', customerIds) : { data: [] };
+      // Get designer profiles
+      const { data: designers } = await supabase
+        .from('profiles')
+        .select('user_id, first_name, last_name, full_name')
+        .in('user_id', fileIds);
+
+      // Get customer profiles
+      const { data: customers } = customerIds.length > 0 ? await supabase
+        .from('profiles')
+        .select('user_id, first_name, last_name, full_name')
+        .in('user_id', customerIds) : { data: [] };
+
+      console.log('Fetched customers:', customers);
+      console.log('Customer count:', customers?.length || 0);
+      
+      // DEBUG: Let's also check if there are any customers at all in the database
+      const { data: allCustomers } = await supabase
+        .from('profiles')
+        .select('user_id, first_name, last_name, full_name, user_type')
+        .eq('user_type', 'client')
+        .limit(5);
+      console.log('All customers in DB:', allCustomers);
+      
+      // CORRECT APPROACH: session_files.session_id -> active_sessions.session_id (with live_ prefix) -> customer_id -> profiles
+      console.log('🎯 CORRECT APPROACH: Using session_id with live_ prefix to find customers...');
+      
+      // Get ALL customer profiles from database
+      const { data: allCustomerProfiles } = await supabase
+        .from('profiles')
+        .select('user_id, first_name, last_name, full_name, user_type')
+        .eq('user_type', 'client');
+      
+      console.log('All customer profiles from DB:', allCustomerProfiles);
+      
+      // Create customer lookup map
+      const customerLookupMap = new Map();
+      allCustomerProfiles?.forEach(customer => {
+        customerLookupMap.set(customer.user_id, customer);
+      });
+      
+      console.log('Customer lookup map size:', customerLookupMap.size);
+      
+      // Get ALL active sessions to map session_id -> customer_id (ADMIN ACCESS)
+      const { data: allActiveSessions, error: activeSessionsError } = await supabase
+        .from('active_sessions')
+        .select('session_id, customer_id, designer_id, status, created_at');
+      
+      console.log('All active sessions fetched:', allActiveSessions?.length || 0);
+      console.log('Active sessions error:', activeSessionsError);
+      console.log('All active sessions data:', allActiveSessions);
+      
+      // TEST: Check if admin function works from frontend
+      const { data: adminTest } = await supabase.rpc('is_user_admin');
+      console.log('🔍 Admin test from frontend:', adminTest);
+      
+      // TEST: Try to get ALL sessions without filters
+      const { data: allSessionsTest, error: allSessionsError } = await supabase
+        .from('active_sessions')
+        .select('session_id, customer_id, designer_id');
+      
+      console.log('🔍 All sessions test:', allSessionsTest?.length || 0, 'sessions found');
+      console.log('🔍 All sessions error:', allSessionsError);
+      
+      if (allSessionsTest && allSessionsTest.length > 1) {
+        console.log('✅ ADMIN ACCESS WORKING! Found', allSessionsTest.length, 'sessions');
+        // Use the working data
+        const workingSessions = allSessionsTest;
+        allActiveSessions.length = 0; // Clear the old array
+        allActiveSessions.push(...workingSessions); // Add the working data
+      } else {
+        console.log('❌ Admin access still not working from frontend');
+      }
+      
+      
+      // MOST IMPORTANT: Get session_approval_requests - this has ALL historical sessions!
+      const { data: allApprovalRequests } = await supabase
+        .from('session_approval_requests')
+        .select('session_id, customer_id, designer_id');
+      
+      console.log('All approval requests fetched:', allApprovalRequests?.length || 0);
+      console.log('Sample approval request:', allApprovalRequests?.[0]);
+      
+      // Update the existing sessionToCustomerMap with active sessions
+      allActiveSessions?.forEach(session => {
+        sessionToCustomerMap.set(session.session_id, {
+          customer_id: session.customer_id,
+          designer_id: null,
+          source: 'active_sessions'
+        });
+        // Also add without live_ prefix for matching
+        if (session.session_id.startsWith('live_')) {
+          sessionToCustomerMap.set(session.session_id.replace('live_', ''), {
+            customer_id: session.customer_id,
+            designer_id: null,
+            source: 'active_sessions'
+          });
+        }
+      });
+      
+      // Add ALL approval requests (this is where the historical data is!)
+      allApprovalRequests?.forEach(request => {
+        sessionToCustomerMap.set(request.session_id, {
+          customer_id: request.customer_id,
+          designer_id: request.designer_id,
+          source: 'approval_requests'
+        });
+        // Also add without live_ prefix for matching
+        if (request.session_id.startsWith('live_')) {
+          sessionToCustomerMap.set(request.session_id.replace('live_', ''), {
+            customer_id: request.customer_id,
+            designer_id: request.designer_id,
+            source: 'approval_requests'
+          });
+        }
+      });
+      
+      console.log('Updated session to customer map size:', sessionToCustomerMap.size);
+      console.log('Sample session mappings:', Array.from(sessionToCustomerMap.entries()).slice(0, 5));
+      
+      // DEBUG: Print all session IDs we have vs what files need
+      console.log('🔍 SESSION IDs WE HAVE:', Array.from(sessionToCustomerMap.keys()));
+      console.log('🔍 SESSION IDs FILES NEED:', directData?.slice(0, 10).map(f => f.session_id));
+      console.log('🔍 SESSION IDs FILES NEED WITH LIVE PREFIX:', directData?.slice(0, 10).map(f => `live_${f.session_id}`));
+
+        // Use the simple customer lookup map
+        const finalCustomers = allCustomerProfiles || [];
+        console.log('Using final customers:', finalCustomers);
 
         // Get complaint counts
         const { data: complaints } = await supabase
@@ -208,21 +363,44 @@ export default function AdminFinalFiles() {
           .in('file_id', directData?.map(f => f.id) || []);
 
         // Create lookup maps
-        const designersMap = new Map(designers?.map(d => [d.user_id, d]) || []);
-        const customersMap = new Map(customers?.map(c => [c.user_id, c]) || []);
+        const designersMap = new Map(designers?.map(d => [d.user_id, d] as [string, any]) || []);
+        const customersMap = new Map(finalCustomers?.map(c => [c.user_id, c] as [string, any]) || []);
         const complaintsMap = new Map();
         complaints?.forEach(c => {
           complaintsMap.set(c.file_id, (complaintsMap.get(c.file_id) || 0) + 1);
         });
 
-        // SMART SOLUTION: Link files to customers by designer_id
-        // Each file's designer is linked to a customer via active_sessions
+        // IMPROVED SOLUTION: Link files to customers by session_id
+        console.log('Available customers:', customers?.length || 0);
+        console.log('Sample customer:', customers?.[0]);
+        
         const formattedFiles = directData?.map(file => {
           const designer = designersMap.get(file.uploaded_by_id);
           
-          // Find ANY active session for this designer to get customer_id
-          const designerSession = activeSessions?.find(session => session.designer_id === file.uploaded_by_id);
-          const customer = designerSession ? customersMap.get(designerSession.customer_id) : null;
+          // CORRECT APPROACH: Use session_id to get customer
+          let customer = null;
+          let customerId = null;
+          
+          if (file.session_id) {
+            // Try exact match first
+            let sessionData = sessionToCustomerMap.get(file.session_id);
+            
+            // If no match, try with live_ prefix (THIS IS THE KEY!)
+            if (!sessionData && !file.session_id.startsWith('live_')) {
+              sessionData = sessionToCustomerMap.get(`live_${file.session_id}`);
+              console.log(`🔍 Trying with live_ prefix: live_${file.session_id}`);
+            }
+            
+            if (sessionData) {
+              customerId = sessionData.customer_id;
+              customer = customerLookupMap.get(customerId);
+              console.log(`✅ Found customer via session ${file.session_id}: ${customerId} -> ${(customer as any)?.first_name} ${(customer as any)?.last_name}`);
+            } else {
+              console.log(`❌ No customer found for session ${file.session_id} (tried both with and without live_ prefix)`);
+            }
+          } else {
+            console.log(`❌ No session_id for file ${file.name}`);
+          }
           
           const complaintCount = complaintsMap.get(file.id) || 0;
 
@@ -234,13 +412,13 @@ export default function AdminFinalFiles() {
             file_url: file.file_url,
             file_size: file.file_size || 0,
             designer_id: file.uploaded_by_id,
-            designer_name: designer?.full_name || 
-                          `${designer?.first_name || ''} ${designer?.last_name || ''}`.trim() || 
-                          designer?.email || 'Unknown Designer',
-            customer_id: designerSession?.customer_id || null,
-            customer_name: customer?.full_name || 
-                          `${customer?.first_name || ''} ${customer?.last_name || ''}`.trim() || 
-                          customer?.email || 'No Customer Found',
+            designer_name: (designer as any)?.full_name || 
+                          `${(designer as any)?.first_name || ''} ${(designer as any)?.last_name || ''}`.trim() || 
+                          (designer as any)?.email || 'Unknown Designer',
+            customer_id: customerId || null,
+            customer_name: (customer as any)?.full_name || 
+                          `${(customer as any)?.first_name || ''} ${(customer as any)?.last_name || ''}`.trim() || 
+                          (customer as any)?.email || 'No Customer Found',
             uploaded_at: file.created_at,
             status: file.status || 'unknown',
             complaint_count: complaintCount,
@@ -326,7 +504,7 @@ export default function AdminFinalFiles() {
       'quality_issue': 'Quality Issue',
       'wrong_file': 'Wrong File',
       'incomplete_work': 'Incomplete Work',
-      'late_delivery': 'Late Delivery',
+      // 'late_delivery': 'Late Delivery',
       'communication_issue': 'Communication Issue',
       'other': 'Other'
     };

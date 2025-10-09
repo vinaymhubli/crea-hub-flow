@@ -12,7 +12,9 @@ import {
   User,
   Calendar,
   FileText,
-  Eye
+  Eye,
+  Upload,
+  Download
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -21,6 +23,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import DesignerFileReuploadDialog from '@/components/DesignerFileReuploadDialog';
 
 interface Complaint {
   id: string;
@@ -42,6 +45,12 @@ interface Complaint {
   updated_at: string;
   customer_name: string;
   file_name: string;
+  new_file_id?: string;
+  new_file_uploaded_at?: string;
+  customer_review_notes?: string;
+  customer_reviewed_at?: string;
+  reupload_count?: number;
+  latest_file_id?: string;
 }
 
 export default function DesignerComplaints() {
@@ -49,6 +58,8 @@ export default function DesignerComplaints() {
   const { toast } = useToast();
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showReuploadDialog, setShowReuploadDialog] = useState(false);
+  const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -131,7 +142,7 @@ export default function DesignerComplaints() {
       'quality_issue': 'Quality Issue',
       'wrong_file': 'Wrong File',
       'incomplete_work': 'Incomplete Work',
-      'late_delivery': 'Late Delivery',
+      // 'late_delivery': 'Late Delivery',
       'communication_issue': 'Communication Issue',
       'other': 'Other'
     };
@@ -142,8 +153,12 @@ export default function DesignerComplaints() {
     const variants: { [key: string]: "default" | "secondary" | "destructive" | "outline" } = {
       'pending': 'secondary',
       'under_review': 'default',
-      'resolved': 'default',
-      'rejected': 'destructive'
+      'rejected': 'destructive',
+      'approved': 'outline',
+      'file_uploaded': 'secondary',
+      'customer_approved': 'default',
+      'customer_rejected': 'destructive',
+      'resolved': 'default'
     };
     return variants[status] || 'default';
   };
@@ -164,13 +179,32 @@ export default function DesignerComplaints() {
         return <Clock className="w-4 h-4" />;
       case 'under_review':
         return <Eye className="w-4 h-4" />;
-      case 'resolved':
-        return <CheckCircle className="w-4 h-4" />;
       case 'rejected':
         return <AlertTriangle className="w-4 h-4" />;
+      case 'approved':
+        return <Upload className="w-4 h-4" />;
+      case 'file_uploaded':
+        return <FileText className="w-4 h-4" />;
+      case 'customer_approved':
+        return <CheckCircle className="w-4 h-4" />;
+      case 'customer_rejected':
+        return <AlertTriangle className="w-4 h-4" />;
+      case 'resolved':
+        return <CheckCircle className="w-4 h-4" />;
       default:
         return <Clock className="w-4 h-4" />;
     }
+  };
+
+  const handleReupload = (complaint: Complaint) => {
+    setSelectedComplaint(complaint);
+    setShowReuploadDialog(true);
+  };
+
+  const handleReuploadComplete = () => {
+    fetchComplaints();
+    setShowReuploadDialog(false);
+    setSelectedComplaint(null);
   };
 
   if (!user) {
@@ -276,6 +310,97 @@ export default function DesignerComplaints() {
                             </div>
                           )}
 
+                          {complaint.admin_notes && (
+                            <div>
+                              <h4 className="font-medium text-gray-900 mb-1">Admin Notes</h4>
+                              <p className="text-gray-700 bg-blue-50 p-3 rounded-lg">
+                                {complaint.admin_notes}
+                              </p>
+                            </div>
+                          )}
+
+                          {complaint.status === 'approved' && (
+                            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                              <h4 className="font-medium text-orange-900 mb-2 flex items-center gap-2">
+                                <Upload className="w-4 h-4" />
+                                Action Required
+                              </h4>
+                              <p className="text-sm text-orange-800 mb-3">
+                                This complaint has been approved. Please upload a corrected version of the file.
+                              </p>
+                              <Button 
+                                onClick={() => handleReupload(complaint)}
+                                className="bg-orange-600 hover:bg-orange-700"
+                                size="sm"
+                              >
+                                <Upload className="w-4 h-4 mr-2" />
+                                Upload Corrected File
+                              </Button>
+                            </div>
+                          )}
+
+                          {complaint.status === 'file_uploaded' && (
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                              <h4 className="font-medium text-blue-900 mb-2 flex items-center gap-2">
+                                <FileText className="w-4 h-4" />
+                                Waiting for Customer Review
+                              </h4>
+                              <p className="text-sm text-blue-800">
+                                Your corrected file has been uploaded and is waiting for customer review.
+                              </p>
+                              {complaint.new_file_uploaded_at && (
+                                <p className="text-xs text-blue-600 mt-2">
+                                  Uploaded: {new Date(complaint.new_file_uploaded_at).toLocaleString()}
+                                </p>
+                              )}
+                            </div>
+                          )}
+
+                          {complaint.status === 'customer_approved' && (
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                              <h4 className="font-medium text-green-900 mb-2 flex items-center gap-2">
+                                <CheckCircle className="w-4 h-4" />
+                                Customer Approved
+                              </h4>
+                              <p className="text-sm text-green-800">
+                                The customer has approved your corrected file. This complaint is now resolved.
+                              </p>
+                              {complaint.customer_reviewed_at && (
+                                <p className="text-xs text-green-600 mt-2">
+                                  Approved: {new Date(complaint.customer_reviewed_at).toLocaleString()}
+                                </p>
+                              )}
+                            </div>
+                          )}
+
+                          {complaint.status === 'customer_rejected' && (
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                              <h4 className="font-medium text-red-900 mb-2 flex items-center gap-2">
+                                <AlertTriangle className="w-4 h-4" />
+                                Customer Rejected
+                              </h4>
+                              <p className="text-sm text-red-800 mb-3">
+                                The customer has rejected your corrected file. Please upload another version.
+                              </p>
+                              {complaint.customer_review_notes && (
+                                <div className="mb-3">
+                                  <h5 className="font-medium text-red-900 mb-1">Customer Feedback:</h5>
+                                  <p className="text-sm text-red-700 bg-red-100 p-2 rounded">
+                                    {complaint.customer_review_notes}
+                                  </p>
+                                </div>
+                              )}
+                              <Button 
+                                onClick={() => handleReupload(complaint)}
+                                className="bg-red-600 hover:bg-red-700"
+                                size="sm"
+                              >
+                                <Upload className="w-4 h-4 mr-2" />
+                                Upload New Version (Attempt {(complaint.reupload_count || 0) + 1})
+                              </Button>
+                            </div>
+                          )}
+
                           {complaint.resolution && (
                             <div>
                               <h4 className="font-medium text-gray-900 mb-1">Resolution</h4>
@@ -300,6 +425,22 @@ export default function DesignerComplaints() {
           </main>
         </div>
       </div>
+
+      {/* Re-upload Dialog */}
+      {selectedComplaint && (
+        <DesignerFileReuploadDialog
+          isOpen={showReuploadDialog}
+          onClose={() => setShowReuploadDialog(false)}
+          complaintId={selectedComplaint.id}
+          originalFileId={selectedComplaint.file_id}
+          sessionId={selectedComplaint.session_id}
+          customerName={selectedComplaint.customer_name}
+          complaintTitle={selectedComplaint.title}
+          complaintDescription={selectedComplaint.description}
+          reuploadCount={selectedComplaint.reupload_count || 0}
+          onFileUploaded={handleReuploadComplete}
+        />
+      )}
     </SidebarProvider>
   );
 }

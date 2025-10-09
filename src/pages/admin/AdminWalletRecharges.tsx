@@ -20,6 +20,7 @@ interface WalletRecharge {
   created_at: string
   user_name?: string
   user_email?: string
+  user_role?: string
   payment_method?: string
   tax_applied?: boolean
   tax_amount?: number
@@ -40,7 +41,8 @@ export default function AdminWalletRecharges() {
     try {
       setLoading(true)
       
-      // Fetch wallet recharge transactions
+      // Fetch ONLY actual wallet recharge transactions (customer top-ups with real money)
+      // Only include transactions that are actual wallet recharges, not internal transfers
       const { data: transactionsData, error: transactionsError } = await supabase
         .from('wallet_transactions')
         .select(`
@@ -49,21 +51,44 @@ export default function AdminWalletRecharges() {
             full_name,
             first_name,
             last_name,
-            email
+            email,
+            role
           )
         `)
         .eq('transaction_type', 'deposit')
+        .or('description.ilike.%wallet top-up%,description.ilike.%recharge%,description.ilike.%add funds%,description.ilike.%payment gateway%,description.ilike.%razorpay%,description.ilike.%stripe%,description.ilike.%payu%')
         .order('created_at', { ascending: false })
 
       if (transactionsError) throw transactionsError
 
-      // Format the data
-      const formattedRecharges = transactionsData?.map(transaction => ({
+      // Format the data and filter for actual wallet recharges only
+      const formattedRecharges = transactionsData?.filter(transaction => {
+        // Only include transactions that are actual wallet recharges (not internal transfers)
+        const description = transaction.description?.toLowerCase() || '';
+        const hasPaymentMethod = transaction.metadata?.payment_method && transaction.metadata.payment_method !== 'Unknown';
+        const isWalletRecharge = description.includes('wallet top-up') || 
+                                description.includes('recharge') || 
+                                description.includes('add funds') ||
+                                description.includes('payment gateway') ||
+                                description.includes('razorpay') ||
+                                description.includes('stripe') ||
+                                description.includes('payu') ||
+                                hasPaymentMethod;
+        
+        // Exclude session-related transactions
+        const isNotSessionRelated = !description.includes('session') && 
+                                   !description.includes('commission') && 
+                                   !description.includes('earnings') &&
+                                   !description.includes('payment received');
+        
+        return isWalletRecharge && isNotSessionRelated;
+      }).map(transaction => ({
         ...transaction,
         user_name: transaction.user?.full_name || 
                   `${transaction.user?.first_name || ''} ${transaction.user?.last_name || ''}`.trim() ||
                   transaction.user?.email || 'Unknown User',
         user_email: transaction.user?.email || 'Unknown Email',
+        user_role: transaction.user?.role || 'unknown',
         payment_method: transaction.metadata?.payment_method || 'Unknown',
         tax_applied: transaction.metadata?.tax_calculation?.total_tax > 0,
         tax_amount: transaction.metadata?.tax_calculation?.total_tax || 0
@@ -154,7 +179,7 @@ export default function AdminWalletRecharges() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Wallet Recharges</h1>
-          <p className="text-gray-600">Monitor all wallet recharge transactions and tax collections</p>
+          <p className="text-gray-600">Monitor customer wallet top-ups and recharge transactions</p>
         </div>
         <Button onClick={fetchWalletRecharges} variant="outline">
           <RefreshCw className="w-4 h-4 mr-2" />
