@@ -139,7 +139,9 @@ export default function DesignerFileReuploadDialog({
           file_type: selectedFile.type,
           file_size: selectedFile.size,
           uploaded_by: designerName,
+          uploaded_by_type: 'designer',
           uploaded_by_id: user.id,
+          status: 'pending',
           is_reupload: true,
           original_file_id: originalFileId,
           complaint_id: complaintId,
@@ -152,30 +154,22 @@ export default function DesignerFileReuploadDialog({
 
       setUploadProgress(75);
 
-      // Update complaint status to file_uploaded
-      const { error: complaintError } = await supabase
-        .from('customer_complaints')
-        .update({
-          status: 'file_uploaded',
-          new_file_id: fileData.id,
-          new_file_uploaded_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', complaintId);
+      // Use the workflow function to handle status update and notifications
+      const { data: workflowResult, error: workflowError } = await (supabase as any).rpc('process_complaint_workflow', {
+        p_complaint_id: complaintId,
+        p_action: 'designer_upload',
+        p_designer_id: user.id,
+        p_new_file_id: fileData.id
+      });
 
-      if (complaintError) throw complaintError;
+      if (workflowError) throw workflowError;
+
+      const result = workflowResult as { success: boolean; error?: string };
+      if (!result?.success) {
+        throw new Error(result?.error || 'Failed to update complaint workflow');
+      }
 
       setUploadProgress(100);
-
-      // Send notification to customer
-      await supabase.rpc('send_notification', {
-        p_user_id: customerName, // This should be customer_id, but we'll get it from complaint
-        p_type: 'file_ready_for_review',
-        p_title: 'New File Ready for Review',
-        p_message: `The designer has uploaded a corrected version for your complaint: "${complaintTitle}". Please review it.`,
-        p_action_url: '/customer/complaints',
-        p_metadata: { complaint_id: complaintId, new_file_id: fileData.id }
-      });
 
       toast({
         title: "File Uploaded Successfully",

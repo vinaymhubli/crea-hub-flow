@@ -71,11 +71,12 @@ export default function DesignerComplaints() {
     try {
       setLoading(true);
 
-      // 1) Fetch complaints for this designer (no joins to avoid FK dependency)
+      // 1) Fetch complaints for this designer (only show approved complaints, not pending/under_review/rejected)
       const { data: rawComplaints, error: complaintsError } = await supabase
         .from('customer_complaints')
         .select('*')
         .eq('designer_id', user?.id)
+        .not('status', 'in', '(pending,under_review,rejected)')
         .order('created_at', { ascending: false });
 
       if (complaintsError) throw complaintsError;

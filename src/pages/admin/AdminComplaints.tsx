@@ -152,7 +152,7 @@ export default function AdminComplaints() {
       setUpdating(true);
 
       // Use the new workflow function for better handling
-      const { data: result, error } = await supabase.rpc('process_complaint_workflow', {
+      const { data: result, error } = await (supabase as any).rpc('process_complaint_workflow', {
         p_complaint_id: selectedComplaint.id,
         p_action: status === 'rejected' ? 'admin_reject' : 
                   status === 'approved' ? 'admin_approve' : 'admin_update',
@@ -162,8 +162,9 @@ export default function AdminComplaints() {
 
       if (error) throw error;
 
-      if (!result?.success) {
-        throw new Error(result?.error || 'Failed to update complaint');
+      const workflowResult = result as { success: boolean; error?: string };
+      if (!workflowResult?.success) {
+        throw new Error(workflowResult?.error || 'Failed to update complaint');
       }
 
       // Log admin activity
@@ -509,13 +510,6 @@ export default function AdminComplaints() {
                 </Button>
                 {selectedComplaint.status === 'pending' && (
                   <>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => handleUpdateComplaint('under_review')}
-                      disabled={updating}
-                    >
-                      Mark Under Review
-                    </Button>
                     <Button 
                       variant="outline" 
                       onClick={() => handleUpdateComplaint('rejected')}

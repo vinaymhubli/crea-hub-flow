@@ -80,49 +80,21 @@ export default function CustomerFileReviewDialog({
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw new Error('User not authenticated');
 
-      // Update complaint status
-      const newStatus = action === 'approve' ? 'customer_approved' : 'customer_rejected';
+      // Use the workflow function to handle status update and notifications
+      const workflowAction = action === 'approve' ? 'customer_approve' : 'customer_reject';
       
-      const { error: complaintError } = await supabase
-        .from('customer_complaints')
-        .update({
-          status: newStatus,
-          customer_review_notes: reviewNotes,
-          customer_reviewed_at: new Date().toISOString(),
-          customer_reviewed_by: user.id,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', complaintId);
+      const { data: workflowResult, error: workflowError } = await (supabase as any).rpc('process_complaint_workflow', {
+        p_complaint_id: complaintId,
+        p_action: workflowAction,
+        p_customer_id: user.id,
+        p_notes: reviewNotes
+      });
 
-      if (complaintError) throw complaintError;
+      if (workflowError) throw workflowError;
 
-      // Send notification to designer
-      const notificationType = action === 'approve' ? 'file_approved' : 'file_rejected';
-      const notificationTitle = action === 'approve' ? 'File Approved' : 'File Rejected';
-      const notificationMessage = action === 'approve' 
-        ? 'The customer has approved your corrected file. The complaint is now resolved.'
-        : 'The customer has rejected your corrected file. Please upload another version.';
-
-      // Get designer ID from complaint
-      const { data: complaint } = await supabase
-        .from('customer_complaints')
-        .select('designer_id')
-        .eq('id', complaintId)
-        .single();
-
-      if (complaint?.designer_id) {
-        await supabase.rpc('send_notification', {
-          p_user_id: complaint.designer_id,
-          p_type: notificationType,
-          p_title: notificationTitle,
-          p_message: notificationMessage,
-          p_action_url: '/designer/complaints',
-          p_metadata: { 
-            complaint_id: complaintId, 
-            new_file_id: newFileId,
-            customer_notes: reviewNotes
-          }
-        });
+      const result = workflowResult as { success: boolean; error?: string };
+      if (!result?.success) {
+        throw new Error(result?.error || 'Failed to update complaint workflow');
       }
 
       toast({
