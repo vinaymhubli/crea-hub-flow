@@ -5,6 +5,9 @@ import { format } from 'date-fns';
 import { BookingDetailsDialog } from '@/components/BookingDetailsDialog';
 import { RescheduleDialog } from '@/components/RescheduleDialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { 
   LayoutDashboard, 
@@ -50,6 +53,16 @@ export default function DesignerBookings() {
   const [showDeclineDialog, setShowDeclineDialog] = useState(false);
   const [bookingToDecline, setBookingToDecline] = useState<any>(null);
   const [recentlyAcceptedBookingId, setRecentlyAcceptedBookingId] = useState<string | null>(null);
+  const [showCalendarView, setShowCalendarView] = useState(false);
+  const [showFilterDialog, setShowFilterDialog] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(new Date());
+  const [filterOptions, setFilterOptions] = useState({
+    dateRange: { start: '', end: '' },
+    serviceType: '',
+    status: '',
+    minAmount: '',
+    maxAmount: ''
+  });
   const { profile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -81,7 +94,7 @@ export default function DesignerBookings() {
         setActiveTab('pending');
       }
     });
-  }, [setNewBookingCallback]);
+  }, []); // Remove setNewBookingCallback from dependencies
 
   // Filter bookings by status and search query
   const getFilteredBookings = (status: string) => {
@@ -125,6 +138,36 @@ export default function DesignerBookings() {
                service.includes(query) || 
                description.includes(query);
       });
+    }
+
+    // Apply advanced filters
+    if (filterOptions.dateRange.start) {
+      filtered = filtered.filter(booking => 
+        new Date(booking.scheduled_date) >= new Date(filterOptions.dateRange.start)
+      );
+    }
+    if (filterOptions.dateRange.end) {
+      filtered = filtered.filter(booking => 
+        new Date(booking.scheduled_date) <= new Date(filterOptions.dateRange.end)
+      );
+    }
+    if (filterOptions.serviceType) {
+      filtered = filtered.filter(booking => 
+        booking.service?.toLowerCase().includes(filterOptions.serviceType.toLowerCase())
+      );
+    }
+    if (filterOptions.status) {
+      filtered = filtered.filter(booking => booking.status === filterOptions.status);
+    }
+    if (filterOptions.minAmount) {
+      filtered = filtered.filter(booking => 
+        booking.total_amount >= parseFloat(filterOptions.minAmount)
+      );
+    }
+    if (filterOptions.maxAmount) {
+      filtered = filtered.filter(booking => 
+        booking.total_amount <= parseFloat(filterOptions.maxAmount)
+      );
     }
 
     // Sort by date (earliest first for upcoming/pending, latest first for completed/cancelled)
@@ -222,6 +265,40 @@ export default function DesignerBookings() {
   const handleViewDetails = (booking: any) => {
     setSelectedBooking(booking);
     setShowDetailsDialog(true);
+  };
+
+  const handleCalendarView = () => {
+    setShowCalendarView(!showCalendarView);
+  };
+
+  const handleFilterClick = () => {
+    setShowFilterDialog(true);
+  };
+
+  const handleApplyFilters = (newFilters: any) => {
+    setFilterOptions(newFilters);
+    setShowFilterDialog(false);
+  };
+
+  const handleClearFilters = () => {
+    setFilterOptions({
+      dateRange: { start: '', end: '' },
+      serviceType: '',
+      status: '',
+      minAmount: '',
+      maxAmount: ''
+    });
+  };
+
+  // Calendar month navigation
+  const goToPrevMonth = () => {
+    setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1));
+  };
+  const goToNextMonth = () => {
+    setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1));
+  };
+  const goToToday = () => {
+    setCalendarMonth(new Date());
   };
 
   const getStatusBadge = (status: string) => {
@@ -446,15 +523,130 @@ export default function DesignerBookings() {
                   </div>
                 </div>
               </div>
-              <Button className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-200">
+              <Button 
+                onClick={handleCalendarView}
+                className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-2.5 font-medium"
+              >
                 <CalendarDays className="w-4 h-4 mr-2" />
-                Calendar View
+                {showCalendarView ? 'List View' : 'Calendar View'}
               </Button>
             </div>
           </header>
 
           <div className="p-8 max-w-7xl mx-auto">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            {showCalendarView ? (
+              <div className="space-y-6">
+                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-900">Calendar View</h2>
+                      <p className="text-gray-600 mt-1">{calendarMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}</p>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Button variant="outline" className="rounded-xl" onClick={goToPrevMonth}>
+                        Prev
+                      </Button>
+                      <Button variant="outline" className="rounded-xl" onClick={goToToday}>
+                        Today
+                      </Button>
+                      <Button variant="outline" className="rounded-xl" onClick={goToNextMonth}>
+                        Next
+                      </Button>
+                    </div>
+                    <div className="flex items-center space-x-4 text-sm">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-3 h-3 rounded bg-yellow-100 border border-yellow-300"></div>
+                        <span className="text-gray-600">Pending</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-3 h-3 rounded bg-green-100 border border-green-300"></div>
+                        <span className="text-gray-600">Confirmed</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-3 h-3 rounded bg-blue-100 border border-blue-300"></div>
+                        <span className="text-gray-600">Completed</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-3 h-3 rounded bg-red-100 border border-red-300"></div>
+                        <span className="text-gray-600">Cancelled</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-7 gap-2 mb-4">
+                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                      <div key={day} className="text-center font-semibold text-gray-600 py-2">
+                        {day}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-7 gap-2">
+                    {Array.from({ length: 42 }, (_, i) => {
+                      const firstDay = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
+                      const startDate = new Date(firstDay);
+                      startDate.setDate(startDate.getDate() - firstDay.getDay() + i);
+                      
+                      const dayBookings = allBookings.filter(booking => {
+                        const bookingDate = new Date(booking.scheduled_date);
+                        return bookingDate.toDateString() === startDate.toDateString();
+                      });
+                      
+                      const isCurrentMonth = startDate.getMonth() === calendarMonth.getMonth();
+                      const isToday = startDate.toDateString() === new Date().toDateString();
+                      
+                      return (
+                        <div
+                          key={i}
+                          className={`min-h-[100px] p-2 border border-gray-200 rounded-lg ${
+                            isCurrentMonth ? 'bg-white' : 'bg-gray-50'
+                          } ${isToday ? 'ring-2 ring-blue-500' : ''}`}
+                        >
+                          <div className={`text-sm font-medium mb-1 ${
+                            isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
+                          }`}>
+                            {startDate.getDate()}
+                          </div>
+                          <div className="space-y-1">
+                            {dayBookings.slice(0, 2).map(booking => {
+                              const getBookingColor = (status: string) => {
+                                switch (status) {
+                                  case 'pending':
+                                    return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200';
+                                  case 'confirmed':
+                                    return 'bg-green-100 text-green-800 hover:bg-green-200';
+                                  case 'completed':
+                                    return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
+                                  case 'cancelled':
+                                    return 'bg-red-100 text-red-800 hover:bg-red-200';
+                                  default:
+                                    return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
+                                }
+                              };
+                              
+                              return (
+                                <div
+                                  key={booking.id}
+                                  className={`text-xs p-1 rounded truncate cursor-pointer transition-colors ${getBookingColor(booking.status)}`}
+                                  onClick={() => handleViewDetails(booking)}
+                                  title={`${booking.service} - ${booking.status}`}
+                                >
+                                  {booking.service}
+                                </div>
+                              );
+                            })}
+                            {dayBookings.length > 2 && (
+                              <div className="text-xs text-gray-500">
+                                +{dayBookings.length - 2} more
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <div className="flex items-center justify-between mb-8">
                 <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-2">
                   <TabsList className="grid w-auto grid-cols-4 bg-transparent gap-2">
@@ -495,7 +687,11 @@ export default function DesignerBookings() {
                       className="pl-10 w-64 border-gray-200 focus:border-green-400 focus:ring-green-200"
                     />
                   </div>
-                  <Button variant="outline" className="border-gray-300">
+                  <Button 
+                    onClick={handleFilterClick}
+                    variant="outline" 
+                    className="border-gray-300 hover:bg-gray-50 rounded-xl px-6 py-2.5 font-medium transition-all duration-200"
+                  >
                     <Filter className="w-4 h-4 mr-2" />
                     Filter
                   </Button>
@@ -562,6 +758,7 @@ export default function DesignerBookings() {
                 )}
               </TabsContent>
             </Tabs>
+            )}
           </div>
         </main>
       </div>
@@ -604,6 +801,145 @@ export default function DesignerBookings() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Filter Dialog */}
+      <Dialog open={showFilterDialog} onOpenChange={setShowFilterDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold flex items-center">
+              <Filter className="w-6 h-6 mr-2 text-blue-600" />
+              Filter Bookings
+            </DialogTitle>
+            <p className="text-gray-600">
+              Apply filters to find specific bookings
+            </p>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            {/* Date Range */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Date Range</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="startDate">Start Date</Label>
+                  <Input
+                    id="startDate"
+                    type="date"
+                    value={filterOptions.dateRange.start}
+                    onChange={(e) => setFilterOptions(prev => ({
+                      ...prev,
+                      dateRange: { ...prev.dateRange, start: e.target.value }
+                    }))}
+                    className="rounded-xl"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="endDate">End Date</Label>
+                  <Input
+                    id="endDate"
+                    type="date"
+                    value={filterOptions.dateRange.end}
+                    onChange={(e) => setFilterOptions(prev => ({
+                      ...prev,
+                      dateRange: { ...prev.dateRange, end: e.target.value }
+                    }))}
+                    className="rounded-xl"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Service Type */}
+            <div className="space-y-2">
+              <Label htmlFor="serviceType">Service Type</Label>
+              <Input
+                id="serviceType"
+                placeholder="e.g., Logo Design, Web Development"
+                value={filterOptions.serviceType}
+                onChange={(e) => setFilterOptions(prev => ({
+                  ...prev,
+                  serviceType: e.target.value
+                }))}
+                className="rounded-xl"
+              />
+            </div>
+
+            {/* Status */}
+            <div className="space-y-2">
+              <Label htmlFor="status">Status</Label>
+              <Select
+                value={filterOptions.status}
+                onValueChange={(value) => setFilterOptions(prev => ({
+                  ...prev,
+                  status: value
+                }))}
+              >
+                <SelectTrigger className="rounded-xl">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All Statuses</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="confirmed">Confirmed</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Amount Range */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Amount Range</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="minAmount">Minimum Amount (₹)</Label>
+                  <Input
+                    id="minAmount"
+                    type="number"
+                    placeholder="0"
+                    value={filterOptions.minAmount}
+                    onChange={(e) => setFilterOptions(prev => ({
+                      ...prev,
+                      minAmount: e.target.value
+                    }))}
+                    className="rounded-xl"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="maxAmount">Maximum Amount (₹)</Label>
+                  <Input
+                    id="maxAmount"
+                    type="number"
+                    placeholder="10000"
+                    value={filterOptions.maxAmount}
+                    onChange={(e) => setFilterOptions(prev => ({
+                      ...prev,
+                      maxAmount: e.target.value
+                    }))}
+                    className="rounded-xl"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-6 border-t">
+            <Button 
+              variant="outline" 
+              onClick={handleClearFilters}
+              className="rounded-xl px-6 py-2.5 border-gray-300 hover:bg-gray-50 font-medium transition-all duration-200"
+            >
+              Clear Filters
+            </Button>
+            <Button 
+              onClick={() => handleApplyFilters(filterOptions)}
+              className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 font-medium rounded-xl px-6 py-2.5 border-0"
+            >
+              Apply Filters
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </SidebarProvider>
   );
 }
