@@ -12,7 +12,8 @@ import {
   Gift,
   Trash2,
   Archive,
-  MessageCircle
+  MessageCircle,
+  AlertTriangle
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -67,6 +68,15 @@ function NotificationCard({ notification, onMarkAsRead, onDelete, onViewDetails 
         return Gift;
       case 'booking_cancelled':
         return X;
+      // Handle announcement types from admin
+      case 'announcement_info':
+        return Info;
+      case 'announcement_warning':
+        return AlertTriangle;
+      case 'announcement_success':
+        return CheckCircle;
+      case 'announcement_error':
+        return X;
       default:
         return Info;
     }
@@ -88,6 +98,15 @@ function NotificationCard({ notification, onMarkAsRead, onDelete, onViewDetails 
       case 'promotion':
         return 'text-purple-500';
       case 'booking_cancelled':
+        return 'text-red-500';
+      // Handle announcement types from admin
+      case 'announcement_info':
+        return 'text-blue-500';
+      case 'announcement_warning':
+        return 'text-orange-500';
+      case 'announcement_success':
+        return 'text-green-500';
+      case 'announcement_error':
         return 'text-red-500';
       default:
         return 'text-gray-500';
@@ -160,14 +179,14 @@ function NotificationCard({ notification, onMarkAsRead, onDelete, onViewDetails 
                   minute: '2-digit' 
                 })}
               </p>
-              <Button 
+              {/* <Button 
                 size="sm" 
                 variant={!notification.is_read ? "default" : "outline"} 
                 className={!notification.is_read ? "bg-gradient-to-r from-green-400 to-blue-500 text-white" : ""}
                 onClick={() => onViewDetails(notification)}
               >
                 View Details
-              </Button>
+              </Button> */}
             </div>
           </div>
         </div>
@@ -526,10 +545,10 @@ export default function CustomerNotifications() {
 
             {/* Notifications */}
             <Tabs defaultValue="all" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="all">All ({notifications.length})</TabsTrigger>
                 <TabsTrigger value="unread">Unread ({unreadCount})</TabsTrigger>
-                <TabsTrigger value="settings">Settings</TabsTrigger>
+                {/* <TabsTrigger value="settings">Settings</TabsTrigger> */}
               </TabsList>
 
               <TabsContent value="all" className="space-y-4 mt-6">
@@ -576,7 +595,7 @@ export default function CustomerNotifications() {
                 )}
               </TabsContent>
 
-              <TabsContent value="settings" className="mt-6">
+              {/* <TabsContent value="settings" className="mt-6">
                 <Card>
                   <CardContent className="p-6 space-y-6">
                     <div>
@@ -659,7 +678,7 @@ export default function CustomerNotifications() {
                      </div>
                   </CardContent>
                 </Card>
-              </TabsContent>
+              </TabsContent> */}
             </Tabs>
           </div>
         </main>

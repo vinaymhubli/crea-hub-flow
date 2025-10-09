@@ -87,8 +87,12 @@ export default function Auth() {
     const formData = new FormData(e.currentTarget);
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
-    const fullName = formData.get('fullName') as string;
+    const firstName = formData.get('firstName') as string;
+    const lastName = formData.get('lastName') as string;
     const role = formData.get('role') as string;
+
+    // Combine first and last name for full_name
+    const fullName = `${firstName} ${lastName}`.trim();
 
     try {
       // Check if email already exists
@@ -110,6 +114,8 @@ export default function Auth() {
         options: {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
+            first_name: firstName,
+            last_name: lastName,
             full_name: fullName,
             role: role,
             user_type: role === 'designer' ? 'designer' : 'client'
@@ -408,24 +414,24 @@ export default function Auth() {
               )}
 
               <TabsContent value="signin">
-                <form onSubmit={handleSignIn} className="space-y-4">
+                <form onSubmit={handleSignIn} className="space-y-6">
                   <div className="space-y-2">
-                    <Label htmlFor="signin-email" className="flex items-center gap-2">
-                      <Mail className="w-4 h-4" />
-                      Email
+                    <Label htmlFor="signin-email" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-teal-600" />
+                      Email Address
                     </Label>
                     <Input
                       id="signin-email"
                       name="email"
                       type="email"
-                      placeholder="Enter your email"
+                      placeholder="Enter your email address"
                       required
-                      className="border-gray-200 focus:border-teal-400 focus:ring-teal-400/20"
+                      className="h-11 border-gray-300 focus:border-teal-500 focus:ring-teal-500/20 transition-colors duration-200"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signin-password" className="flex items-center gap-2">
-                      <Lock className="w-4 h-4" />
+                    <Label htmlFor="signin-password" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                      <Lock className="w-4 h-4 text-teal-600" />
                       Password
                     </Label>
                     <div className="relative">
@@ -435,12 +441,12 @@ export default function Auth() {
                         type={showPassword ? 'text' : 'password'}
                         placeholder="Enter your password"
                         required
-                        className="border-gray-200 focus:border-teal-400 focus:ring-teal-400/20 pr-10"
+                        className="h-11 border-gray-300 focus:border-teal-500 focus:ring-teal-500/20 pr-10 transition-colors duration-200"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer hover:bg-gray-50 rounded-r-md transition-colors duration-200"
                       >
                         {showPassword ? (
                           <EyeOff className="w-4 h-4 text-gray-400 hover:text-gray-600" />
@@ -452,10 +458,20 @@ export default function Auth() {
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 hover:from-green-500 hover:via-teal-600 hover:to-blue-600 text-white"
+                    className="w-full h-12 bg-gradient-to-r from-green-500 via-teal-600 to-blue-600 hover:from-green-600 hover:via-teal-700 hover:to-blue-700 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
                     disabled={loading}
                   >
-                    {loading ? 'Signing in...' : 'Sign In'}
+                    {loading ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Signing in...
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <LogIn className="w-4 h-4" />
+                        Sign In
+                      </div>
+                    )}
                   </Button>
                   
                   <div className="text-center">
@@ -471,37 +487,52 @@ export default function Auth() {
               </TabsContent>
 
               <TabsContent value="signup">
-                <form onSubmit={handleSignUp} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-name" className="flex items-center gap-2">
-                      <User className="w-4 h-4" />
-                      Full Name
-                    </Label>
-                    <Input
-                      id="signup-name"
-                      name="fullName"
-                      placeholder="Enter your full name"
-                      required
-                      className="border-gray-200 focus:border-teal-400 focus:ring-teal-400/20"
-                    />
+                <form onSubmit={handleSignUp} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-firstname" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <User className="w-4 h-4 text-teal-600" />
+                        First Name
+                      </Label>
+                      <Input
+                        id="signup-firstname"
+                        name="firstName"
+                        placeholder="Enter your first name"
+                        required
+                        className="h-11 border-gray-300 focus:border-teal-500 focus:ring-teal-500/20 transition-colors duration-200"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-lastname" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <User className="w-4 h-4 text-teal-600" />
+                        Last Name
+                      </Label>
+                      <Input
+                        id="signup-lastname"
+                        name="lastName"
+                        placeholder="Enter your last name"
+                        required
+                        className="h-11 border-gray-300 focus:border-teal-500 focus:ring-teal-500/20 transition-colors duration-200"
+                      />
+                    </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-email" className="flex items-center gap-2">
-                      <Mail className="w-4 h-4" />
-                      Email
+                    <Label htmlFor="signup-email" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-teal-600" />
+                      Email Address
                     </Label>
                     <Input
                       id="signup-email"
                       name="email"
                       type="email"
-                      placeholder="Enter your email"
+                      placeholder="Enter your email address"
                       required
-                      className="border-gray-200 focus:border-teal-400 focus:ring-teal-400/20"
+                      className="h-11 border-gray-300 focus:border-teal-500 focus:ring-teal-500/20 transition-colors duration-200"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-password" className="flex items-center gap-2">
-                      <Lock className="w-4 h-4" />
+                    <Label htmlFor="signup-password" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                      <Lock className="w-4 h-4 text-teal-600" />
                       Password
                     </Label>
                     <div className="relative">
@@ -509,15 +540,15 @@ export default function Auth() {
                         id="signup-password"
                         name="password"
                         type={showPassword ? 'text' : 'password'}
-                        placeholder="Create a password"
+                        placeholder="Create a strong password"
                         required
                         minLength={6}
-                        className="border-gray-200 focus:border-teal-400 focus:ring-teal-400/20 pr-10"
+                        className="h-11 border-gray-300 focus:border-teal-500 focus:ring-teal-500/20 pr-10 transition-colors duration-200"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer hover:bg-gray-50 rounded-r-md transition-colors duration-200"
                       >
                         {showPassword ? (
                           <EyeOff className="w-4 h-4 text-gray-400 hover:text-gray-600" />
@@ -526,14 +557,15 @@ export default function Auth() {
                         )}
                       </button>
                     </div>
+                    <p className="text-xs text-gray-500">Must be at least 6 characters long</p>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-role" className="flex items-center gap-2">
-                      <Users className="w-4 h-4" />
+                    <Label htmlFor="signup-role" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                      <Users className="w-4 h-4 text-teal-600" />
                       I am a...
                     </Label>
                     <Select name="role" required defaultValue={roleFromUrl || undefined}>
-                      <SelectTrigger className="border-gray-200 focus:border-teal-400 focus:ring-teal-400/20">
+                      <SelectTrigger className="h-11 border-gray-300 focus:border-teal-500 focus:ring-teal-500/20 transition-colors duration-200">
                         <SelectValue placeholder="Select your role" />
                       </SelectTrigger>
                       <SelectContent>
@@ -544,10 +576,20 @@ export default function Auth() {
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 hover:from-green-500 hover:via-teal-600 hover:to-blue-600 text-white"
+                    className="w-full h-12 bg-gradient-to-r from-green-500 via-teal-600 to-blue-600 hover:from-green-600 hover:via-teal-700 hover:to-blue-700 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
                     disabled={loading}
                   >
-                    {loading ? 'Creating account...' : 'Create Account'}
+                    {loading ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Creating Account...
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4" />
+                        Create Account
+                      </div>
+                    )}
                   </Button>
                 </form>
               </TabsContent>

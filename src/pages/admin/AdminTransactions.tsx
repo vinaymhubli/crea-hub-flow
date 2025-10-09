@@ -238,16 +238,31 @@ export default function AdminTransactions() {
     console.log('First 5 transactions user_name:', filteredTransactions.slice(0, 5).map(t => ({ id: t.id, user_name: t.user_name, user_role: t.user_role })));
     
     const csvContent = [
-      ['Date', 'User', 'Role', 'Type', 'Amount', 'Status', 'Description'].join(','),
-      ...filteredTransactions.map(t => [
-        new Date(t.created_at).toLocaleDateString(),
-        t.user_name,
-        t.user_role,
-        getTransactionTypeLabel(t.transaction_type),
-        formatAmount(t.amount, t.transaction_type),
-        t.status,
-        `"${t.description}"`
-      ].join(','))
+      ['Date', 'User Name', 'Email', 'Role', 'Type', 'Amount', 'Status', 'Description'].join(','),
+      ...filteredTransactions.map(t => {
+        // Extract clean name and email from the combined user_name field
+        const parts = t.user_name.split(' ');
+        let cleanName = t.user_name;
+        let email = '';
+        
+        // If user_name contains email pattern, extract it
+        const emailMatch = t.user_name.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+        if (emailMatch) {
+          email = emailMatch[1];
+          cleanName = t.user_name.replace(email, '').replace(t.user_role, '').trim();
+        }
+        
+        return [
+          new Date(t.created_at).toLocaleDateString(),
+          `"${cleanName}"`,
+          `"${email}"`,
+          t.user_role,
+          getTransactionTypeLabel(t.transaction_type),
+          formatAmount(t.amount, t.transaction_type),
+          t.status,
+          `"${t.description}"`
+        ].join(',');
+      })
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv' });

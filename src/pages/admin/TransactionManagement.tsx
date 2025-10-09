@@ -62,7 +62,16 @@ interface Transaction {
   booking_id?: string;
   created_at: string;
   user?: {
-    full_name: string;
+    first_name?: string;
+    last_name?: string;
+    full_name?: string;
+    email: string;
+    role: string;
+  };
+  profiles?: {
+    first_name?: string;
+    last_name?: string;
+    full_name?: string;
     email: string;
     role: string;
   };
@@ -298,16 +307,27 @@ export default function TransactionManagement() {
 
   const exportTransactions = () => {
     const csvContent = [
-      ["ID", "User", "Type", "Amount", "Status", "Description", "Date"],
-      ...filteredTransactions.map((transaction) => [
-        transaction.id,
-        transaction.user?.full_name || transaction.user?.email || "Unknown",
-        transaction.transaction_type,
-        transaction.amount.toString(),
-        transaction.status,
-        transaction.description,
-        new Date(transaction.created_at).toLocaleString(),
-      ]),
+      ["ID", "User", "Email", "Role", "Type", "Amount", "Status", "Description", "Date"],
+      ...filteredTransactions.map((transaction) => {
+        // Build user name from first_name and last_name
+        const userData = transaction.user || transaction.profiles;
+        const firstName = userData?.first_name || '';
+        const lastName = userData?.last_name || '';
+        const fullName = firstName && lastName ? `${firstName} ${lastName}` : 
+                        firstName || lastName || userData?.full_name || 'Unknown User';
+        
+        return [
+          transaction.id,
+          fullName,
+          userData?.email || 'No Email',
+          userData?.role || 'Unknown Role',
+          transaction.transaction_type,
+          transaction.amount.toString(),
+          transaction.status,
+          transaction.description,
+          new Date(transaction.created_at).toLocaleString(),
+        ];
+      }),
     ]
       .map((row) => row.join(","))
       .join("\n");

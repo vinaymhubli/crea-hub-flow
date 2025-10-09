@@ -182,13 +182,13 @@ export default function AdminDashboard() {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6 lg:w-auto">
+        <TabsList className="grid w-full grid-cols-4 lg:w-auto">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="bookings">Bookings</TabsTrigger>
           <TabsTrigger value="announcements">Announcements</TabsTrigger>
-          <TabsTrigger value="communications">Communications</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
+          {/* <TabsTrigger value="communications">Communications</TabsTrigger> */}
+          {/* <TabsTrigger value="settings">Settings</TabsTrigger> */}
         </TabsList>
 
         {/* Overview Tab */}
@@ -495,7 +495,8 @@ export default function AdminDashboard() {
           </div>
         </TabsContent>
 
-        {/* Communications Tab */}
+        {/* Communications Tab - Commented out */}
+        {/*
         <TabsContent value="communications" className="space-y-4">
           <Card>
             <CardHeader>
@@ -524,12 +525,13 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </TabsContent>
+        */}
 
-        {/* Settings Tab */}
+        {/* Settings Tab - Commented out */}
+        {/*
         <TabsContent value="settings" className="space-y-4">
           {settings && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Platform Settings */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -577,7 +579,6 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
 
-              {/* System Status */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -617,6 +618,7 @@ export default function AdminDashboard() {
             </div>
           )}
         </TabsContent>
+        */}
       </Tabs>
     </div>
   );
