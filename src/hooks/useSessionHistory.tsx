@@ -226,10 +226,68 @@ export const useSessionHistory = () => {
     fetchSessions();
   }, [user?.id, profile]);
 
+  // Compute aggregate rating from session_reviews for this designer
+  const [aggregateRating, setAggregateRating] = useState<number>(0);
+
+  useEffect(() => {
+    const fetchAggregate = async () => {
+      if (!user?.id) return;
+      try {
+        const { data: designerRow } = await supabase
+          .from('designers')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+        if (!designerRow) { setAggregateRating(0); return; }
+
+        const { data: designerSessions } = await supabase
+          .from('active_sessions')
+          .select('session_id')
+          .eq('designer_id', designerRow.id);
+        const sessionIds = (designerSessions || []).map(s => s.session_id);
+
+        // Ratings via session linkage
+        let ratings: number[] = [];
+        if (sessionIds.length > 0) {
+          const { data: ratingsData } = await supabase
+            .from('session_reviews')
+            .select('rating')
+            .in('session_id', sessionIds);
+          ratings = (ratingsData || []).map(r => Number((r as any).rating) || 0);
+        }
+
+        // Fallback: ratings matched by designer_name text
+        let byNameRatings: number[] = [];
+        const { data: nameRow } = await supabase
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('user_id', user.id)
+          .single();
+        const fullName = nameRow ? `${nameRow.first_name || ''} ${nameRow.last_name || ''}`.trim() : '';
+        if (fullName) {
+          const { data: nameReviews } = await supabase
+            .from('session_reviews')
+            .select('rating')
+            .eq('designer_name', fullName);
+          byNameRatings = (nameReviews || []).map(r => Number((r as any).rating) || 0);
+        }
+
+        const all = [...ratings, ...byNameRatings];
+        if (all.length === 0) { setAggregateRating(0); return; }
+        const avgRaw = all.reduce((a, b) => a + b, 0) / all.length;
+        const avg = Math.round(avgRaw * 10) / 10;
+        setAggregateRating(avg);
+      } catch {
+        setAggregateRating(0);
+      }
+    };
+    fetchAggregate();
+  }, [user?.id]);
+
   const stats = {
     totalSessions: sessions.length,
     totalHours: sessions.reduce((acc, session) => acc + (session.durationMinutes || 0), 0) / 60,
-    avgRating: sessions.length > 0 ? sessions.reduce((acc, session) => acc + (session.rating || 5), 0) / sessions.length : 0,
+    avgRating: aggregateRating,
     totalEarnings: sessions.reduce((acc, session) => acc + (Number(session.earnings) || 0), 0)
   };
 

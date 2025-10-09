@@ -389,95 +389,89 @@ export default function LiveCallSession() {
   const profileLastName = profile?.last_name;
 
   useEffect(() => {
-    // Load both names from DB so both sides always see each other's real names
+    // Always use explicit lookups matching your DB mapping rules
     const loadNames = async () => {
       try {
         console.log("🔍 Loading names for sessionId:", sessionId);
+        
+        // Ensure sessionId has proper prefix for database lookup
+        const sessionIdWithPrefix = sessionId.includes("live_") ? sessionId : `live_${sessionId}`;
+        console.log("🔍 Using sessionId with prefix:", sessionIdWithPrefix);
 
-        // Use a single query with joins to get both names at once
-        const { data: sessionData, error: sessionError } = await supabase
+        // 1) Get ids from active_sessions
+        const { data: basicSessionData, error: sessErr } = await supabase
           .from("active_sessions")
-          .select(`
-            customer_id,
-            designer_id,
-            customer_profile:profiles!active_sessions_customer_id_fkey(first_name, last_name),
-            designer_profile:designers!active_sessions_designer_id_fkey(user_id, profiles!designers_user_id_fkey(first_name, last_name))
-          `)
-          .eq("session_id", sessionId)
+          .select("customer_id, designer_id")
+          .eq("session_id", sessionIdWithPrefix)
           .single();
-
-        if (sessionError) {
-          console.error("❌ Error loading session data:", sessionError);
-          console.log("❌ Falling back to separate queries...");
-          
-          // Fallback: separate queries
-          const { data: basicSessionData } = await supabase
-            .from("active_sessions")
-            .select("customer_id, designer_id")
-            .eq("session_id", sessionId)
-            .single();
-
-          if (basicSessionData) {
-            console.log("🔍 Basic session data:", basicSessionData);
-            
-            // Get customer name
-            if ((basicSessionData as any)?.customer_id) {
-              const { data: customerProfile } = await supabase
-                .from("profiles")
-                .select("first_name, last_name")
-                .eq("user_id", (basicSessionData as any).customer_id)
-                .single();
-              
-              if (customerProfile) {
-                const customerFullName = `${customerProfile.first_name || ""} ${customerProfile.last_name || ""}`.trim() || "Customer";
-                setCustomerName(customerFullName);
-                console.log("✅ Customer name loaded:", customerFullName);
-              }
-            }
-
-            // Get designer name via designers table
-            if ((basicSessionData as any)?.designer_id) {
-              const { data: designerData } = await supabase
-                .from("designers")
-                .select("user_id")
-                .eq("id", (basicSessionData as any).designer_id)
-                .single();
-              
-              if (designerData?.user_id) {
-                const { data: designerProfile } = await supabase
-                  .from("profiles")
-                  .select("first_name, last_name")
-                  .eq("user_id", designerData.user_id)
-                  .single();
-                
-                if (designerProfile) {
-                  const designerFullName = `${designerProfile.first_name || ""} ${designerProfile.last_name || ""}`.trim() || "Designer";
-                  setDesignerName(designerFullName);
-                  console.log("✅ Designer name loaded:", designerFullName);
-                }
-              }
-            }
-          }
+        if (sessErr || !basicSessionData) {
+          console.error("❌ Could not load active_sessions row:", sessErr);
+          console.log("❌ Session data:", basicSessionData);
           return;
         }
 
-        console.log("🔍 Session data with profiles:", sessionData);
+        console.log("✅ Found session data:", basicSessionData);
 
-        // Extract names from joined data
-        if ((sessionData as any)?.customer_profile) {
-          const profile = (sessionData as any).customer_profile;
-          const customerFullName = `${profile.first_name || ""} ${profile.last_name || ""}`.trim() || "Customer";
-          setCustomerName(customerFullName);
-          console.log("✅ Customer name from join:", customerFullName);
+        // 2) Customer name: profiles.user_id = active_sessions.customer_id
+        if ((basicSessionData as any)?.customer_id) {
+          console.log("🔍 Loading customer profile for ID:", (basicSessionData as any).customer_id);
+          const { data: customerProfile, error: customerError } = await supabase
+            .from("profiles")
+            .select("first_name, last_name")
+            .eq("user_id", (basicSessionData as any).customer_id)
+            .single();
+          
+          if (customerError) {
+            console.error("❌ Error loading customer profile:", customerError);
+          } else if (customerProfile) {
+            const customerFullName = `${customerProfile.first_name || ""} ${customerProfile.last_name || ""}`.trim();
+            if (customerFullName) {
+              setCustomerName(customerFullName);
+              console.log("✅ Customer name set to:", customerFullName);
+            } else {
+              console.log("⚠️ Customer profile found but name is empty");
+            }
+          } else {
+            console.log("⚠️ No customer profile found");
+          }
         }
 
-        if ((sessionData as any)?.designer_profile?.profiles) {
-          const profile = (sessionData as any).designer_profile.profiles;
-          const designerFullName = `${profile.first_name || ""} ${profile.last_name || ""}`.trim() || "Designer";
-          setDesignerName(designerFullName);
-          console.log("✅ Designer name from join:", designerFullName);
+        // 3) Designer name: designers.id = active_sessions.designer_id → designers.user_id → profiles.user_id
+        if ((basicSessionData as any)?.designer_id) {
+          console.log("🔍 Loading designer profile for designer ID:", (basicSessionData as any).designer_id);
+          const { data: designerRow, error: designerRowError } = await supabase
+            .from("designers")
+            .select("user_id")
+            .eq("id", (basicSessionData as any).designer_id)
+            .single();
+          
+          if (designerRowError) {
+            console.error("❌ Error loading designer row:", designerRowError);
+          } else if (designerRow?.user_id) {
+            console.log("🔍 Loading designer profile for user ID:", designerRow.user_id);
+            const { data: designerProfile, error: designerProfileError } = await supabase
+              .from("profiles")
+              .select("first_name, last_name")
+              .eq("user_id", designerRow.user_id)
+              .single();
+            
+            if (designerProfileError) {
+              console.error("❌ Error loading designer profile:", designerProfileError);
+            } else if (designerProfile) {
+              const designerFullName = `${designerProfile.first_name || ""} ${designerProfile.last_name || ""}`.trim();
+              if (designerFullName) {
+                setDesignerName(designerFullName);
+                console.log("✅ Designer name set to:", designerFullName);
+              } else {
+                console.log("⚠️ Designer profile found but name is empty");
+              }
+            } else {
+              console.log("⚠️ No designer profile found");
+            }
+          } else {
+            console.log("⚠️ No designer row found or missing user_id");
+          }
         }
-
       } catch (error) {
         console.error("❌ Error in loadNames:", error);
       }

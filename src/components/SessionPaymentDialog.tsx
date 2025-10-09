@@ -133,6 +133,8 @@ export default function SessionPaymentDialog({
             customerId: user?.id,
             designerId: designerUserId,
             amount: baseAmount,
+            sessionType: 'live_session',
+            duration: 180, // Default 3 minutes for booking sessions
             bookingId: null
           }
         });

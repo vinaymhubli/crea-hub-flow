@@ -99,6 +99,7 @@ export default function CustomerDashboard() {
     }
   };
 
+
   const fetchRecentDesigners = async () => {
     try {
       // Fetch from bookings table

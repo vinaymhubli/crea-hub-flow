@@ -73,7 +73,49 @@ export default function DesignerClientFeedback() {
         ? `${designerProfile.first_name} ${designerProfile.last_name}`.trim()
         : 'Designer';
 
-      // Fetch reviews for this designer
+      console.log('👤 Designer profile:', designerProfile);
+      console.log('👤 Searching for designer name:', designerName);
+
+      // Also try searching by designer_id instead of name
+      const { data: allReviews } = await supabase
+        .from('session_reviews')
+        .select('*');
+      
+      console.log('📊 All reviews in database:', allReviews);
+      console.log('📊 Unique designer names in DB:', [...new Set(allReviews?.map(r => r.designer_name) || [])]);
+
+      // Fetch reviews for sessions where this designer participated
+      console.log('🔍 Fetching reviews for designer ID:', designerData.id);
+      
+      // First, get all session IDs where this designer was involved
+      const { data: designerSessions, error: sessionsError } = await supabase
+        .from('active_sessions')
+        .select('session_id')
+        .eq('designer_id', designerData.id);
+
+      if (sessionsError) {
+        console.error('❌ Error fetching designer sessions:', sessionsError);
+        return;
+      }
+
+      console.log('📊 Designer sessions found:', designerSessions);
+      
+      if (!designerSessions || designerSessions.length === 0) {
+        console.log('📊 No sessions found for this designer');
+        setReviews([]);
+        setStats({
+          totalReviews: 0,
+          averageRating: 0,
+          ratingDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+        });
+        return;
+      }
+
+      // Get session IDs array
+      const sessionIds = designerSessions.map(s => s.session_id);
+      console.log('📊 Session IDs to search for reviews:', sessionIds);
+
+      // Now fetch reviews for those sessions
       const { data: reviewsData, error } = await supabase
         .from('session_reviews')
         .select(`
@@ -83,26 +125,38 @@ export default function DesignerClientFeedback() {
           designer_name,
           rating,
           review_text,
-          review_date,
-          profiles!session_reviews_customer_id_fkey(
-            first_name,
-            last_name,
-            avatar_url,
-            email
-          )
+          review_date
         `)
-        .eq('designer_name', designerName)
+        .in('session_id', sessionIds)
         .order('review_date', { ascending: false });
 
+      // Fetch customer profiles separately
+      if (reviewsData && reviewsData.length > 0) {
+        const customerIds = [...new Set(reviewsData.map(review => review.customer_id))];
+        const { data: customerProfiles } = await supabase
+          .from('profiles')
+          .select('user_id, first_name, last_name, avatar_url, email')
+          .in('user_id', customerIds);
+
+        // Map profiles to reviews
+        reviewsData.forEach(review => {
+          const profile = customerProfiles?.find(p => p.user_id === review.customer_id);
+          review.customer_profile = profile;
+        });
+      }
+
       if (error) {
-        console.error('Error fetching reviews:', error);
+        console.error('❌ Error fetching reviews:', error);
         return;
       }
+
+      console.log('📊 Fetched reviews data:', reviewsData);
+      console.log('📊 Number of reviews found:', reviewsData?.length || 0);
 
       // Transform the data
       const transformedReviews: Review[] = (reviewsData || []).map(review => ({
         ...review,
-        customer_profile: Array.isArray(review.profiles) ? review.profiles[0] : review.profiles
+        customer_profile: review.customer_profile
       }));
 
       setReviews(transformedReviews);

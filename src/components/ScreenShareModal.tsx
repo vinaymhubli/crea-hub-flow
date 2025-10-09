@@ -1162,22 +1162,8 @@ export function ScreenShareModal({
                         <div className="hidden xl:block w-80 xl:w-96 border-l border-gray-200 bg-white overflow-hidden">
                             <SessionSidePanel
                                 sessionId={roomId}
-                                designerName={
-                                    designerName || 
-                                    (bookingData?.designer?.user?.first_name && bookingData?.designer?.user?.last_name 
-                                        ? `${bookingData.designer.user.first_name} ${bookingData.designer.user.last_name}`
-                                        : profile?.user_type === 'designer' 
-                                            ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Designer'
-                                            : 'Designer')
-                                }
-                                customerName={
-                                    customerName || 
-                                    (bookingData?.customer?.first_name && bookingData?.customer?.last_name 
-                                        ? `${bookingData.customer.first_name} ${bookingData.customer.last_name}`
-                                        : profile?.user_type === 'customer' 
-                                            ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Customer'
-                                            : 'Customer')
-                                }
+                                designerName={designerName}
+                                customerName={customerName}
                                 isDesigner={isHost}
                                 duration={sessionDuration}
                                 rate={designerRate}

@@ -30,6 +30,14 @@ export default function SessionRatingDialog({
   const [hoveredRating, setHoveredRating] = useState(0);
 
   const handleRatingSubmit = async () => {
+    console.log('🌟 Starting rating submission:', {
+      sessionId,
+      customerId,
+      designerName,
+      rating,
+      reviewText: review.trim()
+    });
+
     if (rating === 0) {
       toast({
         title: "Rating Required",
@@ -42,19 +50,57 @@ export default function SessionRatingDialog({
     setIsSubmitting(true);
 
     try {
+      // Resolve authoritative designer name from DB to avoid saving placeholder like "Designer"
+      let resolvedDesignerName = designerName;
+      try {
+        const { data: sessionRow } = await supabase
+          .from('active_sessions')
+          .select('designer_id')
+          .eq('session_id', sessionId)
+          .single();
+        if (sessionRow?.designer_id) {
+          const { data: designerUser } = await supabase
+            .from('designers')
+            .select('user_id')
+            .eq('id', sessionRow.designer_id)
+            .single();
+          if (designerUser?.user_id) {
+            const { data: profileRow } = await supabase
+              .from('profiles')
+              .select('first_name, last_name')
+              .eq('user_id', designerUser.user_id)
+              .single();
+            if (profileRow) {
+              const full = `${profileRow.first_name || ''} ${profileRow.last_name || ''}`.trim();
+              if (full) resolvedDesignerName = full;
+            }
+          }
+        }
+      } catch (_e) {
+        // non-fatal; fallback to provided designerName
+      }
+
       // Create session review record
-      const { error: reviewError } = await supabase
+      console.log('📝 Inserting review into session_reviews table...');
+      const { data: insertedReview, error: reviewError } = await supabase
         .from('session_reviews')
         .insert({
           session_id: sessionId,
           customer_id: customerId,
-          designer_name: designerName,
+          designer_name: resolvedDesignerName,
           rating: rating,
           review_text: review.trim() || null,
           review_date: new Date().toISOString()
-        });
+        })
+        .select()
+        .single();
 
-      if (reviewError) throw reviewError;
+      if (reviewError) {
+        console.error('❌ Error inserting review:', reviewError);
+        throw reviewError;
+      }
+
+      console.log('✅ Review inserted successfully:', insertedReview);
 
       // Get designer ID from session to update their rating
       const { data: sessionData } = await supabase

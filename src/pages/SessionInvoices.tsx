@@ -127,7 +127,7 @@ export default function SessionInvoices() {
   const downloadInvoice = async (invoice: Invoice) => {
     try {
       const template = await getTemplateForInvoice(invoice);
-      const invoiceContent = generateInvoiceHTML(invoice, template);
+      const invoiceContent = await generateInvoiceHTML(invoice, template);
       
       // Open a print window for Save as PDF
       const printWindow = window.open('', '_blank');
@@ -179,7 +179,7 @@ export default function SessionInvoices() {
   const viewInvoice = async (invoice: Invoice) => {
     try {
       const template = await getTemplateForInvoice(invoice);
-      const invoiceContent = generateInvoiceHTML(invoice, template);
+      const invoiceContent = await generateInvoiceHTML(invoice, template);
       const w = window.open('', '_blank');
       if (w) {
         w.document.open();
@@ -192,7 +192,7 @@ export default function SessionInvoices() {
     }
   };
 
-  const generateInvoiceHTML = (invoice: Invoice, template: InvoiceTemplate | null) => {
+  const generateInvoiceHTML = async (invoice: Invoice, template: InvoiceTemplate | null) => {
     const taxDetails = invoice.tax_details || {};
     const metadata = invoice.metadata || {};
     const companyName = template?.company_name || 'CreativeHub';
@@ -202,6 +202,40 @@ export default function SessionInvoices() {
     const companyEmail = template?.company_email || '';
     const companyWebsite = template?.company_website || '';
     const footerText = template?.footer_text || 'This is a computer-generated invoice and does not require a signature.';
+
+    // Fetch customer and designer names
+    let customerName = 'Customer';
+    let designerName = 'Designer';
+
+    try {
+      // Get customer name
+      if (invoice.customer_id) {
+        const { data: customerProfile } = await supabase
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('user_id', invoice.customer_id)
+          .single();
+        
+        if (customerProfile) {
+          customerName = `${customerProfile.first_name || ''} ${customerProfile.last_name || ''}`.trim() || 'Customer';
+        }
+      }
+
+      // Get designer name
+      if (invoice.designer_id) {
+        const { data: designerProfile } = await supabase
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('user_id', invoice.designer_id)
+          .single();
+        
+        if (designerProfile) {
+          designerName = `${designerProfile.first_name || ''} ${designerProfile.last_name || ''}`.trim() || 'Designer';
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching names for invoice:', error);
+    }
     
     return `
 <!DOCTYPE html>
@@ -262,7 +296,7 @@ export default function SessionInvoices() {
             <div class="billing-info">
                 <div class="billing-title">Bill To:</div>
                 <div class="billing-details">
-                    ${invoice.invoice_type === 'customer' ? 'Customer' : 'Designer'}<br>
+                    ${invoice.invoice_type === 'customer' ? customerName : designerName}<br>
                     Session ID: ${invoice.session_id}<br>
                     ${invoice.booking_id ? `Booking ID: ${invoice.booking_id}` : 'Live Session'}
                 </div>

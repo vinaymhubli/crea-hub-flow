@@ -412,6 +412,9 @@ export default function CustomerRecentDesigners() {
       }
     });
 
+  // Limit to top 10 most recent after filters/sort
+  const displayedDesigners = filteredDesigners.slice(0, 10);
+
   if (loading) {
     return (
       <SidebarProvider>
@@ -560,8 +563,8 @@ export default function CustomerRecentDesigners() {
                      <div>
                        <p className="text-sm text-gray-600 mb-1">Avg Rating</p>
                        <p className="text-3xl font-bold text-purple-600">
-                         {filteredDesigners.length > 0 
-                           ? (filteredDesigners.reduce((sum, d) => sum + d.rating, 0) / filteredDesigners.length).toFixed(1)
+                         {displayedDesigners.length > 0 
+                           ? (displayedDesigners.reduce((sum, d) => sum + (Number(d.rating) || 0), 0) / displayedDesigners.length).toFixed(1)
                            : '0.0'
                          }
                        </p>
@@ -584,7 +587,7 @@ export default function CustomerRecentDesigners() {
               </Card>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-6">
-                 {filteredDesigners.map((designer) => (
+                 {displayedDesigners.map((designer) => (
                    <DesignerCard 
                      key={designer.id} 
                      designer={designer} 

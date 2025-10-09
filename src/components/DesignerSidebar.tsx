@@ -42,7 +42,7 @@ const sidebarItems = [
   { title: "Availability", url: "/designer-dashboard/availability", icon: Clock },
   { title: "Earnings", url: "/designer-dashboard/earnings", icon: DollarSign },
   { title: "Session History", url: "/designer-dashboard/history", icon: History },
-  { title: "Client Feedback", url: "/designer-dashboard/feedback", icon: MessageCircle },
+  // { title: "Client Feedback", url: "/designer-dashboard/feedback", icon: MessageCircle },
   { title: "Settings", url: "/designer-dashboard/settings", icon: Settings },
 ];
 

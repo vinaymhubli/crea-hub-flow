@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { 
   Calendar, 
   Clock, 
@@ -27,6 +27,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSessionHistory } from "@/hooks/useSessionHistory";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function DesignerSessionHistory() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -34,6 +36,157 @@ export default function DesignerSessionHistory() {
   const [activeTab, setActiveTab] = useState("recent");
   
   const { sessions, stats, loading, error } = useSessionHistory();
+  const { user } = useAuth();
+  const exportReport = () => {
+    try {
+      const header = [
+        'Session ID',
+        'Date',
+        'Type',
+        'Session Name',
+        'Minutes',
+        'Earnings',
+        'Rating',
+        'Review'
+      ];
+
+      const rows = sessions.map((s) => [
+        s.id,
+        s.date,
+        s.type,
+        s.project,
+        String(s.durationMinutes ?? ''),
+        String(s.earnings ?? ''),
+        s.rating != null ? String(s.rating) : '',
+        // Quote review to protect commas/newlines
+        s.feedback ? `"${String(s.feedback).replace(/"/g, '""')}"` : ''
+      ]);
+
+      const csv = [header, ...rows]
+        .map((r) => r.join(','))
+        .join('\n');
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `designer_session_report_${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('Failed to export report:', e);
+    }
+  };
+
+  // Real client feedback pulled from session_reviews
+  const [reviews, setReviews] = useState<Array<{
+    id: string;
+    session_id: string;
+    rating: number;
+    review_text: string | null;
+    review_date: string;
+    customer_profile?: { first_name?: string | null; last_name?: string | null };
+  }>>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewsError, setReviewsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadReviews = async () => {
+      if (!user?.id) return;
+      try {
+        setReviewsLoading(true);
+        setReviewsError(null);
+
+        // 1) Get designer id for current user
+        const { data: designerRow, error: dErr } = await supabase
+          .from('designers')
+          .select('id, user_id')
+          .eq('user_id', user.id)
+          .single();
+        if (dErr || !designerRow) {
+          setReviews([]);
+          return;
+        }
+
+        // 2) Get sessions for this designer
+        const { data: designerSessions, error: sErr } = await supabase
+          .from('active_sessions')
+          .select('session_id')
+          .eq('designer_id', designerRow.id);
+        if (sErr || !designerSessions || designerSessions.length === 0) {
+          setReviews([]);
+          return;
+        }
+
+        const sessionIds = designerSessions.map(s => s.session_id);
+
+        // 3) Pull reviews for those sessions
+        const { data: reviewsData, error: rErr } = await supabase
+          .from('session_reviews')
+          .select('id, session_id, rating, review_text, review_date, customer_id')
+          .in('session_id', sessionIds)
+          .order('review_date', { ascending: false });
+
+        // 3b) Fallback: also fetch by designer_name match (simple mapping requested)
+        // Resolve the designer's full name from profiles
+        let fullName: string | null = null;
+        if (designerRow.user_id) {
+          const { data: profileRow } = await supabase
+            .from('profiles')
+            .select('first_name, last_name')
+            .eq('user_id', designerRow.user_id)
+            .single();
+          if (profileRow) {
+            const maybe = `${profileRow.first_name || ''} ${profileRow.last_name || ''}`.trim();
+            fullName = maybe || null;
+          }
+        }
+
+        let reviewsByName: any[] = [];
+        if (fullName) {
+          const { data: nameData } = await supabase
+            .from('session_reviews')
+            .select('id, session_id, rating, review_text, review_date, customer_id, designer_name')
+            .eq('designer_name', fullName)
+            .order('review_date', { ascending: false });
+          reviewsByName = nameData || [];
+        }
+
+        const combined = [ ...(reviewsData || []), ...reviewsByName ];
+        if (rErr || combined.length === 0) {
+          setReviews([]);
+          return;
+        }
+
+        // 4) Fetch customer profiles for names
+        const customerIds = Array.from(new Set(combined.map(r => r.customer_id)));
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('user_id, first_name, last_name')
+          .in('user_id', customerIds);
+
+        const result = combined.map(r => ({
+          id: r.id,
+          session_id: r.session_id,
+          rating: r.rating,
+          review_text: r.review_text,
+          review_date: r.review_date,
+          customer_profile: profilesData?.find(p => p.user_id === (r as any).customer_id) || undefined,
+        }));
+
+        setReviews(result);
+      } catch (e: any) {
+        setReviewsError(e?.message || 'Failed to load reviews');
+        setReviews([]);
+      } finally {
+        setReviewsLoading(false);
+      }
+    };
+
+    loadReviews();
+  }, [user?.id]);
 
   if (loading) {
     return (
@@ -93,7 +246,7 @@ export default function DesignerSessionHistory() {
             <div className="flex-1">
               <h3 className="font-bold text-gray-900 mb-1">{session.project}</h3>
               <p className="text-gray-600 font-medium">{session.client.name}</p>
-              <p className="text-sm text-gray-500">{session.client.email}</p>
+              <p className="text-sm text-gray-500">{session.date}</p>
               
               {/* Show rating if available */}
               {session.rating && (
@@ -122,7 +275,8 @@ export default function DesignerSessionHistory() {
           </div>
           <div className="flex items-center space-x-2">
             {getStatusBadge(session.status)}
-            <DropdownMenu>
+            {/* 3-dots menu commented out per request */}
+            {/* <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm">
                   <MoreVertical className="w-4 h-4" />
@@ -150,7 +304,7 @@ export default function DesignerSessionHistory() {
                   Message Client
                 </DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>
+            </DropdownMenu> */}
           </div>
         </div>
 
@@ -199,7 +353,8 @@ export default function DesignerSessionHistory() {
           </div>
         )}
 
-        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+        {/* Tools used + action buttons commented out per request */}
+        {/* <div className="flex items-center justify-between pt-4 border-t border-gray-100">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-500">Tools used:</span>
@@ -224,7 +379,7 @@ export default function DesignerSessionHistory() {
               </Button>
             )}
           </div>
-        </div>
+        </div> */}
       </CardContent>
     </Card>
   );
@@ -258,10 +413,11 @@ export default function DesignerSessionHistory() {
                   </div>
                 </div>
               </div>
-              <Button className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-200">
+              {/* Export Report button commented out per request */}
+              {/* <Button onClick={exportReport} className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-200">
                 <Download className="w-4 h-4 mr-2" />
                 Export Report
-              </Button>
+              </Button> */}
             </div>
           </header>
 
@@ -365,55 +521,65 @@ export default function DesignerSessionHistory() {
               </TabsContent>
 
               <TabsContent value="feedback" className="space-y-6">
-                {sessions.map((session) => (
-                  <Card key={session.id} className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-start space-x-4">
-                          <Avatar className="w-12 h-12">
-                            <AvatarImage src={session.client.avatar} />
-                            <AvatarFallback className="bg-gradient-to-r from-green-400 to-blue-500 text-white font-semibold">
-                              {session.client.name.split(' ').map((n: string) => n[0]).join('')}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1">
-                            <h3 className="font-bold text-gray-900 mb-1">{session.project}</h3>
-                            <p className="text-gray-600 font-medium">{session.client.name}</p>
-                            <p className="text-sm text-gray-500">{session.date}</p>
+                {reviewsLoading ? (
+                  <div className="text-sm text-gray-500 px-2">Loading feedback…</div>
+                ) : reviewsError ? (
+                  <div className="text-sm text-red-600 px-2">{reviewsError}</div>
+                ) : reviews.length === 0 ? (
+                  <div className="text-sm text-gray-500 px-2">No client feedback yet.</div>
+                ) : (
+                  reviews.map((review) => (
+                    <Card key={review.id} className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
+                      <CardContent className="p-6">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-start space-x-4">
+                            <Avatar className="w-12 h-12">
+                              <AvatarImage src={undefined} />
+                              <AvatarFallback className="bg-gradient-to-r from-green-400 to-blue-500 text-white font-semibold">
+                                {(review.customer_profile?.first_name || 'C').slice(0,1)}
+                                {(review.customer_profile?.last_name || '').slice(0,1)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                              <h3 className="font-bold text-gray-900 mb-1">Live Design Session</h3>
+                              <p className="text-gray-600 font-medium">{`${review.customer_profile?.first_name || ''} ${review.customer_profile?.last_name || ''}`.trim() || 'Customer'}</p>
+                              <p className="text-sm text-gray-500">{new Date(review.review_date).toLocaleDateString()}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <div className="flex items-center">
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`w-5 h-5 ${i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
+                                />
+                              ))}
+                            </div>
+                            <span className="text-lg font-semibold text-gray-700">({review.rating}/5)</span>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <div className="flex items-center">
-                            {[...Array(5)].map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`w-5 h-5 ${
-                                  i < session.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
-                                }`}
-                              />
-                            ))}
+
+                        {review.review_text && (
+                          <div className="bg-gradient-to-br from-blue-50 to-green-50 rounded-xl p-4 mb-4">
+                            <p className="text-gray-800 italic text-lg leading-relaxed">"{review.review_text}"</p>
                           </div>
-                          <span className="text-lg font-semibold text-gray-700">({session.rating}/5)</span>
-                        </div>
-                      </div>
+                        )}
 
-                      <div className="bg-gradient-to-br from-blue-50 to-green-50 rounded-xl p-4 mb-4">
-                        <p className="text-gray-800 italic text-lg leading-relaxed">"{session.feedback}"</p>
-                      </div>
-
-                      <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                        <div className="flex items-center space-x-4">
-                          <span className="text-sm text-gray-500">Session Duration:</span>
-                          <span className="text-sm font-medium text-gray-700">{session.duration}</span>
+                        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                          <div className="flex items-center space-x-4">
+                            <span className="text-sm text-gray-500">Session ID:</span>
+                            <span className="text-sm font-medium text-gray-700">{review.session_id}</span>
+                          </div>
+                          {/* Reply to Feedback button commented out per request */}
+                          {/* <Button variant="outline" size="sm">
+                            <MessageCircle className="w-4 h-4 mr-2" />
+                            Reply to Feedback
+                          </Button> */}
                         </div>
-                        <Button variant="outline" size="sm">
-                          <MessageCircle className="w-4 h-4 mr-2" />
-                          Reply to Feedback
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
               </TabsContent>
             </Tabs>
           </div>

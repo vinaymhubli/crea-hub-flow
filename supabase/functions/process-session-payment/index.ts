@@ -153,7 +153,7 @@ serve(async (req) => {
     const tdsAmount = (amount * tdsRate) / 100
 
     // Calculate GST (CGST + SGST) based on customer's state
-    let gstRates = { cgst_rate: 0, sgst_rate: 0, igst_rate: 0 }
+    let gstRates = { cgst_rate: 9, sgst_rate: 9, igst_rate: 0 } // Default GST rates
     let gstAmounts = { cgst_amount: 0, sgst_amount: 0, igst_amount: 0, total_gst: 0 }
     
     if (customerProfile && customerProfile.state_code) {
@@ -167,18 +167,23 @@ serve(async (req) => {
 
       if (taxSettings && !taxError) {
         gstRates = {
-          cgst_rate: taxSettings.cgst_rate || 0,
-          sgst_rate: taxSettings.sgst_rate || 0,
+          cgst_rate: taxSettings.cgst_rate || 9,
+          sgst_rate: taxSettings.sgst_rate || 9,
           igst_rate: taxSettings.igst_rate || 0
         }
-
-        gstAmounts = {
-          cgst_amount: (amount * gstRates.cgst_rate) / 100,
-          sgst_amount: (amount * gstRates.sgst_rate) / 100,
-          igst_amount: (amount * gstRates.igst_rate) / 100,
-          total_gst: ((amount * gstRates.cgst_rate) / 100) + ((amount * gstRates.sgst_rate) / 100) + ((amount * gstRates.igst_rate) / 100)
-        }
+      } else {
+        console.log('No tax settings found for state, using default GST rates')
       }
+    } else {
+      console.log('No customer state_code found, using default GST rates')
+    }
+
+    // Always calculate GST amounts (using default rates if no specific settings)
+    gstAmounts = {
+      cgst_amount: (amount * gstRates.cgst_rate) / 100,
+      sgst_amount: (amount * gstRates.sgst_rate) / 100,
+      igst_amount: (amount * gstRates.igst_rate) / 100,
+      total_gst: ((amount * gstRates.cgst_rate) / 100) + ((amount * gstRates.sgst_rate) / 100) + ((amount * gstRates.igst_rate) / 100)
     }
 
     // Calculate total amount customer needs to pay
@@ -387,23 +392,83 @@ serve(async (req) => {
       console.log('Generating invoices for session payment:', sessionId)
       
       // Calculate session duration in minutes from the duration parameter (which is in seconds)
-      const sessionDurationMinutes = duration ? Math.ceil(duration / 60) : 60;
+      const sessionDurationMinutes = duration ? Math.ceil(duration / 60) : 1;
+      console.log(`📊 Session duration: ${duration} seconds = ${sessionDurationMinutes} minutes`);
       
-      const { data: invoiceData, error: invoiceError } = await supabase.rpc('generate_session_invoices', {
-        p_session_id: sessionId,
-        p_customer_id: customerId,
-        p_designer_id: designerId,
-        p_amount: amount,
-        p_booking_id: null,
-        p_session_duration: sessionDurationMinutes, // Pass actual session duration in minutes
-        p_place_of_supply: 'Inter-state' // Default, can be made dynamic based on user location
-      })
+      // Create customer invoice (what customer paid)
+      const { data: customerInvoiceData, error: customerInvoiceError } = await supabase
+        .from('invoices')
+        .insert({
+          invoice_number: `INV-${Date.now()}-C`,
+          session_id: sessionId,
+          customer_id: customerId,
+          designer_id: designerId,
+          invoice_type: 'customer',
+          subtotal: amount,
+          tax_amount: gstAmounts.total_gst,
+          total_amount: totalCustomerAmount,
+          currency: 'INR',
+          status: 'paid',
+          payment_method: 'wallet',
+          paid_at: new Date().toISOString(),
+          session_duration: sessionDurationMinutes,
+          place_of_supply: 'Inter-state',
+          tax_details: {
+            cgst_rate: gstRates.cgst_rate,
+            sgst_rate: gstRates.sgst_rate,
+            igst_rate: gstRates.igst_rate,
+            cgst_amount: gstAmounts.cgst_amount,
+            sgst_amount: gstAmounts.sgst_amount,
+            igst_amount: gstAmounts.igst_amount,
+            total_gst: gstAmounts.total_gst
+          },
+          metadata: {
+            session_type: sessionType,
+            original_amount: amount,
+            gst_breakdown: gstAmounts,
+            payment_type: 'session_completion'
+          }
+        })
+        .select()
+        .single();
 
-      if (invoiceError) {
-        console.error('Invoice generation failed:', invoiceError)
-        // Don't fail the payment if invoice generation fails
+      // Create designer invoice (what designer earned after deductions)
+      const { data: designerInvoiceData, error: designerInvoiceError } = await supabase
+        .from('invoices')
+        .insert({
+          invoice_number: `INV-${Date.now()}-D`,
+          session_id: sessionId,
+          customer_id: customerId,
+          designer_id: designerId,
+          invoice_type: 'designer',
+          subtotal: amount, // Original session amount
+          tax_amount: 0, // No tax for designer earnings
+          total_amount: designerAmount, // Net amount after deductions
+          currency: 'INR',
+          status: 'paid',
+          payment_method: 'wallet',
+          paid_at: new Date().toISOString(),
+          session_duration: sessionDurationMinutes,
+          place_of_supply: 'Inter-state',
+          metadata: {
+            session_type: sessionType,
+            original_amount: amount,
+            commission_amount: commissionAmount,
+            commission_rate: commissionSetting ? commissionSetting.commission_value : 0,
+            commission_type: commissionSetting ? commissionSetting.commission_type : 'none',
+            tds_amount: tdsAmount,
+            tds_rate: tdsRate,
+            final_amount: designerAmount,
+            earnings_type: 'session_completion'
+          }
+        })
+        .select()
+        .single();
+
+      if (customerInvoiceError || designerInvoiceError) {
+        console.error('Invoice generation failed:', { customerInvoiceError, designerInvoiceError });
       } else {
-        console.log('Session payment invoices generated successfully:', invoiceData)
+        console.log('Session payment invoices generated successfully');
       }
     } catch (error) {
       console.error('Invoice generation error:', error)
