@@ -1395,6 +1395,7 @@ export default function LiveCallSession() {
         sessionId={sessionId}
         designerName={designerName}
         designerId={sessionApprovalRequest?.designer_id}
+        actualDuration={duration}
       />
 
       {/* Rate Change Approval Dialog */}

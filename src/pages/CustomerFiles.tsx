@@ -178,24 +178,32 @@ export default function CustomerFiles() {
               return null;
             }
 
-            // DYNAMIC SOLUTION: Get designer name from profiles table
+            // Use the uploaded_by field from the database if it exists and is not generic
             let designerName = 'Unknown Designer';
-            if (customerSession?.designer_id) {
-              try {
-                const { data: designerProfile } = await (supabase as any)
-                  .from('profiles')
-                  .select('full_name, first_name, last_name, email')
-                  .eq('user_id', customerSession.designer_id)
-                  .maybeSingle();
-                
-                if (designerProfile) {
-                  designerName = designerProfile.full_name || 
-                               `${designerProfile.first_name || ''} ${designerProfile.last_name || ''}`.trim() ||
-                               designerProfile.email || 'Unknown Designer';
+            if (file.uploaded_by && file.uploaded_by.trim() && 
+                !['Designer', 'designer', 'Unknown Designer'].includes(file.uploaded_by.trim())) {
+              designerName = file.uploaded_by.trim();
+              console.log('✅ Using uploaded_by field:', designerName);
+            } else {
+              // Fallback: Try to resolve from profiles if uploaded_by is generic
+              console.log('⚠️ uploaded_by is generic, attempting fallback resolution');
+              if (customerSession?.designer_id) {
+                try {
+                  const { data: designerProfile } = await (supabase as any)
+                    .from('profiles')
+                    .select('full_name, first_name, last_name, email')
+                    .eq('user_id', customerSession.designer_id)
+                    .maybeSingle();
+                  
+                  if (designerProfile) {
+                    designerName = designerProfile.full_name || 
+                                 `${designerProfile.first_name || ''} ${designerProfile.last_name || ''}`.trim() ||
+                                 designerProfile.email || 'Unknown Designer';
+                  }
+                } catch (error) {
+                  console.error('Error fetching designer profile:', error);
+                  designerName = 'Designer Name Error';
                 }
-              } catch (error) {
-                console.error('Error fetching designer profile:', error);
-                designerName = 'Designer Name Error';
               }
             }
 

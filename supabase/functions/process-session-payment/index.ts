@@ -392,7 +392,7 @@ serve(async (req) => {
       console.log('Generating invoices for session payment:', sessionId)
       
       // Calculate session duration in minutes from the duration parameter (which is in seconds)
-      const sessionDurationMinutes = duration ? Math.ceil(duration / 60) : 1;
+      const sessionDurationMinutes = duration && duration > 0 ? Math.ceil(duration / 60) : 1;
       console.log(`📊 Session duration: ${duration} seconds = ${sessionDurationMinutes} minutes`);
       
       // Create customer invoice (what customer paid)

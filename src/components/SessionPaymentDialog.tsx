@@ -17,6 +17,7 @@ interface SessionPaymentDialogProps {
   sessionId: string;
   designerName: string;
   designerId?: string;
+  actualDuration?: number; // Add actual session duration in seconds
 }
 
 export default function SessionPaymentDialog({
@@ -26,7 +27,8 @@ export default function SessionPaymentDialog({
   totalAmount,
   sessionId,
   designerName,
-  designerId
+  designerId,
+  actualDuration
 }: SessionPaymentDialogProps) {
   const [paymentMethod, setPaymentMethod] = useState('wallet');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -134,7 +136,7 @@ export default function SessionPaymentDialog({
             designerId: designerUserId,
             amount: baseAmount,
             sessionType: 'live_session',
-            duration: 180, // Default 3 minutes for booking sessions
+            duration: actualDuration, // Use actual session duration or default 3 minutes for booking sessions
             bookingId: null
           }
         });

@@ -76,6 +76,33 @@ export default function DesignerFileUploadDialog({
         .from('session-files')
         .getPublicUrl(filePath);
 
+      // Resolve the best designer display name
+      let resolvedDesignerName = designerName;
+      try {
+        if (!resolvedDesignerName || resolvedDesignerName.toLowerCase() === 'designer') {
+          // Try resolve via designers -> profiles
+          if (designerId) {
+            const { data: designerRow } = await (supabase as any)
+              .from('designers')
+              .select('user_id')
+              .eq('id', designerId)
+              .single();
+            if (designerRow?.user_id) {
+              const { data: prof } = await (supabase as any)
+                .from('profiles')
+                .select('first_name, last_name, full_name, email')
+                .eq('user_id', designerRow.user_id)
+                .maybeSingle();
+              if (prof) {
+                resolvedDesignerName = prof.full_name || `${prof.first_name || ''} ${prof.last_name || ''}`.trim() || prof.email || designerName;
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.log('Name resolution skipped:', e);
+      }
+
       // Save file record to database
       console.log('💾 Saving file record to database:', {
         session_id: sessionId,
@@ -83,7 +110,7 @@ export default function DesignerFileUploadDialog({
         name: file.name,
         file_type: file.type,
         file_size: file.size,
-        uploaded_by: designerName,
+        uploaded_by: resolvedDesignerName,
         uploaded_by_type: 'designer',
         uploaded_by_id: designerId,
         file_url: publicUrl,
@@ -109,7 +136,7 @@ export default function DesignerFileUploadDialog({
         name: file.name,
         file_type: file.type || 'application/octet-stream',
         file_size: file.size,
-        uploaded_by: designerName,
+        uploaded_by: resolvedDesignerName,
         uploaded_by_type: 'designer',
         uploaded_by_id: designerId || '',
         file_url: publicUrl,
