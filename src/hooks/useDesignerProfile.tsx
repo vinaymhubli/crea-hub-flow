@@ -20,6 +20,7 @@ interface DesignerProfile {
   experience_years: number;
   display_hourly_rate: boolean;
   available_for_urgent: boolean;
+  onboarding_completed: boolean;
   created_at: string;
   updated_at: string;
 }

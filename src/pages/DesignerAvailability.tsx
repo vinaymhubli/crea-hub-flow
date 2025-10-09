@@ -8,13 +8,14 @@ import {
   DollarSign, 
   History, 
   Settings,
-  RefreshCw,
   Plus,
   X,
   Copy,
   ChevronLeft,
   ChevronRight,
-  MoreVertical
+  MoreVertical,
+  Edit,
+  Trash2
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -30,118 +31,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useDesignerAvailability } from '@/hooks/useDesignerAvailability';
+import { useDesignerSlots } from '@/hooks/useDesignerSlots';
+import { SlotManagementDialog } from '@/components/SlotManagementDialog';
 import { useToast } from '@/hooks/use-toast';
 
-interface AddTimeSlotDialogProps {
-  onAddTimeSlot: (dayOfWeek: number, startTime: string, endTime: string) => void;
-}
-
-function AddTimeSlotDialog({ onAddTimeSlot }: AddTimeSlotDialogProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedDay, setSelectedDay] = useState<string>("");
-  const [startTime, setStartTime] = useState<string>("09:00");
-  const [endTime, setEndTime] = useState<string>("17:00");
-
-  const daysOfWeek = [
-    { label: "Monday", value: 1 },
-    { label: "Tuesday", value: 2 },
-    { label: "Wednesday", value: 3 },
-    { label: "Thursday", value: 4 },
-    { label: "Friday", value: 5 },
-    { label: "Saturday", value: 6 },
-    { label: "Sunday", value: 0 }
-  ];
-
-  const handleAddSlot = () => {
-    if (selectedDay && startTime && endTime) {
-      const dayValue = daysOfWeek.find(d => d.label.toLowerCase() === selectedDay)?.value;
-      if (dayValue !== undefined) {
-        onAddTimeSlot(dayValue, startTime, endTime);
-        setIsOpen(false);
-        setSelectedDay("");
-        setStartTime("09:00");
-        setEndTime("17:00");
-      }
-    }
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 flex items-center space-x-2">
-          <Plus className="w-4 h-4" />
-          <span>Add Time Slot</span>
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-md mx-auto">
-        <DialogHeader className="flex flex-row items-center justify-between">
-          <DialogTitle className="text-lg font-semibold">Add New Time Slot</DialogTitle>
-          <button 
-            onClick={() => setIsOpen(false)}
-            className="p-1 hover:bg-gray-100 rounded"
-          >
-            <X className="w-5 h-5 text-gray-500" />
-          </button>
-        </DialogHeader>
-        
-        <div className="space-y-4 mt-4">
-          <p className="text-gray-600 text-sm">Create a recurring weekly time slot for bookings</p>
-          
-          <div className="space-y-2">
-            <Label htmlFor="dayOfWeek">Day of Week</Label>
-            <Select value={selectedDay} onValueChange={setSelectedDay}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a day" />
-              </SelectTrigger>
-              <SelectContent>
-                {daysOfWeek.map((day) => (
-                  <SelectItem key={day.label} value={day.label.toLowerCase()}>
-                    {day.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="startTime">Start Time</Label>
-              <Input
-                type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="endTime">End Time</Label>
-              <Input
-                type="time"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end space-x-3 pt-4">
-            <Button 
-              variant="outline" 
-              onClick={() => setIsOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleAddSlot}
-              disabled={!selectedDay || !startTime || !endTime}
-              className="bg-gradient-to-r from-green-400 to-blue-500 text-white"
-            >
-              Add Slot
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 interface AddSpecialDayDialogProps {
   onAddSpecialDay: (date: string, isAvailable: boolean, startTime?: string, endTime?: string, reason?: string) => void;
@@ -176,7 +69,7 @@ function AddSpecialDayDialog({ onAddSpecialDay }: AddSpecialDayDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-gradient-to-r from-purple-400 to-pink-500 hover:from-purple-500 hover:to-pink-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 flex items-center space-x-2">
+        <Button className="bg-gradient-to-r from-purple-400 to-pink-500 hover:from-purple-500 hover:to-pink-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 flex items-center space-x-2 rounded-xl px-6 py-2.5 border-0 font-medium">
           <Plus className="w-4 h-4" />
           <span>Add Special Day</span>
         </Button>
@@ -240,13 +133,14 @@ function AddSpecialDayDialog({ onAddSpecialDay }: AddSpecialDayDialogProps) {
             <Button 
               variant="outline" 
               onClick={() => setIsOpen(false)}
+              className="rounded-xl px-6 py-2.5 border-gray-300 hover:bg-gray-50 font-medium"
             >
               Cancel
             </Button>
             <Button 
               onClick={handleAddSpecialDay}
               disabled={!date}
-              className="bg-gradient-to-r from-purple-400 to-pink-500 text-white"
+              className="bg-gradient-to-r from-purple-400 to-pink-500 hover:from-purple-500 hover:to-pink-600 text-white rounded-xl px-6 py-2.5 border-0 font-medium shadow-lg hover:shadow-xl transition-all duration-200"
             >
               Add Special Day
             </Button>
@@ -259,9 +153,11 @@ function AddSpecialDayDialog({ onAddSpecialDay }: AddSpecialDayDialogProps) {
 
 export default function DesignerAvailability() {
   const [activeTab, setActiveTab] = useState("weekly");
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const [slotDialogOpen, setSlotDialogOpen] = useState(false);
   const { toast } = useToast();
   const {
-    loading,
+    loading: availabilityLoading,
     settings,
     weeklySchedule,
     specialDays,
@@ -270,6 +166,19 @@ export default function DesignerAvailability() {
     addSpecialDay,
     deleteSpecialDay,
   } = useDesignerAvailability();
+  
+  const {
+    slots,
+    loading: slotsLoading,
+    getSlotsForDay,
+    saveSlotsForDay,
+    deleteSlot,
+    getTotalWeeklyHours,
+    getSlotsCountPerDay,
+    getDayName,
+    getDuration,
+    copySlotsToAllDays
+  } = useDesignerSlots();
 
   const weekDays = [
     { name: "Monday", value: 1 },
@@ -294,13 +203,6 @@ export default function DesignerAvailability() {
     await updateSettings({ [field]: value });
   };
 
-  const handleTimeSlotAdd = async (dayOfWeek: number, startTime: string, endTime: string) => {
-    await updateWeeklySchedule(dayOfWeek, {
-      is_available: true,
-      start_time: startTime,
-      end_time: endTime
-    });
-  };
 
   const handleSpecialDayAdd = async (date: string, isAvailable: boolean, startTime?: string, endTime?: string, reason?: string) => {
     await addSpecialDay({
@@ -320,24 +222,38 @@ export default function DesignerAvailability() {
     });
   };
 
-  // Calculate total hours and active days
-  console.log('🔍 Weekly Schedule Data:', weeklySchedule);
-  console.log('🔍 Available Schedules:', weeklySchedule.filter(schedule => schedule.is_available));
+  // Calculate statistics using slots
+  const totalHours = getTotalWeeklyHours();
+  const slotsCountPerDay = getSlotsCountPerDay();
+  const activeDays = Object.values(slotsCountPerDay).filter(count => count > 0).length;
+  const totalSlots = Object.values(slotsCountPerDay).reduce((sum, count) => sum + count, 0);
   
-  const totalHours = weeklySchedule
-    .filter(schedule => schedule.is_available)
-    .reduce((total, schedule) => {
-      const start = new Date(`1970-01-01T${schedule.start_time}`);
-      const end = new Date(`1970-01-01T${schedule.end_time}`);
-      const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-      console.log(`📅 Day ${schedule.day_of_week}: ${schedule.start_time} - ${schedule.end_time} = ${hours} hours`);
-      return total + hours;
-    }, 0);
-
-  const activeDays = weeklySchedule.filter(schedule => schedule.is_available).length;
-  
-  console.log('📊 Total Hours:', totalHours);
+  console.log('📊 Total Hours (from slots):', totalHours);
   console.log('📊 Active Days:', activeDays);
+  console.log('📊 Total Slots:', totalSlots);
+  console.log('📊 Slots per day:', slotsCountPerDay);
+
+  const handleManageSlots = (dayOfWeek: number) => {
+    setSelectedDay(dayOfWeek);
+    setSlotDialogOpen(true);
+  };
+
+  const handleSaveSlots = async (daySlots: any[]) => {
+    if (selectedDay === null) return;
+    await saveSlotsForDay(selectedDay, daySlots);
+  };
+
+  const handleDeleteSlot = async (slotId: string) => {
+    await deleteSlot(slotId);
+  };
+
+  const formatTime = (time: string) => {
+    const [hours, minutes] = time.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+    return `${displayHour}:${minutes} ${ampm}`;
+  };
 
   return (
     <SidebarProvider>
@@ -361,17 +277,12 @@ export default function DesignerAvailability() {
                     <div className="flex items-center space-x-4 mt-2">
                       <span className="text-white/90 font-medium">{Math.round(totalHours)} hours/week</span>
                       <span className="text-white/60">•</span>
+                      <span className="text-white/90 font-medium">{totalSlots} time slots</span>
+                      <span className="text-white/60">•</span>
                       <span className="text-white/90 font-medium">{activeDays} days active</span>
                     </div>
                   </div>
                 </div>
-              </div>
-              <div className="flex space-x-3">
-                <Button className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-200">
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Sync Calendar
-                </Button>
-                <AddTimeSlotDialog onAddTimeSlot={handleTimeSlotAdd} />
               </div>
             </div>
           </header>
@@ -417,47 +328,36 @@ export default function DesignerAvailability() {
                 </CardContent>
               </Card>
 
+              {/* Quick Setup Card - Middle Position */}
               <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
-                <CardHeader className="bg-gradient-to-br from-blue-400 to-purple-500 text-white rounded-t-lg">
+                <CardHeader className="bg-gradient-to-br from-purple-400 to-indigo-500 text-white rounded-t-lg">
                   <CardTitle className="text-lg flex items-center">
-                    <Clock className="w-5 h-5 mr-2" />
-                    Working Hours
+                    <Copy className="w-5 h-5 mr-2" />
+                    Quick Setup
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-6 space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label className="font-semibold text-gray-700">Start Time</Label>
-                        <Input 
-                          type="time" 
-                          value={settings?.working_hours_start || "09:00"}
-                          onChange={(e) => handleSettingsUpdate('working_hours_start', e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="font-semibold text-gray-700">End Time</Label>
-                        <Input 
-                          type="time" 
-                          value={settings?.working_hours_end || "17:00"}
-                          onChange={(e) => handleSettingsUpdate('working_hours_end', e.target.value)}
-                        />
-                      </div>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm text-gray-600 mb-3">Copy slots from one day to all other days</p>
+                      <Select onValueChange={(value) => {
+                        if (value) {
+                          copySlotsToAllDays(parseInt(value));
+                        }
+                      }}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select day to copy from" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {weekDays.map((day) => (
+                            <SelectItem key={day.value} value={day.value.toString()}>
+                              {day.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <Button 
-                      className="w-full bg-gradient-to-r from-blue-400 to-purple-500 text-white"
-                      onClick={() => {
-                        // Apply to all days
-                        weekDays.forEach(day => {
-                          updateWeeklySchedule(day.value, {
-                            is_available: true,
-                            start_time: settings?.working_hours_start || "09:00",
-                            end_time: settings?.working_hours_end || "17:00"
-                          });
-                        });
-                      }}
-                    >
-                      Apply to All Days
-                    </Button>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -475,12 +375,16 @@ export default function DesignerAvailability() {
                         <span className="font-semibold text-gray-900">{Math.round(totalHours)} hours</span>
                       </div>
                       <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Time slots:</span>
+                        <span className="font-semibold text-blue-600">{totalSlots} slots</span>
+                      </div>
+                      <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Active days:</span>
                         <span className="font-semibold text-green-600">{activeDays} days</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Special days:</span>
-                        <span className="font-semibold text-blue-600">{specialDays.length} days</span>
+                        <span className="font-semibold text-purple-600">{specialDays.length} days</span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div className="bg-gradient-to-r from-green-400 to-blue-500 h-2 rounded-full" style={{ width: `${(activeDays / 7) * 100}%` }}></div>
@@ -512,12 +416,17 @@ export default function DesignerAvailability() {
               </div>
 
               <TabsContent value="weekly" className="space-y-6">
-                {loading ? (
-                  <div className="text-center py-8">Loading availability data...</div>
+
+                {slotsLoading ? (
+                  <div className="text-center py-8">Loading time slots...</div>
                 ) : (
                   <div className="grid gap-4">
                     {weekDays.map((day) => {
-                      const dayData = getScheduleForDay(day.value);
+                      const daySlots = getSlotsForDay(day.value);
+                      const slotsCount = daySlots.length;
+                      const totalDayHours = daySlots.reduce((total, slot) => 
+                        total + getDuration(slot.start_time, slot.end_time), 0
+                      );
                       
                       return (
                         <Card key={day.name} className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
@@ -525,50 +434,54 @@ export default function DesignerAvailability() {
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-4">
                                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                                  dayData.is_available 
+                                  slotsCount > 0 
                                     ? 'bg-gradient-to-r from-green-400 to-blue-500' 
                                     : 'bg-gray-200'
                                 }`}>
-                                  <Calendar className={`w-6 h-6 ${dayData.is_available ? 'text-white' : 'text-gray-400'}`} />
+                                  <Calendar className={`w-6 h-6 ${slotsCount > 0 ? 'text-white' : 'text-gray-400'}`} />
                                 </div>
-                                <div>
-                                  <h3 className="text-lg font-semibold text-gray-900">{day.name}</h3>
-                                  <p className="text-sm text-gray-500">
-                                    {dayData.is_available 
-                                      ? `Available ${dayData.start_time} - ${dayData.end_time}` 
-                                      : 'Not available'}
-                                  </p>
+                                <div className="flex-1">
+                                  <div className="flex items-center space-x-3">
+                                    <h3 className="text-lg font-semibold text-gray-900">{day.name}</h3>
+                                    <Badge variant={slotsCount > 0 ? "default" : "secondary"}>
+                                      {slotsCount} slot{slotsCount !== 1 ? 's' : ''}
+                                    </Badge>
+                                    {totalDayHours > 0 && (
+                                      <Badge variant="outline">
+                                        {Math.round(totalDayHours)}h
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <div className="mt-2">
+                                    {slotsCount === 0 ? (
+                                      <p className="text-sm text-gray-500">No time slots configured</p>
+                                    ) : (
+                                      <div className="space-y-1">
+                                        {daySlots.map((slot, index) => (
+                                          <div key={slot.id} className="flex items-center space-x-2 text-sm">
+                                            <Clock className="w-3 h-3 text-gray-400" />
+                                            <span className="text-gray-600">
+                                              {formatTime(slot.start_time)} - {formatTime(slot.end_time)}
+                                            </span>
+                                            <span className="text-gray-400">
+                                              ({Math.round(getDuration(slot.start_time, slot.end_time))}h)
+                                            </span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
-                              <div className="flex items-center space-x-4">
-                                <Switch 
-                                  checked={dayData.is_available} 
-                                  onCheckedChange={() => toggleDayAvailability(day.value)}
-                                />
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="sm">
-                                      <MoreVertical className="w-4 h-4" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent>
-                                    <DropdownMenuItem 
-                                      onClick={() => {
-                                        const startTime = prompt("Start time (HH:MM):", dayData.start_time);
-                                        const endTime = prompt("End time (HH:MM):", dayData.end_time);
-                                        if (startTime && endTime) {
-                                          updateWeeklySchedule(day.value, {
-                                            ...dayData,
-                                            start_time: startTime,
-                                            end_time: endTime
-                                          });
-                                        }
-                                      }}
-                                    >
-                                      Edit Hours
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
+                              <div className="flex items-center space-x-2">
+                                <Button
+                                  onClick={() => handleManageSlots(day.value)}
+                                  className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 font-medium rounded-xl px-6 py-2.5 border-0"
+                                  size="sm"
+                                >
+                                  <Edit className="w-4 h-4 mr-2" />
+                                  Manage Slots
+                                </Button>
                               </div>
                             </div>
                           </CardContent>
@@ -588,7 +501,7 @@ export default function DesignerAvailability() {
                   <AddSpecialDayDialog onAddSpecialDay={handleSpecialDayAdd} />
                 </div>
 
-                {loading ? (
+                {availabilityLoading ? (
                   <div className="text-center py-8">Loading special days...</div>
                 ) : (
                   <div className="grid gap-4">
@@ -630,7 +543,7 @@ export default function DesignerAvailability() {
                                 </Badge>
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="sm">
+                                    <Button variant="ghost" size="sm" className="rounded-xl hover:bg-gray-100 transition-all duration-200">
                                       <MoreVertical className="w-4 h-4" />
                                     </Button>
                                   </DropdownMenuTrigger>
@@ -656,6 +569,24 @@ export default function DesignerAvailability() {
           </div>
         </main>
       </div>
+
+      {/* Slot Management Dialog */}
+      {selectedDay !== null && (
+        <SlotManagementDialog
+          isOpen={slotDialogOpen}
+          onOpenChange={setSlotDialogOpen}
+          dayOfWeek={selectedDay}
+          dayName={getDayName(selectedDay)}
+          existingSlots={getSlotsForDay(selectedDay).map(slot => ({
+            id: slot.id,
+            start_time: slot.start_time,
+            end_time: slot.end_time,
+            is_active: slot.is_active
+          }))}
+          onSaveSlots={handleSaveSlots}
+          onDeleteSlot={handleDeleteSlot}
+        />
+      )}
     </SidebarProvider>
   );
 }

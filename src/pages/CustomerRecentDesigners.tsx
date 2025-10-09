@@ -29,7 +29,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import LiveSessionRequestDialog from "@/components/LiveSessionRequestDialog";
-import { checkDesignerBookingAvailability } from "@/utils/availabilityUtils";
+import { checkDesignerBookingAvailability } from "@/utils/availabilityUtilsSlots";
 
 interface RecentDesigner {
   id: string;

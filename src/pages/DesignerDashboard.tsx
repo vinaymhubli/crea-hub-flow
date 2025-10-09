@@ -47,6 +47,7 @@ import { Switch } from "@/components/ui/switch";
 import { DesignerSidebar } from "@/components/DesignerSidebar";
 import { RingingBell } from "@/components/RingingBell";
 import NotificationBell from "@/components/NotificationBell";
+import { DesignerOnboarding } from "@/components/DesignerOnboarding";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -63,6 +64,7 @@ export default function DesignerDashboard() {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [sessionCustomerName, setSessionCustomerName] =
     useState<string>("Customer");
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const upcomingBookings = getUpcomingBookings();
   const completedBookings = getCompletedBookings();
@@ -72,6 +74,11 @@ export default function DesignerDashboard() {
       calculateTotalEarnings().then(setTotalEarnings);
       // Automatically set designer online when they access dashboard
       setDesignerOnline();
+      
+      // Check if onboarding is needed
+      if (!designerProfile.onboarding_completed) {
+        setShowOnboarding(true);
+      }
     }
   }, [designerProfile]);
 
@@ -169,6 +176,12 @@ export default function DesignerDashboard() {
     setShowScreenShare(false);
     setCurrentSessionId(null);
     setSessionCustomerName("Customer");
+  };
+
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
+    // Refresh designer profile to get updated onboarding status
+    window.location.reload();
   };
 
   // Set designer offline when component unmounts
@@ -315,6 +328,11 @@ export default function DesignerDashboard() {
       });
     }
   };
+
+  // Show onboarding if needed
+  if (showOnboarding) {
+    return <DesignerOnboarding onComplete={handleOnboardingComplete} />;
+  }
 
   return (
     <SidebarProvider>

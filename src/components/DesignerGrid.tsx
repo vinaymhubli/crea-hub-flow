@@ -11,7 +11,7 @@ import { cleanupStaleSessions } from '@/utils/sessionCleanup';
 import { FilterState } from '../pages/Designers';
 import { useAuth } from '@/hooks/useAuth';
 import { Video, MessageCircle, Calendar, Eye } from 'lucide-react';
-import { checkDesignerBookingAvailability } from '@/utils/availabilityUtils';
+import { checkDesignerBookingAvailability } from '@/utils/availabilityUtilsSlots';
 
 interface DesignerGridProps {
   filters: FilterState;

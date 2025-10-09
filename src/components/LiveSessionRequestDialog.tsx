@@ -11,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
 import { Video, MessageCircle, Clock, User, X, Check, Send } from 'lucide-react';
-import { checkDesignerBookingAvailability } from '@/utils/availabilityUtils';
+import { checkDesignerBookingAvailability } from '@/utils/availabilityUtilsSlots';
 
 interface LiveSessionRequestDialogProps {
   isOpen: boolean;

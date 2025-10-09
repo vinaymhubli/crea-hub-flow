@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { checkDesignerAvailabilityForDateTime } from '@/utils/availabilityUtils';
+import { checkDesignerAvailabilityForDateTime } from '@/utils/availabilityUtilsSlots';
 
 interface BookingDialogProps {
   designer: any;
