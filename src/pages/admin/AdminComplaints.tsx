@@ -22,8 +22,7 @@ import {
   FileText,
   Eye,
   Edit,
-  Send,
-  DollarSign
+  Send
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -64,9 +63,6 @@ export default function AdminComplaints() {
   const [adminNotes, setAdminNotes] = useState('');
   const [resolution, setResolution] = useState('');
   const [updating, setUpdating] = useState(false);
-  const [showRefundDialog, setShowRefundDialog] = useState(false);
-  const [refundAmount, setRefundAmount] = useState('');
-  const [processingRefund, setProcessingRefund] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -155,30 +151,21 @@ export default function AdminComplaints() {
     try {
       setUpdating(true);
 
-      const updateData: any = {
-        status,
-        updated_at: new Date().toISOString()
-      };
-
-      if (adminNotes) {
-        updateData.admin_notes = adminNotes;
-      }
-
-      if (resolution) {
-        updateData.resolution = resolution;
-      }
-
-      if (status === 'resolved') {
-        updateData.resolved_at = new Date().toISOString();
-        updateData.resolved_by = user?.id;
-      }
-
-      const { error } = await supabase
-        .from('customer_complaints')
-        .update(updateData)
-        .eq('id', selectedComplaint.id);
+      // Use the new workflow function for better handling
+      const { data: result, error } = await (supabase as any).rpc('process_complaint_workflow', {
+        p_complaint_id: selectedComplaint.id,
+        p_action: status === 'rejected' ? 'admin_reject' : 
+                  status === 'approved' ? 'admin_approve' : 'admin_update',
+        p_admin_id: user?.id,
+        p_notes: adminNotes
+      });
 
       if (error) throw error;
+
+      const workflowResult = result as { success: boolean; error?: string };
+      if (!workflowResult?.success) {
+        throw new Error(workflowResult?.error || 'Failed to update complaint');
+      }
 
       // Log admin activity
       await supabase.rpc('log_admin_activity', {
@@ -188,33 +175,6 @@ export default function AdminComplaints() {
         p_target_id: selectedComplaint.id,
         p_description: `Updated complaint status to ${status}`,
         p_metadata: { status, admin_notes: adminNotes, resolution }
-      });
-
-      // Send notification to customer and designer about status update
-      const notificationType = status === 'resolved' ? 'complaint_resolved' : 'complaint_updated';
-      const notificationTitle = status === 'resolved' ? 'Complaint Resolved' : 'Complaint Status Updated';
-      const notificationMessage = status === 'resolved' 
-        ? 'Your complaint has been resolved by our admin team.'
-        : `Your complaint status has been updated to ${status.replace('_', ' ')}.`;
-
-      // Notify customer
-      await supabase.rpc('send_notification', {
-        p_user_id: selectedComplaint.customer_id,
-        p_type: notificationType,
-        p_title: notificationTitle,
-        p_message: notificationMessage,
-        p_action_url: `/customer/files`,
-        p_metadata: { complaint_id: selectedComplaint.id, status }
-      });
-
-      // Notify designer
-      await supabase.rpc('send_notification', {
-        p_user_id: selectedComplaint.designer_id,
-        p_type: notificationType,
-        p_title: notificationTitle,
-        p_message: notificationMessage,
-        p_action_url: `/designer/complaints`,
-        p_metadata: { complaint_id: selectedComplaint.id, status }
       });
 
       toast({
@@ -236,85 +196,14 @@ export default function AdminComplaints() {
     }
   };
 
-  const handleProcessRefund = async () => {
-    if (!selectedComplaint || !refundAmount) {
-      toast({
-        title: "Missing Information",
-        description: "Please enter a refund amount",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setProcessingRefund(true);
-
-      const { data, error } = await supabase.rpc('process_admin_refund', {
-        p_admin_id: user?.id,
-        p_designer_id: selectedComplaint.designer_id,
-        p_customer_id: selectedComplaint.customer_id,
-        p_amount: parseFloat(refundAmount),
-        p_reason: `Refund for complaint: ${selectedComplaint.title}`,
-        p_reference_type: 'complaint',
-        p_reference_id: selectedComplaint.id
-      });
-
-      if (error) throw error;
-
-      const result = data?.[0];
-      if (result?.success) {
-        toast({
-          title: "Refund Processed",
-          description: `Refund of ₹${refundAmount} has been processed successfully`,
-        });
-
-        // Send notifications
-        await supabase.rpc('send_notification', {
-          p_user_id: selectedComplaint.designer_id,
-          p_type: 'payment_received',
-          p_title: 'Refund Processed',
-          p_message: `A refund of ₹${refundAmount} has been processed from your account due to complaint: ${selectedComplaint.title}`,
-          p_action_url: `/designer-dashboard/earnings`,
-          p_metadata: { refund_id: result.refund_id, complaint_id: selectedComplaint.id }
-        });
-
-        await supabase.rpc('send_notification', {
-          p_user_id: selectedComplaint.customer_id,
-          p_type: 'payment_received',
-          p_title: 'Refund Received',
-          p_message: `You have received a refund of ₹${refundAmount} for your complaint: ${selectedComplaint.title}`,
-          p_action_url: `/customer/wallet`,
-          p_metadata: { refund_id: result.refund_id, complaint_id: selectedComplaint.id }
-        });
-
-        setShowRefundDialog(false);
-        setRefundAmount('');
-        fetchComplaints();
-      } else {
-        toast({
-          title: "Refund Failed",
-          description: result?.message || 'Unknown error occurred',
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error('Error processing refund:', error);
-      toast({
-        title: "Error",
-        description: "Failed to process refund",
-        variant: "destructive",
-      });
-    } finally {
-      setProcessingRefund(false);
-    }
-  };
+  // Refund functionality removed - complaints now trigger file re-upload workflow instead
 
   const getComplaintTypeLabel = (type: string) => {
     const labels: { [key: string]: string } = {
       'quality_issue': 'Quality Issue',
       'wrong_file': 'Wrong File',
       'incomplete_work': 'Incomplete Work',
-      'late_delivery': 'Late Delivery',
+      // 'late_delivery': 'Late Delivery',
       'communication_issue': 'Communication Issue',
       'other': 'Other'
     };
@@ -325,8 +214,12 @@ export default function AdminComplaints() {
     const variants: { [key: string]: "default" | "secondary" | "destructive" | "outline" } = {
       'pending': 'secondary',
       'under_review': 'default',
-      'resolved': 'default',
-      'rejected': 'destructive'
+      'rejected': 'destructive',
+      'approved': 'outline',
+      'file_uploaded': 'secondary',
+      'customer_approved': 'default',
+      'customer_rejected': 'destructive',
+      'resolved': 'default'
     };
     return variants[status] || 'default';
   };
@@ -347,10 +240,18 @@ export default function AdminComplaints() {
         return <Clock className="w-4 h-4" />;
       case 'under_review':
         return <Eye className="w-4 h-4" />;
-      case 'resolved':
-        return <CheckCircle className="w-4 h-4" />;
       case 'rejected':
         return <AlertTriangle className="w-4 h-4" />;
+      case 'approved':
+        return <CheckCircle className="w-4 h-4" />;
+      case 'file_uploaded':
+        return <FileText className="w-4 h-4" />;
+      case 'customer_approved':
+        return <CheckCircle className="w-4 h-4" />;
+      case 'customer_rejected':
+        return <AlertTriangle className="w-4 h-4" />;
+      case 'resolved':
+        return <CheckCircle className="w-4 h-4" />;
       default:
         return <Clock className="w-4 h-4" />;
     }
@@ -405,8 +306,12 @@ export default function AdminComplaints() {
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="under_review">Under Review</SelectItem>
-                <SelectItem value="resolved">Resolved</SelectItem>
                 <SelectItem value="rejected">Rejected</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="file_uploaded">File Uploaded</SelectItem>
+                <SelectItem value="customer_approved">Customer Approved</SelectItem>
+                <SelectItem value="customer_rejected">Customer Rejected</SelectItem>
+                <SelectItem value="resolved">Resolved</SelectItem>
               </SelectContent>
             </Select>
             <Select value={filterPriority} onValueChange={setFilterPriority}>
@@ -603,101 +508,59 @@ export default function AdminComplaints() {
                 <Button variant="outline" onClick={() => setShowDetails(false)}>
                   Cancel
                 </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowRefundDialog(true)}
-                  className="text-orange-600 hover:text-orange-700"
-                >
-                  <DollarSign className="w-4 h-4 mr-2" />
-                  Process Refund
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleUpdateComplaint('under_review')}
-                  disabled={updating}
-                >
-                  Mark Under Review
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleUpdateComplaint('rejected')}
-                  disabled={updating}
-                >
-                  Reject
-                </Button>
-                <Button 
-                  onClick={() => handleUpdateComplaint('resolved')}
-                  disabled={updating}
-                >
-                  {updating ? 'Updating...' : 'Resolve'}
-                </Button>
+                {selectedComplaint.status === 'pending' && (
+                  <>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => handleUpdateComplaint('rejected')}
+                      disabled={updating}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      Reject
+                    </Button>
+                    <Button 
+                      onClick={() => handleUpdateComplaint('approved')}
+                      disabled={updating}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      {updating ? 'Updating...' : 'Approve'}
+                    </Button>
+                  </>
+                )}
+                {selectedComplaint.status === 'under_review' && (
+                  <>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => handleUpdateComplaint('rejected')}
+                      disabled={updating}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      Reject
+                    </Button>
+                    <Button 
+                      onClick={() => handleUpdateComplaint('approved')}
+                      disabled={updating}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      {updating ? 'Updating...' : 'Approve'}
+                    </Button>
+                  </>
+                )}
+                {selectedComplaint.status === 'customer_approved' && (
+                  <Button 
+                    onClick={() => handleUpdateComplaint('resolved')}
+                    disabled={updating}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    {updating ? 'Updating...' : 'Mark Resolved'}
+                  </Button>
+                )}
               </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* Refund Dialog */}
-      <Dialog open={showRefundDialog} onOpenChange={setShowRefundDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Process Refund</DialogTitle>
-          </DialogHeader>
-          
-          {selectedComplaint && (
-            <div className="space-y-4">
-              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                <h4 className="font-medium text-orange-900 mb-2">Complaint Details</h4>
-                <p className="text-sm text-orange-800">
-                  <strong>Customer:</strong> {selectedComplaint.customer_name}
-                </p>
-                <p className="text-sm text-orange-800">
-                  <strong>Designer:</strong> {selectedComplaint.designer_name}
-                </p>
-                <p className="text-sm text-orange-800">
-                  <strong>Complaint:</strong> {selectedComplaint.title}
-                </p>
-              </div>
-
-              <div>
-                <Label htmlFor="refund_amount">Refund Amount (₹) *</Label>
-                <Input
-                  id="refund_amount"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="0.00"
-                  value={refundAmount}
-                  onChange={(e) => setRefundAmount(e.target.value)}
-                />
-              </div>
-
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="font-medium text-blue-900 mb-2">Refund Process</h4>
-                <ul className="text-sm text-blue-800 space-y-1">
-                  <li>• Amount will be deducted from designer's wallet</li>
-                  <li>• Amount will be added to customer's wallet</li>
-                  <li>• Both parties will be notified</li>
-                  <li>• Transaction will be logged for audit</li>
-                </ul>
-              </div>
-
-              <div className="flex justify-end gap-3">
-                <Button variant="outline" onClick={() => setShowRefundDialog(false)}>
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={handleProcessRefund} 
-                  disabled={processingRefund || !refundAmount}
-                  className="bg-orange-600 hover:bg-orange-700"
-                >
-                  {processingRefund ? 'Processing...' : 'Process Refund'}
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

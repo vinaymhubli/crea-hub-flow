@@ -44,7 +44,7 @@ export default function CustomerComplaintDialog({
     { value: 'quality_issue', label: 'Quality Issue' },
     { value: 'wrong_file', label: 'Wrong File' },
     { value: 'incomplete_work', label: 'Incomplete Work' },
-    { value: 'late_delivery', label: 'Late Delivery' },
+    // { value: 'late_delivery', label: 'Late Delivery' },
     { value: 'communication_issue', label: 'Communication Issue' },
     { value: 'other', label: 'Other' }
   ];

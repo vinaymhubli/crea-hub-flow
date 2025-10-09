@@ -35,7 +35,7 @@ interface PlatformSetting {
 interface PlatformEarnings {
   total_platform_fees: number;
   total_gst_collected: number;
-  total_penalty_fees: number;
+  total_penalty_fees: number; // deprecated
   total_earnings: number;
   transaction_count: number;
 }
@@ -249,8 +249,9 @@ export default function AdminPlatformSettings() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Penalty Fees</p>
-                  <p className="text-2xl font-bold">₹{platformEarnings.total_penalty_fees.toFixed(2)}</p>
+                  {/* Penalty Fees removed */}
+                  <p className="text-sm font-medium text-gray-600">Net Admin Earnings</p>
+                  <p className="text-2xl font-bold">₹{(platformEarnings.total_commission_earned).toFixed(2)}</p>
                 </div>
                 <AlertCircle className="w-8 h-8 text-red-600" />
               </div>
@@ -408,7 +409,7 @@ export default function AdminPlatformSettings() {
               <ul className="text-sm space-y-1">
                 <li>• Platform fees are deducted from designer earnings before payment</li>
                 <li>• GST is calculated on the total transaction amount</li>
-                <li>• Penalty fees are charged for complaints and policy violations</li>
+                {/* <li>• Penalty fees are charged for complaints and policy violations</li> */}
                 <li>• All fees are automatically transferred to the admin wallet</li>
                 <li>• Changes to rates apply to new transactions only</li>
               </ul>

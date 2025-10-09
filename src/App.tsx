@@ -23,7 +23,7 @@ import UserManagement from "./pages/admin/UserManagement";
 import TransactionManagement from "./pages/admin/TransactionManagement";
 import AdminFinalFiles from "./pages/admin/AdminFinalFiles";
 import AdminComplaints from "./pages/admin/AdminComplaints";
-import AdminRefunds from "./pages/admin/AdminRefunds";
+// import AdminRefunds from "./pages/admin/AdminRefunds";
 import DesignerVerification from "./pages/admin/DesignerVerification";
 import SessionControl from "./pages/admin/SessionControl";
 import AdminDesignerAvailability from "./pages/admin/DesignerAvailability";
@@ -59,6 +59,7 @@ import HomepageVideoManagement from "./pages/admin/HomepageVideoManagement";
 // import HelpCenterManagement from "./pages/admin/HelpCenterManagement"
 // import BlogManagement from "./pages/admin/BlogManagement"
 // import WebsiteSectionManager from "./pages/admin/WebsiteSectionManager"
+import Earnings from "./pages/admin/Earnings";
 import UsageAnalytics from "./pages/admin/analytics/UsageAnalytics";
 import RevenueAnalytics from "./pages/admin/analytics/RevenueAnalytics";
 import EngagementAnalytics from "./pages/admin/analytics/EngagementAnalytics";
@@ -233,7 +234,7 @@ function AppContent() {
           />
 
           {/* Refunds Management */}
-          <Route
+          {/* <Route
             path="/admin/refunds"
             element={
               <ProtectedAdminRoute>
@@ -242,7 +243,7 @@ function AppContent() {
                 </AdminLayout>
               </ProtectedAdminRoute>
             }
-          />
+          /> */}
 
           {/* Designer Management */}
           <Route
@@ -519,6 +520,18 @@ function AppContent() {
               </AdminLayout>
             </ProtectedAdminRoute>
           } /> */}
+
+          {/* Earnings */}
+          <Route
+            path="/admin/earnings"
+            element={
+              <ProtectedAdminRoute>
+                <AdminLayout>
+                  <Earnings />
+                </AdminLayout>
+              </ProtectedAdminRoute>
+            }
+          />
 
           {/* Analytics */}
           <Route

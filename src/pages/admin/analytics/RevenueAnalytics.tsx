@@ -23,6 +23,9 @@ interface RevenueStats {
   total_transactions: number;
   average_transaction_value: number;
   revenue_growth_rate: number;
+  total_tds: number; // Add TDS
+  total_gst: number; // Add GST
+  net_admin_earnings: number; // Commission + TDS
   top_earning_designers: Array<{
     designer_id: string;
     designer_name: string;
@@ -50,11 +53,6 @@ interface RevenueStats {
     bank_transfer: number;
     wallet: number;
   };
-  refund_stats: {
-    total_refunds: number;
-    refund_rate: number;
-    average_refund_amount: number;
-  };
 }
 
 export default function RevenueAnalytics() {
@@ -62,6 +60,11 @@ export default function RevenueAnalytics() {
   const [stats, setStats] = useState<RevenueStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('30d');
+  const [adminRates, setAdminRates] = useState({
+    gstRate: 0.18,
+    commissionRate: 30,
+    tdsRate: 10
+  });
 
   if (!user) {
     return <Navigate to="/admin-login" replace />;
@@ -146,8 +149,119 @@ export default function RevenueAnalytics() {
           )
           .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
 
-        const platformCommission = totalRevenue * 0.1; // 10% platform fee
-        const designerEarnings = totalRevenue * 0.9; // 90% to designers
+        // SIMPLE MATH APPROACH: Calculate from transaction pairs
+        // Customer payment (including GST) vs Designer earnings (after commission & TDS)
+        
+        // Fetch dynamic admin settings
+        const { data: platformSettings } = await supabase
+          .from('platform_settings')
+          .select('setting_key, setting_value')
+          .in('setting_key', ['gst_rate', 'platform_fee_rate']);
+        
+        const { data: commissionSettings } = await supabase
+          .from('commission_settings')
+          .select('commission_type, commission_value')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .limit(1);
+        
+        const { data: tdsSettings } = await supabase
+          .from('tds_settings')
+          .select('tds_rate')
+          .eq('is_active', true)
+          .single();
+        
+        // Parse settings from key-value structure
+        const gstSetting = platformSettings?.find(s => s.setting_key === 'gst_rate');
+        const commissionSetting = platformSettings?.find(s => s.setting_key === 'platform_fee_rate');
+        
+        const gstRate = (gstSetting?.setting_value as any)?.value ? (gstSetting.setting_value as any).value / 100 : 0.18; // Convert percentage to decimal
+        const commissionRate = (commissionSetting?.setting_value as any)?.value || commissionSettings?.[0]?.commission_value || 30; // Default 30%
+        const tdsRate = tdsSettings?.tds_rate || 10; // Default 10%
+        
+        // Store rates in state for UI display
+        setAdminRates({
+          gstRate: gstRate,
+          commissionRate: commissionRate,
+          tdsRate: tdsRate
+        });
+        
+        console.log('Admin Settings:');
+        console.log('- GST Rate:', gstRate * 100, '%');
+        console.log('- Commission Rate:', commissionRate, '%');
+        console.log('- TDS Rate:', tdsRate, '%');
+        
+        const customerPayments = transactions.filter(t => 
+          t.transaction_type === 'payment' && 
+          t.status === 'completed' &&
+          t.description?.includes('Session payment')
+        );
+        
+        const designerEarnings = transactions.filter(t => 
+          t.transaction_type === 'deposit' && 
+          t.status === 'completed' &&
+          t.description?.includes('Session earnings')
+        );
+        
+        console.log('Customer payments:', customerPayments.length);
+        console.log('Designer earnings:', designerEarnings.length);
+        
+        // Calculate using simple math from transaction pairs with dynamic rates
+        let totalCommission = 0;
+        let totalTDS = 0;
+        let totalGST = 0;
+        
+        // Match customer payments with designer earnings by timestamp (within 1 minute)
+        customerPayments.forEach(customerPayment => {
+          const paymentTime = new Date(customerPayment.created_at);
+          const matchingEarning = designerEarnings.find(earning => {
+            const earningTime = new Date(earning.created_at);
+            const timeDiff = Math.abs(paymentTime.getTime() - earningTime.getTime());
+            return timeDiff < 60000; // Within 1 minute
+          });
+          
+          if (matchingEarning) {
+            const customerAmount = parseFloat(customerPayment.amount.toString());
+            const designerAmount = parseFloat(matchingEarning.amount.toString());
+            
+            console.log(`Transaction pair: Customer paid ₹${customerAmount}, Designer got ₹${designerAmount}`);
+            
+            // Calculate GST using dynamic rate
+            // If customer paid ₹59 including GST, base amount = 59 / (1 + gstRate)
+            const baseAmount = customerAmount / (1 + gstRate);
+            const gstAmount = customerAmount - baseAmount;
+            
+            // Calculate commission and TDS from base amount using dynamic rates
+            const commissionAmount = baseAmount * (commissionRate / 100);
+            const tdsAmount = baseAmount * (tdsRate / 100);
+            
+            console.log(`Calculated with dynamic rates:`);
+            console.log(`- Base: ₹${baseAmount.toFixed(2)}`);
+            console.log(`- GST (${(gstRate * 100).toFixed(1)}%): ₹${gstAmount.toFixed(2)}`);
+            console.log(`- Commission (${commissionRate}%): ₹${commissionAmount.toFixed(2)}`);
+            console.log(`- TDS (${tdsRate}%): ₹${tdsAmount.toFixed(2)}`);
+            
+            totalGST += gstAmount;
+            totalCommission += commissionAmount;
+            totalTDS += tdsAmount;
+          }
+        });
+        
+        console.log('Simple Math Results:');
+        console.log('- Total Commission:', totalCommission);
+        console.log('- Total TDS:', totalTDS);
+        console.log('- Total GST:', totalGST);
+
+        const platformCommission = totalCommission; // Use simple math calculation
+        const designerEarningsTotal = designerEarnings.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
+
+        console.log('Money Distribution Summary:');
+        console.log('- Total Revenue:', totalRevenue);
+        console.log('- Platform Commission:', platformCommission);
+        console.log('- Designer Earnings:', designerEarningsTotal);
+        console.log('- TDS Collected:', totalTDS);
+        console.log('- GST Collected:', totalGST);
+        console.log('- Net Admin Earnings:', platformCommission + totalTDS);
 
         const completedTransactions = transactions.filter(t => 
           t.transaction_type === 'payment' && t.status === 'completed'
@@ -191,10 +305,13 @@ export default function RevenueAnalytics() {
           weekly_revenue: weeklyRevenue,
           daily_revenue: dailyRevenue,
           platform_commission: platformCommission,
-          designer_earnings: designerEarnings,
+          designer_earnings: designerEarningsTotal,
           total_transactions: completedTransactions.length,
           average_transaction_value: averageTransactionValue,
           revenue_growth_rate: monthlyRevenue > 0 ? ((monthlyRevenue - (monthlyRevenue * 0.8)) / (monthlyRevenue * 0.8)) * 100 : 0, // Real growth rate
+          total_tds: totalTDS,
+          total_gst: totalGST,
+          net_admin_earnings: platformCommission + totalTDS,
           top_earning_designers: topEarningDesigners,
           revenue_by_category: [
             { category: 'Logo Design', revenue: totalRevenue * 0.3, percentage: 30 },
@@ -249,14 +366,6 @@ export default function RevenueAnalytics() {
             bank_transfer: Math.floor(completedTransactions.length * 0.1),
             wallet: Math.floor(completedTransactions.length * 0.05),
           },
-          refund_stats: {
-            total_refunds: transactions.filter(t => t.transaction_type === 'refund').length,
-            refund_rate: (transactions.filter(t => t.transaction_type === 'refund').length / completedTransactions.length) * 100,
-            average_refund_amount: transactions
-              .filter(t => t.transaction_type === 'refund')
-              .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0) / 
-              Math.max(transactions.filter(t => t.transaction_type === 'refund').length, 1),
-          },
         };
 
         setStats(stats);
@@ -273,6 +382,9 @@ export default function RevenueAnalytics() {
           total_transactions: 0,
           average_transaction_value: 0,
           revenue_growth_rate: 0,
+          total_tds: 0,
+          total_gst: 0,
+          net_admin_earnings: 0,
           top_earning_designers: [],
           revenue_by_category: [],
           daily_revenue: [],
@@ -282,11 +394,6 @@ export default function RevenueAnalytics() {
             paypal: 0,
             bank_transfer: 0,
             wallet: 0
-          },
-          refund_stats: {
-            total_refunds: 0,
-            refund_rate: 0,
-            average_refund_amount: 0
           }
         });
       }
@@ -403,7 +510,133 @@ export default function RevenueAnalytics() {
             </p>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">TDS Collected</CardTitle>
+            <Wallet className="h-4 w-4 text-orange-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">₹{stats.total_tds?.toLocaleString() || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              Tax deducted at source
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">GST Collected</CardTitle>
+            <DollarSign className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">₹{stats.total_gst?.toLocaleString() || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              Goods & Services Tax
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Net Admin Earnings</CardTitle>
+            <TrendingUp className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">₹{stats.net_admin_earnings?.toLocaleString() || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              Commission + TDS
+            </p>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Money Distribution Breakdown */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <PieChart className="h-5 w-5" />
+            Money Distribution Breakdown
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Complete breakdown of where the money goes from each transaction
+          </p>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <div className="text-sm font-medium text-gray-600">Customer Pays</div>
+              <div className="text-2xl font-bold text-blue-600">₹{stats.total_revenue.toLocaleString()}</div>
+              <div className="text-xs text-gray-500">Total session payments</div>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="text-sm font-medium text-gray-600">GST (Government)</div>
+              <div className="text-2xl font-bold text-red-600">₹{stats.total_gst?.toLocaleString() || 0}</div>
+              <div className="text-xs text-gray-500">CGST + SGST + IGST</div>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="text-sm font-medium text-gray-600">Platform Commission</div>
+              <div className="text-2xl font-bold text-purple-600">₹{stats.platform_commission.toLocaleString()}</div>
+              <div className="text-xs text-gray-500">Admin platform fee</div>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="text-sm font-medium text-gray-600">TDS (Government)</div>
+              <div className="text-2xl font-bold text-orange-600">₹{stats.total_tds?.toLocaleString() || 0}</div>
+              <div className="text-xs text-gray-500">Tax deducted at source</div>
+            </div>
+          </div>
+          
+          <div className="mt-6 pt-4 border-t">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <div className="text-sm font-medium text-gray-600">Designer Receives</div>
+                <div className="text-2xl font-bold text-green-600">₹{stats.designer_earnings.toLocaleString()}</div>
+                <div className="text-xs text-gray-500">After commission & TDS deduction</div>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="text-sm font-medium text-gray-600">Admin Total Earnings</div>
+                <div className="text-2xl font-bold text-indigo-600">₹{stats.net_admin_earnings?.toLocaleString() || 0}</div>
+                <div className="text-xs text-gray-500">Commission + TDS</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+            <div className="text-sm text-gray-600">
+              <strong>Money Flow:</strong> Customer pays ₹{stats.total_revenue.toLocaleString()} → 
+              GST ₹{stats.total_gst?.toLocaleString() || 0} goes to government → 
+              Platform commission ₹{stats.platform_commission.toLocaleString()} goes to admin → 
+              TDS ₹{stats.total_tds?.toLocaleString() || 0} goes to government → 
+              Designer receives ₹{stats.designer_earnings.toLocaleString()}
+            </div>
+          </div>
+          
+          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+            <div className="text-sm text-blue-800">
+              <strong>Verification:</strong> 
+              Customer Payment (₹{stats.total_revenue.toLocaleString()}) = 
+              GST (₹{stats.total_gst?.toLocaleString() || 0}) + 
+              Commission (₹{stats.platform_commission.toLocaleString()}) + 
+              TDS (₹{stats.total_tds?.toLocaleString() || 0}) + 
+              Designer Earnings (₹{stats.designer_earnings.toLocaleString()}) = 
+              ₹{((stats.total_gst || 0) + stats.platform_commission + (stats.total_tds || 0) + stats.designer_earnings).toLocaleString()}
+            </div>
+          </div>
+          
+          <div className="mt-4 p-3 bg-green-50 rounded-lg">
+            <div className="text-sm text-green-800">
+              <strong>Current Admin Settings:</strong> 
+              GST Rate: {(adminRates.gstRate * 100).toFixed(1)}% | 
+              Commission Rate: {adminRates.commissionRate}% | 
+              TDS Rate: {adminRates.tdsRate}%
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Revenue Breakdown */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -605,28 +838,6 @@ export default function RevenueAnalytics() {
               </CardContent>
             </Card>
 
-            {/* Refund Statistics */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Refund Statistics</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Total Refunds</span>
-                    <span className="font-medium">{stats.refund_stats.total_refunds}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Refund Rate</span>
-                    <span className="font-medium">{stats.refund_stats.refund_rate.toFixed(2)}%</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Average Refund</span>
-                    <span className="font-medium">₹{stats.refund_stats.average_refund_amount.toFixed(2)}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </TabsContent>
       </Tabs>

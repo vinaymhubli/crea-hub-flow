@@ -37,12 +37,13 @@ interface Transaction {
   created_at: string;
   user_name: string;
   user_role: string;
+  user_email: string;
 }
 
 interface PlatformEarnings {
   total_platform_fees: number;
   total_gst_collected: number;
-  total_penalty_fees: number;
+  total_penalty_fees: number; // deprecated - penalties removed
   total_earnings: number;
   transaction_count: number;
 }
@@ -110,41 +111,78 @@ export default function AdminTransactions() {
         console.error('Error fetching profiles:', profilesError);
       }
       
+      // Get ALL designer profiles by checking the designers table
+      console.log('Fetching ALL designer profiles...');
+      const { data: designersData, error: designersError } = await supabase
+        .from('designers')
+        .select(`
+          id,
+          user_id,
+          profiles!designers_user_id_fkey (
+            user_id,
+            first_name,
+            last_name,
+            full_name,
+            email,
+            role
+          )
+        `);
+      
+      let designerProfiles = [];
+      if (designersError) {
+        console.error('Error fetching designers:', designersError);
+      } else {
+        designerProfiles = designersData?.map(d => ({
+          ...d.profiles,
+          role: 'designer' // Ensure role is set to designer
+        })).filter(Boolean) || [];
+        console.log('All designer profiles fetched:', designerProfiles);
+      }
+      
+      // Combine regular profiles and designer profiles
+      const allProfiles = [...(profilesData || []), ...designerProfiles];
+      console.log('All profiles combined:', allProfiles);
+      
       // Combine data and format user names
       const formattedTransactions = transactionData?.map(transaction => {
-        const profile = profilesData?.find(p => p.user_id === transaction.user_id);
+        const profile = allProfiles?.find(p => p.user_id === transaction.user_id);
         
         let userName = 'Unknown User';
         let userRole = 'unknown';
+        let userEmail = '';
         
         if (profile) {
-          // Get the name
-          if (profile.full_name) {
-            userName = profile.full_name;
-          } else if (profile.first_name || profile.last_name) {
+          // Get the name - prioritize first_name + last_name, then full_name
+          if (profile.first_name || profile.last_name) {
             const firstName = profile.first_name || '';
             const lastName = profile.last_name || '';
             userName = `${firstName} ${lastName}`.trim();
+          } else if (profile.full_name && profile.full_name.trim()) {
+            userName = profile.full_name.trim();
+          } else if (profile.email) {
+            // If no name, use email as fallback
+            userName = profile.email.split('@')[0];
           }
           
           userRole = profile.role || 'unknown';
+          userEmail = profile.email || '';
           
-          // Format exactly like UI: "Name email role"
-          const email = profile.email || '';
-          userName = email ? `${userName} ${email} ${userRole}` : `${userName} ${userRole}`;
+          console.log(`✅ Found profile for ${transaction.user_id}:`);
+          console.log(`   - Name: "${userName}" (first: "${profile.first_name}", last: "${profile.last_name}", full: "${profile.full_name}")`);
+          console.log(`   - Role: "${userRole}"`);
+          console.log(`   - Email: "${userEmail}"`);
         } else {
           // Fallback: use user_id as name if no profile found
           userName = `User ${transaction.user_id.substring(0, 8)}`;
           userRole = 'unknown';
-          console.warn(`No profile found for user_id: ${transaction.user_id}`);
+          console.warn(`❌ No profile found for user_id: ${transaction.user_id}`);
         }
-        
-        console.log(`Transaction ${transaction.id}: user_name = ${userName}`);
         
         return {
           ...transaction,
           user_name: userName,
-          user_role: userRole
+          user_role: userRole,
+          user_email: userEmail
         };
       }) || [];
       
@@ -180,7 +218,7 @@ export default function AdminTransactions() {
       'refund': 'Refund',
       'platform_fee': 'Platform Fee',
       'gst_collection': 'GST Collection',
-      'penalty_fee': 'Penalty Fee'
+      // 'penalty_fee': 'Penalty Fee' // removed
     };
     return labels[type] || type;
   };
@@ -362,8 +400,9 @@ export default function AdminTransactions() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Penalty Fees</p>
-                  <p className="text-2xl font-bold">₹{platformEarnings.total_penalty_fees.toFixed(2)}</p>
+                  {/* Penalty Fees removed */}
+                  <p className="text-sm font-medium text-gray-600">Net Admin Earnings</p>
+                  <p className="text-2xl font-bold">₹{(platformEarnings.total_commission_earned).toFixed(2)}</p>
                 </div>
                 <Activity className="w-8 h-8 text-red-600" />
               </div>
@@ -410,7 +449,7 @@ export default function AdminTransactions() {
                 <SelectItem value="refund">Refunds</SelectItem>
                 <SelectItem value="platform_fee">Platform Fees</SelectItem>
                 <SelectItem value="gst_collection">GST Collection</SelectItem>
-                <SelectItem value="penalty_fee">Penalty Fees</SelectItem>
+                {/* <SelectItem value="penalty_fee">Penalty Fees</SelectItem> */}
               </SelectContent>
             </Select>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
@@ -477,9 +516,14 @@ export default function AdminTransactions() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <User className="w-4 h-4 text-gray-400" />
-                          {transaction.user_name}
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-2">
+                            <User className="w-4 h-4 text-gray-400" />
+                            <span className="font-medium">{transaction.user_name}</span>
+                          </div>
+                          {transaction.user_email && (
+                            <span className="text-sm text-gray-500 ml-6">{transaction.user_email}</span>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>

@@ -77,11 +77,11 @@ const mainSections = [
     url: "/admin/complaints",
     icon: MessageSquare,
   },
-  {
-    title: "Refunds",
-    url: "/admin/refunds",
-    icon: DollarSign,
-  },
+  // {
+  //   title: "Refunds",
+  //   url: "/admin/refunds",
+  //   icon: DollarSign,
+  // },
   {
     title: "Designer Verification",
     url: "/admin/designer-verification",
@@ -201,6 +201,11 @@ const contentSections = [
 // Analytics section items
 const analyticsSections = [
   {
+    title: "Earnings",
+    url: "/admin/earnings",
+    icon: DollarSign,
+  },
+  {
     title: "Usage Analytics",
     url: "/admin/analytics/usage",
     icon: Activity,
@@ -239,11 +244,11 @@ const platformSections = [
     url: "/admin/platform/taxes",
     icon: Receipt,
   },
-  {
-    title: "Tax Collections",
-    url: "/admin/tax-collections",
-    icon: TrendingUp,
-  },
+  // {
+  //   title: "Tax Collections",
+  //   url: "/admin/tax-collections",
+  //   icon: TrendingUp,
+  // },
   {
     title: "TDS Management",
     url: "/admin/tds-management",

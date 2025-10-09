@@ -13,7 +13,9 @@ import {
   Calendar,
   FileText,
   Eye,
-  RefreshCw
+  RefreshCw,
+  Upload,
+  Download
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -22,6 +24,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import CustomerFileReviewDialog from '@/components/CustomerFileReviewDialog';
 
 interface Complaint {
   id: string;
@@ -40,9 +43,14 @@ interface Complaint {
   resolved_at: string | null;
   resolved_by: string | null;
   created_at: string;
-
   designer_name: string;
   file_name: string;
+  new_file_id?: string;
+  new_file_uploaded_at?: string;
+  customer_review_notes?: string;
+  customer_reviewed_at?: string;
+  reupload_count?: number;
+  latest_file_id?: string;
 }
 
 export default function CustomerComplaints() {
@@ -50,6 +58,9 @@ export default function CustomerComplaints() {
   const { toast } = useToast();
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showReviewDialog, setShowReviewDialog] = useState(false);
+  const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
+  const [newFileData, setNewFileData] = useState<any>(null);
 
   useEffect(() => {
     if (user) {
@@ -132,7 +143,7 @@ export default function CustomerComplaints() {
       'quality_issue': 'Quality Issue',
       'wrong_file': 'Wrong File',
       'incomplete_work': 'Incomplete Work',
-      'late_delivery': 'Late Delivery',
+      // 'late_delivery': 'Late Delivery',
       'communication_issue': 'Communication Issue',
       'other': 'Other'
     };
@@ -143,8 +154,12 @@ export default function CustomerComplaints() {
     const statusConfig = {
       'pending': { color: 'bg-yellow-100 text-yellow-800', icon: Clock, label: 'Pending' },
       'under_review': { color: 'bg-blue-100 text-blue-800', icon: Eye, label: 'Under Review' },
-      'resolved': { color: 'bg-green-100 text-green-800', icon: CheckCircle, label: 'Resolved' },
-      'rejected': { color: 'bg-red-100 text-red-800', icon: AlertTriangle, label: 'Rejected' }
+      'rejected': { color: 'bg-red-100 text-red-800', icon: AlertTriangle, label: 'Rejected' },
+      'approved': { color: 'bg-orange-100 text-orange-800', icon: Upload, label: 'Approved' },
+      'file_uploaded': { color: 'bg-purple-100 text-purple-800', icon: FileText, label: 'File Ready' },
+      'customer_approved': { color: 'bg-green-100 text-green-800', icon: CheckCircle, label: 'Approved' },
+      'customer_rejected': { color: 'bg-red-100 text-red-800', icon: AlertTriangle, label: 'Rejected' },
+      'resolved': { color: 'bg-green-100 text-green-800', icon: CheckCircle, label: 'Resolved' }
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
@@ -183,6 +198,39 @@ export default function CustomerComplaints() {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const handleReviewFile = async (complaint: Complaint) => {
+    if (!complaint.new_file_id) return;
+
+    try {
+      // Fetch the new file details
+      const { data: fileData, error } = await supabase
+        .from('session_files')
+        .select('*')
+        .eq('id', complaint.new_file_id)
+        .single();
+
+      if (error) throw error;
+
+      setNewFileData(fileData);
+      setSelectedComplaint(complaint);
+      setShowReviewDialog(true);
+    } catch (error) {
+      console.error('Error fetching file details:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load file details",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleReviewComplete = () => {
+    fetchComplaints();
+    setShowReviewDialog(false);
+    setSelectedComplaint(null);
+    setNewFileData(null);
   };
 
   if (!user) {
@@ -286,6 +334,93 @@ export default function CustomerComplaints() {
                             </div>
                           )}
 
+                          {complaint.status === 'approved' && (
+                            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                              <h4 className="font-medium text-orange-900 mb-2 flex items-center gap-2">
+                                <Upload className="w-4 h-4" />
+                                Complaint Approved
+                              </h4>
+                              <p className="text-sm text-orange-800 mb-3">
+                                Your complaint has been approved. The designer will upload a corrected version of the file.
+                              </p>
+                              <p className="text-xs text-orange-600">
+                                You will be notified when the corrected file is ready for your review.
+                              </p>
+                            </div>
+                          )}
+
+                          {complaint.status === 'file_uploaded' && (
+                            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                              <h4 className="font-medium text-purple-900 mb-2 flex items-center gap-2">
+                                <FileText className="w-4 h-4" />
+                                New File Ready for Review
+                              </h4>
+                              <p className="text-sm text-purple-800 mb-3">
+                                The designer has uploaded a corrected version. Please review it and approve or reject it.
+                                {complaint.reupload_count && complaint.reupload_count > 0 && (
+                                  <span className="block mt-1 text-xs text-purple-600">
+                                    This is attempt {complaint.reupload_count + 1} - please check if the previous feedback has been addressed.
+                                  </span>
+                                )}
+                              </p>
+                              {complaint.new_file_uploaded_at && (
+                                <p className="text-xs text-purple-600 mb-3">
+                                  Uploaded: {formatDate(complaint.new_file_uploaded_at)}
+                                </p>
+                              )}
+                              <Button 
+                                onClick={() => handleReviewFile(complaint)}
+                                className="bg-purple-600 hover:bg-purple-700"
+                                size="sm"
+                              >
+                                <Eye className="w-4 h-4 mr-2" />
+                                Review File
+                              </Button>
+                            </div>
+                          )}
+
+                          {complaint.status === 'customer_approved' && (
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                              <h4 className="font-medium text-green-900 mb-2 flex items-center gap-2">
+                                <CheckCircle className="w-4 h-4" />
+                                File Approved
+                              </h4>
+                              <p className="text-sm text-green-800">
+                                You have approved the corrected file. This complaint is now resolved.
+                              </p>
+                              {complaint.customer_reviewed_at && (
+                                <p className="text-xs text-green-600 mt-2">
+                                  Approved: {formatDate(complaint.customer_reviewed_at)}
+                                </p>
+                              )}
+                            </div>
+                          )}
+
+                          {complaint.status === 'customer_rejected' && (
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                              <h4 className="font-medium text-red-900 mb-2 flex items-center gap-2">
+                                <AlertTriangle className="w-4 h-4" />
+                                File Rejected
+                              </h4>
+                              <p className="text-sm text-red-800 mb-3">
+                                You have rejected the corrected file. The designer will upload another version.
+                              </p>
+                              {complaint.customer_review_notes && (
+                                <div className="mb-3">
+                                  <h5 className="font-medium text-red-900 mb-1">Your Feedback:</h5>
+                                  <p className="text-sm text-red-700 bg-red-100 p-2 rounded">
+                                    {complaint.customer_review_notes}
+                                  </p>
+                                </div>
+                              )}
+                              {complaint.customer_reviewed_at && (
+                                <p className="text-xs text-red-600">
+                                  Rejected: {formatDate(complaint.customer_reviewed_at)}
+                                </p>
+                              )}
+                            </div>
+                          )}
+
                           {complaint.resolution && (
                             <div>
                               <h4 className="font-medium text-gray-900 mb-2">Resolution:</h4>
@@ -309,6 +444,26 @@ export default function CustomerComplaints() {
           </main>
         </div>
       </div>
+
+      {/* File Review Dialog */}
+      {selectedComplaint && newFileData && (
+        <CustomerFileReviewDialog
+          isOpen={showReviewDialog}
+          onClose={() => setShowReviewDialog(false)}
+          complaintId={selectedComplaint.id}
+          newFileId={newFileData.id}
+          fileName={newFileData.name}
+          fileUrl={newFileData.file_url}
+          fileType={newFileData.file_type}
+          fileSize={newFileData.file_size}
+          uploadedAt={newFileData.created_at}
+          designerName={selectedComplaint.designer_name}
+          complaintTitle={selectedComplaint.title}
+          originalDescription={selectedComplaint.description}
+          reuploadCount={selectedComplaint.reupload_count || 0}
+          onReviewComplete={handleReviewComplete}
+        />
+      )}
     </SidebarProvider>
   );
 }

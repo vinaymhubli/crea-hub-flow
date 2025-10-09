@@ -219,6 +219,253 @@ export default function AdminInvoiceManagement() {
     }
   };
 
+  const getTemplateForInvoice = async (invoice: Invoice): Promise<any | null> => {
+    // Prefer invoice.template_id, otherwise fallback to active template
+    try {
+      if ((invoice as any).template_id) {
+        const { data } = await supabase
+          .from('invoice_templates')
+          .select('*')
+          .eq('id', (invoice as any).template_id)
+          .single();
+        if (data) return data;
+      }
+
+      const { data: active } = await supabase
+        .from('invoice_templates')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+      return (active || null);
+    } catch (_e) {
+      return null;
+    }
+  };
+
+  const generateInvoiceHTML = async (invoice: Invoice, template: any) => {
+    const taxDetails = invoice.tax_details || {};
+    const metadata = invoice.metadata || {};
+    const companyName = template?.company_name || 'CreativeHub';
+    const companyLogo = template?.company_logo_url || '';
+    const companyAddress = template?.company_address || '—';
+    const companyPhone = template?.company_phone || '';
+    const companyEmail = template?.company_email || '';
+    const companyWebsite = template?.company_website || '';
+    const footerText = template?.footer_text || 'This is a computer-generated invoice and does not require a signature.';
+
+    // Fetch customer and designer names
+    let customerName = 'Customer';
+    let designerName = 'Designer';
+
+    try {
+      // Get customer name
+      if (invoice.customer_id) {
+        const { data: customerProfile } = await supabase
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('user_id', invoice.customer_id)
+          .single();
+        
+        if (customerProfile) {
+          customerName = `${customerProfile.first_name || ''} ${customerProfile.last_name || ''}`.trim() || 'Customer';
+        }
+      }
+
+      // Get designer name
+      if (invoice.designer_id) {
+        const { data: designerProfile } = await supabase
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('user_id', invoice.designer_id)
+          .single();
+        
+        if (designerProfile) {
+          designerName = `${designerProfile.first_name || ''} ${designerProfile.last_name || ''}`.trim() || 'Designer';
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching names for invoice:', error);
+    }
+    
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice ${invoice.invoice_number}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+        .invoice-container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 2px solid #eee; padding-bottom: 20px; }
+        .company-info { flex: 1; }
+        .company-name { font-size: 28px; font-weight: bold; color: #333; margin-bottom: 5px; }
+        .company-details { color: #666; line-height: 1.5; }
+        .invoice-info { text-align: right; }
+        .invoice-number { font-size: 24px; font-weight: bold; color: #333; }
+        .invoice-date { color: #666; margin-top: 5px; }
+        .billing-section { display: flex; justify-content: space-between; margin-bottom: 40px; }
+        .billing-info { flex: 1; }
+        .billing-title { font-weight: bold; color: #333; margin-bottom: 10px; }
+        .billing-details { color: #666; line-height: 1.6; }
+        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+        .items-table th, .items-table td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        .items-table th { background: #f8f9fa; font-weight: bold; color: #333; }
+        .totals-section { margin-left: auto; width: 300px; }
+        .total-row { display: flex; justify-content: space-between; padding: 8px 0; }
+        .total-row.final { font-weight: bold; font-size: 18px; border-top: 2px solid #333; padding-top: 12px; margin-top: 12px; }
+        .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #666; }
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+        .status-paid { background: #d4edda; color: #155724; }
+        .status-generated { background: #fff3cd; color: #856404; }
+        .status-sent { background: #cce5ff; color: #004085; }
+    </style>
+</head>
+<body>
+    <div class="invoice-container">
+        <div class="header">
+            <div class="company-info">
+                ${companyLogo ? `<img src="${companyLogo}" alt="${companyName}" style="max-height:48px;margin-bottom:8px;"/>` : ''}
+                <div class="company-name">${companyName}</div>
+                <div class="company-details">
+                    ${companyAddress || ''}<br>
+                    ${companyEmail ? `Email: ${companyEmail}<br>` : ''}
+                    ${companyPhone ? `Phone: ${companyPhone}<br>` : ''}
+                    ${companyWebsite ? `${companyWebsite}` : ''}
+                </div>
+            </div>
+            <div class="invoice-info">
+                <div class="invoice-number">Invoice #${invoice.invoice_number}</div>
+                <div class="invoice-date">${new Date(invoice.created_at).toLocaleDateString('en-IN')}</div>
+                <div style="margin-top: 10px;">
+                    <span class="status-badge status-${invoice.status}">${invoice.status}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="billing-section">
+            <div class="billing-info">
+                <div class="billing-title">Bill To:</div>
+                <div class="billing-details">
+                    ${invoice.invoice_type === 'customer' ? customerName : designerName}<br>
+                    Session ID: ${invoice.session_id}<br>
+                    ${invoice.booking_id ? `Booking ID: ${invoice.booking_id}` : 'Live Session'}
+                </div>
+            </div>
+            <div class="billing-info">
+                <div class="billing-title">Session Details:</div>
+                <div class="billing-details">
+                    Duration: ${invoice.session_duration || 'N/A'} minutes<br>
+                    Date: ${new Date(invoice.created_at).toLocaleDateString('en-IN')}<br>
+                    ${invoice.place_of_supply ? `Place of Supply: ${invoice.place_of_supply}` : ''}
+                </div>
+            </div>
+        </div>
+
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th>Duration</th>
+                    <th>Rate</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Design Session - ${invoice.invoice_type === 'customer' ? 'Customer Payment' : 'Designer Earnings'}</td>
+                    <td>${invoice.session_duration || 'N/A'} minutes</td>
+                    <td>₹${(invoice.subtotal / (invoice.session_duration || 60)).toFixed(2)}/min</td>
+                    <td>₹${invoice.subtotal.toFixed(2)}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="totals-section">
+            <div class="total-row">
+                <span>Session Amount:</span>
+                <span>₹${invoice.subtotal.toFixed(2)}</span>
+            </div>
+            ${invoice.invoice_type === 'designer' ? `
+            <div class="total-row" style="color: #dc2626;">
+                <span>Platform Commission (${metadata.commission_rate || 10}%):</span>
+                <span>-₹${(metadata.commission_amount || 0).toFixed(2)}</span>
+            </div>
+            <div class="total-row" style="color: #dc2626;">
+                <span>TDS Deduction (${metadata.tds_rate || 10}%):</span>
+                <span>-₹${(metadata.tds_amount || 0).toFixed(2)}</span>
+            </div>
+            ` : ''}
+            ${invoice.tax_amount > 0 ? `
+            <div class="total-row">
+                <span>GST (${taxDetails.cgst_rate || 9}% CGST + ${taxDetails.sgst_rate || 9}% SGST):</span>
+                <span>₹${invoice.tax_amount.toFixed(2)}</span>
+            </div>
+            ` : ''}
+            <div class="total-row final">
+                <span>${invoice.invoice_type === 'customer' ? 'Total Paid:' : 'Net Earnings:'}</span>
+                <span>₹${invoice.total_amount.toFixed(2)}</span>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Thank you for your business!</p>
+            <p>${footerText}</p>
+            ${invoice.payment_method ? `<p>Payment Method: ${invoice.payment_method}</p>` : ''}
+            ${invoice.paid_at ? `<p>Paid on: ${new Date(invoice.paid_at).toLocaleDateString('en-IN')}</p>` : ''}
+        </div>
+    </div>
+</body>
+</html>`;
+  };
+
+  const viewInvoice = async (invoice: Invoice) => {
+    try {
+      const template = await getTemplateForInvoice(invoice);
+      const invoiceContent = await generateInvoiceHTML(invoice, template);
+      const w = window.open('', '_blank');
+      if (w) {
+        w.document.write(invoiceContent);
+        w.document.close();
+      }
+    } catch (error) {
+      console.error('Error viewing invoice:', error);
+      toast({
+        title: "Error",
+        description: "Failed to view invoice",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const downloadInvoice = async (invoice: Invoice) => {
+    try {
+      const template = await getTemplateForInvoice(invoice);
+      const invoiceContent = await generateInvoiceHTML(invoice, template);
+      
+      // Open a print window for Save as PDF
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.open();
+        printWindow.document.write(invoiceContent.replace('</body>', '<script>window.onload=()=>window.print()</script></body>'));
+        printWindow.document.close();
+      }
+
+      toast({
+        title: "Success",
+        description: "Invoice downloaded successfully!",
+      });
+    } catch (error) {
+      console.error('Error downloading invoice:', error);
+      toast({
+        title: "Error",
+        description: "Failed to download invoice. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleTemplateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -583,10 +830,18 @@ export default function AdminInvoiceManagement() {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <Button variant="outline" size="sm">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => viewInvoice(invoice)}
+                              >
                                 <Eye className="w-4 h-4" />
                               </Button>
-                              <Button variant="outline" size="sm">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => downloadInvoice(invoice)}
+                              >
                                 <Download className="w-4 h-4" />
                               </Button>
                             </div>
