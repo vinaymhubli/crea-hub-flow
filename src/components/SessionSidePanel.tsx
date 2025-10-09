@@ -1444,7 +1444,7 @@ export default function SessionSidePanel({
                     </div>
                     <div className="flex justify-between text-xs sm:text-sm">
                       <span className="text-gray-600">Rate per minute:</span>
-                      <span>₹{rate.toFixed(2)}</span>
+                      <span>₹{Math.round(rate).toFixed(0)}</span>
                     </div>
                     <div className="flex justify-between text-xs sm:text-sm">
                       <span className="text-gray-600">Format Multiplier:</span>
@@ -1455,35 +1455,35 @@ export default function SessionSidePanel({
                       <span>Subtotal:</span>
                       <span>
                         ₹
-                        {(
+                        {Math.round(
                           Math.ceil(duration / 60) *
                           rate *
                           formatMultiplier
-                        ).toFixed(2)}
+                        ).toFixed(0)}
                       </span>
                     </div>
                     <div className="flex justify-between text-xs sm:text-sm">
                       <span>GST (18%):</span>
                       <span>
                         ₹
-                        {(
+                        {Math.round(
                           Math.ceil(duration / 60) *
                           rate *
                           formatMultiplier *
                           0.18
-                        ).toFixed(2)}
+                        ).toFixed(0)}
                       </span>
                     </div>
                     <div className="flex justify-between font-bold text-sm sm:text-lg">
                       <span>Total:</span>
                       <span>
                         ₹
-                        {(
+                        {Math.round(
                           Math.ceil(duration / 60) *
                           rate *
                           formatMultiplier *
                           1.18
-                        ).toFixed(2)}
+                        ).toFixed(0)}
                       </span>
                     </div>
                   </div>

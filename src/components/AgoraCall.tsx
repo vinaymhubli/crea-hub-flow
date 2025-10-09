@@ -50,6 +50,7 @@ interface AgoraCallProps {
   onOpenShare?: () => void;
   onScreenShareStarted?: () => void;
   onScreenShareStopped?: () => void;
+  onRemoteScreenShareStopped?: () => void; // NEW: When remote user stops screen sharing
   onSessionEnd?: () => void;
   // New props for screen sharing control
   remoteScreenSharing?: boolean;
@@ -78,6 +79,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
       onOpenShare,
       onScreenShareStarted,
       onScreenShareStopped,
+      onRemoteScreenShareStopped,
       onSessionEnd,
       remoteScreenSharing,
       onScreenShareRequest,
@@ -92,6 +94,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
   ) => {
     const clientRef = useRef<IAgoraRTCClient | null>(null);
     const [joined, setJoined] = useState(false);
+    // NOTE: media persistence hooks moved below state declarations to avoid "uninitialized variable" errors
 
 
     // Critical debugging: Track component lifecycle
@@ -197,6 +200,59 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
       "local" | "remote" | "screen" | null
     >(null);
 
+    // Persist mic/cam state across refresh within this session
+    const mediaStateKey = useMemo(
+      () => `live_media_${sessionId}_${userId}`,
+      [sessionId, userId]
+    );
+
+    const stopScreenShareIfActive = useCallback(async () => {
+      try {
+        if (screenSharingRef.current && screenTrackRef.current && clientRef.current) {
+          try { await clientRef.current.unpublish(screenTrackRef.current); } catch {}
+          try { screenTrackRef.current.close(); } catch {}
+          screenTrackRef.current = null;
+          setScreenSharing(false);
+          if (onScreenShareStopped) onScreenShareStopped();
+        }
+      } catch {}
+    }, [onScreenShareStopped]);
+
+    // Restore media state on mount; never auto-start screen share
+    useEffect(() => {
+      try {
+        const raw = localStorage.getItem(mediaStateKey);
+        if (raw) {
+          const saved = JSON.parse(raw);
+          if (typeof saved.muted === 'boolean') {
+            setMuted(saved.muted);
+          }
+          if (typeof saved.cameraOff === 'boolean') {
+            setCameraOff(saved.cameraOff);
+          }
+        }
+      } catch {}
+      // Only once on mount
+      stopScreenShareIfActive();
+      const onUnload = () => {
+        try { localStorage.setItem(mediaStateKey, JSON.stringify({ muted, cameraOff })); } catch {}
+      };
+      window.addEventListener('beforeunload', onUnload);
+      return () => window.removeEventListener('beforeunload', onUnload);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    useEffect(() => {
+      try { localStorage.setItem(mediaStateKey, JSON.stringify({ muted, cameraOff })); } catch {}
+      // Apply to tracks if present (guard creation order)
+      if (localAudioTrackRef.current) {
+        try { localAudioTrackRef.current.setEnabled(!muted); } catch {}
+      }
+      if (localVideoTrackRef.current) {
+        try { localVideoTrackRef.current.setEnabled(!cameraOff); } catch {}
+      }
+    }, [muted, cameraOff, mediaStateKey]);
+
     // Keep ref in sync with state
     useEffect(() => {
       screenSharingRef.current = screenSharing;
@@ -234,33 +290,16 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
       console.log("🔍 Button should be:", screenShareBlocked ? "DISABLED" : "ENABLED");
     }, [screenShareBlocked]);
 
-    // Debug effect to track screen sharing layout changes
+    // Debug effect to track screen sharing layout changes - simplified to avoid infinite loops
     useEffect(() => {
       console.log("🖥️ ===== SCREEN SHARING LAYOUT STATE =====");
       console.log("🖥️ screenSharing (local):", screenSharing);
       console.log("🖥️ remoteScreenSharingState:", remoteScreenSharingState);
       console.log("🖥️ remoteScreenSharingUser:", remoteScreenSharingUser);
       console.log("🖥️ remoteScreenSharing (prop):", remoteScreenSharing);
-      console.log("🖥️ Layout condition:", screenSharing || remoteScreenSharingState || remoteScreenSharing);
-      console.log("🖥️ Layout should be:", (screenSharing || remoteScreenSharingState || remoteScreenSharing) ? "SCREEN SHARING" : "NORMAL GRID");
-      
-      // Debug remote users
-      console.log("🖥️ Remote users:", Object.keys(remoteUsers).map(uid => ({
-        uid,
-        hasVideo: remoteUsers[uid]?.hasVideo,
-        hasAudio: remoteUsers[uid]?.hasAudio
-      })));
-
-      // Force screen sharing state if prop indicates it but local state doesn't
-      if (remoteScreenSharing && !remoteScreenSharingState) {
-        console.log("🖥️ FORCING screen sharing state based on prop");
-        setRemoteScreenSharingState(true);
-        if (Object.keys(remoteUsers).length > 0) {
-          const firstUser = Object.keys(remoteUsers)[0];
-          setRemoteScreenSharingUser(firstUser);
-        }
-      }
-    }, [screenSharing, remoteScreenSharingState, remoteScreenSharingUser, remoteScreenSharing, remoteUsers]);
+      console.log("🖥️ Layout condition:", screenSharing || remoteScreenSharingState);
+      console.log("🖥️ Layout should be:", (screenSharing || remoteScreenSharingState) ? "SCREEN SHARING" : "NORMAL GRID");
+    }, [screenSharing, remoteScreenSharingState, remoteScreenSharingUser, remoteScreenSharing]);
 
     // Force sync remote screen sharing state with prop
     useEffect(() => {
@@ -278,7 +317,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
           }
         }
       }
-    }, [remoteScreenSharing, remoteScreenSharingState, remoteUsers]);
+    }, [remoteScreenSharing, remoteScreenSharingState]);
 
     // Immediate screen sharing state sync - prioritize prop over detection
     useEffect(() => {
@@ -296,7 +335,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
         setRemoteScreenSharingState(false);
         setRemoteScreenSharingUser(null);
       }
-    }, [remoteScreenSharing, remoteUsers]);
+    }, [remoteScreenSharing]);
 
     // Reset screen sharing states when session changes
     useEffect(() => {
@@ -500,20 +539,26 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
               existing.videoTrack = null;
               existing.hasVideo = false;
 
-              // Check if this user was the one screen sharing
-              if (remoteScreenSharingUser === user.uid) {
-                console.log(
-                  "🖥️ REMOTE SCREEN SHARING STOPPED - user was screen sharing:",
-                  user.uid
-                );
+              // ALWAYS clear screen sharing state when ANY remote user unpublishes video
+              // This handles cases where remoteScreenSharingUser wasn't set correctly
+              if (remoteScreenSharingState) {
+                console.log("🖥️ ✅ REMOTE SCREEN SHARING STOPPED - clearing all screen sharing state");
+                console.log("🖥️ User who stopped:", user.uid);
+                console.log("🖥️ Previously tracked user:", remoteScreenSharingUser);
                 setRemoteScreenSharingState(false);
                 setRemoteScreenSharingUser(null);
-                setFullscreenVideo(null); // Reset fullscreen state when remote screen sharing stops
+                setFullscreenVideo(null);
                 
-                // Force a small delay to ensure state updates are processed
-                setTimeout(() => {
-                  console.log("🖥️ Screen sharing state reset completed");
-                }, 100);
+                // Call the remote screen share stopped callback
+                if (onRemoteScreenShareStopped) {
+                  console.log("🖥️ ✅ Calling onRemoteScreenShareStopped callback");
+                  onRemoteScreenShareStopped();
+                  console.log("🖥️ ✅ onRemoteScreenShareStopped callback completed");
+                } else {
+                  console.warn("🖥️ ❌ onRemoteScreenShareStopped callback not available");
+                }
+              } else {
+                console.log("🖥️ ❌ No remote screen sharing active, no action needed");
               }
             }
             if (mediaType === "audio") {
@@ -542,6 +587,8 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
             setRemoteScreenSharingState(false);
             setRemoteScreenSharingUser(null);
             setFullscreenVideo(null);
+            // Call the remote screen share stopped callback to broadcast the event
+            if (onRemoteScreenShareStopped) onRemoteScreenShareStopped();
             
             // Force a small delay to ensure state updates are processed
             setTimeout(() => {
@@ -552,7 +599,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
           if (onRemoteUserLeft) onRemoteUserLeft(user.uid);
         });
       },
-      [onRemoteUserJoined, onRemoteUserLeft, remoteScreenSharingUser]
+      [onRemoteUserJoined, onRemoteUserLeft, remoteScreenSharingUser, onRemoteScreenShareStopped]
     );
 
     const join = useCallback(async () => {
@@ -1224,7 +1271,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
 
     // Force video play when screen sharing layout is active
     useEffect(() => {
-      const shouldShowScreenShare = screenSharing || remoteScreenSharingState || remoteScreenSharing;
+      const shouldShowScreenShare = screenSharing || remoteScreenSharingState;
       if (shouldShowScreenShare) {
         console.log("🖥️ Screen sharing layout is active, forcing video play");
         
@@ -1258,7 +1305,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
           });
         }
       }
-    }, [screenSharing, remoteScreenSharingState, remoteScreenSharing, remoteUsers]);
+    }, [screenSharing, remoteScreenSharingState, remoteScreenSharing]);
 
     // Helper function to switch video to fullscreen
     const handleVideoClick = useCallback(
@@ -1275,11 +1322,10 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
         <div className="flex-1 relative overflow-hidden">
           {/* Google Meet style video layout */}
           {(() => {
-            const shouldShowScreenShare = screenSharing || remoteScreenSharingState || remoteScreenSharing;
+            const shouldShowScreenShare = screenSharing || remoteScreenSharingState;
             console.log("🖥️ LAYOUT DECISION:", {
               screenSharing,
               remoteScreenSharingState,
-              remoteScreenSharing,
               shouldShowScreenShare
             });
             return shouldShowScreenShare;
@@ -1315,17 +1361,17 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
                       })
                   )}
 
-                  {/* Screen sharing indicator */}
-                  <div className="absolute top-4 left-4 bg-red-500/90 backdrop-blur-sm text-white px-3 py-2 rounded-lg flex items-center gap-2 shadow-lg">
-                    <ScreenShare className="w-4 h-4" />
-                    <span className="text-sm font-medium">
-                      {screenSharing
-                        ? "You are presenting"
-                        : `${
-                            isDesigner ? "Customer" : "Designer"
-                          } is presenting`}
-                    </span>
-                  </div>
+                  {/* Screen sharing indicator - only show when actually sharing */}
+                  {(screenSharing || remoteScreenSharingState) && (
+                    <div className="absolute top-4 left-4 bg-red-500/90 backdrop-blur-sm text-white px-3 py-2 rounded-lg flex items-center gap-2 shadow-lg">
+                      <ScreenShare className="w-4 h-4" />
+                      <span className="text-sm font-medium">
+                        {screenSharing
+                          ? "You are presenting"
+                          : `${isDesigner ? "Customer" : "Designer"} is presenting`}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 

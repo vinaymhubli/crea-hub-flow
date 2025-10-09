@@ -27,7 +27,7 @@ export default function GlobalScreenShareNotification() {
   const [showScreenShare, setShowScreenShare] = useState(false);
 
   useEffect(() => {
-    if (!user || !profile || profile.user_type !== 'client') return;
+    if (!user || !profile || !['client','customer'].includes(profile.user_type as any)) return;
 
     // Set up realtime subscription for screen share notifications
     const channel = supabase
@@ -121,7 +121,7 @@ export default function GlobalScreenShareNotification() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, profile, toast]);
+  }, [user, profile, toast, navigate]);
 
   const joinScreenShare = () => {
     setShowScreenShare(true);

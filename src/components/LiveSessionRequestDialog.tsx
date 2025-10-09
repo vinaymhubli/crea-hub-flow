@@ -113,32 +113,60 @@ export default function LiveSessionRequestDialog({
 
         if (error) throw error;
 
-        // Fetch designer profiles separately
-          const designerIds = (data || []).map((req: any) => req.designer_id);
-          let designerProfiles: any = {};
-          
-          if (designerIds.length > 0) {
-            const { data: profiles, error: profilesError } = await supabase
-              .from('profiles')
-              .select('user_id, first_name, last_name, avatar_url')
-              .in('user_id', designerIds);
+        // We must map designer_id (designers.id) -> profiles.user_id
+        const designerIds = (data || []).map((req: any) => req.designer_id);
+        let designerIdToProfile: Record<string, any> = {};
 
-            if (!profilesError && profiles) {
-              designerProfiles = profiles.reduce((acc, profile) => {
-                acc[profile.user_id] = profile;
-                return acc;
-              }, {} as any);
+        if (designerIds.length > 0) {
+          // 1) Fetch designers rows to get user_id
+          const { data: designersRows, error: designersError } = await (supabase as any)
+            .from('designers')
+            .select('id, user_id')
+            .in('id', designerIds);
+
+          if (!designersError && designersRows && designersRows.length > 0) {
+            const userIds = designersRows.map((d: any) => d.user_id).filter(Boolean);
+
+            // 2) Fetch profiles for those user_ids
+            if (userIds.length > 0) {
+              const { data: profiles, error: profilesError } = await (supabase as any)
+                .from('profiles')
+                .select('user_id, first_name, last_name, full_name, avatar_url, email')
+                .in('user_id', userIds);
+
+              if (!profilesError && profiles) {
+                const userIdToProfile: Record<string, any> = profiles.reduce((acc: any, p: any) => {
+                  acc[p.user_id] = p;
+                  return acc;
+                }, {});
+
+                // Build map keyed by designers.id
+                designerIdToProfile = designersRows.reduce((acc: any, d: any) => {
+                  const p = userIdToProfile[d.user_id];
+                  if (p) {
+                    acc[d.id] = {
+                      first_name: p.first_name,
+                      last_name: p.last_name,
+                      avatar_url: p.avatar_url,
+                      full_name: p.full_name,
+                      email: p.email
+                    };
+                  }
+                  return acc;
+                }, {} as Record<string, any>);
+              }
             }
           }
+        }
 
-          // Combine data with designer profiles
-          const requestsWithProfiles = (data || []).map((request: any) => ({
+        // Combine data with resolved designer profiles
+        const requestsWithProfiles = (data || []).map((request: any) => {
+          const fallback = { first_name: 'Unknown', last_name: 'Designer' };
+          return {
             ...request,
-            designer: designerProfiles[request.designer_id] || {
-            first_name: 'Unknown',
-            last_name: 'Designer'
-          }
-        }));
+            designer: designerIdToProfile[request.designer_id] || fallback
+          };
+        });
 
         setSessionRequests(requestsWithProfiles);
       }

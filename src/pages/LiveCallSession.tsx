@@ -70,6 +70,9 @@ export default function LiveCallSession() {
   const [pendingRateChange, setPendingRateChange] = useState<number | null>(null);
   const [pendingMultiplierChange, setPendingMultiplierChange] = useState<number | null>(null);
   const [pendingFileFormat, setPendingFileFormat] = useState<string>('');
+  
+  // Persist timer across refreshes
+  const timerStorageKey = useMemo(() => `live_timer_${sessionId}`, [sessionId]);
 
   // Broadcast helper
   const channel = useMemo(
@@ -93,6 +96,12 @@ export default function LiveCallSession() {
         } else {
           console.log('📊 Loaded session data:', activeSessionData);
           setSessionData(activeSessionData);
+          // Initialize duration from started_at to keep timer consistent across refresh
+          if ((activeSessionData as any)?.started_at) {
+            const startedMs = new Date((activeSessionData as any).started_at).getTime();
+            const elapsed = Math.max(0, Math.floor((Date.now() - startedMs) / 1000));
+            setDuration(elapsed);
+          }
         }
       } catch (error) {
         console.error('Error in loadSessionData:', error);
@@ -184,12 +193,20 @@ export default function LiveCallSession() {
           `${p.payload.userName} started screen sharing`
         );
         setTimeout(() => setScreenShareNotification(null), 3000);
+        // Pause timer while someone is presenting
+        setIsPaused(true);
       })
       .on("broadcast", { event: "screen_share_stopped" }, (p) => {
         setScreenShareNotification(
           `${p.payload.userName} stopped screen sharing`
         );
         setTimeout(() => setScreenShareNotification(null), 3000);
+        // Ensure UI reflects that no one is presenting and resume timer on both sides
+        setIsPaused(false);
+        // Designer drives timer sync when unpaused
+        if (isDesigner) {
+          channel.send({ type: "broadcast", event: "session_resume", payload: {} });
+        }
       })
        .on("broadcast", { event: "session_end" }, async (p) => {
          console.log("📡 Customer received session_end event:", p.payload);
@@ -238,6 +255,13 @@ export default function LiveCallSession() {
              });
              console.log("📊 Designer responding with current format multiplier:", formatMultiplier);
            }
+          // Also sync current timer immediately so refreshed clients align instantly
+          channel.send({
+            type: "broadcast",
+            event: "timer_sync",
+            payload: { duration },
+          });
+          console.log("⏱️ Designer responded with current duration:", duration);
          }
        })
        .on("broadcast", { event: "session_approval_request" }, (p) => {
@@ -315,9 +339,8 @@ export default function LiveCallSession() {
          console.log("📡 Payload:", p.payload);
          console.log("📡 userName:", p.payload?.userName);
          console.log("📡 Current isDesigner:", isDesigner);
-         console.log("📡 Setting remoteScreenSharing to FALSE");
-         setRemoteScreenSharing(false);
-         console.log("✅ remoteScreenSharing state updated to FALSE - AgoraCall should re-enable button");
+         console.log("📡 Screen share stopped broadcast received - AgoraCall will handle state update");
+         // Don't set remoteScreenSharing here - let AgoraCall detect and call handleRemoteScreenShareStopped
        })
        .on("broadcast", { event: "screen_share_request" }, (p) => {
          console.log("📡 Screen share request notification:", p.payload);
@@ -343,42 +366,125 @@ export default function LiveCallSession() {
             payload: { duration: newDuration },
           });
         }
+        // Persist locally so refresh restores immediately
+        try {
+          localStorage.setItem(timerStorageKey, String(newDuration));
+        } catch {}
         return newDuration;
       });
     }, 1000);
     return () => clearInterval(t);
-  }, [bothJoined, isPaused, isDesigner, channel]);
+  }, [bothJoined, isPaused, isDesigner, channel, timerStorageKey]);
+
+  // On mount, attempt to restore from localStorage first for instant continuity
+  useEffect(() => {
+    const saved = localStorage.getItem(timerStorageKey);
+    if (saved && !Number.isNaN(Number(saved))) {
+      setDuration(Number(saved));
+    }
+  }, [timerStorageKey]);
 
   // Stable profile values to prevent infinite re-renders
   const profileFirstName = profile?.first_name;
   const profileLastName = profile?.last_name;
 
   useEffect(() => {
-    // Load names from profiles via active_sessions to display in panels
+    // Load both names from DB so both sides always see each other's real names
     const loadNames = async () => {
-      const { data } = await supabase
-        .from("active_sessions" as any)
-        .select(
-          "customer_id, designers(user_id), profiles!active_sessions_customer_id_fkey(first_name, last_name)"
-        )
-        .eq("session_id", sessionId)
-        .maybeSingle();
-      if ((data as any)?.profiles)
-        setCustomerName(
-          `${(data as any).profiles.first_name || ""} ${
-            (data as any).profiles.last_name || ""
-          }`.trim() || "Customer"
-        );
-      // Designer name from current user
-      if (profileFirstName || profileLastName) {
-        setDesignerName(
-          `${profileFirstName || ""} ${profileLastName || ""}`.trim() ||
-            "Designer"
-        );
+      try {
+        console.log("🔍 Loading names for sessionId:", sessionId);
+
+        // Use a single query with joins to get both names at once
+        const { data: sessionData, error: sessionError } = await supabase
+          .from("active_sessions")
+          .select(`
+            customer_id,
+            designer_id,
+            customer_profile:profiles!active_sessions_customer_id_fkey(first_name, last_name),
+            designer_profile:designers!active_sessions_designer_id_fkey(user_id, profiles!designers_user_id_fkey(first_name, last_name))
+          `)
+          .eq("session_id", sessionId)
+          .single();
+
+        if (sessionError) {
+          console.error("❌ Error loading session data:", sessionError);
+          console.log("❌ Falling back to separate queries...");
+          
+          // Fallback: separate queries
+          const { data: basicSessionData } = await supabase
+            .from("active_sessions")
+            .select("customer_id, designer_id")
+            .eq("session_id", sessionId)
+            .single();
+
+          if (basicSessionData) {
+            console.log("🔍 Basic session data:", basicSessionData);
+            
+            // Get customer name
+            if ((basicSessionData as any)?.customer_id) {
+              const { data: customerProfile } = await supabase
+                .from("profiles")
+                .select("first_name, last_name")
+                .eq("user_id", (basicSessionData as any).customer_id)
+                .single();
+              
+              if (customerProfile) {
+                const customerFullName = `${customerProfile.first_name || ""} ${customerProfile.last_name || ""}`.trim() || "Customer";
+                setCustomerName(customerFullName);
+                console.log("✅ Customer name loaded:", customerFullName);
+              }
+            }
+
+            // Get designer name via designers table
+            if ((basicSessionData as any)?.designer_id) {
+              const { data: designerData } = await supabase
+                .from("designers")
+                .select("user_id")
+                .eq("id", (basicSessionData as any).designer_id)
+                .single();
+              
+              if (designerData?.user_id) {
+                const { data: designerProfile } = await supabase
+                  .from("profiles")
+                  .select("first_name, last_name")
+                  .eq("user_id", designerData.user_id)
+                  .single();
+                
+                if (designerProfile) {
+                  const designerFullName = `${designerProfile.first_name || ""} ${designerProfile.last_name || ""}`.trim() || "Designer";
+                  setDesignerName(designerFullName);
+                  console.log("✅ Designer name loaded:", designerFullName);
+                }
+              }
+            }
+          }
+          return;
+        }
+
+        console.log("🔍 Session data with profiles:", sessionData);
+
+        // Extract names from joined data
+        if ((sessionData as any)?.customer_profile) {
+          const profile = (sessionData as any).customer_profile;
+          const customerFullName = `${profile.first_name || ""} ${profile.last_name || ""}`.trim() || "Customer";
+          setCustomerName(customerFullName);
+          console.log("✅ Customer name from join:", customerFullName);
+        }
+
+        if ((sessionData as any)?.designer_profile?.profiles) {
+          const profile = (sessionData as any).designer_profile.profiles;
+          const designerFullName = `${profile.first_name || ""} ${profile.last_name || ""}`.trim() || "Designer";
+          setDesignerName(designerFullName);
+          console.log("✅ Designer name from join:", designerFullName);
+        }
+
+      } catch (error) {
+        console.error("❌ Error in loadNames:", error);
       }
     };
+
     if (sessionId) loadNames();
-  }, [sessionId, profileFirstName, profileLastName]);
+  }, [sessionId]);
 
   // Load booking data - EXACT copy from ScreenShare
   const loadBookingData = async () => {
@@ -666,7 +772,19 @@ export default function LiveCallSession() {
       payload: { userName },
     });
     console.log("✅ screen_share_stopped broadcast sent");
+    // Also resume timer locally after sharing stops
+    setIsPaused(false);
   }, [channel, isDesigner, designerName, customerName]);
+
+  const handleRemoteScreenShareStopped = useCallback(() => {
+    console.log("🖥️ ===== REMOTE SCREEN SHARE STOPPED HANDLER CALLED =====");
+    // For remote screen share stop, we don't broadcast - the remote user already broadcasted
+    // We just need to update local UI state
+    console.log("🖥️ Remote user stopped screen sharing, updating local UI");
+    setRemoteScreenSharing(false);
+    setIsPaused(false); // Resume timer when remote screen sharing stops
+    console.log("⏱️ Timer resumed after remote screen sharing stopped");
+  }, []);
 
   const handleScreenShareRequest = useCallback(() => {
     const userName = isDesigner ? designerName : customerName;
@@ -996,6 +1114,8 @@ export default function LiveCallSession() {
                 customerId: activeSession.customer_id,
                 designerId: activeSession.designer_id,
                 amount: sessionAmount,
+                sessionType: 'live_session',
+                duration: duration, // Pass actual session duration in seconds
                 bookingId: bookingData?.id || null
               }
             });
@@ -1234,6 +1354,7 @@ export default function LiveCallSession() {
           onRemoteUserLeft={handleRemoteLeft}
           onScreenShareStarted={handleScreenShareStarted}
           onScreenShareStopped={handleScreenShareStopped}
+          onRemoteScreenShareStopped={handleRemoteScreenShareStopped}
           remoteScreenSharing={remoteScreenSharing}
           onScreenShareRequest={handleScreenShareRequest}
           isPaused={isPaused}

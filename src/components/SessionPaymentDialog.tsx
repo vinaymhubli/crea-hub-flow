@@ -71,11 +71,8 @@ export default function SessionPaymentDialog({
     }
 
     if (walletBalance < totalAmount) {
-      toast({
-        title: "Insufficient Balance",
-        description: `Your wallet balance (₹${walletBalance.toFixed(2)}) is insufficient. Please recharge your wallet.`,
-        variant: "destructive",
-      });
+      // Open wallet top-up page in the same tab (navigate)
+      window.location.href = '/customer-wallet';
       return;
     }
 
@@ -187,20 +184,6 @@ export default function SessionPaymentDialog({
       name: 'Wallet',
       description: `Balance: ₹${walletBalance.toFixed(2)}`,
       icon: Wallet,
-      available: walletBalance >= totalAmount
-    },
-    {
-      id: 'upi',
-      name: 'UPI',
-      description: 'Pay with any UPI app',
-      icon: Banknote,
-      available: true
-    },
-    {
-      id: 'card',
-      name: 'Credit/Debit Card',
-      description: 'Pay with your card',
-      icon: CreditCard,
       available: true
     }
   ];
@@ -240,7 +223,7 @@ export default function SessionPaymentDialog({
 
           {/* Payment Methods */}
           <div>
-            <Label className="text-sm font-medium mb-3 block">Choose Payment Method</Label>
+            <Label className="text-sm font-medium mb-3 block">Payment Method</Label>
             <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
               <div className="space-y-2">
                 {paymentMethods.map((method) => {

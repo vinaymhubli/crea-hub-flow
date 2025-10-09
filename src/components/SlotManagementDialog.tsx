@@ -78,10 +78,41 @@ export function SlotManagementDialog({
 
   const validateSlot = (slot: Slot, excludeId?: string): string[] => {
     const validationErrors: string[] = [];
+    const now = new Date();
+    const todayDow = now.getDay(); // 0=Sun..6=Sat
+    const isToday = dayOfWeek === todayDow;
+
+    const toDate = (time: string) => new Date(`1970-01-01T${time}`);
+    const start = toDate(slot.start_time);
+    const end = toDate(slot.end_time);
+    const minutesDiff = Math.round((end.getTime() - start.getTime()) / 60000);
     
     // Check if start time is before end time
     if (slot.start_time >= slot.end_time) {
       validationErrors.push("Start time must be before end time");
+    }
+
+    // Prevent same start and end
+    if (slot.start_time === slot.end_time) {
+      validationErrors.push("Start and end time cannot be the same");
+    }
+
+    // Enforce minimum duration of 30 minutes
+    if (minutesDiff < 30) {
+      validationErrors.push("Minimum slot duration is 30 minutes");
+    }
+
+    // For today's day, disallow past times
+    if (isToday) {
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      const current = `${hh}:${mm}`;
+      if (slot.start_time <= current) {
+        validationErrors.push("Start time cannot be in the past");
+      }
+      if (slot.end_time <= current) {
+        validationErrors.push("End time cannot be in the past");
+      }
     }
 
     // Check for overlaps with existing slots

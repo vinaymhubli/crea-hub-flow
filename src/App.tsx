@@ -84,6 +84,8 @@ import DesignerAvailability from "./pages/DesignerAvailability";
 import DesignerEarnings from "./pages/DesignerEarnings";
 import DesignerComplaints from "./pages/DesignerComplaints";
 import DesignerSessionHistory from "./pages/DesignerSessionHistory";
+import DesignerClientFeedback from "./pages/DesignerClientFeedback";
+import SessionInvoices from "./pages/SessionInvoices";
 import DesignerSettings from "./pages/DesignerSettings";
 import DesignerServices from "./pages/DesignerServices";
 import DesignerFileReviews from "./pages/DesignerFileReviews";
@@ -618,7 +620,7 @@ function AppContent() {
             }
           />
           <Route
-            path="/customer-dashboard/invoices"
+            path="/customer-dashboard/old-invoices"
             element={
               <ProtectedRoute requireUserType="client">
                 <CustomerInvoices />
@@ -772,7 +774,7 @@ function AppContent() {
             }
           />
           <Route
-            path="/designer/invoices"
+            path="/designer/old-invoices"
             element={
               <ProtectedRoute requireUserType="designer">
                 <DesignerInvoices />
@@ -784,6 +786,30 @@ function AppContent() {
             element={
               <ProtectedRoute requireUserType="designer">
                 <DesignerSessionHistory />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/designer-dashboard/feedback"
+            element={
+              <ProtectedRoute requireUserType="designer">
+                <DesignerClientFeedback />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/designer-dashboard/invoices"
+            element={
+              <ProtectedRoute requireUserType="designer">
+                <SessionInvoices />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/customer-dashboard/invoices"
+            element={
+              <ProtectedRoute requireUserType="customer">
+                <SessionInvoices />
               </ProtectedRoute>
             }
           />

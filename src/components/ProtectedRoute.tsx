@@ -5,7 +5,7 @@ import { DesignerVerificationGuard } from './DesignerVerificationGuard';
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  requireUserType?: 'client' | 'designer';
+  requireUserType?: 'client' | 'customer' | 'designer';
 }
 
 export const ProtectedRoute = ({ children, requireUserType }: ProtectedRouteProps) => {
@@ -39,7 +39,14 @@ export const ProtectedRoute = ({ children, requireUserType }: ProtectedRouteProp
       );
     }
     
-    if (profile.user_type !== requireUserType) {
+    const matchesRequiredType = (
+      requireUserType === profile.user_type ||
+      // Treat 'client' and 'customer' as equivalent user types
+      (requireUserType === 'customer' && profile.user_type === 'client') ||
+      (requireUserType === 'client' && profile.user_type === 'customer')
+    );
+
+    if (!matchesRequiredType) {
       // Redirect to appropriate dashboard based on user type
       const redirectPath = profile.user_type === 'designer' 
         ? '/designer-dashboard' 

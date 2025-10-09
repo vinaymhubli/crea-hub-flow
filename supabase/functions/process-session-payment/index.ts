@@ -4,6 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
 serve(async (req) => {
@@ -13,8 +14,11 @@ serve(async (req) => {
 
   try {
     const { sessionId, amount, customerId, designerId, sessionType, duration } = await req.json()
-    const authHeader = req.headers.get('Authorization')!
-    const token = authHeader.replace('Bearer ', '')
+
+    const authHeader = req.headers.get('Authorization') || ''
+    const token = authHeader?.startsWith('Bearer ')
+      ? authHeader.replace('Bearer ', '')
+      : ''
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -198,7 +202,7 @@ serve(async (req) => {
     const commissionTransactionId = `COMMISSION_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
     // Customer pays total amount (session amount + GST)
-    const { data: customerTransaction, error: customerError } = await supabase
+    const { data: customerTransaction, error: customerTxError } = await supabase
       .from('wallet_transactions')
       .insert({
         user_id: customerId,
@@ -225,8 +229,8 @@ serve(async (req) => {
       .select()
       .single()
 
-    if (customerError) {
-      console.error('Customer transaction error:', customerError)
+    if (customerTxError) {
+      console.error('Customer transaction error:', customerTxError)
       return new Response(
         JSON.stringify({ error: 'Failed to process customer payment' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -234,7 +238,7 @@ serve(async (req) => {
     }
 
     // Add earnings to designer wallet (amount minus commission and TDS)
-    const { data: designerTransaction, error: designerError } = await supabase
+    const { data: designerTransaction, error: designerTxError } = await supabase
       .from('wallet_transactions')
       .insert({
         user_id: designerId,
@@ -251,6 +255,7 @@ serve(async (req) => {
           earnings_type: 'session_completion',
           original_amount: amount,
           commission_amount: commissionAmount,
+          commission_rate: commissionSetting ? commissionSetting.commission_value : 0,
           tds_amount: tdsAmount,
           tds_rate: tdsRate,
           final_amount: designerAmount,
@@ -260,8 +265,8 @@ serve(async (req) => {
       .select()
       .single()
 
-    if (designerError) {
-      console.error('Designer transaction error:', designerError)
+    if (designerTxError) {
+      console.error('Designer transaction error:', designerTxError)
       // Rollback customer transaction
       await supabase
         .from('wallet_transactions')
@@ -279,7 +284,7 @@ serve(async (req) => {
       try {
         console.log('Recording admin commission earnings:', commissionAmount)
         
-        const { error: commissionError } = await supabase
+        const { error: commissionInsertError } = await supabase
           .from('admin_earnings')
           .insert({
             transaction_id: commissionTransactionId,
@@ -292,8 +297,8 @@ serve(async (req) => {
             designer_id: designerId
           })
 
-        if (commissionError) {
-          console.error('Failed to record commission earnings:', commissionError)
+        if (commissionInsertError) {
+          console.error('Failed to record commission earnings:', commissionInsertError)
           // Don't fail the payment if commission recording fails
         } else {
           console.log('Admin commission recorded successfully')
@@ -380,13 +385,17 @@ serve(async (req) => {
     // Generate invoices for session payment (wallet-to-wallet with admin commission)
     try {
       console.log('Generating invoices for session payment:', sessionId)
+      
+      // Calculate session duration in minutes from the duration parameter (which is in seconds)
+      const sessionDurationMinutes = duration ? Math.ceil(duration / 60) : 60;
+      
       const { data: invoiceData, error: invoiceError } = await supabase.rpc('generate_session_invoices', {
         p_session_id: sessionId,
         p_customer_id: customerId,
         p_designer_id: designerId,
         p_amount: amount,
         p_booking_id: null,
-        p_session_duration: 60, // Default 60 minutes, can be made dynamic
+        p_session_duration: sessionDurationMinutes, // Pass actual session duration in minutes
         p_place_of_supply: 'Inter-state' // Default, can be made dynamic based on user location
       })
 

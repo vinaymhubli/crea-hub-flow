@@ -8,8 +8,10 @@ import {
   History, 
   Settings,
   MessageSquare,
+  MessageCircle,
   Package,
   FileCheck,
+  FileText,
   AlertTriangle,
   Receipt,
   LogOut
@@ -36,10 +38,11 @@ const sidebarItems = [
   { title: "Messages", url: "/designer-dashboard/messages", icon: MessageSquare },
   // { title: "File Reviews", url: "/designer-dashboard/file-reviews", icon: FileCheck },
   { title: "Complaints", url: "/designer/complaints", icon: AlertTriangle },
-  { title: "Invoices", url: "/designer/invoices", icon: Receipt },
+  { title: "Invoices", url: "/designer-dashboard/invoices", icon: Receipt },
   { title: "Availability", url: "/designer-dashboard/availability", icon: Clock },
   { title: "Earnings", url: "/designer-dashboard/earnings", icon: DollarSign },
   { title: "Session History", url: "/designer-dashboard/history", icon: History },
+  { title: "Client Feedback", url: "/designer-dashboard/feedback", icon: MessageCircle },
   { title: "Settings", url: "/designer-dashboard/settings", icon: Settings },
 ];
 

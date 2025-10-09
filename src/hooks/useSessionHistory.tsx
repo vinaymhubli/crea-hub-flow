@@ -12,6 +12,7 @@ interface SessionData {
   project: string;
   date: string;
   duration: string;
+  durationMinutes: number; // numeric duration in minutes for accurate stats
   type: string;
   status: string;
   rating?: number;
@@ -52,7 +53,7 @@ export const useSessionHistory = () => {
         return;
       }
 
-      // Fetch completed bookings with customer profiles
+      // Fetch completed bookings with customer profiles and reviews
       const { data: bookingsData, error: bookingsError } = await supabase
         .from('bookings')
         .select(`
@@ -76,7 +77,7 @@ export const useSessionHistory = () => {
         .eq('status', 'completed')
         .order('scheduled_date', { ascending: false });
 
-      // Also fetch completed live sessions
+      // Also fetch completed live sessions with payment data
       const { data: liveSessionsData, error: liveSessionsError } = await supabase
         .from('active_sessions')
         .select(`
@@ -128,6 +129,7 @@ export const useSessionHistory = () => {
             year: 'numeric'
           }),
           duration: `${booking.duration_hours}h 00m`,
+          durationMinutes: Math.max(0, Number(booking.duration_hours || 0) * 60),
           type: 'Video Call',
           status: booking.status,
           earnings: Number(booking.total_amount) || 0,
@@ -138,6 +140,27 @@ export const useSessionHistory = () => {
           description: booking.description
         };
       });
+
+      // Get payment data for live sessions to show real earnings
+      const sessionIds = (liveSessionsData || []).map(session => session.session_id);
+      let paymentData: any[] = [];
+      
+      if (sessionIds.length > 0) {
+        const { data: payments } = await supabase
+          .from('wallet_transactions')
+          .select('metadata, amount')
+          .eq('transaction_type', 'deposit')
+          .eq('status', 'completed')
+          .in('metadata->>session_id', sessionIds);
+        
+        paymentData = payments || [];
+      }
+
+      // Get reviews for sessions
+      const { data: reviewsData } = await supabase
+        .from('session_reviews')
+        .select('session_id, rating, review_text')
+        .in('session_id', sessionIds);
 
       // Transform live sessions data
       const transformedLiveSessions: SessionData[] = (liveSessionsData || []).map(session => {
@@ -150,6 +173,13 @@ export const useSessionHistory = () => {
         const durationMs = endTime.getTime() - startTime.getTime();
         const durationHours = Math.floor(durationMs / (1000 * 60 * 60));
         const durationMinutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+        
+        // Find payment for this session
+        const payment = paymentData.find(p => p.metadata?.session_id === session.session_id);
+        const earnings = payment ? Number(payment.amount) : 0;
+
+        // Find review for this session
+        const review = (reviewsData || []).find(r => r.session_id === session.session_id);
         
         return {
           id: session.id,
@@ -165,12 +195,15 @@ export const useSessionHistory = () => {
             year: 'numeric'
           }),
           duration: `${durationHours}h ${durationMinutes}m`,
+          durationMinutes: Math.max(0, Math.round(durationMs / (1000 * 60))),
           type: 'Live Session',
           status: 'completed',
-          earnings: 0, // Live sessions don't have earnings in this table
-          hasRecording: Math.random() > 0.5, // Random for now
+          earnings: earnings,
+          rating: review?.rating,
+          feedback: review?.review_text,
+          hasRecording: false, // Live sessions don't have recordings
           hasNotes: true,
-          tools: ['Figma', 'Adobe XD'], // Default tools for now
+          tools: ['Screen Share', 'Voice Chat'], // Live session tools
           service: 'Live Design Session',
           description: 'Live design consultation session'
         };
@@ -195,14 +228,9 @@ export const useSessionHistory = () => {
 
   const stats = {
     totalSessions: sessions.length,
-    totalHours: sessions.reduce((acc, session) => {
-      const hours = parseFloat(session.duration.split('h')[0]);
-      const minutesPart = session.duration.split('h')[1]?.split('m')[0];
-      const minutes = minutesPart ? parseFloat(minutesPart) : 0;
-      return acc + hours + (minutes / 60);
-    }, 0),
+    totalHours: sessions.reduce((acc, session) => acc + (session.durationMinutes || 0), 0) / 60,
     avgRating: sessions.length > 0 ? sessions.reduce((acc, session) => acc + (session.rating || 5), 0) / sessions.length : 0,
-    totalEarnings: sessions.reduce((acc, session) => acc + session.earnings, 0)
+    totalEarnings: sessions.reduce((acc, session) => acc + (Number(session.earnings) || 0), 0)
   };
 
   return {

@@ -94,6 +94,30 @@ export default function DesignerSessionHistory() {
               <h3 className="font-bold text-gray-900 mb-1">{session.project}</h3>
               <p className="text-gray-600 font-medium">{session.client.name}</p>
               <p className="text-sm text-gray-500">{session.client.email}</p>
+              
+              {/* Show rating if available */}
+              {session.rating && (
+                <div className="flex items-center space-x-2 mt-2">
+                  <div className="flex items-center space-x-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`w-4 h-4 ${
+                          star <= session.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-sm text-gray-600">({session.rating}/5)</span>
+                </div>
+              )}
+              
+              {/* Show feedback if available */}
+              {session.feedback && (
+                <div className="mt-2 p-2 bg-gray-50 rounded text-sm text-gray-700">
+                  "{session.feedback}"
+                </div>
+              )}
             </div>
           </div>
           <div className="flex items-center space-x-2">
@@ -242,7 +266,7 @@ export default function DesignerSessionHistory() {
           </header>
 
           <div className="p-8 max-w-7xl mx-auto space-y-8">
-            {/* Stats Cards */}
+            {/* Real Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <Card className="bg-white border-0 shadow-xl">
                 <CardContent className="p-6 text-center">
@@ -259,7 +283,7 @@ export default function DesignerSessionHistory() {
                   <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-blue-500 rounded-xl flex items-center justify-center mx-auto mb-3">
                     <Clock className="w-6 h-6 text-white" />
                   </div>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalHours.toFixed(1)}h</p>
+                  <p className="text-2xl font-bold text-gray-900">{Math.max(0, stats.totalHours).toFixed(1)}h</p>
                   <p className="text-sm text-gray-600">Total Hours</p>
                 </CardContent>
               </Card>
@@ -279,7 +303,7 @@ export default function DesignerSessionHistory() {
                   <div className="w-12 h-12 bg-gradient-to-r from-green-400 to-blue-500 rounded-xl flex items-center justify-center mx-auto mb-3">
                     <DollarSign className="w-6 h-6 text-white" />
                   </div>
-                  <p className="text-2xl font-bold text-gray-900">₹{stats.totalEarnings}</p>
+                  <p className="text-2xl font-bold text-gray-900">₹{Math.round(stats.totalEarnings)}</p>
                   <p className="text-sm text-gray-600">Total Earned</p>
                 </CardContent>
               </Card>

@@ -56,28 +56,39 @@ export default function SessionRatingDialog({
 
       if (reviewError) throw reviewError;
 
-      // Update designer's average rating
-      const { data: existingReviews, error: fetchError } = await supabase
-        .from('session_reviews')
-        .select('rating')
-        .eq('designer_name', designerName);
+      // Get designer ID from session to update their rating
+      const { data: sessionData } = await supabase
+        .from('active_sessions')
+        .select('designer_id')
+        .eq('session_id', sessionId)
+        .single();
 
-      if (!fetchError && existingReviews) {
-        const totalRating = existingReviews.reduce((sum, r) => sum + r.rating, 0);
-        const averageRating = totalRating / existingReviews.length;
+      if (sessionData?.designer_id) {
+        // Get all reviews for this designer to calculate new average
+        const { data: existingReviews, error: fetchError } = await supabase
+          .from('session_reviews')
+          .select('rating')
+          .eq('designer_name', designerName);
 
-        // Update designer profile with new average rating
-        const { error: updateError } = await supabase
-          .from('designers')
-          .update({ 
-            average_rating: averageRating,
-            total_reviews: existingReviews.length,
-            updated_at: new Date().toISOString()
-          })
-          .eq('user_id', customerId); // This should be the designer's user_id, but we'll need to get it properly
+        if (!fetchError && existingReviews) {
+          const totalRating = existingReviews.reduce((sum, r) => sum + r.rating, 0);
+          const averageRating = Number((totalRating / existingReviews.length).toFixed(2));
 
-        if (updateError) {
-          console.error('Error updating designer rating:', updateError);
+          // Update designer profile with new average rating
+          const { error: updateError } = await supabase
+            .from('designers')
+            .update({ 
+              average_rating: averageRating,
+              total_reviews: existingReviews.length,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', sessionData.designer_id);
+
+          if (updateError) {
+            console.error('Error updating designer rating:', updateError);
+          } else {
+            console.log(`✅ Updated designer rating: ${averageRating} (${existingReviews.length} reviews)`);
+          }
         }
       }
 
