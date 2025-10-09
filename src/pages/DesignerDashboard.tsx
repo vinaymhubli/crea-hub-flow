@@ -76,8 +76,13 @@ export default function DesignerDashboard() {
       setDesignerOnline();
       
       // Check if onboarding is needed
-      if (!designerProfile.onboarding_completed) {
+      const status = (designerProfile as any)?.verification_status;
+      const isVerified = ['approved', 'verified'].includes(status as any);
+      // Show onboarding ONLY for new + not yet approved designers
+      if (!designerProfile.onboarding_completed && !isVerified) {
         setShowOnboarding(true);
+      } else {
+        setShowOnboarding(false);
       }
     }
   }, [designerProfile]);

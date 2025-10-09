@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Settings,
   Globe,
@@ -36,14 +37,114 @@ import { useUserSettings } from "@/hooks/useUserSettings";
 import { useDesignerProfile } from "@/hooks/useDesignerProfile";
 import { useDesignerAvailability } from "@/hooks/useDesignerAvailability";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 
 export default function DesignerSettings() {
   const [activeTab, setActiveTab] = useState("general");
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [updatingPassword, setUpdatingPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   const { user } = useAuth();
+  const { toast } = useToast();
+
+  // Export sessions and earnings as CSV files (simple multi-file download)
+  const handleExportAccountData = async () => {
+    try {
+      if (!user) return;
+
+      // Fetch bookings (sessions) for this user (as designer or customer)
+      const { data: bookings } = await (supabase as any)
+        .from('bookings')
+        .select('*')
+        .or(`designer_id.eq.${user.id},customer_id.eq.${user.id}`)
+        .order('created_at', { ascending: false });
+
+      // Fetch wallet transactions (earnings history)
+      const { data: transactions } = await (supabase as any)
+        .from('wallet_transactions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      const toCsv = (rows: any[]) => {
+        if (!rows || rows.length === 0) return '';
+        const headers = Object.keys(rows[0]);
+        const escape = (v: any) => {
+          if (v === null || v === undefined) return '';
+          return String(v).replace(/\"/g, '""');
+        };
+        const body = rows.map(r => headers.map(h => `"${escape(r[h])}"`).join(','));
+        return [headers.join(','), ...body].join('\n');
+      };
+
+      const files = [
+        { name: 'sessions.csv', content: toCsv(bookings || []) },
+        { name: 'earnings_transactions.csv', content: toCsv(transactions || []) },
+      ];
+
+      files.forEach(f => {
+        const blob = new Blob([f.content], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = f.name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
+    } catch (err) {
+      console.error('Error exporting account data', err);
+    }
+  };
+
+  // Update password
+  const handleUpdatePassword = async () => {
+    try {
+      if (!currentPassword) {
+        toast({ title: "Enter current password", description: "Please type your current password to continue.", variant: "destructive" });
+        return;
+      }
+      if (!newPassword || newPassword.length < 6) {
+        toast({ title: "Password too short", description: "Use at least 6 characters.", variant: "destructive" });
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        toast({ title: "Passwords do not match", description: "New password and confirm password must match.", variant: "destructive" });
+        return;
+      }
+      setUpdatingPassword(true);
+      // Re-authenticate with current password
+      const email = (user as any)?.email;
+      if (!email) throw new Error('User email not found');
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password: currentPassword });
+      if (signInError) {
+        throw new Error('Current password is incorrect');
+      }
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      toast({ title: "Password updated", description: "Your password has been changed." });
+    } catch (e: any) {
+      console.error('Update password failed', e);
+      toast({ title: "Failed to update password", description: e?.message || 'Try again', variant: "destructive" });
+    } finally {
+      setUpdatingPassword(false);
+    }
+  };
+
+  // Open official Government of India Form 16 help/download page
+  const handleDownloadForm16 = () => {
+    window.open('https://www.incometax.gov.in/iec/foportal/help/form16', '_blank');
+  };
   const { settings: userSettings, loading: settingsLoading, updateSetting } = useUserSettings();
   const { designerProfile, loading: profileLoading, updateDesignerProfile } = useDesignerProfile();
   const { settings: availabilitySettings, loading: availabilityLoading, updateSettings: updateAvailabilitySettings } = useDesignerAvailability();
@@ -403,8 +504,8 @@ export default function DesignerSettings() {
 
               {/* Security Tab */}
               <TabsContent value="security" className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
+                <div className="flex justify-center py-8 px-4">
+                  <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 w-full max-w-3xl mx-auto">
                     <CardHeader className="bg-gradient-to-br from-red-400 to-pink-500 text-white rounded-t-lg">
                       <CardTitle className="flex items-center">
                         <Lock className="w-5 h-5 mr-2" />
@@ -419,13 +520,15 @@ export default function DesignerSettings() {
                           <Input 
                             type={showPassword ? "text" : "password"}
                             placeholder="Enter current password"
-                            className="border-gray-200 focus:border-green-400"
+                            value={currentPassword}
+                            onChange={(e) => setCurrentPassword(e.target.value)}
+                            className="border-gray-200 focus:border-green-400 pr-10"
                           />
                           <Button
                             type="button"
                             variant="ghost"
                             size="sm"
-                            className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                             onClick={() => setShowPassword(!showPassword)}
                           >
                             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -439,6 +542,8 @@ export default function DesignerSettings() {
                           <Input 
                             type={showNewPassword ? 'text' : 'password'}
                             placeholder="Enter new password"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
                             className="border-gray-200 focus:border-green-400 pr-10"
                           />
                           <Button
@@ -453,6 +558,29 @@ export default function DesignerSettings() {
                         </div>
                       </div>
 
+                      <div>
+                        <Label className="font-semibold text-gray-700">Confirm New Password</Label>
+                        <div className="relative">
+                          <Input 
+                            type={showConfirmPassword ? 'text' : 'password'}
+                            placeholder="Re-type new password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            className="border-gray-200 focus:border-green-400 pr-10"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          >
+                            {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/*
                       <div className="flex items-center justify-between">
                         <div>
                           <Label className="font-semibold text-gray-700">Two-factor authentication</Label>
@@ -463,13 +591,15 @@ export default function DesignerSettings() {
                           onCheckedChange={(checked) => updateSetting('security_two_factor', checked)}
                         />
                       </div>
+                      */}
 
-                      <Button className="w-full bg-gradient-to-r from-red-400 to-pink-500 text-white">
-                        Update Password
+                      <Button className="w-full bg-gradient-to-r from-red-400 to-pink-500 text-white" onClick={handleUpdatePassword} disabled={updatingPassword}>
+                        {updatingPassword ? 'Updating...' : 'Update Password'}
                       </Button>
                     </CardContent>
                   </Card>
 
+                  {/*
                   <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
                     <CardHeader className="bg-gradient-to-br from-indigo-400 to-purple-500 text-white rounded-t-lg">
                       <CardTitle className="flex items-center">
@@ -512,6 +642,7 @@ export default function DesignerSettings() {
                       </Button>
                     </CardContent>
                   </Card>
+                  */}
                 </div>
               </TabsContent>
 
@@ -535,21 +666,29 @@ export default function DesignerSettings() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="bank">Bank Transfer</SelectItem>
-                            <SelectItem value="paypal">PayPal</SelectItem>
-                            <SelectItem value="stripe">Stripe</SelectItem>
+                            {/* <SelectItem value="paypal">PayPal</SelectItem>
+                            <SelectItem value="stripe">Stripe</SelectItem> */}
                           </SelectContent>
                         </Select>
                       </div>
 
+                      {/*
                       <Button className="w-full bg-gradient-to-r from-green-400 to-emerald-500 text-white">
                         <CreditCard className="w-4 h-4 mr-2" />
                         Add Payment Method
                       </Button>
+                      */}
 
-                      <Button variant="outline" className="w-full">
-                        <Download className="w-4 h-4 mr-2" />
-                        Download Tax Forms
-                      </Button>
+                      <div className="flex flex-col md:flex-row items-center justify-center gap-3">
+                        <Button variant="outline" className="min-w-[240px]" onClick={handleExportAccountData}>
+                          <Download className="w-4 h-4 mr-2" />
+                          Export Account Data
+                        </Button>
+                        <Button variant="outline" className="min-w-[240px]" onClick={handleDownloadForm16}>
+                          <Download className="w-4 h-4 mr-2" />
+                          Download Form 16
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -559,13 +698,9 @@ export default function DesignerSettings() {
                         <Trash2 className="w-5 h-5 mr-2" />
                         Account Management
                       </CardTitle>
-                      <CardDescription className="text-white/80">Account deletion and data export</CardDescription>
+                      <CardDescription className="text-white/80">Account deletion</CardDescription>
                     </CardHeader>
                     <CardContent className="p-6 space-y-4">
-                      <Button variant="outline" className="w-full">
-                        <Download className="w-4 h-4 mr-2" />
-                        Export Account Data
-                      </Button>
 
                       <Button variant="outline" className="w-full border-red-200 text-red-600 hover:bg-red-50">
                         <Trash2 className="w-4 h-4 mr-2" />

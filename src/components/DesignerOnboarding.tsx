@@ -6,8 +6,9 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
-import { CheckCircle, Clock, Calendar, User, Star, ArrowRight, ArrowLeft } from 'lucide-react';
+import { CheckCircle, Clock, Calendar, User, Star, ArrowRight, ArrowLeft, LogOut } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 interface DesignerOnboardingProps {
   onComplete: () => void;
@@ -17,9 +18,15 @@ export function DesignerOnboarding({ onComplete }: DesignerOnboardingProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSlotDialogOpen, setIsSlotDialogOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
-  const { slots, totalSlots, totalHours, slotsByDay, loading } = useDesignerSlots();
+  const {
+    slots,
+    loading,
+    getSlotsForDay,
+    getTotalWeeklyHours
+  } = useDesignerSlots();
   const { designerProfile, updateDesignerProfile } = useDesignerProfile();
   const { toast } = useToast();
+  const { signOut } = useAuth();
 
   const steps = [
     {
@@ -44,7 +51,19 @@ export function DesignerOnboarding({ onComplete }: DesignerOnboardingProps) {
 
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
+  const verificationStatus = (designerProfile as any)?.verification_status || 'pending';
+  const isVerified = verificationStatus === 'verified';
+
+  // Derived aggregates for current slots
+  const totalSlots = (slots || []).filter((s: any) => s.is_active).length;
+  const totalHours = getTotalWeeklyHours ? getTotalWeeklyHours() : 0;
+  const slotsByDay: Record<number, any[]> = {};
+  for (let i = 0; i < 7; i++) {
+    slotsByDay[i] = getSlotsForDay ? getSlotsForDay(i) : [];
+  }
+
   const handleSlotDialogOpen = (day: number) => {
+    if (!isVerified) return; // gate until verified
     setSelectedDay(day);
     setIsSlotDialogOpen(true);
   };
@@ -74,8 +93,8 @@ export function DesignerOnboarding({ onComplete }: DesignerOnboardingProps) {
       });
       
       toast({
-        title: "Welcome to CreaHub!",
-        description: "Your profile and schedule are set up. You can now start accepting bookings!",
+        title: "Welcome to meetmydesigners!",
+        description: "Your setup is complete. You can now start accepting bookings!",
       });
       
       onComplete();
@@ -89,15 +108,21 @@ export function DesignerOnboarding({ onComplete }: DesignerOnboardingProps) {
     }
   };
 
-  const canProceedFromStep2 = totalSlots > 0;
+  const canProceedFromStep2 = isVerified && totalSlots > 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 relative">
+          <button
+            onClick={() => signOut()}
+            className="absolute right-0 -top-2 text-sm bg-white border rounded-lg px-3 py-1 shadow hover:bg-gray-50 flex items-center gap-2"
+          >
+            <LogOut className="w-4 h-4" /> Logout
+          </button>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome to CreaHub!
+            Welcome to meetmydesigners!
           </h1>
           <p className="text-lg text-gray-600">
             Let's get your designer profile set up in just a few steps
@@ -145,11 +170,11 @@ export function DesignerOnboarding({ onComplete }: DesignerOnboardingProps) {
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              {steps[currentStep - 1].icon}
-              {steps[currentStep - 1].title}
+              {steps[Math.max(0, currentStep - 1)].icon}
+              {steps[Math.max(0, currentStep - 1)].title}
             </CardTitle>
             <CardDescription>
-              {steps[currentStep - 1].description}
+              {steps[Math.max(0, currentStep - 1)].description}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -161,8 +186,7 @@ export function DesignerOnboarding({ onComplete }: DesignerOnboardingProps) {
                   </div>
                   <h3 className="text-xl font-semibold mb-2">Profile Created Successfully!</h3>
                   <p className="text-gray-600">
-                    Your designer profile has been created and is pending admin verification. 
-                    While you wait, let's set up your availability schedule.
+                    Your designer profile has been created and is pending admin verification.
                   </p>
                 </div>
                 
@@ -172,7 +196,7 @@ export function DesignerOnboarding({ onComplete }: DesignerOnboardingProps) {
                     <span className="font-medium text-yellow-800">Verification Status</span>
                   </div>
                   <p className="text-yellow-700 text-sm">
-                    Your profile is pending admin approval. You'll be notified once verified and can start accepting bookings.
+                    Your profile is pending admin approval. You'll be notified once verified. You can set your schedule only after verification.
                   </p>
                 </div>
               </div>
@@ -182,12 +206,18 @@ export function DesignerOnboarding({ onComplete }: DesignerOnboardingProps) {
               <div className="space-y-6">
                 <div className="text-center mb-6">
                   <h3 className="text-xl font-semibold mb-2">Set Your Weekly Schedule</h3>
-                  <p className="text-gray-600">
-                    Add your available time slots for each day. You can have up to 6 slots per day.
-                  </p>
+                  {isVerified ? (
+                    <p className="text-gray-600">
+                      Add your available time slots for each day. You can have up to 6 slots per day.
+                    </p>
+                  ) : (
+                    <p className="text-yellow-700">
+                      You can set your schedule after admin verification. Please check back once verified.
+                    </p>
+                  )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 ${!isVerified ? 'opacity-50 pointer-events-none' : ''}`}>
                   {dayNames.map((dayName, dayIndex) => {
                     const daySlots = slotsByDay[dayIndex] || [];
                     const slotCount = daySlots.length;
@@ -230,7 +260,7 @@ export function DesignerOnboarding({ onComplete }: DesignerOnboardingProps) {
                   })}
                 </div>
 
-                {totalSlots > 0 && (
+                {isVerified && totalSlots > 0 && (
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <CheckCircle className="w-5 h-5 text-green-600" />
@@ -243,7 +273,7 @@ export function DesignerOnboarding({ onComplete }: DesignerOnboardingProps) {
                       </div>
                       <div>
                         <span className="text-green-700">Total Hours:</span>
-                        <span className="ml-2 font-medium">{totalHours.toFixed(1)}h</span>
+                        <span className="ml-2 font-medium">{Number(totalHours).toFixed(1)}h</span>
                       </div>
                     </div>
                   </div>
@@ -284,7 +314,7 @@ export function DesignerOnboarding({ onComplete }: DesignerOnboardingProps) {
                         <div className="flex justify-between">
                           <span>Active Days:</span>
                           <span className="font-medium">
-                            {Object.values(slotsByDay).filter(day => day.length > 0).length}
+                            {Array.from({ length: 7 }).filter((_, i) => (slotsByDay[i] || []).length > 0).length}
                           </span>
                         </div>
                       </div>
@@ -361,9 +391,12 @@ export function DesignerOnboarding({ onComplete }: DesignerOnboardingProps) {
         {selectedDay !== null && (
           <SlotManagementDialog
             isOpen={isSlotDialogOpen}
-            onClose={handleSlotDialogClose}
+            onOpenChange={(open: boolean) => { if (!open) handleSlotDialogClose(); }}
             dayOfWeek={selectedDay}
             dayName={dayNames[selectedDay]}
+            existingSlots={slotsByDay[selectedDay] || []}
+            onSaveSlots={async () => {}}
+            onDeleteSlot={async () => {}}
           />
         )}
       </div>
