@@ -64,10 +64,17 @@ export function FeaturedDesignersManager() {
   const [selectedPosition, setSelectedPosition] = useState<number>(1);
   const [adminNotes, setAdminNotes] = useState('');
   const [featuredUntil, setFeaturedUntil] = useState('');
+  
+  // Video management state
+  const [videoUrl, setVideoUrl] = useState('');
+  const [videoTitle, setVideoTitle] = useState('');
+  const [videoDescription, setVideoDescription] = useState('');
+  const [videoLoading, setVideoLoading] = useState(false);
 
   useEffect(() => {
     fetchFeaturedDesigners();
     fetchAvailableDesigners();
+    fetchVideoContent();
   }, []);
 
   const fetchFeaturedDesigners = async () => {
@@ -245,6 +252,63 @@ export function FeaturedDesignersManager() {
     }
   };
 
+  const fetchVideoContent = async () => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from('featured_designer_video')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      
+      if (data) {
+        setVideoUrl(data.youtube_url || '');
+        setVideoTitle(data.title || '');
+        setVideoDescription(data.description || '');
+      }
+    } catch (error) {
+      console.error('Error fetching video content:', error);
+    }
+  };
+
+  const saveVideoContent = async () => {
+    try {
+      setVideoLoading(true);
+      
+      // First, deactivate any existing videos
+      await (supabase as any)
+        .from('featured_designer_video')
+        .update({ is_active: false })
+        .eq('is_active', true);
+
+      // Get current user ID
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Insert new video
+      const { error } = await (supabase as any)
+        .from('featured_designer_video')
+        .insert({
+          youtube_url: videoUrl,
+          title: videoTitle,
+          description: videoDescription,
+          is_active: true,
+          created_by: user?.id
+        });
+
+      if (error) throw error;
+      
+      toast.success('Video saved successfully');
+    } catch (error) {
+      console.error('Error saving video:', error);
+      toast.error('Failed to save video');
+    } finally {
+      setVideoLoading(false);
+    }
+  };
+
   // Backward compatibility
   const reorderDesigner = async (designerId: string, newPosition: number) => {
     await setDesignerPosition(designerId, newPosition);
@@ -387,6 +451,59 @@ export function FeaturedDesignersManager() {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Video Management Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Users className="w-5 h-5 mr-2 text-blue-600" />
+            Featured Designers Video
+          </CardTitle>
+          <CardDescription>
+            Set the video that will be displayed in the Featured Designers section on the homepage
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="video-url">YouTube Video URL</Label>
+              <Input
+                id="video-url"
+                placeholder="https://youtu.be/your-video-id"
+                value={videoUrl}
+                onChange={(e) => setVideoUrl(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="video-title">Video Title</Label>
+              <Input
+                id="video-title"
+                placeholder="Featured Designers Video"
+                value={videoTitle}
+                onChange={(e) => setVideoTitle(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="video-description">Video Description</Label>
+            <Input
+              id="video-description"
+              placeholder="Description for the video"
+              value={videoDescription}
+              onChange={(e) => setVideoDescription(e.target.value)}
+            />
+          </div>
+          <div className="flex justify-end">
+            <Button 
+              onClick={saveVideoContent} 
+              disabled={videoLoading || !videoUrl.trim()}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {videoLoading ? 'Saving...' : 'Save Video'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Featured Designers List */}
       <div className="grid gap-4">
