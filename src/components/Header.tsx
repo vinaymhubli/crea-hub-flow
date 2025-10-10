@@ -117,7 +117,7 @@ export default function Header() {
             <img 
               src={getHeaderLogo()} 
               alt="meetmydesigners" 
-              className="h-10 w-auto"
+              className="h-10 w-auto object-contain"
             />
           </Link>
 
