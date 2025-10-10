@@ -21,6 +21,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { BankAccountVerification } from './BankAccountVerification';
+import { PennyDropVerification } from './PennyDropVerification';
 
 interface BankAccount {
   id: string;
@@ -47,6 +48,8 @@ export function BankAccountManager({ open, onOpenChange, onAccountAdded }: BankA
   const [editingAccount, setEditingAccount] = useState<BankAccount | null>(null);
   const [showVerification, setShowVerification] = useState(false);
   const [verifyingAccount, setVerifyingAccount] = useState<BankAccount | null>(null);
+  const [showPennyDrop, setShowPennyDrop] = useState(false);
+  const [pennyDropAccount, setPennyDropAccount] = useState<BankAccount | null>(null);
   const [formData, setFormData] = useState({
     bank_name: '',
     account_holder_name: '',
@@ -405,19 +408,34 @@ export function BankAccountManager({ open, onOpenChange, onAccountAdded }: BankA
                       
                       <div className="flex justify-end space-x-2 mt-4">
                         {!account.is_verified && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setVerifyingAccount(account);
-                              setShowVerification(true);
-                            }}
-                            disabled={loading}
-                            className="text-blue-600 hover:text-blue-700"
-                          >
-                            <Shield className="w-3 h-3 mr-1" />
-                            Verify
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setPennyDropAccount(account);
+                                setShowPennyDrop(true);
+                              }}
+                              disabled={loading}
+                              className="text-green-600 hover:text-green-700"
+                            >
+                              <Shield className="w-3 h-3 mr-1" />
+                              Penny Drop
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setVerifyingAccount(account);
+                                setShowVerification(true);
+                              }}
+                              disabled={loading}
+                              className="text-blue-600 hover:text-blue-700"
+                            >
+                              <Shield className="w-3 h-3 mr-1" />
+                              Manual
+                            </Button>
+                          </div>
                         )}
                         {!account.is_primary && (
                           <Button
@@ -470,6 +488,20 @@ export function BankAccountManager({ open, onOpenChange, onAccountAdded }: BankA
           setVerifyingAccount(null);
         }}
       />
+
+      {pennyDropAccount && (
+        <PennyDropVerification
+          bankAccount={pennyDropAccount}
+          open={showPennyDrop}
+          onOpenChange={setShowPennyDrop}
+          onVerified={() => {
+            // Refresh accounts after verification
+            fetchBankAccounts();
+            setShowPennyDrop(false);
+            setPennyDropAccount(null);
+          }}
+        />
+      )}
     </Dialog>
   );
 }
