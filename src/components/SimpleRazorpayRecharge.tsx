@@ -86,6 +86,7 @@ export function SimpleRazorpayRecharge({ onSuccess, onError }: SimpleRazorpayRec
       // Create Razorpay order
       const { data: orderData, error: orderError } = await supabase.functions.invoke('razorpay-wallet-recharge', {
         body: {
+          action: 'create_order',
           amount: rechargeAmount,
           currency: 'INR'
         }
@@ -134,11 +135,11 @@ export function SimpleRazorpayRecharge({ onSuccess, onError }: SimpleRazorpayRec
             console.log('Payment successful, verifying...', response)
             
             // Verify payment manually (no webhook needed)
-            const { data: verifyData, error: verifyError } = await supabase.functions.invoke('razorpay-verify-payment', {
+            const { data: verifyData, error: verifyError } = await supabase.functions.invoke('razorpay-wallet-recharge', {
               body: {
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature
+                action: 'verify_payment',
+                payment_id: response.razorpay_payment_id,
+                order_id: response.razorpay_order_id
               }
             })
 

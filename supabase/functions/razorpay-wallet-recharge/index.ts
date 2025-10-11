@@ -9,7 +9,6 @@ const corsHeaders = {
 // Razorpay configuration
 const RAZORPAY_KEY_ID = Deno.env.get('RAZORPAY_KEY_ID')
 const RAZORPAY_KEY_SECRET = Deno.env.get('RAZORPAY_KEY_SECRET')
-const RAZORPAY_WEBHOOK_SECRET = Deno.env.get('RAZORPAY_WEBHOOK_SECRET')
 
 interface RazorpayOrderResponse {
   id: string
@@ -37,7 +36,7 @@ serve(async (req) => {
   }
 
   try {
-    const { amount, currency = 'INR', receipt } = await req.json()
+    const { amount, currency = 'INR', action, payment_id, order_id } = await req.json()
     const authHeader = req.headers.get('Authorization')!
     const token = authHeader.replace('Bearer ', '')
 
@@ -54,17 +53,41 @@ serve(async (req) => {
       )
     }
 
-    if (!amount || amount <= 0) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid amount' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
     if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
       return new Response(
         JSON.stringify({ error: 'Razorpay configuration missing' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Handle different actions
+    if (action === 'create_order') {
+      return await createRazorpayOrder(supabase, user, amount, currency)
+    } else if (action === 'verify_payment') {
+      return await verifyAndCompletePayment(supabase, user, payment_id, order_id)
+    } else {
+      return new Response(
+        JSON.stringify({ error: 'Invalid action. Use "create_order" or "verify_payment"' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+
+  } catch (error) {
+    console.error('Razorpay wallet recharge error:', error)
+    return new Response(
+      JSON.stringify({ error: 'Internal server error', details: error.message }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
+})
+
+async function createRazorpayOrder(supabase: any, user: any, amount: number, currency: string) {
+  try {
+    if (!amount || amount <= 0) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid amount' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -162,13 +185,126 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Razorpay wallet recharge error:', error)
+    console.error('Order creation error:', error)
     return new Response(
-      JSON.stringify({ error: 'Internal server error', details: error.message }),
+      JSON.stringify({ error: 'Failed to create order', details: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
-})
+}
+
+async function verifyAndCompletePayment(supabase: any, user: any, paymentId: string, orderId: string) {
+  try {
+    if (!paymentId || !orderId) {
+      return new Response(
+        JSON.stringify({ error: 'Payment ID and Order ID are required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    console.log('Verifying payment:', { paymentId, orderId, userId: user.id })
+
+    // Verify payment with Razorpay
+    const paymentResponse = await fetch(`https://api.razorpay.com/v1/payments/${paymentId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Basic ${btoa(RAZORPAY_KEY_ID + ':' + RAZORPAY_KEY_SECRET)}`,
+        'Content-Type': 'application/json',
+      }
+    })
+
+    if (!paymentResponse.ok) {
+      const errorData = await paymentResponse.json()
+      console.error('Payment verification failed:', errorData)
+      return new Response(
+        JSON.stringify({ error: 'Payment verification failed', details: errorData }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const payment: RazorpayPaymentResponse = await paymentResponse.json()
+
+    // Check if payment is captured and matches the order
+    if (payment.status !== 'captured' || payment.order_id !== orderId) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Payment not successful or order mismatch',
+          payment_status: payment.status,
+          order_match: payment.order_id === orderId
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Find the pending transaction
+    const { data: transaction, error: transactionError } = await supabase
+      .from('wallet_transactions')
+      .select('*')
+      .eq('metadata->razorpay_order_id', orderId)
+      .eq('user_id', user.id)
+      .eq('status', 'pending')
+      .single()
+
+    if (transactionError || !transaction) {
+      return new Response(
+        JSON.stringify({ error: 'Transaction not found or already processed' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Update transaction to completed
+    const { error: updateError } = await supabase
+      .from('wallet_transactions')
+      .update({
+        status: 'completed',
+        description: `Wallet recharge completed - Payment ${paymentId}`,
+        metadata: {
+          ...transaction.metadata,
+          razorpay_payment_id: paymentId,
+          payment_method: payment.method,
+          payment_status: payment.status,
+          completed_at: new Date().toISOString()
+        }
+      })
+      .eq('id', transaction.id)
+
+    if (updateError) {
+      console.error('Failed to update transaction:', updateError)
+      return new Response(
+        JSON.stringify({ error: 'Failed to update transaction' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    console.log('Payment verified and wallet credited:', {
+      transactionId: transaction.id,
+      amount: transaction.amount,
+      paymentId: paymentId
+    })
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: 'Payment verified and wallet credited successfully',
+        transaction: {
+          id: transaction.id,
+          amount: transaction.amount,
+          status: 'completed',
+          payment_id: paymentId
+        }
+      }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+
+  } catch (error) {
+    console.error('Payment verification error:', error)
+    return new Response(
+      JSON.stringify({ error: 'Payment verification failed', details: error.message }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
+}
+
 
 
 
