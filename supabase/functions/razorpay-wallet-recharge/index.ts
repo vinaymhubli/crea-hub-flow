@@ -242,36 +242,96 @@ async function verifyAndCompletePayment(supabase: any, user: any, paymentId: str
       )
     }
 
-    // Generate invoice for the wallet recharge - SAME WAY as session payments
+    // Generate invoice for the wallet recharge - Direct database insert like session payments
     try {
-      const { data: invoiceData, error: invoiceError } = await supabase.rpc('generate_session_invoices', {
-        p_session_id: 'WALLET_RECHARGE_' + Date.now(),
-        p_booking_id: null,
-        p_customer_id: user.id,
-        p_designer_id: user.id,
-        p_amount: payment.amount / 100, // Convert from paise to rupees
-        p_template_id: null
-      })
+      const rechargeAmount = payment.amount / 100 // Convert from paise to rupees
+      
+      // Get the recharge template (Wallet Recharge type)
+      const { data: template, error: templateError } = await supabase
+        .from('invoice_templates')
+        .select('*')
+        .eq('invoice_type', 'recharge')
+        .eq('is_active', true)
+        .single()
+
+      let templateId = null
+      if (!templateError && template) {
+        templateId = template.id
+      } else {
+        // Fallback to any active template
+        const { data: fallbackTemplate } = await supabase
+          .from('invoice_templates')
+          .select('id')
+          .eq('is_active', true)
+          .limit(1)
+          .single()
+        
+        if (fallbackTemplate) {
+          templateId = fallbackTemplate.id
+        }
+      }
+
+      // Generate invoice number using admin template prefix format
+      const invoiceNumber = `MMD-${Date.now()}-RCPT-2025`
+      
+      // Create wallet recharge invoice - Simple receipt format
+      const { data: invoiceData, error: invoiceError } = await supabase
+        .from('invoices')
+        .insert({
+          invoice_number: invoiceNumber,
+          session_id: 'WALLET_RECHARGE',
+          customer_id: user.id,
+          designer_id: user.id,
+          invoice_type: 'customer',
+          subtotal: rechargeAmount,
+          tax_amount: 0, // No tax on wallet recharge
+          total_amount: rechargeAmount,
+          currency: 'INR',
+          status: 'paid',
+          payment_method: 'razorpay',
+          paid_at: new Date().toISOString(),
+          template_id: templateId,
+          metadata: {
+            recharge_type: 'wallet_credit',
+            payment_method: 'razorpay',
+            razorpay_payment_id: paymentId,
+            razorpay_order_id: orderId,
+            generated_at: new Date().toISOString(),
+            invoice_format: 'simple_receipt' // Mark as simple receipt format
+          }
+        })
+        .select()
+        .single()
 
       if (invoiceError) {
-        console.error('Failed to generate invoice:', invoiceError)
-        // Don't fail the transaction if invoice generation fails, just log it
+        console.error('Failed to create invoice:', invoiceError)
       } else {
-        console.log('Invoice generated successfully:', invoiceData)
+        console.log('Invoice created successfully:', invoiceData)
+        
+        // Add invoice item
+        await supabase
+          .from('invoice_items')
+          .insert({
+            invoice_id: invoiceData.id,
+            item_name: 'Wallet Recharge',
+            description: 'Add funds to wallet balance',
+            quantity: 1,
+            unit_price: rechargeAmount,
+            total_price: rechargeAmount,
+            tax_rate: 0
+          })
         
         // Update transaction with invoice reference
-        if (invoiceData && invoiceData.length > 0) {
-          await supabase
-            .from('wallet_transactions')
-            .update({
-              metadata: {
-                ...newTransaction.metadata,
-                invoice_id: invoiceData[0]?.customer_invoice_id,
-                invoice_number: invoiceData[0]?.customer_invoice_number
-              }
-            })
-            .eq('id', newTransaction.id)
-        }
+        await supabase
+          .from('wallet_transactions')
+          .update({
+            metadata: {
+              ...newTransaction.metadata,
+              invoice_id: invoiceData.id,
+              invoice_number: invoiceData.invoice_number
+            }
+          })
+          .eq('id', newTransaction.id)
       }
     } catch (invoiceError) {
       console.error('Invoice generation error:', invoiceError)

@@ -348,11 +348,12 @@ export default function AdminInvoiceManagement() {
             <div class="billing-info">
                 <div class="billing-title">Bill To:</div>
                 <div class="billing-details">
-                    ${invoice.invoice_type === 'customer' ? customerName : designerName}<br>
-                    Session ID: ${invoice.session_id}<br>
-                    ${invoice.booking_id ? `Booking ID: ${invoice.booking_id}` : 'Live Session'}
+                    ${customerName}<br>
+                    ${invoice.session_id === 'WALLET_RECHARGE' ? 'Wallet Recharge Transaction' : `Session ID: ${invoice.session_id}`}<br>
+                    ${invoice.booking_id ? `Booking ID: ${invoice.booking_id}` : ''}
                 </div>
             </div>
+            ${invoice.session_id !== 'WALLET_RECHARGE' ? `
             <div class="billing-info">
                 <div class="billing-title">Session Details:</div>
                 <div class="billing-details">
@@ -361,22 +362,27 @@ export default function AdminInvoiceManagement() {
                     ${invoice.place_of_supply ? `Place of Supply: ${invoice.place_of_supply}` : ''}
                 </div>
             </div>
+            ` : ''}
         </div>
 
         <table class="items-table">
             <thead>
                 <tr>
                     <th>Description</th>
-                    <th>Duration</th>
-                    <th>Rate</th>
+                    ${invoice.session_id !== 'WALLET_RECHARGE' ? '<th>Duration</th><th>Rate</th>' : '<th>Qty</th><th>Rate</th>'}
                     <th>Amount</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td>Design Session - ${invoice.invoice_type === 'customer' ? 'Customer Payment' : 'Designer Earnings'}</td>
+                    <td>${invoice.session_id === 'WALLET_RECHARGE' ? 'Wallet Recharge' : `Design Session - ${invoice.invoice_type === 'customer' ? 'Customer Payment' : 'Designer Earnings'}`}</td>
+                    ${invoice.session_id !== 'WALLET_RECHARGE' ? `
                     <td>${invoice.session_duration || 'N/A'} minutes</td>
                     <td>₹${(invoice.subtotal / (invoice.session_duration || 60)).toFixed(2)}/min</td>
+                    ` : `
+                    <td>1</td>
+                    <td>₹${invoice.subtotal.toFixed(2)}</td>
+                    `}
                     <td>₹${invoice.subtotal.toFixed(2)}</td>
                 </tr>
             </tbody>
@@ -384,7 +390,7 @@ export default function AdminInvoiceManagement() {
 
         <div class="totals-section">
             <div class="total-row">
-                <span>Session Amount:</span>
+                <span>${invoice.session_id === 'WALLET_RECHARGE' ? 'Subtotal:' : 'Session Amount:'}</span>
                 <span>₹${invoice.subtotal.toFixed(2)}</span>
             </div>
             ${invoice.invoice_type === 'designer' ? `
@@ -404,7 +410,7 @@ export default function AdminInvoiceManagement() {
             </div>
             ` : ''}
             <div class="total-row final">
-                <span>${invoice.invoice_type === 'customer' ? 'Total Paid:' : 'Net Earnings:'}</span>
+                <span>${invoice.session_id === 'WALLET_RECHARGE' ? 'Total:' : (invoice.invoice_type === 'customer' ? 'Total Paid:' : 'Net Earnings:')}</span>
                 <span>₹${invoice.total_amount.toFixed(2)}</span>
             </div>
         </div>
