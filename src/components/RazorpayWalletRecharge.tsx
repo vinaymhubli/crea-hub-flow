@@ -104,11 +104,14 @@ export function RazorpayWalletRecharge({ onSuccess, onError }: RazorpayWalletRec
         key: orderData.order.key,
         amount: orderData.order.amount,
         currency: orderData.order.currency,
-        name: orderData.order.name,
+        name: 'meetmydesigners',
         description: orderData.order.description,
         order_id: orderData.order.id,
         prefill: orderData.order.prefill,
-        theme: orderData.order.theme,
+        theme: {
+          color: '#059669', // green-600 to match website theme
+          backdrop_color: 'rgba(0, 0, 0, 0.6)'
+        },
         handler: async (response: any) => {
           try {
             // Verify payment

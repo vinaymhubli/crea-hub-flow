@@ -27,7 +27,7 @@ export function SimpleRazorpayRecharge({ onSuccess, onError }: SimpleRazorpayRec
   const { toast } = useToast()
   const { user } = useAuth()
 
-  const predefinedAmounts = [100, 500, 1000, 2000, 5000, 10000]
+  const predefinedAmounts = [1, 10, 100, 500, 1000, 2000]
 
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {
@@ -56,10 +56,10 @@ export function SimpleRazorpayRecharge({ onSuccess, onError }: SimpleRazorpayRec
       return
     }
 
-    if (rechargeAmount < 10) {
+    if (rechargeAmount < 1) {
       toast({
         title: "Minimum Amount",
-        description: "Minimum recharge amount is ₹10",
+        description: "Minimum recharge amount is ₹1",
         variant: "destructive"
       })
       return
@@ -108,7 +108,7 @@ export function SimpleRazorpayRecharge({ onSuccess, onError }: SimpleRazorpayRec
         key: orderData.order.key,
         amount: orderData.order.amount,
         currency: orderData.order.currency,
-        name: 'CreaHub',
+        name: 'meetmydesigners',
         description: `Add ₹${rechargeAmount} to wallet`,
         order_id: orderData.order.id,
         prefill: {
@@ -117,7 +117,7 @@ export function SimpleRazorpayRecharge({ onSuccess, onError }: SimpleRazorpayRec
           contact: user?.user_metadata?.phone || ''
         },
         theme: {
-          color: themeColor,
+          color: isDark ? '#10b981' : '#059669', // green-500 for dark, green-600 for light to match website
           backdrop_color: isDark ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.6)'
         },
         modal: {
@@ -221,7 +221,7 @@ export function SimpleRazorpayRecharge({ onSuccess, onError }: SimpleRazorpayRec
                 max="100000"
               />
             </div>
-            <p className="text-xs text-gray-500">Minimum: ₹10 • Maximum: ₹1,00,000</p>
+            <p className="text-xs text-gray-500">Minimum: ₹1 • Maximum: ₹1,00,000</p>
           </div>
 
           {/* Quick Select Amounts */}

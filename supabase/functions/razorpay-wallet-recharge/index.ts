@@ -132,32 +132,8 @@ async function createRazorpayOrder(supabase: any, user: any, amount: number, cur
 
     const order: RazorpayOrderResponse = await orderResponse.json()
 
-    // Store pending transaction in database
-    const { error: insertError } = await supabase
-      .from('wallet_transactions')
-      .insert({
-        user_id: user.id,
-        amount: amount,
-        transaction_type: 'deposit',
-        status: 'pending',
-        description: `Wallet recharge via Razorpay - Order ${order.id}`,
-        metadata: {
-          razorpay_order_id: order.id,
-          razorpay_receipt: receiptId,
-          payment_gateway: 'razorpay',
-          currency: currency,
-          created_at: new Date().toISOString(),
-          order_data: orderData
-        }
-      })
-
-    if (insertError) {
-      console.error('Database error:', insertError)
-      return new Response(
-        JSON.stringify({ error: 'Failed to record transaction' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
+    // Don't create transaction record yet - only create after successful payment verification
+    console.log('Order created successfully, waiting for payment completion:', order.id)
 
     // Return order details for frontend
     return new Response(
@@ -169,7 +145,7 @@ async function createRazorpayOrder(supabase: any, user: any, amount: number, cur
           currency: order.currency,
           receipt: order.receipt,
           key: RAZORPAY_KEY_ID,
-          name: 'CreaHub',
+          name: 'meetmydesigners',
           description: `Wallet recharge of ₹${amount}`,
           prefill: {
             name: user.user_metadata?.full_name || '',
@@ -177,7 +153,7 @@ async function createRazorpayOrder(supabase: any, user: any, amount: number, cur
             contact: user.user_metadata?.phone || ''
           },
           theme: {
-            color: '#3B82F6'
+            color: '#059669' // green-600 to match meetmydesigners website theme
           }
         }
       }),
@@ -236,49 +212,69 @@ async function verifyAndCompletePayment(supabase: any, user: any, paymentId: str
       )
     }
 
-    // Find the pending transaction
-    const { data: transaction, error: transactionError } = await supabase
+    // Create new transaction record only after successful payment verification
+    const { data: newTransaction, error: insertError } = await supabase
       .from('wallet_transactions')
-      .select('*')
-      .eq('metadata->razorpay_order_id', orderId)
-      .eq('user_id', user.id)
-      .eq('status', 'pending')
-      .single()
-
-    if (transactionError || !transaction) {
-      return new Response(
-        JSON.stringify({ error: 'Transaction not found or already processed' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    // Update transaction to completed
-    const { error: updateError } = await supabase
-      .from('wallet_transactions')
-      .update({
+      .insert({
+        user_id: user.id,
+        amount: payment.amount / 100, // Convert from paise to rupees
+        transaction_type: 'deposit',
         status: 'completed',
         description: `Wallet recharge completed - Payment ${paymentId}`,
         metadata: {
-          ...transaction.metadata,
+          razorpay_order_id: orderId,
           razorpay_payment_id: paymentId,
           payment_method: payment.method,
           payment_status: payment.status,
+          payment_gateway: 'razorpay',
+          currency: payment.currency,
           completed_at: new Date().toISOString()
         }
       })
-      .eq('id', transaction.id)
+      .select()
+      .single()
 
-    if (updateError) {
-      console.error('Failed to update transaction:', updateError)
+    if (insertError) {
+      console.error('Failed to create transaction:', insertError)
       return new Response(
-        JSON.stringify({ error: 'Failed to update transaction' }),
+        JSON.stringify({ error: 'Failed to record transaction' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
+    // Generate invoice for the wallet recharge using admin template
+    try {
+      const { data: invoiceData, error: invoiceError } = await supabase.rpc('generate_wallet_recharge_invoice', {
+        p_customer_id: user.id,
+        p_amount: payment.amount / 100 // Convert from paise to rupees
+      })
+
+      if (invoiceError) {
+        console.error('Failed to generate invoice:', invoiceError)
+        // Don't fail the transaction if invoice generation fails, just log it
+      } else {
+        console.log('Invoice generated successfully:', invoiceData)
+        
+        // Update transaction with invoice reference
+        await supabase
+          .from('wallet_transactions')
+          .update({
+            metadata: {
+              ...newTransaction.metadata,
+              invoice_id: invoiceData[0]?.invoice_id,
+              invoice_number: invoiceData[0]?.invoice_number
+            }
+          })
+          .eq('id', newTransaction.id)
+      }
+    } catch (invoiceError) {
+      console.error('Invoice generation error:', invoiceError)
+      // Continue without failing the transaction
+    }
+
     console.log('Payment verified and wallet credited:', {
-      transactionId: transaction.id,
-      amount: transaction.amount,
+      transactionId: newTransaction.id,
+      amount: newTransaction.amount,
       paymentId: paymentId
     })
 
@@ -287,8 +283,8 @@ async function verifyAndCompletePayment(supabase: any, user: any, paymentId: str
         success: true,
         message: 'Payment verified and wallet credited successfully',
         transaction: {
-          id: transaction.id,
-          amount: transaction.amount,
+          id: newTransaction.id,
+          amount: newTransaction.amount,
           status: 'completed',
           payment_id: paymentId
         }
