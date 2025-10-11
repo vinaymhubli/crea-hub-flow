@@ -157,6 +157,11 @@ export function SimpleRazorpayRecharge({ onSuccess, onError }: SimpleRazorpayRec
               setAmount('')
               setOpen(false)
               onSuccess?.(rechargeAmount)
+              
+              // Redirect to wallet page after successful payment
+              setTimeout(() => {
+                window.location.href = '/customer-dashboard/wallet'
+              }, 1000)
             } else {
               throw new Error('Payment verification failed')
             }

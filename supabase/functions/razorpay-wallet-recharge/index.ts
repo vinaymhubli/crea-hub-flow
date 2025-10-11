@@ -242,11 +242,15 @@ async function verifyAndCompletePayment(supabase: any, user: any, paymentId: str
       )
     }
 
-    // Generate invoice for the wallet recharge using admin template
+    // Generate invoice for the wallet recharge - SAME WAY as session payments
     try {
-      const { data: invoiceData, error: invoiceError } = await supabase.rpc('generate_wallet_recharge_invoice', {
+      const { data: invoiceData, error: invoiceError } = await supabase.rpc('generate_session_invoices', {
+        p_session_id: 'WALLET_RECHARGE_' + Date.now(),
+        p_booking_id: null,
         p_customer_id: user.id,
-        p_amount: payment.amount / 100 // Convert from paise to rupees
+        p_designer_id: user.id,
+        p_amount: payment.amount / 100, // Convert from paise to rupees
+        p_template_id: null
       })
 
       if (invoiceError) {
@@ -256,16 +260,18 @@ async function verifyAndCompletePayment(supabase: any, user: any, paymentId: str
         console.log('Invoice generated successfully:', invoiceData)
         
         // Update transaction with invoice reference
-        await supabase
-          .from('wallet_transactions')
-          .update({
-            metadata: {
-              ...newTransaction.metadata,
-              invoice_id: invoiceData[0]?.invoice_id,
-              invoice_number: invoiceData[0]?.invoice_number
-            }
-          })
-          .eq('id', newTransaction.id)
+        if (invoiceData && invoiceData.length > 0) {
+          await supabase
+            .from('wallet_transactions')
+            .update({
+              metadata: {
+                ...newTransaction.metadata,
+                invoice_id: invoiceData[0]?.customer_invoice_id,
+                invoice_number: invoiceData[0]?.customer_invoice_number
+              }
+            })
+            .eq('id', newTransaction.id)
+        }
       }
     } catch (invoiceError) {
       console.error('Invoice generation error:', invoiceError)
