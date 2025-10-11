@@ -339,7 +339,7 @@ export default function AdminInvoiceManagement() {
                 <div class="invoice-number">Invoice #${invoice.invoice_number}</div>
                 <div class="invoice-date">${new Date(invoice.created_at).toLocaleDateString('en-IN')}</div>
                 <div style="margin-top: 10px;">
-                    <span class="status-badge status-${invoice.status}">${invoice.status}</span>
+                    <span class="status-badge status-${invoice.status}">${invoice.session_id === 'WALLET_RECHARGE' ? 'RECHARGE' : invoice.status}</span>
                 </div>
             </div>
         </div>
