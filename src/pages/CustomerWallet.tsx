@@ -50,32 +50,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UniversalPaymentModal } from '@/components/UniversalPaymentModal';
 import { WithdrawalModal } from '@/components/WithdrawalModal';
 import { BankAccountManager } from '@/components/BankAccountManager';
+import { SimpleRazorpayRecharge } from '@/components/SimpleRazorpayRecharge';
+import { SimpleRazorpayWithdrawal } from '@/components/SimpleRazorpayWithdrawal';
 
 // Real data will be fetched from database
 
 // CustomerSidebar is now imported from shared component
 
-function AddFundsButton() {
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-
+function AddFundsButton({ onSuccess }: { onSuccess?: () => void }) {
   return (
-    <>
-      <Button 
-        className="bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 text-white hover:shadow-lg transition-all duration-300"
-        onClick={() => setShowPaymentModal(true)}
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        Add Credits
-      </Button>
-      <UniversalPaymentModal 
-        open={showPaymentModal}
-        onOpenChange={setShowPaymentModal}
-        onSuccess={() => {
-          // Refresh wallet data after successful payment
-          window.location.reload();
-        }}
-      />
-    </>
+    <SimpleRazorpayRecharge
+      onSuccess={(amount) => {
+        console.log(`Successfully recharged ₹${amount}`);
+        onSuccess?.();
+      }}
+      onError={(error) => {
+        console.error('Recharge failed:', error);
+      }}
+    />
   );
 }
 
@@ -308,15 +300,17 @@ export default function CustomerWallet() {
                       <p className="text-muted-foreground">Available for design sessions</p>
                     </div>
                     <div className="flex space-x-3">
-                      <AddFundsButton />
-                      <Button 
-                        variant="outline" 
-                        className="hover:bg-gradient-to-r hover:from-teal-50 hover:to-blue-100 border-teal-300/50"
-                        onClick={() => setShowWithdrawalModal(true)}
-                      >
-                        <ArrowUpFromLine className="w-4 h-4 mr-2" />
-                        Withdraw
-                      </Button>
+                      <AddFundsButton onSuccess={fetchWalletData} />
+                      <SimpleRazorpayWithdrawal 
+                        currentBalance={walletBalance}
+                        onSuccess={(amount) => {
+                          console.log(`Successfully withdrew ₹${amount}`);
+                          fetchWalletData();
+                        }}
+                        onError={(error) => {
+                          console.error('Withdrawal failed:', error);
+                        }}
+                      />
                     </div>
                   </div>
                 </CardContent>
