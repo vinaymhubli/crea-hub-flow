@@ -354,25 +354,25 @@ export default function DesignerBookings() {
             : 'border-gray-200'
         }`}
       >
-        <CardContent className="p-6">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-start space-x-4">
-              <Avatar className="w-12 h-12">
-                <AvatarFallback className="bg-gradient-to-r from-green-400 to-blue-500 text-white font-semibold">
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-0 mb-4">
+            <div className="flex items-start space-x-3 sm:space-x-4 min-w-0 flex-1">
+              <Avatar className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
+                <AvatarFallback className="bg-gradient-to-r from-green-400 to-blue-500 text-white font-semibold text-sm sm:text-base">
                   {customerName.split(' ').map((n: string) => n[0]).join('') || 'C'}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1">
-                <h3 className="font-bold text-gray-900 mb-1">{booking.service}</h3>
-                <p className="text-gray-600 font-medium">{customerName}</p>
-                <p className="text-sm text-gray-500">Customer</p>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-gray-900 mb-1 text-sm sm:text-base truncate">{booking.service}</h3>
+                <p className="text-gray-600 font-medium text-sm truncate">{customerName}</p>
+                <p className="text-xs sm:text-sm text-gray-500">Customer</p>
               </div>
             </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 self-start sm:self-auto">
             {getStatusBadge(booking.status)}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 sm:h-9 sm:w-9">
                   <MoreVertical className="w-4 h-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -414,75 +414,77 @@ export default function DesignerBookings() {
           </div>
         </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-            <div className="flex items-center space-x-2">
-              <Calendar className="w-4 h-4 text-gray-400" />
-              <span className="text-sm text-gray-600">{formatDate(booking.scheduled_date)}</span>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-4">
+            <div className="flex items-center space-x-1.5 sm:space-x-2">
+              <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" />
+              <span className="text-xs sm:text-sm text-gray-600 truncate">{formatDate(booking.scheduled_date)}</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <Clock className="w-4 h-4 text-gray-400" />
-              <span className="text-sm text-gray-600">{formatTime(booking.scheduled_date, booking.duration_hours)}</span>
+            <div className="flex items-center space-x-1.5 sm:space-x-2">
+              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" />
+              <span className="text-xs sm:text-sm text-gray-600 truncate">{formatTime(booking.scheduled_date, booking.duration_hours)}</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <Video className="w-4 h-4 text-gray-400" />
-              <span className="text-sm text-gray-600">Video Call</span>
+            <div className="flex items-center space-x-1.5 sm:space-x-2">
+              <Video className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" />
+              <span className="text-xs sm:text-sm text-gray-600">Video Call</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <DollarSign className="w-4 h-4 text-gray-400" />
-              <span className="text-sm font-semibold text-green-600">₹{booking.total_amount}</span>
+            <div className="flex items-center space-x-1.5 sm:space-x-2">
+              <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" />
+              <span className="text-xs sm:text-sm font-semibold text-green-600">₹{booking.total_amount}</span>
             </div>
           </div>
 
           {booking.description && (
-            <div className="bg-gray-50 rounded-lg p-3 mb-4">
-              <p className="text-sm text-gray-700">{booking.description}</p>
+            <div className="bg-gray-50 rounded-lg p-2.5 sm:p-3 mb-3 sm:mb-4">
+              <p className="text-xs sm:text-sm text-gray-700 line-clamp-2">{booking.description}</p>
             </div>
           )}
 
         {booking.rating && (
-          <div className="flex items-center space-x-2 mb-4">
+          <div className="flex items-center space-x-2 mb-3 sm:mb-4">
             <div className="flex items-center">
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className={`w-4 h-4 ${
+                  className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${
                     i < booking.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
                   }`}
                 />
               ))}
             </div>
-            <span className="text-sm text-gray-600">({booking.rating}/5)</span>
+            <span className="text-xs sm:text-sm text-gray-600">({booking.rating}/5)</span>
           </div>
         )}
 
         {booking.feedback && (
-          <div className="bg-blue-50 rounded-lg p-3 mb-4">
-            <p className="text-sm text-blue-800 italic">"{booking.feedback}"</p>
+          <div className="bg-blue-50 rounded-lg p-2.5 sm:p-3 mb-3 sm:mb-4">
+            <p className="text-xs sm:text-sm text-blue-800 italic line-clamp-2">"{booking.feedback}"</p>
           </div>
         )}
 
-          <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 pt-3 sm:pt-4 border-t border-gray-100">
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-500">Duration:</span>
-              <span className="text-sm font-medium text-gray-700">{booking.duration_hours} hour{booking.duration_hours !== 1 ? 's' : ''}</span>
+              <span className="text-xs sm:text-sm text-gray-500">Duration:</span>
+              <span className="text-xs sm:text-sm font-medium text-gray-700">{booking.duration_hours} hour{booking.duration_hours !== 1 ? 's' : ''}</span>
             </div>
-          <div className="flex space-x-2">
+          <div className="flex gap-2 w-full sm:w-auto">
             <Button 
               variant="outline" 
               size="sm"
               onClick={() => handleMessageClient(booking)}
+              className="flex-1 sm:flex-none text-xs"
             >
-              <MessageCircle className="w-4 h-4 mr-1" />
+              <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
               Chat
             </Button>
             {booking.status === 'confirmed' && (
               <Button 
                 size="sm" 
-                className="bg-gradient-to-r from-green-400 to-blue-500 text-white"
+                className="bg-gradient-to-r from-green-400 to-blue-500 text-white flex-1 sm:flex-none text-xs"
                 onClick={() => handleJoinSession(booking)}
               >
-                <Video className="w-4 h-4 mr-1" />
-                Join Session
+                <Video className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
+                <span className="hidden sm:inline">Join Session</span>
+                <span className="sm:hidden">Join</span>
               </Button>
             )}
             </div>
@@ -499,19 +501,19 @@ export default function DesignerBookings() {
         
         <main className="flex-1">
           {/* Enhanced Header */}
-          <header className="bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 px-6 py-8 relative overflow-hidden">
+          <header className="bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 px-4 sm:px-6 py-4 sm:py-8 relative overflow-hidden">
             <div className="absolute inset-0 bg-black/10"></div>
-            <div className="relative z-10 flex items-center justify-between">
-              <div className="flex items-center space-x-6">
-                <SidebarTrigger className="text-white hover:bg-white/20 rounded-lg p-2" />
-                <div className="flex items-center space-x-4">
-                  <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/30 shadow-xl">
-                    <Calendar className="w-8 h-8 text-white" />
+            <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center space-x-3 sm:space-x-6">
+                <SidebarTrigger className="text-white hover:bg-white/20 rounded-lg p-2 flex-shrink-0" />
+                <div className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 backdrop-blur-sm rounded-xl sm:rounded-2xl flex items-center justify-center border border-white/30 shadow-xl flex-shrink-0">
+                    <Calendar className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                   </div>
-                  <div>
-                    <h1 className="text-3xl font-bold text-white">Bookings</h1>
-                    <p className="text-white/90 text-lg">Manage your design sessions and client appointments</p>
-                    <div className="flex items-center space-x-4 mt-2">
+                  <div className="min-w-0 flex-1">
+                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white truncate">Bookings</h1>
+                    <p className="text-white/90 text-xs sm:text-sm lg:text-lg truncate hidden sm:block">Manage your design sessions and client appointments</p>
+                    <div className="flex items-center space-x-2 sm:space-x-4 mt-1 sm:mt-2 text-xs sm:text-sm">
                       <span className="text-white/90 font-medium">
                         {upcomingBookings.length} Upcoming
                       </span>
@@ -525,61 +527,61 @@ export default function DesignerBookings() {
               </div>
               <Button 
                 onClick={handleCalendarView}
-                className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-2.5 font-medium"
+                className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-4 sm:px-6 py-2 sm:py-2.5 font-medium text-xs sm:text-sm w-full sm:w-auto"
               >
-                <CalendarDays className="w-4 h-4 mr-2" />
+                <CalendarDays className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
                 {showCalendarView ? 'List View' : 'Calendar View'}
               </Button>
             </div>
           </header>
 
-          <div className="p-8 max-w-7xl mx-auto">
+          <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
             {showCalendarView ? (
-              <div className="space-y-6">
-                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-                  <div className="flex items-center justify-between mb-6">
+              <div className="space-y-4 sm:space-y-6">
+                <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl border border-gray-100 p-4 sm:p-6">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6">
                     <div>
-                      <h2 className="text-2xl font-bold text-gray-900">Calendar View</h2>
-                      <p className="text-gray-600 mt-1">{calendarMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}</p>
+                      <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Calendar View</h2>
+                      <p className="text-gray-600 mt-1 text-sm sm:text-base">{calendarMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}</p>
                     </div>
-                    <div className="flex items-center space-x-3">
-                      <Button variant="outline" className="rounded-xl" onClick={goToPrevMonth}>
+                    <div className="flex items-center justify-between sm:justify-start gap-2 sm:space-x-3">
+                      <Button variant="outline" className="rounded-lg sm:rounded-xl text-xs sm:text-sm px-3 sm:px-4" onClick={goToPrevMonth}>
                         Prev
                       </Button>
-                      <Button variant="outline" className="rounded-xl" onClick={goToToday}>
+                      <Button variant="outline" className="rounded-lg sm:rounded-xl text-xs sm:text-sm px-3 sm:px-4" onClick={goToToday}>
                         Today
                       </Button>
-                      <Button variant="outline" className="rounded-xl" onClick={goToNextMonth}>
+                      <Button variant="outline" className="rounded-lg sm:rounded-xl text-xs sm:text-sm px-3 sm:px-4" onClick={goToNextMonth}>
                         Next
                       </Button>
                     </div>
-                    <div className="flex items-center space-x-4 text-sm">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-3 h-3 rounded bg-yellow-100 border border-yellow-300"></div>
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm">
+                      <div className="flex items-center space-x-1.5 sm:space-x-2">
+                        <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded bg-yellow-100 border border-yellow-300"></div>
                         <span className="text-gray-600">Pending</span>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-3 h-3 rounded bg-green-100 border border-green-300"></div>
+                      <div className="flex items-center space-x-1.5 sm:space-x-2">
+                        <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded bg-green-100 border border-green-300"></div>
                         <span className="text-gray-600">Confirmed</span>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-3 h-3 rounded bg-blue-100 border border-blue-300"></div>
+                      <div className="flex items-center space-x-1.5 sm:space-x-2">
+                        <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded bg-blue-100 border border-blue-300"></div>
                         <span className="text-gray-600">Completed</span>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-3 h-3 rounded bg-red-100 border border-red-300"></div>
+                      <div className="flex items-center space-x-1.5 sm:space-x-2">
+                        <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded bg-red-100 border border-red-300"></div>
                         <span className="text-gray-600">Cancelled</span>
                       </div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-7 gap-2 mb-4">
+                  <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-2 sm:mb-4">
                     {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                      <div key={day} className="text-center font-semibold text-gray-600 py-2">
+                      <div key={day} className="text-center font-semibold text-gray-600 py-1 sm:py-2 text-xs sm:text-sm">
                         {day}
                       </div>
                     ))}
                   </div>
-                  <div className="grid grid-cols-7 gap-2">
+                  <div className="grid grid-cols-7 gap-1 sm:gap-2">
                     {Array.from({ length: 42 }, (_, i) => {
                       const firstDay = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
                       const startDate = new Date(firstDay);
@@ -596,11 +598,11 @@ export default function DesignerBookings() {
                       return (
                         <div
                           key={i}
-                          className={`min-h-[100px] p-2 border border-gray-200 rounded-lg ${
+                          className={`min-h-[60px] sm:min-h-[80px] lg:min-h-[100px] p-1 sm:p-2 border border-gray-200 rounded-md sm:rounded-lg ${
                             isCurrentMonth ? 'bg-white' : 'bg-gray-50'
-                          } ${isToday ? 'ring-2 ring-blue-500' : ''}`}
+                          } ${isToday ? 'ring-1 sm:ring-2 ring-blue-500' : ''}`}
                         >
-                          <div className={`text-sm font-medium mb-1 ${
+                          <div className={`text-xs sm:text-sm font-medium mb-0.5 sm:mb-1 ${
                             isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
                           }`}>
                             {startDate.getDate()}
@@ -647,50 +649,54 @@ export default function DesignerBookings() {
               </div>
             ) : (
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <div className="flex items-center justify-between mb-8">
-                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-2">
-                  <TabsList className="grid w-auto grid-cols-4 bg-transparent gap-2">
+              <div className="flex flex-col gap-4 mb-6 sm:mb-8">
+                <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl border border-gray-100 p-1.5 sm:p-2 overflow-x-auto">
+                  <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 bg-transparent gap-1.5 sm:gap-2 min-w-max lg:min-w-0 !h-fit">
                     <TabsTrigger 
                       value="upcoming"
-                      className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-xl py-3 px-6 font-semibold"
+                      className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-lg sm:rounded-xl py-2 sm:py-3 px-4 sm:px-6 font-semibold text-xs sm:text-sm whitespace-nowrap"
                     >
-                      Upcoming ({upcomingBookings.length})
+                      <span className="hidden sm:inline">Upcoming ({upcomingBookings.length})</span>
+                      <span className="sm:hidden">Upcoming</span>
                     </TabsTrigger>
                     <TabsTrigger 
                       value="pending"
-                      className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-xl py-3 px-6 font-semibold"
+                      className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-lg sm:rounded-xl py-2 sm:py-3 px-4 sm:px-6 font-semibold text-xs sm:text-sm whitespace-nowrap"
                     >
-                      Pending ({pendingBookings.length})
+                      <span className="hidden sm:inline">Pending ({pendingBookings.length})</span>
+                      <span className="sm:hidden">Pending</span>
                     </TabsTrigger>
                     <TabsTrigger 
                       value="completed"
-                      className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-xl py-3 px-6 font-semibold"
+                      className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-lg sm:rounded-xl py-2 sm:py-3 px-4 sm:px-6 font-semibold text-xs sm:text-sm whitespace-nowrap"
                     >
-                      Completed ({completedBookings.length})
+                      <span className="hidden sm:inline">Completed ({completedBookings.length})</span>
+                      <span className="sm:hidden">Done</span>
                     </TabsTrigger>
                     <TabsTrigger 
                       value="cancelled"
-                      className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-xl py-3 px-6 font-semibold"
+                      className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-lg sm:rounded-xl py-2 sm:py-3 px-4 sm:px-6 font-semibold text-xs sm:text-sm whitespace-nowrap"
                     >
-                      Cancelled ({cancelledBookings.length})
+                      <span className="hidden sm:inline">Cancelled ({cancelledBookings.length})</span>
+                      <span className="sm:hidden">Cancelled</span>
                     </TabsTrigger>
                   </TabsList>
                 </div>
                 
-                <div className="flex items-center space-x-4">
-                  <div className="relative">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:space-x-4">
+                  <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <Input
                       placeholder="Search bookings..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10 w-64 border-gray-200 focus:border-green-400 focus:ring-green-200"
+                      className="pl-10 w-full border-gray-200 focus:border-green-400 focus:ring-green-200 text-sm"
                     />
                   </div>
                   <Button 
                     onClick={handleFilterClick}
                     variant="outline" 
-                    className="border-gray-300 hover:bg-gray-50 rounded-xl px-6 py-2.5 font-medium transition-all duration-200"
+                    className="border-gray-300 hover:bg-gray-50 rounded-lg sm:rounded-xl px-4 sm:px-6 py-2 sm:py-2.5 font-medium transition-all duration-200 text-sm w-full sm:w-auto"
                   >
                     <Filter className="w-4 h-4 mr-2" />
                     Filter
@@ -698,60 +704,60 @@ export default function DesignerBookings() {
                 </div>
               </div>
 
-              <TabsContent value="upcoming" className="space-y-6">
+              <TabsContent value="upcoming" className="space-y-4 sm:space-y-6">
                 {loading ? (
-                  <div className="text-center py-12">Loading bookings...</div>
+                  <div className="text-center py-8 sm:py-12 text-sm sm:text-base">Loading bookings...</div>
                 ) : upcomingBookings.length > 0 ? (
                   upcomingBookings.map(renderBookingCard)
                 ) : (
-                  <div className="text-center py-20">
-                    <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No upcoming bookings</h3>
-                    <p className="text-gray-500">Your upcoming sessions will appear here.</p>
+                  <div className="text-center py-12 sm:py-16 lg:py-20">
+                    <Calendar className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 px-4">No upcoming bookings</h3>
+                    <p className="text-gray-500 text-sm sm:text-base px-4">Your upcoming sessions will appear here.</p>
                   </div>
                 )}
               </TabsContent>
 
-              <TabsContent value="pending" className="space-y-6">
+              <TabsContent value="pending" className="space-y-4 sm:space-y-6">
                 {loading ? (
-                  <div className="text-center py-12">Loading bookings...</div>
+                  <div className="text-center py-8 sm:py-12 text-sm sm:text-base">Loading bookings...</div>
                 ) : pendingBookings.length > 0 ? (
                   pendingBookings.map(renderBookingCard)
                 ) : (
-                  <div className="text-center py-20">
-                    <Clock className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No pending bookings</h3>
-                    <p className="text-gray-500">Pending booking requests will appear here.</p>
+                  <div className="text-center py-12 sm:py-16 lg:py-20">
+                    <Clock className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 px-4">No pending bookings</h3>
+                    <p className="text-gray-500 text-sm sm:text-base px-4">Pending booking requests will appear here.</p>
                   </div>
                 )}
               </TabsContent>
 
-              <TabsContent value="completed" className="space-y-6">
+              <TabsContent value="completed" className="space-y-4 sm:space-y-6">
                 {loading ? (
-                  <div className="text-center py-12">Loading bookings...</div>
+                  <div className="text-center py-8 sm:py-12 text-sm sm:text-base">Loading bookings...</div>
                 ) : completedBookings.length > 0 ? (
                   completedBookings.map(renderBookingCard)
                 ) : (
-                  <div className="text-center py-20">
-                    <CheckCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No completed bookings</h3>
-                    <p className="text-gray-500">Your completed sessions will appear here.</p>
+                  <div className="text-center py-12 sm:py-16 lg:py-20">
+                    <CheckCircle className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 px-4">No completed bookings</h3>
+                    <p className="text-gray-500 text-sm sm:text-base px-4">Your completed sessions will appear here.</p>
                   </div>
                 )}
               </TabsContent>
 
-              <TabsContent value="cancelled" className="space-y-6">
+              <TabsContent value="cancelled" className="space-y-4 sm:space-y-6">
                 {loading ? (
-                  <div className="text-center py-12">Loading bookings...</div>
+                  <div className="text-center py-8 sm:py-12 text-sm sm:text-base">Loading bookings...</div>
                 ) : cancelledBookings.length > 0 ? (
                   cancelledBookings.map(renderBookingCard)
                 ) : (
-                  <div className="text-center py-20">
-                    <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl">
-                      <XCircle className="w-10 h-10 text-white" />
+                  <div className="text-center py-12 sm:py-16 lg:py-20">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-green-400 to-blue-500 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-xl">
+                      <XCircle className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
                     </div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-3">No cancelled bookings</h3>
-                    <p className="text-gray-600 mb-8 max-w-md mx-auto text-lg">
+                    <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-3 px-4">No cancelled bookings</h3>
+                    <p className="text-gray-600 mb-6 sm:mb-8 max-w-md mx-auto text-sm sm:text-base lg:text-lg px-4">
                       You don't have any cancelled bookings.
                     </p>
                   </div>

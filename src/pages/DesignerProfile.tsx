@@ -298,34 +298,34 @@ export default function DesignerProfile() {
         
         <main className="flex-1">
           {/* Enhanced Header with Profile Preview */}
-          <header className="bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 px-6 py-8 relative overflow-hidden">
+          <header className="bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 px-4 sm:px-6 py-4 sm:py-8 relative overflow-hidden">
             <div className="absolute inset-0 bg-black/10"></div>
-            <div className="relative z-10 flex items-center justify-between">
-              <div className="flex items-center space-x-6">
-                <SidebarTrigger className="text-white hover:bg-white/20 rounded-lg p-2" />
-                <div className="flex items-center space-x-4">
+            <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center space-x-3 sm:space-x-6">
+                <SidebarTrigger className="text-white hover:bg-white/20 rounded-lg p-2 flex-shrink-0" />
+                <div className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
                   {avatarImage ? (
                     <img 
                       src={avatarImage} 
                       alt="Profile" 
-                      className="w-16 h-16 rounded-2xl object-cover border border-white/30 shadow-xl"
+                      className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl object-cover border border-white/30 shadow-xl flex-shrink-0"
                     />
                   ) : (
-                    <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/30 shadow-xl">
-                      <span className="text-white font-bold text-xl">{getInitials()}</span>
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 backdrop-blur-sm rounded-xl sm:rounded-2xl flex items-center justify-center border border-white/30 shadow-xl flex-shrink-0">
+                      <span className="text-white font-bold text-base sm:text-xl">{getInitials()}</span>
                     </div>
                   )}
-                  <div>
-                    <h1 className="text-3xl font-bold text-white">Designer Profile</h1>
-                    <p className="text-white/90 text-lg">
-                      {getDisplayName()} • {formData.specialty} • {formData.experience_years}+ years experience
+                  <div className="min-w-0 flex-1">
+                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white truncate">Designer Profile</h1>
+                    <p className="text-white/90 text-xs sm:text-sm lg:text-lg truncate">
+                      {getDisplayName()} <span className="hidden sm:inline">• {formData.specialty} • {formData.experience_years}+ years experience</span>
                     </p>
-                    <div className="flex items-center space-x-4 mt-2">
+                    <div className="flex items-center space-x-2 sm:space-x-4 mt-1 sm:mt-2">
                       <div className="flex items-center space-x-1">
-                        <Star className="w-4 h-4 fill-yellow-300 text-yellow-300" />
-                        <span className="text-white/90 font-medium">{designerProfile?.rating?.toFixed(1) || '0.0'}</span>
+                        <Star className="w-3 h-3 sm:w-4 sm:h-4 fill-yellow-300 text-yellow-300" />
+                        <span className="text-white/90 font-medium text-xs sm:text-sm">{designerProfile?.rating?.toFixed(1) || '0.0'}</span>
                       </div>
-                      <Badge className="bg-white/20 text-white border-white/30">
+                      <Badge className="bg-white/20 text-white border-white/30 text-xs">
                         {designerProfile?.is_online ? 'Available' : 'Offline'}
                       </Badge>
                     </div>
@@ -334,80 +334,82 @@ export default function DesignerProfile() {
               </div>
               <Button 
                 asChild 
-                className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-200"
+                className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-200 text-xs sm:text-sm w-full sm:w-auto justify-center"
                 disabled={!designerProfile?.id}
               >
                 <Link 
                   to={`/designer/${designerProfile?.id}`}
                   state={{ hideGlobalChrome: true, fromProfile: true }}
                 >
-                  <Eye className="w-4 h-4" />
-                  <span>View Public Profile</span>
-                  <ChevronRight className="w-4 h-4" />
+                  <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">View Public Profile</span>
+                  <span className="sm:hidden">View Public</span>
+                  <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
                 </Link>
               </Button>
             </div>
           </header>
 
-          <div className="p-8 max-w-7xl mx-auto">
+          <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               {/* Enhanced Tab Navigation */}
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-2 mb-8">
-                <TabsList className="grid w-full grid-cols-4 bg-transparent gap-2">
+              <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl border border-gray-100 p-1.5 sm:p-2 mb-6 sm:mb-8 overflow-x-auto">
+                <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 bg-transparent gap-1.5 sm:gap-2 min-w-max sm:min-w-0 !h-fit">
                   <TabsTrigger 
                     value="personal" 
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 hover:scale-105 rounded-xl py-3 font-semibold"
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 hover:scale-105 rounded-lg sm:rounded-xl py-2 sm:py-3 font-semibold text-xs sm:text-sm whitespace-nowrap"
                   >
-                    <User className="w-4 h-4 mr-2" />
-                    Personal Info
+                    <User className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                    <span className="hidden sm:inline">Personal Info</span>
+                    <span className="sm:hidden">Personal</span>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="professional" 
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 hover:scale-105 rounded-xl py-3 font-semibold"
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 hover:scale-105 rounded-lg sm:rounded-xl py-2 sm:py-3 font-semibold text-xs sm:text-sm whitespace-nowrap"
                   >
-                    <Settings className="w-4 h-4 mr-2" />
+                    <Settings className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                     Professional
                   </TabsTrigger>
                   <TabsTrigger 
                     value="portfolio" 
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 hover:scale-105 rounded-xl py-3 font-semibold"
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 hover:scale-105 rounded-lg sm:rounded-xl py-2 sm:py-3 font-semibold text-xs sm:text-sm whitespace-nowrap"
                   >
-                    <FolderOpen className="w-4 h-4 mr-2" />
+                    <FolderOpen className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                     Portfolio
                   </TabsTrigger>
                   <TabsTrigger 
                     value="reviews" 
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 hover:scale-105 rounded-xl py-3 font-semibold"
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 hover:scale-105 rounded-lg sm:rounded-xl py-2 sm:py-3 font-semibold text-xs sm:text-sm whitespace-nowrap"
                   >
-                    <Star className="w-4 h-4 mr-2" />
+                    <Star className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                     Reviews
                   </TabsTrigger>
                 </TabsList>
               </div>
 
-              <TabsContent value="personal" className="space-y-8 animate-fade-in">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <TabsContent value="personal" className="space-y-6 sm:space-y-8 animate-fade-in">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
                   {/* Profile Picture Section */}
                   <div className="lg:col-span-1">
                     <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden">
-                      <CardHeader className="bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 text-white text-center py-8">
-                        <CardTitle className="text-xl font-bold">Profile Picture</CardTitle>
+                      <CardHeader className="bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 text-white text-center py-4 sm:py-6 lg:py-8">
+                        <CardTitle className="text-base sm:text-lg lg:text-xl font-bold">Profile Picture</CardTitle>
                       </CardHeader>
-                      <CardContent className="p-8 text-center">
+                      <CardContent className="p-4 sm:p-6 lg:p-8 text-center">
                         <div className="relative group">
                           {avatarImage ? (
                             <img 
                               src={avatarImage} 
                               alt="Profile" 
-                              className="w-32 h-32 rounded-full object-cover mx-auto shadow-2xl group-hover:scale-105 transition-transform duration-300"
+                              className="w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 rounded-full object-cover mx-auto shadow-2xl group-hover:scale-105 transition-transform duration-300"
                             />
                           ) : (
-                            <div className="w-32 h-32 bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto shadow-2xl group-hover:scale-105 transition-transform duration-300">
-                              <span className="text-white font-bold text-3xl">{getInitials()}</span>
+                            <div className="w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto shadow-2xl group-hover:scale-105 transition-transform duration-300">
+                              <span className="text-white font-bold text-2xl sm:text-3xl">{getInitials()}</span>
                             </div>
                           )}
                           <div className="absolute inset-0 bg-black/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                            <Camera className="w-8 h-8 text-white" />
+                            <Camera className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                           </div>
                         </div>
                         <input
@@ -417,26 +419,26 @@ export default function DesignerProfile() {
                           onChange={handleAvatarUpload}
                           className="hidden"
                         />
-                        <div className="space-y-3 mt-6">
+                        <div className="space-y-2 sm:space-y-3 mt-4 sm:mt-6">
                           <Button 
                             onClick={() => avatarInputRef.current?.click()}
-                            className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 w-full"
+                            className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 w-full text-sm sm:text-base"
                           >
-                            <Camera className="w-4 h-4 mr-2" />
+                            <Camera className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
                             Change Photo
                           </Button>
                           {avatarImage && (
                             <Button 
                               onClick={handleRemoveAvatar}
                               variant="outline"
-                              className="w-full border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 transition-all duration-200"
+                              className="w-full border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 transition-all duration-200 text-sm sm:text-base"
                             >
-                              <X className="w-4 h-4 mr-2" />
+                              <X className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
                               Remove Photo
                             </Button>
                           )}
                         </div>
-                        <p className="text-sm text-gray-500 mt-3">Upload a professional headshot</p>
+                        <p className="text-xs sm:text-sm text-gray-500 mt-2 sm:mt-3">Upload a professional headshot</p>
                       </CardContent>
                     </Card>
                   </div>
@@ -444,15 +446,15 @@ export default function DesignerProfile() {
                   {/* Personal Information Section */}
                   <div className="lg:col-span-2">
                     <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden">
-                      <CardHeader className="bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 text-white">
-                        <CardTitle className="text-xl font-bold flex items-center">
-                          <User className="w-5 h-5 mr-2" />
+                      <CardHeader className="bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 text-white p-4 sm:p-6">
+                        <CardTitle className="text-base sm:text-lg lg:text-xl font-bold flex items-center">
+                          <User className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                           Personal Information
                         </CardTitle>
-                        <CardDescription className="text-white/80">Update your personal details and contact information</CardDescription>
+                        <CardDescription className="text-white/80 text-xs sm:text-sm">Update your personal details and contact information</CardDescription>
                       </CardHeader>
-                      <CardContent className="p-8 space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <CardContent className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                           <div className="space-y-2">
                             <Label htmlFor="firstName" className="text-sm font-semibold text-gray-700 flex items-center">
                               <User className="w-4 h-4 mr-1" />
@@ -551,12 +553,12 @@ export default function DesignerProfile() {
                           <p className="text-sm text-gray-500">Describe your background, experience, and what makes you unique.</p>
                         </div>
 
-                        <div className="flex justify-end space-x-3 md:col-span-2">
-                          <Button variant="outline" className="border-gray-300 hover:border-gray-400 px-6">Cancel</Button>
+                        <div className="flex flex-col sm:flex-row justify-end gap-3 sm:space-x-3 md:col-span-2">
+                          <Button variant="outline" className="border-gray-300 hover:border-gray-400 px-6 w-full sm:w-auto order-2 sm:order-1">Cancel</Button>
                           <Button 
                             onClick={handleSavePersonal}
                             disabled={isSaving}
-                            className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 px-6"
+                            className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 px-6 w-full sm:w-auto order-1 sm:order-2"
                           >
                             {isSaving ? 'Saving...' : 'Save Changes'}
                           </Button>
@@ -567,14 +569,14 @@ export default function DesignerProfile() {
                 </div>
               </TabsContent>
 
-              <TabsContent value="professional" className="space-y-6 animate-fade-in">
+              <TabsContent value="professional" className="space-y-4 sm:space-y-6 animate-fade-in">
                 <Card className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-                  <CardHeader className="bg-gradient-to-r from-green-400 to-blue-500 text-white rounded-t-lg">
-                    <CardTitle className="text-xl font-bold">Professional Information</CardTitle>
-                    <CardDescription className="text-white/80">Update your professional details and specializations.</CardDescription>
+                  <CardHeader className="bg-gradient-to-r from-green-400 to-blue-500 text-white rounded-t-lg p-4 sm:p-6">
+                    <CardTitle className="text-base sm:text-lg lg:text-xl font-bold">Professional Information</CardTitle>
+                    <CardDescription className="text-white/80 text-xs sm:text-sm">Update your professional details and specializations.</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-6 p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                       <div className="space-y-2">
                         <Label htmlFor="specialization" className="text-sm font-semibold text-gray-700">Primary Specialization</Label>
                         <Select value={formData.specialty} onValueChange={(value) => handleInputChange('specialty', value)}>
@@ -605,7 +607,7 @@ export default function DesignerProfile() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                       <div className="space-y-2">
                         <Label htmlFor="hourlyRate" className="text-sm font-semibold text-gray-700">Per Minute Rate (₹)</Label>
                         <Input 
@@ -616,27 +618,29 @@ export default function DesignerProfile() {
                           value={formData.hourly_rate}
                           onChange={(e) => handleInputChange('hourly_rate', parseFloat(e.target.value) || 0)}
                         />
-                        <p className="text-sm text-gray-500">The rate you charge per minute for your design services</p>
+                        <p className="text-xs sm:text-sm text-gray-500">The rate you charge per minute for your design services</p>
                       </div>
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
-                          <div>
-                            <Label className="font-semibold text-gray-700">Display Per Minute Rate</Label>
-                            <p className="text-sm text-gray-500">Show your per minute rate on your public profile</p>
+                      <div className="space-y-3 sm:space-y-4">
+                        <div className="flex items-center justify-between gap-3 p-3 sm:p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+                          <div className="min-w-0 flex-1">
+                            <Label className="font-semibold text-gray-700 text-sm sm:text-base">Display Per Minute Rate</Label>
+                            <p className="text-xs sm:text-sm text-gray-500">Show your per minute rate on your public profile</p>
                           </div>
                           <Switch 
                             checked={formData.display_hourly_rate} 
-                            onCheckedChange={(checked) => handleInputChange('display_hourly_rate', checked)} 
+                            onCheckedChange={(checked) => handleInputChange('display_hourly_rate', checked)}
+                            className="flex-shrink-0"
                           />
                         </div>
-                        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
-                          <div>
-                            <Label className="font-semibold text-gray-700">Available for Urgent Work</Label>
-                            <p className="text-sm text-gray-500">Show that you're available for urgent/rush projects</p>
+                        <div className="flex items-center justify-between gap-3 p-3 sm:p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+                          <div className="min-w-0 flex-1">
+                            <Label className="font-semibold text-gray-700 text-sm sm:text-base">Available for Urgent Work</Label>
+                            <p className="text-xs sm:text-sm text-gray-500">Show that you're available for urgent/rush projects</p>
                           </div>
                           <Switch 
                             checked={formData.available_for_urgent} 
-                            onCheckedChange={(checked) => handleInputChange('available_for_urgent', checked)} 
+                            onCheckedChange={(checked) => handleInputChange('available_for_urgent', checked)}
+                            className="flex-shrink-0"
                           />
                         </div>
                       </div>
@@ -659,29 +663,29 @@ export default function DesignerProfile() {
                       </Select>
                     </div>
 
-                    <div className="space-y-4">
+                    <div className="space-y-3 sm:space-y-4">
                       <Label className="text-sm font-semibold text-gray-700">Additional Skills</Label>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                         {skillOptions.map((skill) => (
-                          <div key={skill} className="flex items-center space-x-2 p-2 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-100 hover:border-green-200 transition-colors">
+                          <div key={skill} className="flex items-center space-x-2 p-2 sm:p-2.5 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-100 hover:border-green-200 transition-colors">
                             <Checkbox 
                               id={skill}
                               checked={formData.skills.includes(skill)}
                               onCheckedChange={() => handleSkillToggle(skill)}
-                              className="border-green-300"
+                              className="border-green-300 flex-shrink-0"
                             />
-                            <Label htmlFor={skill} className="text-sm font-medium text-gray-700">{skill}</Label>
+                            <Label htmlFor={skill} className="text-xs sm:text-sm font-medium text-gray-700 cursor-pointer">{skill}</Label>
                           </div>
                         ))}
                       </div>
                     </div>
 
-                    <div className="flex justify-end space-x-3">
-                      <Button variant="outline" className="border-gray-300 hover:border-gray-400">Cancel</Button>
+                    <div className="flex flex-col sm:flex-row justify-end gap-3 sm:space-x-3">
+                      <Button variant="outline" className="border-gray-300 hover:border-gray-400 w-full sm:w-auto order-2 sm:order-1">Cancel</Button>
                       <Button 
                         onClick={handleSaveProfessional}
                         disabled={isSaving}
-                        className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                        className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 w-full sm:w-auto order-1 sm:order-2"
                       >
                         {isSaving ? 'Saving...' : 'Save Changes'}
                       </Button>
@@ -690,13 +694,13 @@ export default function DesignerProfile() {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="portfolio" className="space-y-6 animate-fade-in">
+              <TabsContent value="portfolio" className="space-y-4 sm:space-y-6 animate-fade-in">
                 <Card className="bg-white border-0 shadow-lg">
-                  <CardHeader className="bg-gradient-to-r from-green-400 to-blue-500 text-white rounded-t-lg">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <CardTitle className="text-xl font-bold">Portfolio</CardTitle>
-                        <CardDescription className="text-white/80">Showcase your best design work to attract more clients</CardDescription>
+                  <CardHeader className="bg-gradient-to-r from-green-400 to-blue-500 text-white rounded-t-lg p-4 sm:p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+                      <div className="min-w-0 flex-1">
+                        <CardTitle className="text-base sm:text-lg lg:text-xl font-bold">Portfolio</CardTitle>
+                        <CardDescription className="text-white/80 text-xs sm:text-sm">Showcase your best design work to attract more clients</CardDescription>
                       </div>
                       <div>
                         <input
@@ -709,17 +713,17 @@ export default function DesignerProfile() {
                         />
                         <Button 
                           onClick={() => portfolioInputRef.current?.click()}
-                          className="bg-white/20 hover:bg-white/30 text-white border-white/20 shadow-lg hover:shadow-xl transition-all duration-200"
+                          className="bg-white/20 hover:bg-white/30 text-white border-white/20 shadow-lg hover:shadow-xl transition-all duration-200 text-xs sm:text-sm"
                         >
-                          <Upload className="w-4 h-4 mr-2" />
+                          <Upload className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
                           Add Images
                         </Button>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="p-6">
+                  <CardContent className="p-4 sm:p-6">
                     {formData.portfolio_images.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                         {formData.portfolio_images.map((imageUrl, index) => (
                           <div key={index} className="relative group">
                             <img 
@@ -742,17 +746,17 @@ export default function DesignerProfile() {
                         ))}
                       </div>
                     ) : (
-                      <div className="text-center py-16">
-                        <div className="w-20 h-20 bg-gradient-to-r from-green-100 to-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                          <FolderOpen className="w-10 h-10 text-green-600" />
+                      <div className="text-center py-8 sm:py-12 lg:py-16">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-green-100 to-blue-100 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-lg">
+                          <FolderOpen className="w-8 h-8 sm:w-10 sm:h-10 text-green-600" />
                         </div>
-                        <h3 className="text-2xl font-bold text-gray-900 mb-3">No portfolio items</h3>
-                        <p className="text-gray-500 mb-8 text-lg">Get started by adding your first portfolio item.</p>
+                        <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-3 px-4">No portfolio items</h3>
+                        <p className="text-gray-500 mb-6 sm:mb-8 text-sm sm:text-base lg:text-lg px-4">Get started by adding your first portfolio item.</p>
                         <Button 
                           onClick={() => portfolioInputRef.current?.click()}
-                          className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+                          className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 text-sm sm:text-base"
                         >
-                          <Upload className="w-4 h-4 mr-2" />
+                          <Upload className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
                           Add Portfolio Item
                         </Button>
                       </div>
@@ -761,50 +765,50 @@ export default function DesignerProfile() {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="reviews" className="space-y-6 animate-fade-in">
+              <TabsContent value="reviews" className="space-y-4 sm:space-y-6 animate-fade-in">
                 <Card className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-                  <CardHeader className="bg-gradient-to-r from-green-400 to-blue-500 text-white rounded-t-lg">
-                    <CardTitle className="text-xl font-bold">Reviews</CardTitle>
-                    <CardDescription className="text-white/80">View client reviews of your design services.</CardDescription>
+                  <CardHeader className="bg-gradient-to-r from-green-400 to-blue-500 text-white rounded-t-lg p-4 sm:p-6">
+                    <CardTitle className="text-base sm:text-lg lg:text-xl font-bold">Reviews</CardTitle>
+                    <CardDescription className="text-white/80 text-xs sm:text-sm">View client reviews of your design services.</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-6 p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-20 h-20 bg-gradient-to-r from-green-100 to-blue-100 rounded-2xl flex items-center justify-center shadow-lg">
-                          <Star className="w-10 h-10 text-green-600" />
+                  <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
+                      <div className="flex items-center space-x-3 sm:space-x-4">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-green-100 to-blue-100 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
+                          <Star className="w-8 h-8 sm:w-10 sm:h-10 text-green-600" />
                         </div>
-                        <div>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-4xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-2">
+                            <span className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
                               {designerProfile?.rating?.toFixed(1) || '0.0'}
                             </span>
-                            <div className="flex space-x-1">
+                            <div className="flex space-x-0.5 sm:space-x-1">
                               {[1, 2, 3, 4, 5].map((star) => (
-                                <Star key={star} className="w-6 h-6 fill-yellow-400 text-yellow-400 hover:scale-110 transition-transform" />
+                                <Star key={star} className="w-4 h-4 sm:w-6 sm:h-6 fill-yellow-400 text-yellow-400 hover:scale-110 transition-transform" />
                               ))}
                             </div>
                           </div>
-                          <p className="text-sm text-gray-500 font-medium">
+                          <p className="text-xs sm:text-sm text-gray-500 font-medium mt-1">
                             Based on {designerProfile?.reviews_count || 0} reviews
                           </p>
                         </div>
                       </div>
-                      <div className="text-right p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
-                        <p className="text-sm text-gray-600 font-semibold">Completion rate</p>
-                        <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+                      <div className="text-left sm:text-right p-3 sm:p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+                        <p className="text-xs sm:text-sm text-gray-600 font-semibold">Completion rate</p>
+                        <p className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
                           {designerProfile?.completion_rate || 0}%
                         </p>
-                        <p className="text-sm text-green-600 font-medium">✓ Projects completed</p>
+                        <p className="text-xs sm:text-sm text-green-600 font-medium">✓ Projects completed</p>
                       </div>
                     </div>
 
                     {designerProfile?.reviews_count === 0 && (
-                      <div className="text-center py-16">
-                        <div className="w-20 h-20 bg-gradient-to-r from-green-100 to-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                          <Star className="w-10 h-10 text-green-600" />
+                      <div className="text-center py-8 sm:py-12 lg:py-16">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-green-100 to-blue-100 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-lg">
+                          <Star className="w-8 h-8 sm:w-10 sm:h-10 text-green-600" />
                         </div>
-                        <h3 className="text-2xl font-bold text-gray-900 mb-3">No reviews yet</h3>
-                        <p className="text-gray-500 mb-8 text-lg">Complete your first project to start getting reviews!</p>
+                        <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-3 px-4">No reviews yet</h3>
+                        <p className="text-gray-500 mb-6 sm:mb-8 text-sm sm:text-base lg:text-lg px-4">Complete your first project to start getting reviews!</p>
                       </div>
                     )}
                   </CardContent>

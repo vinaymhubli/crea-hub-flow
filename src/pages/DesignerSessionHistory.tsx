@@ -234,46 +234,46 @@ export default function DesignerSessionHistory() {
 
   const renderSessionCard = (session: any) => (
     <Card key={session.id} className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
-      <CardContent className="p-6">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-start space-x-4">
-            <Avatar className="w-12 h-12">
+      <CardContent className="p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-0 mb-4">
+          <div className="flex items-start space-x-3 sm:space-x-4 min-w-0 flex-1">
+            <Avatar className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
               <AvatarImage src={session.client.avatar} />
-              <AvatarFallback className="bg-gradient-to-r from-green-400 to-blue-500 text-white font-semibold">
+              <AvatarFallback className="bg-gradient-to-r from-green-400 to-blue-500 text-white font-semibold text-sm sm:text-base">
                 {session.client.name.split(' ').map((n: string) => n[0]).join('')}
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1">
-              <h3 className="font-bold text-gray-900 mb-1">{session.project}</h3>
-              <p className="text-gray-600 font-medium">{session.client.name}</p>
-              <p className="text-sm text-gray-500">{session.date}</p>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-bold text-gray-900 mb-1 text-sm sm:text-base truncate">{session.project}</h3>
+              <p className="text-gray-600 font-medium text-sm truncate">{session.client.name}</p>
+              <p className="text-xs sm:text-sm text-gray-500">{session.date}</p>
               
               {/* Show rating if available */}
               {session.rating && (
                 <div className="flex items-center space-x-2 mt-2">
-                  <div className="flex items-center space-x-1">
+                  <div className="flex items-center space-x-0.5 sm:space-x-1">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <Star
                         key={star}
-                        className={`w-4 h-4 ${
+                        className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${
                           star <= session.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
                         }`}
                       />
                     ))}
                   </div>
-                  <span className="text-sm text-gray-600">({session.rating}/5)</span>
+                  <span className="text-xs sm:text-sm text-gray-600">({session.rating}/5)</span>
                 </div>
               )}
               
               {/* Show feedback if available */}
               {session.feedback && (
-                <div className="mt-2 p-2 bg-gray-50 rounded text-sm text-gray-700">
+                <div className="mt-2 p-2 bg-gray-50 rounded text-xs sm:text-sm text-gray-700 line-clamp-2">
                   "{session.feedback}"
                 </div>
               )}
             </div>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 self-start">
             {getStatusBadge(session.status)}
             {/* 3-dots menu commented out per request */}
             {/* <DropdownMenu>
@@ -308,48 +308,48 @@ export default function DesignerSessionHistory() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-          <div className="flex items-center space-x-2">
-            <Calendar className="w-4 h-4 text-gray-400" />
-            <span className="text-sm text-gray-600">{session.date}</span>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-4">
+          <div className="flex items-center space-x-1.5 sm:space-x-2">
+            <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" />
+            <span className="text-xs sm:text-sm text-gray-600 truncate">{session.date}</span>
           </div>
-          <div className="flex items-center space-x-2">
-            <Clock className="w-4 h-4 text-gray-400" />
-            <span className="text-sm text-gray-600">{session.duration}</span>
+          <div className="flex items-center space-x-1.5 sm:space-x-2">
+            <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" />
+            <span className="text-xs sm:text-sm text-gray-600 truncate">{session.duration}</span>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1.5 sm:space-x-2">
             {session.type === 'Video Call' ? (
-              <Video className="w-4 h-4 text-gray-400" />
+              <Video className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" />
             ) : (
-              <MapPin className="w-4 h-4 text-gray-400" />
+              <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" />
             )}
-            <span className="text-sm text-gray-600">{session.type}</span>
+            <span className="text-xs sm:text-sm text-gray-600 truncate">{session.type}</span>
           </div>
-          <div className="flex items-center space-x-2">
-            <DollarSign className="w-4 h-4 text-gray-400" />
-            <span className="text-sm font-semibold text-green-600">₹{session.earnings}</span>
+          <div className="flex items-center space-x-1.5 sm:space-x-2">
+            <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" />
+            <span className="text-xs sm:text-sm font-semibold text-green-600">₹{session.earnings}</span>
           </div>
         </div>
 
         {session.rating && (
-          <div className="flex items-center space-x-2 mb-4">
+          <div className="flex items-center space-x-2 mb-3 sm:mb-4">
             <div className="flex items-center">
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className={`w-4 h-4 ${
+                  className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${
                     i < session.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
                   }`}
                 />
               ))}
             </div>
-            <span className="text-sm text-gray-600">({session.rating}/5)</span>
+            <span className="text-xs sm:text-sm text-gray-600">({session.rating}/5)</span>
           </div>
         )}
 
         {session.feedback && (
-          <div className="bg-blue-50 rounded-lg p-3 mb-4">
-            <p className="text-sm text-blue-800 italic">"{session.feedback}"</p>
+          <div className="bg-blue-50 rounded-lg p-2.5 sm:p-3 mb-3 sm:mb-4">
+            <p className="text-xs sm:text-sm text-blue-800 italic line-clamp-2">"{session.feedback}"</p>
           </div>
         )}
 
@@ -391,23 +391,23 @@ export default function DesignerSessionHistory() {
         
         <main className="flex-1">
           {/* Enhanced Header */}
-          <header className="bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 px-6 py-8 relative overflow-hidden">
+          <header className="bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 px-4 sm:px-6 py-4 sm:py-8 relative overflow-hidden">
             <div className="absolute inset-0 bg-black/10"></div>
             <div className="relative z-10 flex items-center justify-between">
-              <div className="flex items-center space-x-6">
-                <SidebarTrigger className="text-white hover:bg-white/20 rounded-lg p-2" />
-                <div className="flex items-center space-x-4">
-                  <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/30 shadow-xl">
-                    <History className="w-8 h-8 text-white" />
+              <div className="flex items-center space-x-3 sm:space-x-6 min-w-0 flex-1">
+                <SidebarTrigger className="text-white hover:bg-white/20 rounded-lg p-2 flex-shrink-0" />
+                <div className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 backdrop-blur-sm rounded-xl sm:rounded-2xl flex items-center justify-center border border-white/30 shadow-xl flex-shrink-0">
+                    <History className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                   </div>
-                  <div>
-                    <h1 className="text-3xl font-bold text-white">Session History</h1>
-                    <p className="text-white/90 text-lg">Track your past design sessions and performance</p>
-                    <div className="flex items-center space-x-4 mt-2">
+                  <div className="min-w-0 flex-1">
+                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white truncate">Session History</h1>
+                    <p className="text-white/90 text-xs sm:text-sm lg:text-lg truncate hidden sm:block">Track your past design sessions and performance</p>
+                    <div className="flex flex-wrap items-center gap-x-2 sm:gap-x-4 gap-y-1 mt-1 sm:mt-2 text-xs sm:text-sm">
                       <span className="text-white/90 font-medium">{stats.totalSessions} sessions</span>
-                      <span className="text-white/60">•</span>
+                      <span className="text-white/60 hidden sm:inline">•</span>
                       <span className="text-white/90 font-medium">{stats.totalHours.toFixed(1)} hours</span>
-                      <span className="text-white/60">•</span>
+                      <span className="text-white/60 hidden sm:inline">•</span>
                       <span className="text-white/90 font-medium">{stats.avgRating.toFixed(1)} ⭐ avg rating</span>
                     </div>
                   </div>
@@ -421,65 +421,65 @@ export default function DesignerSessionHistory() {
             </div>
           </header>
 
-          <div className="p-8 max-w-7xl mx-auto space-y-8">
+          <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 sm:space-y-8">
             {/* Real Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
               <Card className="bg-white border-0 shadow-xl">
-                <CardContent className="p-6 text-center">
-                  <div className="w-12 h-12 bg-gradient-to-r from-green-400 to-green-500 rounded-xl flex items-center justify-center mx-auto mb-3">
-                    <Calendar className="w-6 h-6 text-white" />
+                <CardContent className="p-4 sm:p-6 text-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-green-400 to-green-500 rounded-lg sm:rounded-xl flex items-center justify-center mx-auto mb-2 sm:mb-3">
+                    <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalSessions}</p>
-                  <p className="text-sm text-gray-600">Total Sessions</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.totalSessions}</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Total Sessions</p>
                 </CardContent>
               </Card>
 
               <Card className="bg-white border-0 shadow-xl">
-                <CardContent className="p-6 text-center">
-                  <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-blue-500 rounded-xl flex items-center justify-center mx-auto mb-3">
-                    <Clock className="w-6 h-6 text-white" />
+                <CardContent className="p-4 sm:p-6 text-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-400 to-blue-500 rounded-lg sm:rounded-xl flex items-center justify-center mx-auto mb-2 sm:mb-3">
+                    <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
-                  <p className="text-2xl font-bold text-gray-900">{Math.max(0, stats.totalHours).toFixed(1)}h</p>
-                  <p className="text-sm text-gray-600">Total Hours</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900">{Math.max(0, stats.totalHours).toFixed(1)}h</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Total Hours</p>
                 </CardContent>
               </Card>
 
               <Card className="bg-white border-0 shadow-xl">
-                <CardContent className="p-6 text-center">
-                  <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-xl flex items-center justify-center mx-auto mb-3">
-                    <Star className="w-6 h-6 text-white" />
+                <CardContent className="p-4 sm:p-6 text-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-lg sm:rounded-xl flex items-center justify-center mx-auto mb-2 sm:mb-3">
+                    <Star className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
-                  <p className="text-2xl font-bold text-gray-900">{stats.avgRating.toFixed(1)}</p>
-                  <p className="text-sm text-gray-600">Avg. Rating</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.avgRating.toFixed(1)}</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Avg. Rating</p>
                 </CardContent>
               </Card>
 
               <Card className="bg-white border-0 shadow-xl">
-                <CardContent className="p-6 text-center">
-                  <div className="w-12 h-12 bg-gradient-to-r from-green-400 to-blue-500 rounded-xl flex items-center justify-center mx-auto mb-3">
-                    <DollarSign className="w-6 h-6 text-white" />
+                <CardContent className="p-4 sm:p-6 text-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-green-400 to-blue-500 rounded-lg sm:rounded-xl flex items-center justify-center mx-auto mb-2 sm:mb-3">
+                    <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
-                  <p className="text-2xl font-bold text-gray-900">₹{Math.round(stats.totalEarnings)}</p>
-                  <p className="text-sm text-gray-600">Total Earned</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900">₹{Math.round(stats.totalEarnings)}</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Total Earned</p>
                 </CardContent>
               </Card>
             </div>
 
             {/* Search and Filters */}
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-              <div className="flex items-center space-x-4">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl border border-gray-100 p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:space-x-4">
                 <div className="flex-1 relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <Input
                     placeholder="Search by client name or project..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 border-gray-200 focus:border-green-400 focus:ring-green-200"
+                    className="pl-10 border-gray-200 focus:border-green-400 focus:ring-green-200 text-sm"
                   />
                 </div>
                 
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-40 border-gray-200">
+                  <SelectTrigger className="w-full sm:w-40 border-gray-200 text-sm">
                     <SelectValue placeholder="All Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -490,37 +490,38 @@ export default function DesignerSessionHistory() {
                   </SelectContent>
                 </Select>
                 
-                <Button variant="outline" className="border-gray-200">
+                <Button variant="outline" className="border-gray-200 w-full sm:w-auto text-sm">
                   <Filter className="w-4 h-4 mr-2" />
-                  More Filters
+                  <span className="hidden sm:inline">More Filters</span>
+                  <span className="sm:hidden">Filters</span>
                 </Button>
               </div>
             </div>
 
             {/* Enhanced Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-2 mb-8">
-                <TabsList className="grid w-auto grid-cols-2 bg-transparent gap-2">
+              <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl border border-gray-100 p-1.5 sm:p-2 mb-6 sm:mb-8 overflow-x-auto">
+                <TabsList className="grid w-full grid-cols-2 bg-transparent gap-1.5 sm:gap-2 min-w-max sm:min-w-0">
                   <TabsTrigger 
                     value="recent"
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-xl py-3 px-8 font-semibold"
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-lg sm:rounded-xl py-2 sm:py-3 px-6 sm:px-8 font-semibold text-xs sm:text-sm whitespace-nowrap"
                   >
                     Recent Sessions
                   </TabsTrigger>
                   <TabsTrigger 
                     value="feedback"
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-xl py-3 px-8 font-semibold"
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-lg sm:rounded-xl py-2 sm:py-3 px-6 sm:px-8 font-semibold text-xs sm:text-sm whitespace-nowrap"
                   >
                     Client Feedback
                   </TabsTrigger>
                 </TabsList>
               </div>
 
-              <TabsContent value="recent" className="space-y-6">
+              <TabsContent value="recent" className="space-y-4 sm:space-y-6">
                 {sessions.map(renderSessionCard)}
               </TabsContent>
 
-              <TabsContent value="feedback" className="space-y-6">
+              <TabsContent value="feedback" className="space-y-4 sm:space-y-6">
                 {reviewsLoading ? (
                   <div className="text-sm text-gray-500 px-2">Loading feedback…</div>
                 ) : reviewsError ? (
@@ -530,45 +531,45 @@ export default function DesignerSessionHistory() {
                 ) : (
                   reviews.map((review) => (
                     <Card key={review.id} className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
-                      <CardContent className="p-6">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-start space-x-4">
-                            <Avatar className="w-12 h-12">
+                      <CardContent className="p-4 sm:p-6">
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-0 mb-4">
+                          <div className="flex items-start space-x-3 sm:space-x-4 min-w-0 flex-1">
+                            <Avatar className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
                               <AvatarImage src={undefined} />
-                              <AvatarFallback className="bg-gradient-to-r from-green-400 to-blue-500 text-white font-semibold">
+                              <AvatarFallback className="bg-gradient-to-r from-green-400 to-blue-500 text-white font-semibold text-sm sm:text-base">
                                 {(review.customer_profile?.first_name || 'C').slice(0,1)}
                                 {(review.customer_profile?.last_name || '').slice(0,1)}
                               </AvatarFallback>
                             </Avatar>
-                            <div className="flex-1">
-                              <h3 className="font-bold text-gray-900 mb-1">Live Design Session</h3>
-                              <p className="text-gray-600 font-medium">{`${review.customer_profile?.first_name || ''} ${review.customer_profile?.last_name || ''}`.trim() || 'Customer'}</p>
-                              <p className="text-sm text-gray-500">{new Date(review.review_date).toLocaleDateString()}</p>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-bold text-gray-900 mb-1 text-sm sm:text-base truncate">Live Design Session</h3>
+                              <p className="text-gray-600 font-medium text-sm truncate">{`${review.customer_profile?.first_name || ''} ${review.customer_profile?.last_name || ''}`.trim() || 'Customer'}</p>
+                              <p className="text-xs sm:text-sm text-gray-500">{new Date(review.review_date).toLocaleDateString()}</p>
                             </div>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <div className="flex items-center">
+                          <div className="flex items-center space-x-2 self-start">
+                            <div className="flex items-center space-x-0.5 sm:space-x-1">
                               {[...Array(5)].map((_, i) => (
                                 <Star
                                   key={i}
-                                  className={`w-5 h-5 ${i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
+                                  className={`w-4 h-4 sm:w-5 sm:h-5 ${i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
                                 />
                               ))}
                             </div>
-                            <span className="text-lg font-semibold text-gray-700">({review.rating}/5)</span>
+                            <span className="text-base sm:text-lg font-semibold text-gray-700">({review.rating}/5)</span>
                           </div>
                         </div>
 
                         {review.review_text && (
-                          <div className="bg-gradient-to-br from-blue-50 to-green-50 rounded-xl p-4 mb-4">
-                            <p className="text-gray-800 italic text-lg leading-relaxed">"{review.review_text}"</p>
+                          <div className="bg-gradient-to-br from-blue-50 to-green-50 rounded-lg sm:rounded-xl p-3 sm:p-4 mb-3 sm:mb-4">
+                            <p className="text-gray-800 italic text-sm sm:text-base lg:text-lg leading-relaxed">"{review.review_text}"</p>
                           </div>
                         )}
 
-                        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                          <div className="flex items-center space-x-4">
-                            <span className="text-sm text-gray-500">Session ID:</span>
-                            <span className="text-sm font-medium text-gray-700">{review.session_id}</span>
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 pt-3 sm:pt-4 border-t border-gray-100">
+                          <div className="flex items-center space-x-2 sm:space-x-4">
+                            <span className="text-xs sm:text-sm text-gray-500">Session ID:</span>
+                            <span className="text-xs sm:text-sm font-medium text-gray-700 break-all">{review.session_id}</span>
                           </div>
                           {/* Reply to Feedback button commented out per request */}
                           {/* <Button variant="outline" size="sm">

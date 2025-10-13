@@ -346,34 +346,35 @@ export default function DesignerDashboard() {
 
         <main className="flex-1">
           {/* Header */}
-          <header className="bg-gradient-to-r from-green-400 to-blue-500 px-6 py-8">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <SidebarTrigger className="text-white hover:bg-white/20" />
+          <header className="bg-gradient-to-r from-green-400 to-blue-500 px-4 sm:px-6 py-4 sm:py-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center space-x-3 sm:space-x-4">
+                <SidebarTrigger className="text-white hover:bg-white/20 flex-shrink-0" />
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => navigate('/')}
-                  className="text-white hover:bg-white/20 flex items-center space-x-2"
+                  className="text-white hover:bg-white/20 flex items-center space-x-2 text-xs sm:text-sm"
                 >
-                  <Home className="w-4 h-4" />
-                  <span>Back to Home</span>
+                  <Home className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Back to Home</span>
+                  <span className="sm:hidden">Home</span>
                 </Button>
-                <div>
-                  <h1 className="text-2xl font-bold text-white">
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-white truncate">
                     Designer Dashboard
                   </h1>
-                  <p className="text-white/80">
+                  <p className="text-white/80 text-xs sm:text-sm hidden sm:block">
                     Manage your design business and showcase your talent
                   </p>
                 </div>
               </div>
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-4">
+              <div className="flex items-center justify-between sm:justify-end space-x-2 sm:space-x-4">
+                <div className="flex items-center space-x-2 sm:space-x-4">
                   {/* Status Indicator */}
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-1.5 sm:space-x-2">
                     <div
-                      className={`w-3 h-3 rounded-full ${
+                      className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full ${
                         activity?.is_online
                           ? activity.activity_status === "active"
                             ? "bg-green-400 animate-pulse"
@@ -381,7 +382,7 @@ export default function DesignerDashboard() {
                           : "bg-gray-400"
                       }`}
                     ></div>
-                    <span className="text-white/80 text-sm font-medium">
+                    <span className="text-white/80 text-xs sm:text-sm font-medium hidden sm:inline">
                       {activity?.is_online
                         ? activity.activity_status === "active"
                           ? "Active Now"
@@ -389,13 +390,13 @@ export default function DesignerDashboard() {
                         : "Offline"}
                     </span>
                     {activity?.is_in_schedule && (
-                      <span className="text-xs text-white/60">(Scheduled)</span>
+                      <span className="text-xs text-white/60 hidden md:inline">(Scheduled)</span>
                     )}
                   </div>
 
                   {/* Online/Offline Toggle */}
-                  <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/20">
-                    <Power className="w-4 h-4 text-white/80" />
+                  <div className="flex items-center space-x-1.5 sm:space-x-2 bg-white/10 backdrop-blur-sm rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 border border-white/20">
+                    <Power className="w-3 h-3 sm:w-4 sm:h-4 text-white/80 flex-shrink-0" />
                     <Switch
                       checked={
                         activity?.is_online
@@ -405,9 +406,9 @@ export default function DesignerDashboard() {
                           : false
                       }
                       onCheckedChange={toggleOnlineStatus}
-                      className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-500"
+                      className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-500 scale-75 sm:scale-100"
                     />
-                    <span className="text-white/80 text-xs font-medium">
+                    <span className="text-white/80 text-xs font-medium hidden sm:inline">
                       {activity?.is_online
                         ? activity.activity_status
                           ? "Online"
@@ -419,8 +420,8 @@ export default function DesignerDashboard() {
                 <NotificationBell />
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
-                      <span className="text-white font-semibold text-sm">
+                    <button className="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors flex-shrink-0">
+                      <span className="text-white font-semibold text-xs sm:text-sm">
                         {getInitials(profile?.first_name, profile?.last_name)}
                       </span>
                     </button>
@@ -491,17 +492,17 @@ export default function DesignerDashboard() {
             </div>
           </header>
 
-          <div className="p-6 space-y-8">
+          <div className="p-4 sm:p-6 space-y-6 sm:space-y-8">
             {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
               <Link to="/designer-dashboard/services" className="group">
-                <div className="relative overflow-hidden bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl p-6 h-32 transition-all duration-300 hover:scale-105 hover:shadow-xl animate-fade-in">
-                  <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full"></div>
+                <div className="relative overflow-hidden bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 h-24 sm:h-32 transition-all duration-300 hover:scale-105 hover:shadow-xl animate-fade-in">
+                  <div className="absolute -top-2 -right-2 sm:-top-4 sm:-right-4 w-16 h-16 sm:w-24 sm:h-24 bg-white/10 rounded-full"></div>
                   <div className="relative z-10 flex flex-col justify-between h-full text-white">
-                    <Package className="w-8 h-8 mb-2" />
+                    <Package className="w-5 h-5 sm:w-8 sm:h-8 mb-1 sm:mb-2" />
                     <div>
-                      <h3 className="font-bold text-lg">Manage Services</h3>
-                      <p className="text-white/80 text-sm">
+                      <h3 className="font-bold text-sm sm:text-lg">Manage Services</h3>
+                      <p className="text-white/80 text-xs sm:text-sm hidden sm:block">
                         Create & edit offerings
                       </p>
                     </div>
@@ -511,15 +512,15 @@ export default function DesignerDashboard() {
 
               <Link to="/designer-dashboard/bookings" className="group">
                 <div
-                  className="relative overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl p-6 h-32 transition-all duration-300 hover:scale-105 hover:shadow-xl animate-fade-in"
+                  className="relative overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 h-24 sm:h-32 transition-all duration-300 hover:scale-105 hover:shadow-xl animate-fade-in"
                   style={{ animationDelay: "0.1s" }}
                 >
-                  <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full"></div>
+                  <div className="absolute -top-2 -right-2 sm:-top-4 sm:-right-4 w-16 h-16 sm:w-24 sm:h-24 bg-white/10 rounded-full"></div>
                   <div className="relative z-10 flex flex-col justify-between h-full text-white">
-                    <Calendar className="w-8 h-8 mb-2" />
+                    <Calendar className="w-5 h-5 sm:w-8 sm:h-8 mb-1 sm:mb-2" />
                     <div>
-                      <h3 className="font-bold text-lg">Manage Bookings</h3>
-                      <p className="text-white/80 text-sm">
+                      <h3 className="font-bold text-sm sm:text-lg">Manage Bookings</h3>
+                      <p className="text-white/80 text-xs sm:text-sm hidden sm:block">
                         View & organize sessions
                       </p>
                     </div>
@@ -529,15 +530,15 @@ export default function DesignerDashboard() {
 
               <Link to="/designer-dashboard/portfolio" className="group">
                 <div
-                  className="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 h-32 transition-all duration-300 hover:scale-105 hover:shadow-xl animate-fade-in"
+                  className="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 h-24 sm:h-32 transition-all duration-300 hover:scale-105 hover:shadow-xl animate-fade-in"
                   style={{ animationDelay: "0.2s" }}
                 >
-                  <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full"></div>
+                  <div className="absolute -top-2 -right-2 sm:-top-4 sm:-right-4 w-16 h-16 sm:w-24 sm:h-24 bg-white/10 rounded-full"></div>
                   <div className="relative z-10 flex flex-col justify-between h-full text-white">
-                    <FolderOpen className="w-8 h-8 mb-2" />
+                    <FolderOpen className="w-5 h-5 sm:w-8 sm:h-8 mb-1 sm:mb-2" />
                     <div>
-                      <h3 className="font-bold text-lg">Update Portfolio</h3>
-                      <p className="text-white/80 text-sm">
+                      <h3 className="font-bold text-sm sm:text-lg">Update Portfolio</h3>
+                      <p className="text-white/80 text-xs sm:text-sm hidden sm:block">
                         Showcase your work
                       </p>
                     </div>
@@ -547,15 +548,15 @@ export default function DesignerDashboard() {
 
               <Link to="/designer-dashboard/earnings" className="group">
                 <div
-                  className="relative overflow-hidden bg-gradient-to-br from-violet-500 to-pink-500 rounded-2xl p-6 h-32 transition-all duration-300 hover:scale-105 hover:shadow-xl animate-fade-in"
+                  className="relative overflow-hidden bg-gradient-to-br from-violet-500 to-pink-500 rounded-xl sm:rounded-2xl p-4 sm:p-6 h-24 sm:h-32 transition-all duration-300 hover:scale-105 hover:shadow-xl animate-fade-in"
                   style={{ animationDelay: "0.3s" }}
                 >
-                  <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full"></div>
+                  <div className="absolute -top-2 -right-2 sm:-top-4 sm:-right-4 w-16 h-16 sm:w-24 sm:h-24 bg-white/10 rounded-full"></div>
                   <div className="relative z-10 flex flex-col justify-between h-full text-white">
-                    <DollarSign className="w-8 h-8 mb-2" />
+                    <DollarSign className="w-5 h-5 sm:w-8 sm:h-8 mb-1 sm:mb-2" />
                     <div>
-                      <h3 className="font-bold text-lg">View Earnings</h3>
-                      <p className="text-white/80 text-sm">Track your income</p>
+                      <h3 className="font-bold text-sm sm:text-lg">View Earnings</h3>
+                      <p className="text-white/80 text-xs sm:text-sm hidden sm:block">Track your income</p>
                     </div>
                   </div>
                 </div>
@@ -567,49 +568,50 @@ export default function DesignerDashboard() {
               className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-slate-50 to-gray-100 animate-fade-in"
               style={{ animationDelay: "0.4s" }}
             >
-              <CardHeader className="bg-gradient-to-r from-slate-600 to-gray-700 text-white">
-                <CardTitle className="text-xl flex items-center">
-                  <CalendarClock className="w-6 h-6 mr-3" />
-                  Active Design Sessions
+              <CardHeader className="bg-gradient-to-r from-slate-600 to-gray-700 text-white p-4 sm:p-6">
+                <CardTitle className="text-lg sm:text-xl flex items-center">
+                  <CalendarClock className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3" />
+                  <span className="hidden sm:inline">Active Design Sessions</span>
+                  <span className="sm:hidden">Active Sessions</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-8">
+              <CardContent className="p-4 sm:p-6 lg:p-8">
                 {activeSession ? (
-                  <div className="bg-gradient-to-r from-green-50 to-teal-50 rounded-lg p-6 border border-green-200">
-                    <div className="flex items-center justify-between mb-4">
+                  <div className="bg-gradient-to-r from-green-50 to-teal-50 rounded-lg p-4 sm:p-6 border border-green-200">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4">
                       <div className="flex items-center space-x-3">
-                        <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                        <span className="font-bold text-green-800">
+                        <div className="w-2 h-2 sm:w-3 sm:h-3 bg-red-500 rounded-full animate-pulse"></div>
+                        <span className="font-bold text-green-800 text-sm sm:text-base">
                           Live Session
                         </span>
                       </div>
                       <Link
                         to={`/session/${activeSession.id}`}
-                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
+                        className="bg-green-600 hover:bg-green-700 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm sm:text-base text-center"
                       >
                         Join Session
                       </Link>
                     </div>
-                    <h3 className="text-lg font-bold text-gray-800 mb-2">
+                    <h3 className="text-base sm:text-lg font-bold text-gray-800 mb-2 truncate">
                       {activeSession.service}
                     </h3>
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 text-sm sm:text-base">
                       with {activeSession.customer?.first_name}{" "}
                       {activeSession.customer?.last_name}
                     </p>
                   </div>
                 ) : (
                   <div className="text-center">
-                    <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <CalendarClock className="w-10 h-10 text-blue-500" />
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                      <CalendarClock className="w-8 h-8 sm:w-10 sm:h-10 text-blue-500" />
                     </div>
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-2">
                       No Active Sessions
                     </h3>
-                    <p className="text-gray-600 mb-4">
+                    <p className="text-gray-600 mb-4 text-sm sm:text-base">
                       You don't have any active design sessions at the moment.
                     </p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-xs sm:text-sm text-gray-500">
                       When customers start a session with you, they will appear
                       here.
                     </p>
@@ -619,30 +621,31 @@ export default function DesignerDashboard() {
             </Card>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
               <Card
                 className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in"
                 style={{ animationDelay: "0.5s" }}
               >
-                <CardContent className="p-6 bg-gradient-to-br from-green-50 to-emerald-50">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1 font-medium">
+                <CardContent className="p-4 sm:p-6 bg-gradient-to-br from-green-50 to-emerald-50">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm text-gray-600 mb-1 font-medium">
                         Total Earnings
                       </p>
-                      <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                      <p className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                         ${totalEarnings.toFixed(2)}
                       </p>
                       <Link
                         to="/designer-dashboard/earnings"
-                        className="text-sm text-green-600 hover:text-green-700 flex items-center mt-3 font-medium group"
+                        className="text-xs sm:text-sm text-green-600 hover:text-green-700 flex items-center mt-2 sm:mt-3 font-medium group"
                       >
-                        View earnings report
+                        <span className="hidden sm:inline">View earnings report</span>
+                        <span className="sm:hidden">View report</span>
                         <TrendingUp className="w-3 h-3 ml-1 transition-transform group-hover:translate-x-1" />
                       </Link>
                     </div>
-                    <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg">
-                      <DollarSign className="w-8 h-8 text-white" />
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
+                      <DollarSign className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                     </div>
                   </div>
                 </CardContent>
@@ -652,21 +655,21 @@ export default function DesignerDashboard() {
                 className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in"
                 style={{ animationDelay: "0.6s" }}
               >
-                <CardContent className="p-6 bg-gradient-to-br from-blue-50 to-cyan-50">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1 font-medium">
+                <CardContent className="p-4 sm:p-6 bg-gradient-to-br from-blue-50 to-cyan-50">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm text-gray-600 mb-1 font-medium">
                         Total Clients
                       </p>
-                      <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                      <p className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
                         {uniqueClients}
                       </p>
-                      <p className="text-sm text-blue-600 mt-3 font-medium">
+                      <p className="text-xs sm:text-sm text-blue-600 mt-2 sm:mt-3 font-medium">
                         {upcomingBookings.length} upcoming bookings
                       </p>
                     </div>
-                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
-                      <User className="w-8 h-8 text-white" />
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
+                      <User className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                     </div>
                   </div>
                 </CardContent>
@@ -676,25 +679,25 @@ export default function DesignerDashboard() {
                 className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in"
                 style={{ animationDelay: "0.7s" }}
               >
-                <CardContent className="p-6 bg-gradient-to-br from-yellow-50 to-orange-50">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1 font-medium">
+                <CardContent className="p-4 sm:p-6 bg-gradient-to-br from-yellow-50 to-orange-50">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm text-gray-600 mb-1 font-medium">
                         Avg. Rating
                       </p>
-                      <div className="flex items-center space-x-2 mb-3">
-                        <p className="text-3xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
+                      <div className="flex items-center space-x-2 mb-2 sm:mb-3">
+                        <p className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
                           {designerProfile?.rating?.toFixed(1) || "0.0"}
                         </p>
-                        <Star className="w-6 h-6 text-yellow-400 fill-current" />
+                        <Star className="w-4 h-4 sm:w-6 sm:h-6 text-yellow-400 fill-current" />
                       </div>
-                      <p className="text-sm text-yellow-600 font-medium">
+                      <p className="text-xs sm:text-sm text-yellow-600 font-medium">
                         From {designerProfile?.reviews_count || 0} completed
                         sessions
                       </p>
                     </div>
-                    <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
-                      <Star className="w-8 h-8 text-white" />
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
+                      <Star className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                     </div>
                   </div>
                 </CardContent>
@@ -704,21 +707,21 @@ export default function DesignerDashboard() {
                 className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in"
                 style={{ animationDelay: "0.8s" }}
               >
-                <CardContent className="p-6 bg-gradient-to-br from-purple-50 to-pink-50">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1 font-medium">
+                <CardContent className="p-4 sm:p-6 bg-gradient-to-br from-purple-50 to-pink-50">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm text-gray-600 mb-1 font-medium">
                         Completion Rate
                       </p>
-                      <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                      <p className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                         {designerProfile?.completion_rate || 0}%
                       </p>
-                      <p className="text-sm text-purple-600 mt-3 font-medium">
+                      <p className="text-xs sm:text-sm text-purple-600 mt-2 sm:mt-3 font-medium">
                         {completedBookings.length} completed sessions
                       </p>
                     </div>
-                    <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
-                      <TrendingUp className="w-8 h-8 text-white" />
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
+                      <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                     </div>
                   </div>
                 </CardContent>
@@ -726,31 +729,31 @@ export default function DesignerDashboard() {
             </div>
 
             {/* Bottom Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
               {/* Weekly Earnings Chart */}
               <Card
                 className="overflow-hidden border-0 shadow-lg animate-fade-in"
                 style={{ animationDelay: "0.9s" }}
               >
-                <CardHeader className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
-                  <CardTitle className="flex items-center">
-                    <TrendingUp className="w-6 h-6 mr-3" />
+                <CardHeader className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-4 sm:p-6">
+                  <CardTitle className="flex items-center text-base sm:text-lg">
+                    <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3" />
                     Weekly Earnings
                   </CardTitle>
-                  <CardDescription className="text-indigo-100">
+                  <CardDescription className="text-indigo-100 text-xs sm:text-sm">
                     Your earnings for the current week
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="p-6">
-                  <div className="h-64 flex items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="h-48 sm:h-64 flex items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl">
                     <div className="text-center">
-                      <div className="w-16 h-16 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <TrendingUp className="w-8 h-8 text-indigo-500" />
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                        <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-500" />
                       </div>
-                      <h3 className="font-bold text-gray-800 text-lg mb-2">
+                      <h3 className="font-bold text-gray-800 text-base sm:text-lg mb-2">
                         No Earnings Data
                       </h3>
-                      <p className="text-gray-600">
+                      <p className="text-gray-600 text-sm sm:text-base px-4">
                         Start taking sessions to see your weekly progress
                       </p>
                     </div>
@@ -763,29 +766,29 @@ export default function DesignerDashboard() {
                 className="overflow-hidden border-0 shadow-lg animate-fade-in"
                 style={{ animationDelay: "1.0s" }}
               >
-                <CardHeader className="bg-gradient-to-r from-teal-500 to-cyan-600 text-white">
-                  <CardTitle className="flex items-center">
-                    <CalendarClock className="w-6 h-6 mr-3" />
+                <CardHeader className="bg-gradient-to-r from-teal-500 to-cyan-600 text-white p-4 sm:p-6">
+                  <CardTitle className="flex items-center text-base sm:text-lg">
+                    <CalendarClock className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3" />
                     Upcoming Sessions
                   </CardTitle>
-                  <CardDescription className="text-teal-100">
+                  <CardDescription className="text-teal-100 text-xs sm:text-sm">
                     Your scheduled design sessions
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   {upcomingBookings.length > 0 ? (
-                    <div className="space-y-4">
+                    <div className="space-y-3 sm:space-y-4">
                       {upcomingBookings.slice(0, 3).map((booking) => (
                         <div
                           key={booking.id}
-                          className="bg-gradient-to-r from-teal-50 to-cyan-50 rounded-lg p-4 border border-teal-200"
+                          className="bg-gradient-to-r from-teal-50 to-cyan-50 rounded-lg p-3 sm:p-4 border border-teal-200"
                         >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h4 className="font-semibold text-gray-800">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-gray-800 text-sm sm:text-base truncate">
                                 {booking.service}
                               </h4>
-                              <p className="text-sm text-gray-600">
+                              <p className="text-xs sm:text-sm text-gray-600 truncate">
                                 with {booking.customer?.first_name}{" "}
                                 {booking.customer?.last_name}
                               </p>
@@ -796,12 +799,12 @@ export default function DesignerDashboard() {
                                 at{" "}
                                 {new Date(
                                   booking.scheduled_date
-                                ).toLocaleTimeString()}
+                                ).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </p>
                             </div>
                             <Badge
                               variant="outline"
-                              className="border-teal-200 text-teal-600"
+                              className="border-teal-200 text-teal-600 self-start sm:self-center"
                             >
                               {booking.status}
                             </Badge>
@@ -811,25 +814,25 @@ export default function DesignerDashboard() {
                       {upcomingBookings.length > 3 && (
                         <Link
                           to="/designer-dashboard/bookings"
-                          className="text-sm text-teal-600 hover:text-teal-700 font-medium block text-center"
+                          className="text-xs sm:text-sm text-teal-600 hover:text-teal-700 font-medium block text-center"
                         >
                           View all {upcomingBookings.length} upcoming sessions
                         </Link>
                       )}
                     </div>
                   ) : (
-                    <div className="text-center py-8">
-                      <div className="w-16 h-16 bg-gradient-to-br from-teal-100 to-cyan-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <CalendarClock className="w-8 h-8 text-teal-500" />
+                    <div className="text-center py-6 sm:py-8">
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-teal-100 to-cyan-100 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                        <CalendarClock className="w-6 h-6 sm:w-8 sm:h-8 text-teal-500" />
                       </div>
-                      <h3 className="font-bold text-gray-800 text-lg mb-2">
+                      <h3 className="font-bold text-gray-800 text-base sm:text-lg mb-2">
                         No Upcoming Sessions
                       </h3>
-                      <p className="text-gray-600 mb-6">
+                      <p className="text-gray-600 mb-4 sm:mb-6 text-sm sm:text-base px-4">
                         You don't have any design sessions scheduled.
                       </p>
                       <Link to="/designer-dashboard/availability">
-                        <Button className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white border-0 transition-all duration-300 hover:scale-105">
+                        <Button className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white border-0 transition-all duration-300 hover:scale-105 text-sm sm:text-base">
                           Update Availability
                         </Button>
                       </Link>
@@ -840,27 +843,27 @@ export default function DesignerDashboard() {
             </div>
 
             {/* Performance Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
               <Card
                 className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in"
                 style={{ animationDelay: "1.1s" }}
               >
-                <CardContent className="p-6 bg-gradient-to-br from-amber-50 to-yellow-50">
-                  <div className="flex items-center space-x-4 mb-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-xl flex items-center justify-center">
-                      <Clock className="w-6 h-6 text-white" />
+                <CardContent className="p-4 sm:p-6 bg-gradient-to-br from-amber-50 to-yellow-50">
+                  <div className="flex items-center space-x-3 sm:space-x-4 mb-3 sm:mb-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                     </div>
-                    <div>
-                      <h3 className="font-bold text-gray-800">Response Time</h3>
-                      <p className="text-sm text-gray-600">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-bold text-gray-800 text-sm sm:text-base">Response Time</h3>
+                      <p className="text-xs sm:text-sm text-gray-600 truncate">
                         Average response to bookings
                       </p>
                     </div>
                   </div>
-                  <p className="text-3xl font-bold bg-gradient-to-r from-amber-600 to-yellow-600 bg-clip-text text-transparent mb-2">
+                  <p className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-amber-600 to-yellow-600 bg-clip-text text-transparent mb-2">
                     {designerProfile?.response_time || "1 hour"}
                   </p>
-                  <p className="text-sm text-amber-600 font-medium">
+                  <p className="text-xs sm:text-sm text-amber-600 font-medium">
                     Respond faster to get more bookings
                   </p>
                 </CardContent>
@@ -870,24 +873,24 @@ export default function DesignerDashboard() {
                 className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in"
                 style={{ animationDelay: "1.2s" }}
               >
-                <CardContent className="p-6 bg-gradient-to-br from-rose-50 to-pink-50">
-                  <div className="flex items-center space-x-4 mb-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-rose-500 to-pink-500 rounded-xl flex items-center justify-center">
-                      <Eye className="w-6 h-6 text-white" />
+                <CardContent className="p-4 sm:p-6 bg-gradient-to-br from-rose-50 to-pink-50">
+                  <div className="flex items-center space-x-3 sm:space-x-4 mb-3 sm:mb-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-rose-500 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <Eye className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                     </div>
-                    <div>
-                      <h3 className="font-bold text-gray-800">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-bold text-gray-800 text-sm sm:text-base">
                         Portfolio Views
                       </h3>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-xs sm:text-sm text-gray-600 truncate">
                         Times clients viewed your work
                       </p>
                     </div>
                   </div>
-                  <p className="text-3xl font-bold bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent mb-2">
+                  <p className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent mb-2">
                     0
                   </p>
-                  <p className="text-sm text-rose-600 font-medium">
+                  <p className="text-xs sm:text-sm text-rose-600 font-medium">
                     Update your portfolio to attract clients
                   </p>
                 </CardContent>
@@ -897,30 +900,30 @@ export default function DesignerDashboard() {
                 className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in"
                 style={{ animationDelay: "1.3s" }}
               >
-                <CardContent className="p-6 bg-gradient-to-br from-emerald-50 to-green-50">
-                  <div className="flex items-center space-x-4 mb-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-500 rounded-xl flex items-center justify-center">
-                      <User className="w-6 h-6 text-white" />
+                <CardContent className="p-4 sm:p-6 bg-gradient-to-br from-emerald-50 to-green-50">
+                  <div className="flex items-center space-x-3 sm:space-x-4 mb-3 sm:mb-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-emerald-500 to-green-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <User className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                     </div>
-                    <div>
-                      <h3 className="font-bold text-gray-800">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-bold text-gray-800 text-sm sm:text-base">
                         Profile Completion
                       </h3>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-xs sm:text-sm text-gray-600 truncate">
                         Complete to attract more clients
                       </p>
                     </div>
                   </div>
-                  <p className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent mb-2">
+                  <p className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent mb-2">
                     {calculateProfileCompletion()}%
                   </p>
-                  <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                  <div className="w-full bg-gray-200 rounded-full h-2.5 sm:h-3 mb-2">
                     <div
-                      className="bg-gradient-to-r from-emerald-500 to-green-500 h-3 rounded-full transition-all duration-500"
+                      className="bg-gradient-to-r from-emerald-500 to-green-500 h-2.5 sm:h-3 rounded-full transition-all duration-500"
                       style={{ width: `${calculateProfileCompletion()}%` }}
                     ></div>
                   </div>
-                  <p className="text-sm text-emerald-600 font-medium">
+                  <p className="text-xs sm:text-sm text-emerald-600 font-medium">
                     {calculateProfileCompletion() === 100
                       ? "Profile Complete!"
                       : "Almost there! Complete your profile"}

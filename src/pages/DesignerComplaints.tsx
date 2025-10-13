@@ -218,21 +218,21 @@ export default function DesignerComplaints() {
         <DesignerSidebar />
         <div className="flex-1 flex flex-col">
           <header className="bg-white shadow-sm border-b">
-            <div className="flex items-center justify-between px-6 py-4">
-              <div className="flex items-center gap-4">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
+              <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                 <SidebarTrigger />
-                <h1 className="text-2xl font-semibold text-gray-900">Complaints</h1>
+                <h1 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-900 truncate">Complaints</h1>
               </div>
             </div>
           </header>
 
-          <main className="flex-1 p-6">
-            <div className="max-w-7xl mx-auto space-y-6">
+          <main className="flex-1 p-4 sm:p-6">
+            <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
               {/* Header */}
               <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-3xl font-bold text-gray-900">Customer Complaints</h2>
-                  <p className="text-gray-600">View and respond to customer complaints about your work</p>
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 truncate">Customer Complaints</h2>
+                  <p className="text-gray-600 text-sm sm:text-base truncate">View and respond to customer complaints about your work</p>
                 </div>
               </div>
 

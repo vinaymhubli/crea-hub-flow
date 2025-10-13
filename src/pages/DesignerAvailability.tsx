@@ -262,23 +262,23 @@ export default function DesignerAvailability() {
         
         <main className="flex-1">
           {/* Enhanced Header */}
-          <header className="bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 px-6 py-8 relative overflow-hidden">
+          <header className="bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 px-4 sm:px-6 py-4 sm:py-8 relative overflow-hidden">
             <div className="absolute inset-0 bg-black/10"></div>
             <div className="relative z-10 flex items-center justify-between">
-              <div className="flex items-center space-x-6">
-                <SidebarTrigger className="text-white hover:bg-white/20 rounded-lg p-2" />
-                <div className="flex items-center space-x-4">
-                  <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/30 shadow-xl">
-                    <Clock className="w-8 h-8 text-white" />
+              <div className="flex items-center space-x-3 sm:space-x-6 min-w-0 flex-1">
+                <SidebarTrigger className="text-white hover:bg-white/20 rounded-lg p-2 flex-shrink-0" />
+                <div className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 backdrop-blur-sm rounded-xl sm:rounded-2xl flex items-center justify-center border border-white/30 shadow-xl flex-shrink-0">
+                    <Clock className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                   </div>
-                  <div>
-                    <h1 className="text-3xl font-bold text-white">Availability Management</h1>
-                    <p className="text-white/90 text-lg">Manage your weekly schedule and special day exceptions</p>
-                    <div className="flex items-center space-x-4 mt-2">
+                  <div className="min-w-0 flex-1">
+                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white truncate">Availability Management</h1>
+                    <p className="text-white/90 text-xs sm:text-sm lg:text-lg truncate hidden sm:block">Manage your weekly schedule and special day exceptions</p>
+                    <div className="flex flex-wrap items-center gap-x-2 sm:gap-x-4 gap-y-1 mt-1 sm:mt-2 text-xs sm:text-sm">
                       <span className="text-white/90 font-medium">{Math.round(totalHours)} hours/week</span>
-                      <span className="text-white/60">•</span>
+                      <span className="text-white/60 hidden sm:inline">•</span>
                       <span className="text-white/90 font-medium">{totalSlots} time slots</span>
-                      <span className="text-white/60">•</span>
+                      <span className="text-white/60 hidden sm:inline">•</span>
                       <span className="text-white/90 font-medium">{activeDays} days active</span>
                     </div>
                   </div>
@@ -287,9 +287,9 @@ export default function DesignerAvailability() {
             </div>
           </header>
 
-          <div className="p-8 max-w-7xl mx-auto space-y-8">
+          <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 sm:space-y-8">
             {/* Quick Settings Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
               <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
                 <CardHeader className="bg-gradient-to-br from-green-400 to-blue-500 text-white rounded-t-lg">
                   <CardTitle className="text-lg flex items-center">
@@ -430,36 +430,36 @@ export default function DesignerAvailability() {
                       
                       return (
                         <Card key={day.name} className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
-                          <CardContent className="p-6">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-4">
-                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                          <CardContent className="p-4 sm:p-6">
+                            <div className="flex flex-col gap-4">
+                              <div className="flex items-start space-x-3 sm:space-x-4">
+                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 ${
                                   slotsCount > 0 
                                     ? 'bg-gradient-to-r from-green-400 to-blue-500' 
                                     : 'bg-gray-200'
                                 }`}>
-                                  <Calendar className={`w-6 h-6 ${slotsCount > 0 ? 'text-white' : 'text-gray-400'}`} />
+                                  <Calendar className={`w-5 h-5 sm:w-6 sm:h-6 ${slotsCount > 0 ? 'text-white' : 'text-gray-400'}`} />
                                 </div>
-                                <div className="flex-1">
-                                  <div className="flex items-center space-x-3">
-                                    <h3 className="text-lg font-semibold text-gray-900">{day.name}</h3>
-                                    <Badge variant={slotsCount > 0 ? "default" : "secondary"}>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                                    <h3 className="text-base sm:text-lg font-semibold text-gray-900">{day.name}</h3>
+                                    <Badge variant={slotsCount > 0 ? "default" : "secondary"} className="text-xs">
                                       {slotsCount} slot{slotsCount !== 1 ? 's' : ''}
                                     </Badge>
                                     {totalDayHours > 0 && (
-                                      <Badge variant="outline">
+                                      <Badge variant="outline" className="text-xs">
                                         {Math.round(totalDayHours)}h
                                       </Badge>
                                     )}
                                   </div>
                                   <div className="mt-2">
                                     {slotsCount === 0 ? (
-                                      <p className="text-sm text-gray-500">No time slots configured</p>
+                                      <p className="text-xs sm:text-sm text-gray-500">No time slots configured</p>
                                     ) : (
                                       <div className="space-y-1">
                                         {daySlots.map((slot, index) => (
-                                          <div key={slot.id} className="flex items-center space-x-2 text-sm">
-                                            <Clock className="w-3 h-3 text-gray-400" />
+                                          <div key={slot.id} className="flex items-center space-x-1.5 sm:space-x-2 text-xs sm:text-sm">
+                                            <Clock className="w-3 h-3 text-gray-400 flex-shrink-0" />
                                             <span className="text-gray-600">
                                               {formatTime(slot.start_time)} - {formatTime(slot.end_time)}
                                             </span>
@@ -473,13 +473,13 @@ export default function DesignerAvailability() {
                                   </div>
                                 </div>
                               </div>
-                              <div className="flex items-center space-x-2">
+                              <div className="flex items-center">
                                 <Button
                                   onClick={() => handleManageSlots(day.value)}
-                                  className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 font-medium rounded-xl px-6 py-2.5 border-0"
+                                  className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 font-medium rounded-lg sm:rounded-xl px-4 sm:px-6 py-2 sm:py-2.5 border-0 w-full sm:w-auto text-sm sm:text-base"
                                   size="sm"
                                 >
-                                  <Edit className="w-4 h-4 mr-2" />
+                                  <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2" />
                                   Manage Slots
                                 </Button>
                               </div>

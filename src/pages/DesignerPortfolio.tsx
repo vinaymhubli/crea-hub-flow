@@ -355,19 +355,19 @@ export default function DesignerPortfolio() {
         
         <main className="flex-1">
           {/* Enhanced Header with Profile Preview */}
-          <header className="bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 px-6 py-8 relative overflow-hidden">
+          <header className="bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 px-4 sm:px-6 py-4 sm:py-8 relative overflow-hidden">
             <div className="absolute inset-0 bg-black/10"></div>
-            <div className="relative z-10 flex items-center justify-between">
-              <div className="flex items-center space-x-6">
-                <SidebarTrigger className="text-white hover:bg-white/20 rounded-lg p-2" />
-                <div className="flex items-center space-x-4">
-                  <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/30 shadow-xl">
-                    <FolderOpen className="w-8 h-8 text-white" />
+            <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center space-x-3 sm:space-x-6">
+                <SidebarTrigger className="text-white hover:bg-white/20 rounded-lg p-2 flex-shrink-0" />
+                <div className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 backdrop-blur-sm rounded-xl sm:rounded-2xl flex items-center justify-center border border-white/30 shadow-xl flex-shrink-0">
+                    <FolderOpen className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                   </div>
-                  <div>
-                    <h1 className="text-3xl font-bold text-white">Portfolio</h1>
-                    <p className="text-white/90 text-lg">Showcase your best design work to attract more clients</p>
-                    <div className="flex items-center space-x-4 mt-2">
+                  <div className="min-w-0 flex-1">
+                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white truncate">Portfolio</h1>
+                    <p className="text-white/90 text-xs sm:text-sm lg:text-lg truncate hidden sm:block">Showcase your best design work to attract more clients</p>
+                    <div className="flex items-center space-x-2 sm:space-x-4 mt-1 sm:mt-2 text-xs sm:text-sm">
                       <span className="text-white/90 font-medium">{portfolioItems.length} Projects</span>
                       <span className="text-white/60">•</span>
                       <span className="text-white/90 font-medium">{categories.length - 1} Categories</span>
@@ -379,16 +379,16 @@ export default function DesignerPortfolio() {
             </div>
           </header>
 
-          <div className="p-8 max-w-7xl mx-auto">
+          <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
             {/* Enhanced Category Filter */}
             {categories.length > 1 && (
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-2 mb-8">
-                <nav className="flex flex-wrap gap-2">
+              <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl border border-gray-100 p-1.5 sm:p-2 mb-6 sm:mb-8 overflow-x-auto">
+                <nav className="flex gap-1.5 sm:gap-2 min-w-max">
                   {categories.map((category) => (
                     <button
                       key={category}
                       onClick={() => setActiveCategory(category)}
-                      className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 hover:scale-105 ${
+                      className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 hover:scale-105 whitespace-nowrap ${
                         category === activeCategory
                           ? "bg-gradient-to-r from-green-400 to-blue-500 text-white shadow-lg"
                           : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
@@ -403,7 +403,7 @@ export default function DesignerPortfolio() {
 
             {/* Portfolio Grid */}
             {filteredItems.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8">
                 {filteredItems.map((item) => (
                   <div key={item.id} className="group cursor-pointer">
                     <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-[1.03] hover:-rotate-1">

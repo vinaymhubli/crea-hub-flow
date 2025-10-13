@@ -11,6 +11,7 @@ import {
   DollarSign,
   Clock,
   Monitor,
+  ArrowLeft,
 } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -603,28 +604,28 @@ export default function DesignerMessages() {
 
         <main className="flex-1">
           {/* Header */}
-          <header className="bg-gradient-to-r from-green-400 to-blue-500 px-6 py-8">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <SidebarTrigger className="text-white hover:bg-white/20" />
-                <div>
-                  <h1 className="text-2xl font-bold text-white">Messages</h1>
-                  <p className="text-white/80">
+          <header className="bg-gradient-to-r from-green-400 to-blue-500 px-4 sm:px-6 py-4 sm:py-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center space-x-3 sm:space-x-4">
+                <SidebarTrigger className="text-white hover:bg-white/20 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-xl sm:text-2xl font-bold text-white truncate">Messages</h1>
+                  <p className="text-white/80 text-xs sm:text-sm truncate hidden sm:block">
                     Communicate with your clients and manage project discussions
                   </p>
                 </div>
               </div>
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
-                  <span className="text-white/80 text-sm font-medium">
+              <div className="flex items-center justify-between sm:justify-end space-x-3 sm:space-x-4">
+                <div className="flex items-center space-x-1.5 sm:space-x-2">
+                  <div className="w-2 h-2 sm:w-3 sm:h-3 bg-white rounded-full animate-pulse"></div>
+                  <span className="text-white/80 text-xs sm:text-sm font-medium">
                     Online
                   </span>
                 </div>
-                <RingingBell className="w-5 h-5 text-white/80" />
+                <RingingBell className="w-4 h-4 sm:w-5 sm:h-5 text-white/80" />
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
+                    <button className="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors flex-shrink-0">
                       <span className="text-white font-semibold text-xs">
                         MD
                       </span>
@@ -683,44 +684,46 @@ export default function DesignerMessages() {
             </div>
           </header>
 
-          <div className="p-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
+          <div className="p-4 sm:p-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 h-[calc(100vh-180px)] sm:h-[calc(100vh-200px)]">
               {/* Conversations List */}
-              <Card className="lg:col-span-1 overflow-hidden border-0 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-green-500 to-blue-500 text-white">
-                  <CardTitle className="flex items-center justify-between">
+              <Card className={`lg:col-span-1 overflow-hidden border-0 shadow-lg ${
+                selectedConversation ? 'hidden lg:flex' : 'flex'
+              } flex-col`}>
+                <CardHeader className="bg-gradient-to-r from-green-500 to-blue-500 text-white p-4 sm:p-6">
+                  <CardTitle className="flex items-center justify-between text-base sm:text-lg">
                     <span>Conversations</span>
                     <Badge
                       variant="secondary"
-                      className="bg-white/20 text-white"
+                      className="bg-white/20 text-white text-xs"
                     >
                       {conversations.length}
                     </Badge>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-0">
+                <CardContent className="p-0 flex-1 flex flex-col min-h-0">
                   {/* Search */}
-                  <div className="p-4 border-b border-gray-200">
+                  <div className="p-3 sm:p-4 border-b border-gray-200">
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                       <Input
                         placeholder="Search conversations..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
+                        className="pl-10 text-sm"
                       />
                     </div>
                   </div>
 
                   {/* Conversations */}
-                  <div className="overflow-y-auto max-h-[500px]">
+                  <div className="overflow-y-auto flex-1">
                     {filteredConversations.length === 0 ? (
-                      <div className="p-8 text-center">
-                        <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      <div className="p-6 sm:p-8 text-center">
+                        <MessageSquare className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
                           No conversations
                         </h3>
-                        <p className="text-gray-600">
+                        <p className="text-gray-600 text-sm sm:text-base px-4">
                           You'll see client conversations here once you have
                           bookings
                         </p>
@@ -733,7 +736,7 @@ export default function DesignerMessages() {
                             conversation.booking_id
                           }
                           onClick={() => setSelectedConversation(conversation)}
-                          className={`p-4 border-b border-gray-100 cursor-pointer transition-colors hover:bg-gray-50 ${
+                          className={`p-3 sm:p-4 border-b border-gray-100 cursor-pointer transition-colors hover:bg-gray-50 ${
                             selectedConversation?.conversation_id ===
                               conversation.conversation_id ||
                             selectedConversation?.booking_id ===
@@ -808,23 +811,34 @@ export default function DesignerMessages() {
               </Card>
 
               {/* Chat Area */}
-              <Card className="lg:col-span-2 overflow-hidden border-0 shadow-lg flex flex-col">
+              <Card className={`lg:col-span-2 overflow-hidden border-0 shadow-lg ${
+                selectedConversation ? 'flex' : 'hidden lg:flex'
+              } flex-col`}>
                 {selectedConversation ? (
                   <>
                     {/* Chat Header */}
-                    <CardHeader className="bg-gradient-to-r from-green-500 to-blue-500 text-white">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <Avatar>
-                            <AvatarFallback className="bg-white/20 text-white">
+                    <CardHeader className="bg-gradient-to-r from-green-500 to-blue-500 text-white p-4 sm:p-6">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+                          {/* Mobile Back Button */}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedConversation(null)}
+                            className="lg:hidden text-white hover:bg-white/20 p-2 h-8 w-8 flex-shrink-0"
+                          >
+                            <ArrowLeft className="w-4 h-4" />
+                          </Button>
+                          <Avatar className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
+                            <AvatarFallback className="bg-white/20 text-white text-sm sm:text-base">
                               {selectedConversation.customer_initials}
                             </AvatarFallback>
                           </Avatar>
-                          <div>
-                            <h3 className="font-semibold">
+                          <div className="min-w-0 flex-1">
+                            <h3 className="font-semibold text-sm sm:text-base truncate">
                               {selectedConversation.customer_name}
                             </h3>
-                            <p className="text-white/80 text-sm">
+                            <p className="text-white/80 text-xs sm:text-sm truncate">
                               Project: {selectedConversation.service}
                             </p>
                           </div>
@@ -833,16 +847,17 @@ export default function DesignerMessages() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-white hover:bg-white/20 gap-2"
+                            className="text-white hover:bg-white/20 gap-2 hidden sm:flex text-xs sm:text-sm"
                             onClick={() => startLiveDesignSession()}
                           >
-                            <Monitor className="w-4 h-4" />
-                            live design with client
+                            <Monitor className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                            <span className="hidden lg:inline">live design with client</span>
+                            <span className="lg:hidden">Live Design</span>
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-white hover:bg-white/20"
+                            className="text-white hover:bg-white/20 p-2 h-8 w-8"
                           >
                             <MoreVertical className="w-4 h-4" />
                           </Button>
@@ -852,11 +867,11 @@ export default function DesignerMessages() {
 
                     {/* Messages Area */}
                     <CardContent className="flex-1 p-0 overflow-hidden flex flex-col">
-                      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4">
                         {messages.length === 0 ? (
-                          <div className="text-center py-8">
-                            <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                            <p className="text-gray-600">
+                          <div className="text-center py-6 sm:py-8">
+                            <MessageSquare className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
+                            <p className="text-gray-600 text-sm sm:text-base px-4">
                               No messages yet. Start the conversation!
                             </p>
                           </div>
@@ -871,27 +886,27 @@ export default function DesignerMessages() {
                               }`}
                             >
                               <div
-                                className={`flex items-start space-x-2 max-w-[70%] ${
+                                className={`flex items-start space-x-2 max-w-[85%] sm:max-w-[70%] ${
                                   message.sender_id === user?.id
                                     ? "flex-row-reverse space-x-reverse"
                                     : ""
                                 }`}
                               >
                                 {message.sender_id !== user?.id && (
-                                  <Avatar className="w-8 h-8">
+                                  <Avatar className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0">
                                     <AvatarFallback className="bg-gray-200 text-gray-600 text-xs">
                                       {selectedConversation.customer_initials}
                                     </AvatarFallback>
                                   </Avatar>
                                 )}
                                 <div
-                                  className={`rounded-2xl px-4 py-3 ${
+                                  className={`rounded-xl sm:rounded-2xl px-3 py-2 sm:px-4 sm:py-3 ${
                                     message.sender_id === user?.id
                                       ? "bg-gradient-to-r from-green-500 to-blue-500 text-white"
                                       : "bg-gray-100 text-gray-900"
                                   }`}
                                 >
-                                  <p className="text-sm">{message.content}</p>
+                                  <p className="text-xs sm:text-sm break-words">{message.content}</p>
                                   <p
                                     className={`text-xs mt-1 ${
                                       message.sender_id === user?.id
@@ -914,8 +929,8 @@ export default function DesignerMessages() {
                       </div>
 
                       {/* Message Input */}
-                      <div className="border-t border-gray-200 p-4">
-                        <div className="flex items-end space-x-3">
+                      <div className="border-t border-gray-200 p-3 sm:p-4">
+                        <div className="flex items-end gap-2 sm:space-x-3">
                           <div className="flex-1">
                             <Textarea
                               placeholder="Type your message..."
@@ -927,35 +942,35 @@ export default function DesignerMessages() {
                                   handleSendMessage();
                                 }
                               }}
-                              className="min-h-[60px] resize-none border-gray-300 focus:border-green-500"
+                              className="min-h-[50px] sm:min-h-[60px] resize-none border-gray-300 focus:border-green-500 text-sm"
                               disabled={isSending}
                             />
                           </div>
                           <Button
                             onClick={handleSendMessage}
                             disabled={!newMessage.trim() || isSending}
-                            className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white px-6"
+                            className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white px-3 sm:px-6 h-[50px] sm:h-auto"
                           >
                             <Send className="w-4 h-4" />
                             {isSending && (
-                              <span className="ml-2">Sending...</span>
+                              <span className="ml-2 hidden sm:inline">Sending...</span>
                             )}
                           </Button>
                         </div>
-                        <p className="text-xs text-gray-500 mt-2">
+                        <p className="text-xs text-gray-500 mt-2 hidden sm:block">
                           Press Enter to send, Shift + Enter for new line
                         </p>
                       </div>
                     </CardContent>
                   </>
                 ) : (
-                  <div className="flex-1 flex items-center justify-center">
+                  <div className="flex-1 flex items-center justify-center p-4">
                     <div className="text-center">
-                      <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      <MessageSquare className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 px-4">
                         Select a conversation
                       </h3>
-                      <p className="text-gray-600">
+                      <p className="text-gray-600 text-sm sm:text-base px-4">
                         Choose a conversation from the left to start messaging
                       </p>
                     </div>

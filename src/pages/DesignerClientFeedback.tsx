@@ -227,41 +227,41 @@ export default function DesignerClientFeedback() {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 via-blue-50 to-green-50">
         <DesignerSidebar />
-        <main className="flex-1 p-8">
-          <div className="max-w-7xl mx-auto space-y-8">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8">
+          <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
             {/* Header */}
             <div className="text-center">
-              <h1 className="text-4xl font-bold text-gray-900 mb-4">Client Feedback</h1>
-              <p className="text-xl text-gray-600">See what your clients are saying about your work</p>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 sm:mb-4 px-4">Client Feedback</h1>
+              <p className="text-base sm:text-lg lg:text-xl text-gray-600 px-4">See what your clients are saying about your work</p>
             </div>
 
             {/* Stats Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               <Card className="bg-white shadow-lg">
-                <CardContent className="p-6">
-                  <div className="flex items-center space-x-4">
-                    <div className="p-3 bg-blue-100 rounded-full">
-                      <MessageCircle className="w-6 h-6 text-blue-600" />
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex flex-col sm:flex-row items-center sm:space-x-4 gap-3 sm:gap-0">
+                    <div className="p-2.5 sm:p-3 bg-blue-100 rounded-full flex-shrink-0">
+                      <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Total Reviews</p>
-                      <p className="text-2xl font-bold text-gray-900">{stats.totalReviews}</p>
+                    <div className="text-center sm:text-left">
+                      <p className="text-xs sm:text-sm font-medium text-gray-600">Total Reviews</p>
+                      <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.totalReviews}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               <Card className="bg-white shadow-lg">
-                <CardContent className="p-6">
-                  <div className="flex items-center space-x-4">
-                    <div className="p-3 bg-yellow-100 rounded-full">
-                      <Star className="w-6 h-6 text-yellow-600" />
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex flex-col sm:flex-row items-center sm:space-x-4 gap-3 sm:gap-0">
+                    <div className="p-2.5 sm:p-3 bg-yellow-100 rounded-full flex-shrink-0">
+                      <Star className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600" />
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Average Rating</p>
-                      <div className="flex items-center space-x-2">
-                        <p className="text-2xl font-bold text-gray-900">{stats.averageRating}</p>
-                        <Badge className={getRatingColor(stats.averageRating)}>
+                    <div className="text-center sm:text-left">
+                      <p className="text-xs sm:text-sm font-medium text-gray-600">Average Rating</p>
+                      <div className="flex items-center justify-center sm:justify-start space-x-2 mt-1">
+                        <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.averageRating}</p>
+                        <Badge className={`${getRatingColor(stats.averageRating)} text-xs`}>
                           {stats.averageRating >= 4.5 ? 'Excellent' : 
                            stats.averageRating >= 3.5 ? 'Good' : 
                            stats.averageRating >= 2.5 ? 'Fair' : 'Needs Improvement'}
@@ -273,28 +273,28 @@ export default function DesignerClientFeedback() {
               </Card>
 
               <Card className="bg-white shadow-lg">
-                <CardContent className="p-6">
-                  <div className="flex items-center space-x-4">
-                    <div className="p-3 bg-green-100 rounded-full">
-                      <TrendingUp className="w-6 h-6 text-green-600" />
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex flex-col sm:flex-row items-center sm:space-x-4 gap-3 sm:gap-0">
+                    <div className="p-2.5 sm:p-3 bg-green-100 rounded-full flex-shrink-0">
+                      <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">5-Star Reviews</p>
-                      <p className="text-2xl font-bold text-gray-900">{stats.ratingDistribution[5]}</p>
+                    <div className="text-center sm:text-left">
+                      <p className="text-xs sm:text-sm font-medium text-gray-600">5-Star Reviews</p>
+                      <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.ratingDistribution[5]}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               <Card className="bg-white shadow-lg">
-                <CardContent className="p-6">
-                  <div className="flex items-center space-x-4">
-                    <div className="p-3 bg-purple-100 rounded-full">
-                      <Award className="w-6 h-6 text-purple-600" />
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex flex-col sm:flex-row items-center sm:space-x-4 gap-3 sm:gap-0">
+                    <div className="p-2.5 sm:p-3 bg-purple-100 rounded-full flex-shrink-0">
+                      <Award className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Satisfaction Rate</p>
-                      <p className="text-2xl font-bold text-gray-900">
+                    <div className="text-center sm:text-left">
+                      <p className="text-xs sm:text-sm font-medium text-gray-600">Satisfaction Rate</p>
+                      <p className="text-xl sm:text-2xl font-bold text-gray-900">
                         {stats.totalReviews > 0 
                           ? Math.round(((stats.ratingDistribution[4] + stats.ratingDistribution[5]) / stats.totalReviews) * 100)
                           : 0}%
