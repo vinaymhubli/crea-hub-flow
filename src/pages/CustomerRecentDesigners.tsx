@@ -76,45 +76,45 @@ function DesignerCard({ designer, favorites, onToggleFavorite, onMessage, onBook
 
   return (
     <Card className="hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-white via-gray-50 to-green-50/30 backdrop-blur-sm hover:scale-[1.02]">
-      <CardContent className="p-6">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              <Avatar className="w-16 h-16">
+      <CardContent className="p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4 gap-3 sm:gap-0">
+          <div className="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
+            <div className="relative flex-shrink-0">
+              <Avatar className="w-14 h-14 sm:w-16 sm:h-16">
                 <AvatarImage src={designer.profile?.avatar_url} alt={designerName} />
-                <AvatarFallback className="bg-gradient-to-br from-green-400 via-teal-500 to-blue-500 text-white font-semibold text-lg">
+                <AvatarFallback className="bg-gradient-to-br from-green-400 via-teal-500 to-blue-500 text-white font-semibold text-base sm:text-lg">
                   {designerInitials}
                 </AvatarFallback>
               </Avatar>
               {designer.is_online && (
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow-sm animate-pulse"></div>
+                <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-green-500 rounded-full border-2 border-white shadow-sm animate-pulse"></div>
               )}
             </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 text-lg">{designerName}</h3>
-              <p className="text-gray-600 font-medium">{designer.specialty}</p>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-gray-900 text-base sm:text-lg truncate">{designerName}</h3>
+              <p className="text-gray-600 font-medium text-sm sm:text-base truncate">{designer.specialty}</p>
               <div className="flex items-center space-x-1 mt-1">
-                <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                <span className="text-sm font-medium text-gray-700">{designer.rating}</span>
-                <span className="text-sm text-gray-500">({designer.reviews_count} reviews)</span>
+                <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400 fill-current" />
+                <span className="text-xs sm:text-sm font-medium text-gray-700">{designer.rating}</span>
+                <span className="text-xs sm:text-sm text-gray-500">({designer.reviews_count})</span>
               </div>
             </div>
           </div>
-          <div className="text-right">
-            <p className="font-semibold text-gray-900 bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">₹{designer.hourly_rate}/min</p>
+          <div className="sm:text-right flex sm:flex-col items-center sm:items-end justify-between sm:justify-start flex-shrink-0">
+            <p className="font-semibold text-gray-900 bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent text-base sm:text-lg">₹{designer.hourly_rate}/min</p>
             {designer.location && (
-              <div className="flex items-center space-x-1 mt-1">
+              <div className="flex items-center space-x-1 mt-0 sm:mt-1">
                 <MapPin className="w-3 h-3 text-gray-400" />
-                <span className="text-sm text-gray-500">{designer.location}</span>
+                <span className="text-xs sm:text-sm text-gray-500">{designer.location}</span>
               </div>
             )}
           </div>
         </div>
 
-        <div className="space-y-3 mb-4">
-          <p className="text-sm text-gray-600">{designer.bio}</p>
+        <div className="space-y-2 sm:space-y-3 mb-4">
+          <p className="text-xs sm:text-sm text-gray-600 line-clamp-2">{designer.bio}</p>
           
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {designer.skills?.slice(0, 3).map((skill, index) => (
               <Badge key={index} variant="secondary" className="text-xs">
                 {skill}
@@ -127,10 +127,10 @@ function DesignerCard({ designer, favorites, onToggleFavorite, onMessage, onBook
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
             <div>
               <p className="text-gray-500">Last worked</p>
-              <p className="font-medium text-gray-900">
+              <p className="font-medium text-gray-900 truncate">
                 {designer.lastWorkedAt 
                   ? designer.lastWorkedAt.toLocaleDateString()
                   : 'N/A'
@@ -138,7 +138,7 @@ function DesignerCard({ designer, favorites, onToggleFavorite, onMessage, onBook
               </p>
             </div>
             <div>
-              <p className="text-gray-500">
+              <p className="text-gray-500 truncate">
                 {(designer.projectsCompleted || 0) === 0 && (designer.ongoingCount || 0) > 0 
                   ? 'Ongoing projects' 
                   : 'Projects completed'
@@ -157,14 +157,14 @@ function DesignerCard({ designer, favorites, onToggleFavorite, onMessage, onBook
             </div>
             <div>
               <p className="text-gray-500">Response time</p>
-              <p className="font-medium text-gray-900">{designer.response_time}</p>
+              <p className="font-medium text-gray-900 truncate">{designer.response_time}</p>
             </div>
           </div>
 
-          <div className="flex items-center space-x-4 text-sm">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm">
             <div className="flex items-center space-x-1">
-              <BadgeIcon className="w-4 h-4 text-green-500" />
-              <span className="text-gray-600">{designer.completion_rate}% completion rate</span>
+              <BadgeIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-500" />
+              <span className="text-gray-600">{designer.completion_rate}% completion</span>
             </div>
             {designer.is_online && (
               <div className="flex items-center space-x-1">
@@ -175,45 +175,47 @@ function DesignerCard({ designer, favorites, onToggleFavorite, onMessage, onBook
           </div>
         </div>
 
-        <div className="flex space-x-3">
+        <div className="grid grid-cols-2 sm:flex sm:space-x-3 gap-2 sm:gap-0">
           <Button 
             type="button"
-            className="flex-1 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white shadow-lg"
+            className="col-span-2 sm:col-span-1 sm:flex-1 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white shadow-lg text-xs sm:text-sm"
             onClick={() => onMessage(designer.id, designer.latestBookingId)}
           >
-            <MessageCircle className="w-4 h-4 mr-2" />
+            <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
             Message
           </Button>
           <Button 
             type="button"
             variant="outline" 
-            className="flex-1 border-2 border-gradient-to-r from-green-400 to-blue-400 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50"
+            className="sm:flex-1 border-2 border-gradient-to-r from-green-400 to-blue-400 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 text-xs sm:text-sm"
             onClick={() => onBookAgain(designer.id)}
           >
-            <Calendar className="w-4 h-4 mr-2" />
-            Book Again
+            <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+            <span className="hidden sm:inline">Book Again</span>
+            <span className="sm:hidden">Book</span>
           </Button>
           <Button 
             type="button"
             variant="outline" 
-            className="flex-1 border-2 border-gradient-to-r from-purple-400 to-pink-400 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50"
+            className="sm:flex-1 border-2 border-gradient-to-r from-purple-400 to-pink-400 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 text-xs sm:text-sm"
             onClick={() => onLiveSession(designer)}
           >
-            <Video className="w-4 h-4 mr-2" />
-            Live Session
+            <Video className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+            <span className="hidden sm:inline">Live Session</span>
+            <span className="sm:hidden">Live</span>
           </Button>
           <Button 
             type="button"
             variant="outline" 
             size="icon" 
-            className={`border-2 transition-all duration-200 ${
+            className={`border-2 transition-all duration-200 h-9 w-9 sm:h-10 sm:w-10 ${
               isFavorite 
                 ? 'border-red-400 bg-red-50 hover:bg-red-100' 
                 : 'border-gradient-to-r from-green-400 to-blue-400 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50'
             }`}
             onClick={() => onToggleFavorite(designer.id)}
           >
-            <Heart className={`w-4 h-4 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
+            <Heart className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
           </Button>
         </div>
       </CardContent>
@@ -438,21 +440,21 @@ export default function CustomerRecentDesigners() {
         
         <main className="flex-1">
           {/* Header */}
-          <header className="bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 border-b-0 px-6 py-8 shadow-lg">
+          <header className="bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 border-b-0 px-4 sm:px-6 py-4 sm:py-8 shadow-lg">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <SidebarTrigger className="text-white hover:bg-white/20 rounded-lg p-2" />
-                <div>
-                  <h1 className="text-2xl font-bold text-white">Recent Designers</h1>
-                  <p className="text-white/90">Designers you've worked with previously</p>
+              <div className="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
+                <SidebarTrigger className="text-white hover:bg-white/20 rounded-lg p-2 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-xl sm:text-2xl font-bold text-white truncate">Recent Designers</h1>
+                  <p className="text-white/90 text-xs sm:text-sm hidden sm:block">Designers you've worked with previously</p>
                 </div>
               </div>
-              <div className="flex items-center space-x-3">
-                <Bell className="w-5 h-5 text-white/80 hover:text-white cursor-pointer transition-colors" />
+              <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
+                <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-white/80 hover:text-white cursor-pointer transition-colors" />
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-all duration-200 ring-2 ring-white/30">
-                      <span className="text-white font-semibold text-sm">U</span>
+                    <button className="w-7 h-7 sm:w-8 sm:h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-all duration-200 ring-2 ring-white/30">
+                      <span className="text-white font-semibold text-xs sm:text-sm">U</span>
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-64 p-0" align="end">
@@ -486,9 +488,9 @@ export default function CustomerRecentDesigners() {
             </div>
           </header>
 
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {/* Filters and Search */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6">
               <div className="flex-1">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -496,14 +498,14 @@ export default function CustomerRecentDesigners() {
                     placeholder="Search designers, skills, or specialties..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 text-sm sm:text-base"
                   />
                 </div>
               </div>
               
-              <div className="flex gap-3">
+              <div className="flex gap-2 sm:gap-3">
                 <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-full sm:w-40 text-xs sm:text-sm">
                     <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
                   <SelectContent>
@@ -515,7 +517,7 @@ export default function CustomerRecentDesigners() {
                 </Select>
 
                 <Select value={filterBy} onValueChange={setFilterBy}>
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-full sm:w-32 text-xs sm:text-sm">
                     <SelectValue placeholder="Filter" />
                   </SelectTrigger>
                   <SelectContent>
@@ -528,48 +530,48 @@ export default function CustomerRecentDesigners() {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
               <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-0 shadow-lg">
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   <div className="flex items-center justify-between">
                      <div>
-                       <p className="text-sm text-gray-600 mb-1">Total Designers</p>
-                       <p className="text-3xl font-bold text-green-600">{filteredDesigners.length}</p>
+                       <p className="text-xs sm:text-sm text-gray-600 mb-1">Total Designers</p>
+                       <p className="text-2xl sm:text-3xl font-bold text-green-600">{filteredDesigners.length}</p>
                      </div>
-                     <Users className="w-12 h-12 text-green-500" />
+                     <Users className="w-10 h-10 sm:w-12 sm:h-12 text-green-500" />
                    </div>
                  </CardContent>
                </Card>
 
                <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-0 shadow-lg">
-                 <CardContent className="p-6">
+                 <CardContent className="p-4 sm:p-6">
                    <div className="flex items-center justify-between">
                      <div>
-                       <p className="text-sm text-gray-600 mb-1">Online Now</p>
-                       <p className="text-3xl font-bold text-blue-600">
+                       <p className="text-xs sm:text-sm text-gray-600 mb-1">Online Now</p>
+                       <p className="text-2xl sm:text-3xl font-bold text-blue-600">
                          {filteredDesigners.filter(d => d.is_online).length}
                        </p>
                      </div>
-                     <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
-                       <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+                     <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                       <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-white rounded-full animate-pulse"></div>
                      </div>
                    </div>
                  </CardContent>
                </Card>
 
                <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-0 shadow-lg">
-                 <CardContent className="p-6">
+                 <CardContent className="p-4 sm:p-6">
                    <div className="flex items-center justify-between">
                      <div>
-                       <p className="text-sm text-gray-600 mb-1">Avg Rating</p>
-                       <p className="text-3xl font-bold text-purple-600">
+                       <p className="text-xs sm:text-sm text-gray-600 mb-1">Avg Rating</p>
+                       <p className="text-2xl sm:text-3xl font-bold text-purple-600">
                          {displayedDesigners.length > 0 
                            ? (displayedDesigners.reduce((sum, d) => sum + (Number(d.rating) || 0), 0) / displayedDesigners.length).toFixed(1)
                            : '0.0'
                          }
                        </p>
                      </div>
-                     <Star className="w-12 h-12 text-yellow-500 fill-current" />
+                     <Star className="w-10 h-10 sm:w-12 sm:h-12 text-yellow-500 fill-current" />
                    </div>
                  </CardContent>
               </Card>
@@ -577,16 +579,16 @@ export default function CustomerRecentDesigners() {
 
             {/* Designers Grid */}
             {filteredDesigners.length === 0 ? (
-              <Card className="p-12 text-center">
-                <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No recent designers</h3>
-                <p className="text-gray-600 mb-6">Start working with designers to see them here</p>
+              <Card className="p-8 sm:p-12 text-center">
+                <Users className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">No recent designers</h3>
+                <p className="text-gray-600 mb-6 text-sm sm:text-base">Start working with designers to see them here</p>
                 <Link to="/designers">
-                  <Button>Find Designers</Button>
+                  <Button className="text-sm sm:text-base">Find Designers</Button>
                 </Link>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                  {displayedDesigners.map((designer) => (
                    <DesignerCard 
                      key={designer.id} 

@@ -210,22 +210,22 @@ export default function CustomerWallet() {
         
         <main className="flex-1">
           {/* Header */}
-          <header className="bg-gradient-to-br from-green-400 via-teal-500 to-blue-500 text-white px-6 py-12 relative overflow-hidden">
+          <header className="bg-gradient-to-br from-green-400 via-teal-500 to-blue-500 text-white px-4 sm:px-6 py-6 sm:py-12 relative overflow-hidden">
             <div className="absolute inset-0 bg-black/10"></div>
             <div className="relative z-10 flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <SidebarTrigger className="text-white" />
-                <div>
-                  <h1 className="text-3xl font-bold text-white mb-2">Wallet</h1>
-                  <p className="text-green-100">Manage your wallet balance and transactions</p>
+              <div className="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
+                <SidebarTrigger className="text-white flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2 truncate">Wallet</h1>
+                  <p className="text-green-100 text-xs sm:text-sm hidden sm:block">Manage your wallet balance and transactions</p>
                 </div>
               </div>
-              <div className="flex items-center space-x-3">
-                <Bell className="w-5 h-5 text-green-100" />
+              <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
+                <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-green-100" />
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
-                          <span className="text-white font-semibold text-sm">{userInitials}</span>
+                    <button className="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
+                          <span className="text-white font-semibold text-xs sm:text-sm">{userInitials}</span>
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-64 p-0" align="end">
@@ -280,26 +280,26 @@ export default function CustomerWallet() {
             <div className="absolute top-12 right-40 w-1.5 h-1.5 bg-white/25 rounded-full animate-pulse delay-500"></div>
           </header>
 
-          <div className="p-6 space-y-8">
+          <div className="p-4 sm:p-6 space-y-6 sm:space-y-8">
             {/* Balance and Payment Methods */}
             <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
               {/* Your Balance */}
               <Card className="bg-gradient-to-br from-card via-teal-50/20 to-blue-50/10 border border-teal-200/30 shadow-xl">
-                <CardHeader>
-                  <CardTitle className="text-2xl text-foreground flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-teal-500 rounded-full flex items-center justify-center">
-                      <Wallet className="w-4 h-4 text-white" />
+                <CardHeader className="p-4 sm:p-6">
+                  <CardTitle className="text-xl sm:text-2xl text-foreground flex items-center space-x-2">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-r from-green-400 to-teal-500 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
                     </div>
                     <span>Your Balance</span>
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
+                <CardContent className="p-4 sm:p-6 pt-0">
+                  <div className="space-y-3 sm:space-y-4">
                     <div>
-                      <p className="text-4xl font-bold text-foreground mb-2">₹{walletBalance.toFixed(2)}</p>
-                      <p className="text-muted-foreground">Available for design sessions</p>
+                      <p className="text-3xl sm:text-4xl font-bold text-foreground mb-2">₹{walletBalance.toFixed(2)}</p>
+                      <p className="text-muted-foreground text-sm sm:text-base">Available for design sessions</p>
                     </div>
-                    <div className="flex space-x-3">
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 sm:space-x-3">
                       <AddFundsButton onSuccess={fetchWalletData} />
                       <SimpleRazorpayWithdrawal 
                         currentBalance={walletBalance}
@@ -355,68 +355,73 @@ export default function CustomerWallet() {
 
             {/* Transaction History */}
             <Card className="bg-gradient-to-br from-card via-teal-50/20 to-blue-50/10 border border-teal-200/30 shadow-xl">
-              <CardHeader>
+              <CardHeader className="p-4 sm:p-6">
                 <div>
-                  <CardTitle className="text-2xl text-foreground">Transaction History</CardTitle>
-                  <CardDescription>View your recent transactions and payments</CardDescription>
+                  <CardTitle className="text-xl sm:text-2xl text-foreground">Transaction History</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">View your recent transactions and payments</CardDescription>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6 pt-0">
                 <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
                   <TabsList className="grid w-full grid-cols-4 bg-gradient-to-r from-teal-50 to-blue-50">
-                    <TabsTrigger value="all" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-teal-500 data-[state=active]:text-white">All</TabsTrigger>
-                    <TabsTrigger value="deposits" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-teal-500 data-[state=active]:text-white">Deposits</TabsTrigger>
-                    <TabsTrigger value="payments" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-teal-500 data-[state=active]:text-white">Payments</TabsTrigger>
-                    <TabsTrigger value="refunds" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-teal-500 data-[state=active]:text-white">Refunds</TabsTrigger>
+                    <TabsTrigger value="all" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-teal-500 data-[state=active]:text-white text-xs sm:text-sm">All</TabsTrigger>
+                    <TabsTrigger value="deposits" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-teal-500 data-[state=active]:text-white text-xs sm:text-sm">Deposits</TabsTrigger>
+                    <TabsTrigger value="payments" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-teal-500 data-[state=active]:text-white text-xs sm:text-sm">Payments</TabsTrigger>
+                    <TabsTrigger value="refunds" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-teal-500 data-[state=active]:text-white text-xs sm:text-sm">Refunds</TabsTrigger>
                   </TabsList>
-                  <TabsContent value={activeTab} className="mt-6">
+                  <TabsContent value={activeTab} className="mt-4 sm:mt-6">
                     {loading ? (
                       <div className="flex justify-center py-8">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
                       </div>
                     ) : (
-                      <div className="space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-1 gap-3 sm:gap-4">
                         {transactions.length > 0 ? transactions.map((transaction) => (
-                        <div key={transaction.id} className="flex items-center justify-between p-4 border border-teal-200/30 rounded-lg hover:bg-gradient-to-r hover:from-teal-50/50 hover:to-blue-50/50 transition-all duration-300">
-                          <div className="flex items-center space-x-4">
-                            <div className={`w-12 h-12 ${transaction.color} rounded-full flex items-center justify-center shadow-lg`}>
-                              <transaction.icon className={`w-5 h-5 ${transaction.iconColor}`} />
-                            </div>
-                            <div>
-                              <p className="font-medium text-foreground">{transaction.title}</p>
-                              <div className="flex items-center text-sm text-muted-foreground space-x-2">
-                                <Calendar className="w-3 h-3" />
-                                <span>{transaction.date}</span>
+                        <Card key={transaction.id} className="border-teal-200/30 hover:shadow-md transition-shadow overflow-hidden">
+                          <CardContent className="p-3 sm:p-4">
+                            <div className="flex items-start gap-3">
+                              <div className={`w-12 h-12 sm:w-14 sm:h-14 ${transaction.color} rounded-xl flex items-center justify-center shadow-lg flex-shrink-0`}>
+                                <transaction.icon className={`w-5 h-5 sm:w-6 sm:h-6 ${transaction.iconColor}`} />
+                              </div>
+                              <div className="flex-1 min-w-0 space-y-2">
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-semibold text-foreground text-sm sm:text-base mb-1 sm:mb-2">{transaction.title}</p>
+                                    <div className="flex items-center flex-wrap gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                                      <div className="flex items-center space-x-1">
+                                        <Calendar className="w-3 h-3 flex-shrink-0" />
+                                        <span>{transaction.date}</span>
+                                      </div>
+                                      <span>•</span>
+                                      <div className="flex items-center space-x-1">
+                                        <CheckCircle className="w-3 h-3 flex-shrink-0" />
+                                        <span>{transaction.status}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="text-right flex-shrink-0">
+                                    <p className={`font-bold text-base sm:text-lg ${
+                                      transaction.amount.startsWith('+') 
+                                        ? 'text-green-600' 
+                                        : 'text-red-600'
+                                    }`}>
+                                      {transaction.amount}
+                                    </p>
+                                  </div>
+                                </div>
                                 {transaction.designer && (
-                                  <>
-                                    <span>•</span>
-                                    <User className="w-3 h-3" />
-                                    <span>{transaction.designer}</span>
-                                  </>
+                                  <div className="flex items-center text-xs text-muted-foreground space-x-1.5 pt-1 border-t border-gray-100">
+                                    <User className="w-3 h-3 flex-shrink-0 mt-1" />
+                                    <span className="truncate">Designer: {transaction.designer}</span>
+                                  </div>
                                 )}
                               </div>
                             </div>
-                          </div>
-                          <div className="flex items-center space-x-3">
-                            <div className="text-right">
-                              <p className={`font-semibold ${
-                                transaction.amount.startsWith('+') 
-                                  ? 'text-green-600' 
-                                  : 'text-red-600'
-                              }`}>
-                                {transaction.amount}
-                              </p>
-                              <div className="flex items-center text-xs text-muted-foreground">
-                                <CheckCircle className="w-3 h-3 mr-1" />
-                                <span>{transaction.status}</span>
-                              </div>
-                            </div>
-                            <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                          </div>
-                          </div>
+                          </CardContent>
+                        </Card>
                         )) : (
                           <div className="text-center py-8">
-                            <p className="text-muted-foreground">No transactions found.</p>
+                            <p className="text-muted-foreground text-sm sm:text-base">No transactions found.</p>
                           </div>
                         )}
                       </div>
@@ -424,9 +429,9 @@ export default function CustomerWallet() {
                     
                     {/* Pagination Controls */}
                     {totalPages > 1 && (
-                      <div className="flex items-center justify-between mt-8 pt-6 border-t border-teal-200/30">
-                        <div className="text-sm text-muted-foreground">
-                          Showing {Math.min((currentPage - 1) * itemsPerPage + 1, totalCount)} to {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount} transactions
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-teal-200/30">
+                        <div className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
+                          Showing {Math.min((currentPage - 1) * itemsPerPage + 1, totalCount)} to {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount}
                         </div>
                         <div className="flex items-center space-x-2">
                           <Button
@@ -434,9 +439,10 @@ export default function CustomerWallet() {
                             size="sm"
                             onClick={handlePreviousPage}
                             disabled={currentPage === 1}
-                            className="hover:bg-gradient-to-r hover:from-teal-50 hover:to-blue-100 border-teal-300/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="hover:bg-gradient-to-r hover:from-teal-50 hover:to-blue-100 border-teal-300/50 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm"
                           >
-                            Previous
+                            <span className="hidden sm:inline">Previous</span>
+                            <span className="sm:hidden">Prev</span>
                           </Button>
                           
                           <div className="flex items-center space-x-1">
@@ -458,11 +464,11 @@ export default function CustomerWallet() {
                                   variant={currentPage === pageNumber ? "default" : "outline"}
                                   size="sm"
                                   onClick={() => handlePageClick(pageNumber)}
-                                  className={
+                                  className={`h-8 w-8 sm:h-9 sm:w-9 p-0 text-xs sm:text-sm ${
                                     currentPage === pageNumber
                                       ? "bg-gradient-to-r from-green-400 to-teal-500 text-white hover:from-green-500 hover:to-teal-600"
                                       : "hover:bg-gradient-to-r hover:from-teal-50 hover:to-blue-100 border-teal-300/50"
-                                  }
+                                  }`}
                                 >
                                   {pageNumber}
                                 </Button>
@@ -475,7 +481,7 @@ export default function CustomerWallet() {
                             size="sm"
                             onClick={handleNextPage}
                             disabled={currentPage === totalPages}
-                            className="hover:bg-gradient-to-r hover:from-teal-50 hover:to-blue-100 border-teal-300/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="hover:bg-gradient-to-r hover:from-teal-50 hover:to-blue-100 border-teal-300/50 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm"
                           >
                             Next
                           </Button>

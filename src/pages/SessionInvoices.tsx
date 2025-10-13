@@ -377,15 +377,15 @@ export default function SessionInvoices() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'paid':
-        return <Badge className="bg-green-100 text-green-800">Paid</Badge>;
+        return <Badge className="bg-green-100 text-green-800 text-xs">Paid</Badge>;
       case 'sent':
-        return <Badge className="bg-blue-100 text-blue-800">Sent</Badge>;
+        return <Badge className="bg-blue-100 text-blue-800 text-xs">Sent</Badge>;
       case 'generated':
-        return <Badge className="bg-yellow-100 text-yellow-800">Generated</Badge>;
+        return <Badge className="bg-yellow-100 text-yellow-800 text-xs">Generated</Badge>;
       case 'cancelled':
-        return <Badge className="bg-red-100 text-red-800">Cancelled</Badge>;
+        return <Badge className="bg-red-100 text-red-800 text-xs">Cancelled</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge variant="outline" className="text-xs">{status}</Badge>;
     }
   };
 
@@ -399,12 +399,12 @@ export default function SessionInvoices() {
   if (loading) {
     return (
       <SidebarProvider>
-        <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 via-blue-50 to-green-50">
+        <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 via-blue-50 to-green-50 overflow-hidden">
           {isDesigner ? <DesignerSidebar /> : <CustomerSidebar />}
-          <main className="flex-1 flex items-center justify-center">
+          <main className="flex-1 flex items-center justify-center overflow-x-hidden">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
-              <p className="mt-4 text-gray-600">Loading invoices...</p>
+              <p className="mt-4 text-gray-600 text-sm">Loading invoices...</p>
             </div>
           </main>
         </div>
@@ -414,41 +414,41 @@ export default function SessionInvoices() {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 via-blue-50 to-green-50">
+      <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 via-blue-50 to-green-50 overflow-hidden">
         {isDesigner ? <DesignerSidebar /> : <CustomerSidebar />}
-        <main className="flex-1 p-8">
-          <div className="max-w-7xl mx-auto space-y-8">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-x-hidden">
+          <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
             {/* Header */}
             <div className="text-center">
-              <h1 className="text-4xl font-bold text-gray-900 mb-4">Session Invoices</h1>
-              <p className="text-xl text-gray-600">View and download your session invoices</p>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 sm:mb-4">Session Invoices</h1>
+              <p className="text-sm sm:text-base md:text-xl text-gray-600">View and download your session invoices</p>
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
               <Card className="bg-white shadow-lg">
-                <CardContent className="p-6">
-                  <div className="flex items-center space-x-4">
-                    <div className="p-3 bg-blue-100 rounded-full">
-                      <FileText className="w-6 h-6 text-blue-600" />
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex items-center space-x-3 sm:space-x-4">
+                    <div className="p-2.5 sm:p-3 bg-blue-100 rounded-full flex-shrink-0">
+                      <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Total Invoices</p>
-                      <p className="text-2xl font-bold text-gray-900">{invoices.length}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs sm:text-sm font-medium text-gray-600">Total Invoices</p>
+                      <p className="text-xl sm:text-2xl font-bold text-gray-900">{invoices.length}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               <Card className="bg-white shadow-lg">
-                <CardContent className="p-6">
-                  <div className="flex items-center space-x-4">
-                    <div className="p-3 bg-green-100 rounded-full">
-                      <DollarSign className="w-6 h-6 text-green-600" />
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex items-center space-x-3 sm:space-x-4">
+                    <div className="p-2.5 sm:p-3 bg-green-100 rounded-full flex-shrink-0">
+                      <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Total Amount</p>
-                      <p className="text-2xl font-bold text-gray-900">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs sm:text-sm font-medium text-gray-600">Total Amount</p>
+                      <p className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
                         ₹{Math.round(invoices.reduce((sum, inv) => sum + inv.total_amount, 0))}
                       </p>
                     </div>
@@ -457,14 +457,14 @@ export default function SessionInvoices() {
               </Card>
 
               <Card className="bg-white shadow-lg">
-                <CardContent className="p-6">
-                  <div className="flex items-center space-x-4">
-                    <div className="p-3 bg-purple-100 rounded-full">
-                      <Calendar className="w-6 h-6 text-purple-600" />
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex items-center space-x-3 sm:space-x-4">
+                    <div className="p-2.5 sm:p-3 bg-purple-100 rounded-full flex-shrink-0">
+                      <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Paid Invoices</p>
-                      <p className="text-2xl font-bold text-gray-900">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs sm:text-sm font-medium text-gray-600">Paid Invoices</p>
+                      <p className="text-xl sm:text-2xl font-bold text-gray-900">
                         {invoices.filter(inv => inv.status === 'paid').length}
                       </p>
                     </div>
@@ -474,20 +474,20 @@ export default function SessionInvoices() {
             </div>
 
             {/* Filters */}
-            <Card className="bg-white shadow-lg">
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-4">
+            <Card className="bg-white shadow-lg overflow-hidden">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                   <div className="flex-1 relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <Input
                       placeholder="Search by invoice number or session ID..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10"
+                      className="pl-10 text-sm sm:text-base"
                     />
                   </div>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-48">
+                    <SelectTrigger className="w-full sm:w-48 text-xs sm:text-sm">
                       <SelectValue placeholder="Filter by status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -503,81 +503,109 @@ export default function SessionInvoices() {
             </Card>
 
             {/* Invoices List */}
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {filteredInvoices.length === 0 ? (
                 <Card className="bg-white shadow-lg">
-                  <CardContent className="p-12 text-center">
-                    <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600">No invoices found matching your criteria.</p>
+                  <CardContent className="p-8 sm:p-12 text-center">
+                    <FileText className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 text-sm sm:text-base">No invoices found matching your criteria.</p>
                   </CardContent>
                 </Card>
               ) : (
                 filteredInvoices.map((invoice) => (
-                  <Card key={invoice.id} className="bg-white shadow-lg hover:shadow-xl transition-shadow">
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          <div className="p-3 bg-blue-100 rounded-full">
-                            <FileText className="w-6 h-6 text-blue-600" />
+                  <Card key={invoice.id} className="bg-white shadow-lg hover:shadow-xl transition-shadow overflow-hidden">
+                    <CardContent className="p-4 sm:p-6">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        {/* Left Section */}
+                        <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
+                          <div className="p-2.5 sm:p-3 bg-blue-100 rounded-full flex-shrink-0">
+                            <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
                           </div>
-                          <div>
-                            <h3 className="font-semibold text-gray-900">Invoice #{invoice.invoice_number}</h3>
-                            <p className="text-sm text-gray-600">Session ID: {invoice.session_id}</p>
-                            <p className="text-sm text-gray-500">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-sm sm:text-base text-gray-900 truncate">Invoice #{invoice.invoice_number}</h3>
+                            <p className="text-xs sm:text-sm text-gray-600 truncate">Session ID: {invoice.session_id}</p>
+                            <p className="text-xs sm:text-sm text-gray-500 mt-1">
                               {new Date(invoice.created_at).toLocaleDateString('en-IN', {
                                 year: 'numeric',
-                                month: 'long',
+                                month: 'short',
                                 day: 'numeric'
                               })}
                             </p>
                           </div>
                         </div>
 
-                        <div className="flex items-center space-x-4">
-                          <div className="text-right">
-                            <p className="text-lg font-bold text-gray-900">₹{Math.round(invoice.total_amount)}</p>
-                            <p className="text-sm text-gray-600">{invoice.invoice_type} invoice</p>
+                        {/* Right Section - Amount & Status */}
+                        <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
+                          <div className="text-left sm:text-right">
+                            <p className="text-base sm:text-lg font-bold text-gray-900">₹{Math.round(invoice.total_amount)}</p>
+                            <p className="text-xs sm:text-sm text-gray-600">{invoice.invoice_type} invoice</p>
                           </div>
                           {getStatusBadge(invoice.status)}
-                          <div className="flex space-x-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => viewInvoice(invoice)}
-                            >
-                              <Eye className="w-4 h-4 mr-1" />
-                              View
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => downloadInvoice(invoice)}
-                            >
-                              <Download className="w-4 h-4 mr-1" />
-                              Download
-                            </Button>
-                          </div>
                         </div>
                       </div>
 
+                      {/* Action Buttons - Mobile: Bottom, Desktop: Inline */}
+                      <div className="mt-3 pt-3 border-t sm:hidden">
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => viewInvoice(invoice)}
+                            className="w-full text-xs"
+                          >
+                            <Eye className="w-3.5 h-3.5 mr-1.5" />
+                            View
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => downloadInvoice(invoice)}
+                            className="w-full text-xs"
+                          >
+                            <Download className="w-3.5 h-3.5 mr-1.5" />
+                            Download
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Desktop Actions */}
+                      <div className="hidden sm:flex sm:justify-end space-x-2 mt-3">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => viewInvoice(invoice)}
+                        >
+                          <Eye className="w-4 h-4 mr-1" />
+                          View
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => downloadInvoice(invoice)}
+                        >
+                          <Download className="w-4 h-4 mr-1" />
+                          Download
+                        </Button>
+                      </div>
+
                       {/* Additional Details */}
-                      <div className="mt-4 pt-4 border-t border-gray-100">
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-100">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 text-xs sm:text-sm">
                           <div>
                             <p className="text-gray-500">Subtotal</p>
-                            <p className="font-medium">₹{Math.round(invoice.subtotal)}</p>
+                            <p className="font-medium text-gray-900 truncate">₹{Math.round(invoice.subtotal)}</p>
                           </div>
                           <div>
                             <p className="text-gray-500">Tax</p>
-                            <p className="font-medium">₹{Math.round(invoice.tax_amount || 0)}</p>
+                            <p className="font-medium text-gray-900 truncate">₹{Math.round(invoice.tax_amount || 0)}</p>
                           </div>
                           <div>
                             <p className="text-gray-500">Duration</p>
-                            <p className="font-medium">{invoice.session_duration || 'N/A'} min</p>
+                            <p className="font-medium text-gray-900 truncate">{invoice.session_duration || 'N/A'} min</p>
                           </div>
                           <div>
-                            <p className="text-gray-500">Payment Method</p>
-                            <p className="font-medium">{invoice.payment_method || 'Wallet'}</p>
+                            <p className="text-gray-500">Payment</p>
+                            <p className="font-medium text-gray-900 truncate">{invoice.payment_method || 'Wallet'}</p>
                           </div>
                         </div>
                       </div>

@@ -155,7 +155,7 @@ const DesignerDetails: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-6xl">
         {/* Back Navigation */}
         <Button
           variant="ghost"
@@ -166,22 +166,22 @@ const DesignerDetails: React.FC = () => {
               navigate(-1);
             }
           }}
-          className="mb-6"
+          className="mb-4 sm:mb-6"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
         </Button>
 
         {/* Header Section */}
-        <div className="bg-card rounded-3xl p-8 mb-8 shadow-lg border border-border">
-          <div className="flex flex-col lg:flex-row gap-8">
+        <div className="bg-card rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 mb-6 sm:mb-8 shadow-lg border border-border">
+          <div className="flex flex-col lg:flex-row gap-6 sm:gap-8">
             {/* Left - Profile Info */}
             <div className="flex-1">
-              <div className="flex items-start gap-6 mb-6">
-                <div className="relative">
-                  <Avatar className="w-24 h-24">
+              <div className="flex items-start gap-4 sm:gap-6 mb-4 sm:mb-6">
+                <div className="relative flex-shrink-0">
+                  <Avatar className="w-20 h-20 sm:w-24 sm:h-24">
                     <AvatarImage src={designer.avatar_url} />
-                    <AvatarFallback className="text-lg">
+                    <AvatarFallback className="text-base sm:text-lg">
                       {(() => {
                         const firstName = designer.first_name || '';
                         const lastName = designer.last_name || '';
@@ -199,14 +199,14 @@ const DesignerDetails: React.FC = () => {
                     </AvatarFallback>
                   </Avatar>
                   {designer.is_online && (
-                    <div className="absolute -bottom-2 -right-2 w-8 h-8 sm:w-6 sm:h-6 bg-green-400 rounded-full border-4 sm:border-2 border-white flex items-center justify-center">
-                      <span className="text-xs sm:text-[10px] text-white font-bold">●</span>
+                    <div className="absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2 w-6 h-6 sm:w-8 sm:h-8 lg:w-6 lg:h-6 bg-green-400 rounded-full border-3 sm:border-4 lg:border-2 border-white flex items-center justify-center">
+                      <span className="text-xs text-white font-bold">●</span>
                     </div>
                   )}
                 </div>
                 
-                <div className="flex-1">
-                  <h1 className="text-3xl font-bold text-foreground mb-2">
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2 truncate">
                     {(() => {
                       const firstName = designer.first_name || '';
                       const lastName = designer.last_name || '';
@@ -222,35 +222,36 @@ const DesignerDetails: React.FC = () => {
                       return 'Designer';
                     })()}
                   </h1>
-                  <p className="text-green-600 font-semibold text-lg mb-1">{designer.specialty}</p>
+                  <p className="text-green-600 font-semibold text-base sm:text-lg mb-2">{designer.specialty}</p>
                   
-                  <div className="flex flex-wrap items-center gap-4 mb-4">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-4">
                     <div className="flex items-center gap-1">
-                      <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                      <span className="font-semibold">{designer.rating}</span>
-                      <span className="text-muted-foreground">({designer.reviews_count} reviews)</span>
+                      <Star className="w-4 h-4 sm:w-5 sm:h-5 fill-yellow-400 text-yellow-400" />
+                      <span className="font-semibold text-sm sm:text-base">{designer.rating}</span>
+                      <span className="text-muted-foreground text-xs sm:text-sm">({designer.reviews_count} reviews)</span>
                     </div>
                     
                     {designer.location && (
                       <div className="flex items-center gap-1 text-muted-foreground">
-                        <MapPin className="w-4 h-4" />
-                        <span>{designer.location}</span>
+                        <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <span className="text-xs sm:text-sm">{designer.location}</span>
                       </div>
                     )}
                     
                     <div className="flex items-center gap-1 text-muted-foreground">
-                      <Clock className="w-4 h-4" />
-                      <span>Responds in {designer.response_time}</span>
+                      <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <span className="text-xs sm:text-sm hidden sm:inline">Responds in {designer.response_time}</span>
+                      <span className="text-xs sm:hidden">{designer.response_time}</span>
                     </div>
                     
-                    <Badge variant={designer.is_online ? "default" : "secondary"}>
+                    <Badge variant={designer.is_online ? "default" : "secondary"} className="text-xs">
                       {designer.is_online ? 'Online' : 'Offline'}
                     </Badge>
                   </div>
                   
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5 sm:gap-2">
                     {designer.skills?.map((skill, index) => (
-                      <Badge key={index} variant="outline">
+                      <Badge key={index} variant="outline" className="text-xs">
                         {skill}
                       </Badge>
                     ))}
@@ -262,30 +263,30 @@ const DesignerDetails: React.FC = () => {
             {/* Right - Actions */}
             <div className="lg:w-80">
               <Card>
-                <CardContent className="p-6">
-                  <div className="text-center mb-6">
-                    <div className="text-3xl font-bold text-foreground mb-1">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="text-center mb-4 sm:mb-6">
+                    <div className="text-2xl sm:text-3xl font-bold text-foreground mb-1">
                       ₹{designer.hourly_rate}
-                      <span className="text-lg font-normal text-muted-foreground">/min</span>
+                      <span className="text-base sm:text-lg font-normal text-muted-foreground">/min</span>
                     </div>
-                    <p className="text-muted-foreground">Starting from</p>
+                    <p className="text-muted-foreground text-sm">Starting from</p>
                   </div>
                   
-                  <div className="space-y-3">
+                  <div className="space-y-2 sm:space-y-3">
                     <BookingDialog designer={designer}>
-                      <Button className="w-full bg-green-600 hover:bg-green-700">
+                      <Button className="w-full bg-green-600 hover:bg-green-700 text-sm sm:text-base">
                         <Calendar className="w-4 h-4 mr-2" />
                         Book Session
                       </Button>
                     </BookingDialog>
                     
-                    <Button variant="outline" className="w-full" onClick={handleSendMessage}>
+                    <Button variant="outline" className="w-full text-sm sm:text-base" onClick={handleSendMessage}>
                       <MessageCircle className="w-4 h-4 mr-2" />
                       Send Message
                     </Button>
                   </div>
                   
-                  <div className="mt-6 text-center text-sm text-muted-foreground">
+                  <div className="mt-4 sm:mt-6 text-center text-xs sm:text-sm text-muted-foreground">
                     <p>{designer.completion_rate}% completion rate</p>
                   </div>
                 </CardContent>
@@ -295,8 +296,8 @@ const DesignerDetails: React.FC = () => {
         </div>
 
         {/* Tabs */}
-        <div className="mb-8">
-          <div className="flex space-x-1 bg-muted p-1 rounded-lg w-fit">
+        <div className="mb-6 sm:mb-8 overflow-x-auto">
+          <div className="flex space-x-1 bg-muted p-1 rounded-lg w-fit min-w-full sm:min-w-0">
             {[
               { id: 'about', label: 'About' },
               { id: 'services', label: 'Services' },
@@ -305,7 +306,7 @@ const DesignerDetails: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors flex-1 sm:flex-none whitespace-nowrap ${
                   activeTab === tab.id
                     ? 'bg-background text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
@@ -320,8 +321,8 @@ const DesignerDetails: React.FC = () => {
         {/* Tab Content */}
         {activeTab === 'about' && (
           <Card>
-            <CardHeader>
-              <CardTitle>About {(() => {
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="text-lg sm:text-xl">About {(() => {
                 const firstName = designer.first_name || '';
                 const email = designer.email || '';
                 
@@ -333,8 +334,8 @@ const DesignerDetails: React.FC = () => {
                 return 'Designer';
               })()}</CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground leading-relaxed">
+            <CardContent className="p-4 sm:p-6">
+              <p className="text-muted-foreground leading-relaxed text-sm sm:text-base">
                 {designer.bio || 'This designer has not added a bio yet.'}
               </p>
             </CardContent>
@@ -342,7 +343,7 @@ const DesignerDetails: React.FC = () => {
         )}
 
         {activeTab === 'services' && (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {services.length > 0 ? (
               services.map((service) => (
                 <Card key={service.id} className="group hover:shadow-lg transition-shadow">
@@ -359,22 +360,22 @@ const DesignerDetails: React.FC = () => {
                       </div>
                     )}
                   </div>
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold mb-2 line-clamp-2">{service.title}</h3>
-                    <p className="text-muted-foreground text-sm mb-3 line-clamp-2">
+                  <CardContent className="p-3 sm:p-4">
+                    <h3 className="font-semibold mb-2 line-clamp-2 text-sm sm:text-base">{service.title}</h3>
+                    <p className="text-muted-foreground text-xs sm:text-sm mb-3 line-clamp-2">
                       {service.description}
                     </p>
-                    <div className="flex items-center justify-between">
-                      <div className="text-lg font-bold">₹{service.price}</div>
-                      <div className="flex items-center gap-1 text-sm">
-                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="text-base sm:text-lg font-bold">₹{service.price}</div>
+                      <div className="flex items-center gap-1 text-xs sm:text-sm">
+                        <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-yellow-400 text-yellow-400" />
                         <span>{service.rating}</span>
                       </div>
                     </div>
-                    <div className="mt-3">
+                    <div>
                       <Link
                         to={`/services/${service.id}`}
-                        className="block w-full text-center bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-colors"
+                        className="block w-full text-center bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-colors text-xs sm:text-sm"
                       >
                         View Service
                       </Link>
@@ -392,12 +393,12 @@ const DesignerDetails: React.FC = () => {
 
         {activeTab === 'portfolio' && (
           <Card>
-            <CardHeader>
-              <CardTitle>Portfolio</CardTitle>
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="text-lg sm:text-xl">Portfolio</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 sm:p-6">
               {portfolioItems && portfolioItems.length > 0 ? (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   {portfolioItems.map((item, index) => (
                     <div key={item.id || index} className="group relative aspect-square bg-muted rounded-lg overflow-hidden">
                       <img
@@ -406,8 +407,8 @@ const DesignerDetails: React.FC = () => {
                         className="w-full h-full object-cover hover:scale-105 transition-transform"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300">
-                        <div className="absolute bottom-4 left-4 right-4">
-                          <h4 className="text-white font-semibold mb-1">{item.title}</h4>
+                        <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 right-2 sm:right-4">
+                          <h4 className="text-white font-semibold mb-1 text-xs sm:text-sm truncate">{item.title}</h4>
                           {item.category && (
                             <span className="text-white/80 text-xs bg-white/20 px-2 py-1 rounded">
                               {item.category}
@@ -419,8 +420,8 @@ const DesignerDetails: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground">No portfolio items available</p>
+                <div className="text-center py-8 sm:py-12">
+                  <p className="text-muted-foreground text-sm sm:text-base">No portfolio items available</p>
                 </div>
               )}
             </CardContent>
