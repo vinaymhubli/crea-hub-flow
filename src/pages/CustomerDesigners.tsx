@@ -1,5 +1,7 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { CustomerSidebar } from "@/components/CustomerSidebar";
+import { DashboardHeader } from "@/components/DashboardHeader";
+import { Users } from "lucide-react";
 import Designers from "./Designers";
 
 export default function CustomerDesigners() {
@@ -9,16 +11,11 @@ export default function CustomerDesigners() {
         <CustomerSidebar />
         
         <main className="flex-1">
-          {/* Header */}
-          <header className="bg-gradient-to-r from-green-400 to-blue-500 px-6 py-4">
-            <div className="flex items-center space-x-4">
-              <SidebarTrigger className="text-white hover:bg-white/20" />
-              <div>
-                <h1 className="text-xl font-bold text-white">Find Designers</h1>
-                <p className="text-white/80 text-sm">Browse and connect with talented designers</p>
-              </div>
-            </div>
-          </header>
+          <DashboardHeader
+            title="Find Designers"
+            subtitle="Browse and connect with talented designers"
+            icon={<Users className="w-6 h-6 sm:w-8 sm:h-8 text-white" />}
+          />
 
           {/* Content */}
           <div className="h-full">

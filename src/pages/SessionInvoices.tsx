@@ -3,6 +3,7 @@ import { Download, FileText, Calendar, User, DollarSign, Eye, Search } from 'luc
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { DesignerSidebar } from "@/components/DesignerSidebar";
 import { CustomerSidebar } from "@/components/CustomerSidebar";
+import { DashboardHeader } from "@/components/DashboardHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -401,10 +402,17 @@ export default function SessionInvoices() {
       <SidebarProvider>
         <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 via-blue-50 to-green-50 overflow-hidden">
           {isDesigner ? <DesignerSidebar /> : <CustomerSidebar />}
-          <main className="flex-1 flex items-center justify-center overflow-x-hidden">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
-              <p className="mt-4 text-gray-600 text-sm">Loading invoices...</p>
+          <main className="flex-1">
+            <DashboardHeader
+              title="Session Invoices"
+              subtitle="View and download your session invoices"
+              icon={<FileText className="w-6 h-6 sm:w-8 sm:h-8 text-white" />}
+            />
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+                <p className="mt-4 text-gray-600 text-sm">Loading invoices...</p>
+              </div>
             </div>
           </main>
         </div>
@@ -416,13 +424,14 @@ export default function SessionInvoices() {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 via-blue-50 to-green-50 overflow-hidden">
         {isDesigner ? <DesignerSidebar /> : <CustomerSidebar />}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-x-hidden">
-          <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
-            {/* Header */}
-            <div className="text-center">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 sm:mb-4">Session Invoices</h1>
-              <p className="text-sm sm:text-base md:text-xl text-gray-600">View and download your session invoices</p>
-            </div>
+        <main className="flex-1">
+          <DashboardHeader
+            title="Session Invoices"
+            subtitle="View and download your session invoices"
+            icon={<FileText className="w-6 h-6 sm:w-8 sm:h-8 text-white" />}
+          />
+          <div className="p-4 sm:p-6 lg:p-8 overflow-x-hidden">
+            <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
 
             {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
@@ -613,6 +622,7 @@ export default function SessionInvoices() {
                   </Card>
                 ))
               )}
+            </div>
             </div>
           </div>
         </main>

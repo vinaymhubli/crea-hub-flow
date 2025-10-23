@@ -133,6 +133,8 @@ function AppContent() {
   const hideGlobalChrome =
     location.pathname.startsWith("/customer-dashboard") ||
     location.pathname.startsWith("/designer-dashboard") ||
+    location.pathname.startsWith("/designer/") ||
+    location.pathname.startsWith("/customer/") ||
     location.pathname.startsWith("/admin") ||
     location.pathname === "/admin-dashboard" ||
     location.pathname.startsWith("/session/") ||

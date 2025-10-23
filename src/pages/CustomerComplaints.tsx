@@ -20,6 +20,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { CustomerSidebar } from '@/components/CustomerSidebar';
+import { DashboardHeader } from '@/components/DashboardHeader';
 import {
   SidebarProvider,
   SidebarTrigger,
@@ -239,21 +240,20 @@ export default function CustomerComplaints() {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen bg-gray-50">
+      <div className="flex min-h-screen bg-gray-50 w-full">
         <CustomerSidebar />
-        <div className="flex-1 flex flex-col">
-          <header className="bg-white shadow-sm border-b">
-            <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
-              <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-                <SidebarTrigger />
-                <h1 className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-900 truncate">My Complaints</h1>
-              </div>
+        <div className="flex-1 flex flex-col w-full">
+          <DashboardHeader
+            title="My Complaints"
+            subtitle="Track and manage your complaints about design work"
+            icon={<AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8 text-white" />}
+            actionButton={
               <Button onClick={fetchComplaints} variant="outline" size="sm" className="flex-shrink-0">
                 <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2" />
                 <span className="hidden sm:inline">Refresh</span>
               </Button>
-            </div>
-          </header>
+            }
+          />
 
           <main className="flex-1 p-4 sm:p-6">
             <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">

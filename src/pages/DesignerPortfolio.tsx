@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { DesignerSidebar } from "@/components/DesignerSidebar";
+import { DashboardHeader } from "@/components/DashboardHeader";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -354,30 +355,19 @@ export default function DesignerPortfolio() {
         <DesignerSidebar />
         
         <main className="flex-1">
-          {/* Enhanced Header with Profile Preview */}
-          <header className="bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 px-4 sm:px-6 py-4 sm:py-8 relative overflow-hidden">
-            <div className="absolute inset-0 bg-black/10"></div>
-            <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex items-center space-x-3 sm:space-x-6">
-                <SidebarTrigger className="text-white hover:bg-white/20 rounded-lg p-2 flex-shrink-0" />
-                <div className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 backdrop-blur-sm rounded-xl sm:rounded-2xl flex items-center justify-center border border-white/30 shadow-xl flex-shrink-0">
-                    <FolderOpen className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white truncate">Portfolio</h1>
-                    <p className="text-white/90 text-xs sm:text-sm lg:text-lg truncate hidden sm:block">Showcase your best design work to attract more clients</p>
-                    <div className="flex items-center space-x-2 sm:space-x-4 mt-1 sm:mt-2 text-xs sm:text-sm">
-                      <span className="text-white/90 font-medium">{portfolioItems.length} Projects</span>
-                      <span className="text-white/60">•</span>
-                      <span className="text-white/90 font-medium">{categories.length - 1} Categories</span>
-                    </div>
-                  </div>
-                </div>
+          <DashboardHeader
+            title="Portfolio"
+            subtitle="Showcase your best design work to attract more clients"
+            icon={<FolderOpen className="w-6 h-6 sm:w-8 sm:h-8 text-white" />}
+            additionalInfo={
+              <div className="flex items-center space-x-2 sm:space-x-4 text-xs sm:text-sm">
+                <span className="text-white/90 font-medium">{portfolioItems.length} Projects</span>
+                <span className="text-white/60">•</span>
+                <span className="text-white/90 font-medium">{categories.length - 1} Categories</span>
               </div>
-              <AddPortfolioDialog />
-            </div>
-          </header>
+            }
+            actionButton={<AddPortfolioDialog />}
+          />
 
           <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
             {/* Enhanced Category Filter */}

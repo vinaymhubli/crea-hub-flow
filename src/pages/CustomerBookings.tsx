@@ -20,6 +20,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { CustomerSidebar } from "@/components/CustomerSidebar";
+import { DashboardHeader } from "@/components/DashboardHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -258,21 +259,13 @@ export default function CustomerBookings() {
         <CustomerSidebar />
         
         <main className="flex-1">
-          {/* Header */}
-          <header className="bg-gradient-to-r from-green-400 to-blue-500 px-6 py-8">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <SidebarTrigger className="text-white hover:bg-white/20" />
-                <div>
-                  <h1 className="text-2xl font-bold text-white">My Bookings</h1>
-                  <p className="text-white/80">Manage your design sessions and appointments</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
-                  <span className="text-white/80 text-sm font-medium">Online</span>
-                </div>
+          <DashboardHeader
+            title="My Bookings"
+            subtitle="Manage your design sessions and appointments"
+            userInitials="U"
+            isOnline={true}
+            actionButton={
+              <div className="flex items-center space-x-2 sm:space-x-4">
                 <Bell className="w-5 h-5 text-white/80" />
                 <Popover>
                   <PopoverTrigger asChild>
@@ -308,8 +301,8 @@ export default function CustomerBookings() {
                   </PopoverContent>
                 </Popover>
               </div>
-            </div>
-          </header>
+            }
+          />
 
           <div className="p-6 space-y-8">
             {/* Quick Stats and Actions */}

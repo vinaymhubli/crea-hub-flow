@@ -16,6 +16,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { DesignerSidebar } from '@/components/DesignerSidebar';
+import { DashboardHeader } from '@/components/DashboardHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -297,58 +298,16 @@ export default function DesignerProfile() {
         <DesignerSidebar />
         
         <main className="flex-1">
-          {/* Enhanced Header with Profile Preview */}
-          <header className="bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 px-4 sm:px-6 py-4 sm:py-8 relative overflow-hidden">
-            <div className="absolute inset-0 bg-black/10"></div>
-            <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex items-center space-x-3 sm:space-x-6">
-                <SidebarTrigger className="text-white hover:bg-white/20 rounded-lg p-2 flex-shrink-0" />
-                <div className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
-                  {avatarImage ? (
-                    <img 
-                      src={avatarImage} 
-                      alt="Profile" 
-                      className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl object-cover border border-white/30 shadow-xl flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 backdrop-blur-sm rounded-xl sm:rounded-2xl flex items-center justify-center border border-white/30 shadow-xl flex-shrink-0">
-                      <span className="text-white font-bold text-base sm:text-xl">{getInitials()}</span>
-                    </div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white truncate">Designer Profile</h1>
-                    <p className="text-white/90 text-xs sm:text-sm lg:text-lg truncate">
-                      {getDisplayName()} <span className="hidden sm:inline">• {formData.specialty} • {formData.experience_years}+ years experience</span>
-                    </p>
-                    <div className="flex items-center space-x-2 sm:space-x-4 mt-1 sm:mt-2">
-                      <div className="flex items-center space-x-1">
-                        <Star className="w-3 h-3 sm:w-4 sm:h-4 fill-yellow-300 text-yellow-300" />
-                        <span className="text-white/90 font-medium text-xs sm:text-sm">{designerProfile?.rating?.toFixed(1) || '0.0'}</span>
-                      </div>
-                      <Badge className="bg-white/20 text-white border-white/30 text-xs">
-                        {designerProfile?.is_online ? 'Available' : 'Offline'}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <Button 
-                asChild 
-                className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-200 text-xs sm:text-sm w-full sm:w-auto justify-center"
-                disabled={!designerProfile?.id}
-              >
-                <Link 
-                  to={`/designer/${designerProfile?.id}`}
-                  state={{ hideGlobalChrome: true, fromProfile: true }}
-                >
-                  <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">View Public Profile</span>
-                  <span className="sm:hidden">View Public</span>
-                  <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
-                </Link>
-              </Button>
-            </div>
-          </header>
+          <DashboardHeader
+            title="Designer Profile"
+            subtitle={`${getDisplayName()} • ${formData.specialty} • ${formData.experience_years}+ years experience`}
+            avatarImage={avatarImage}
+            userInitials={getInitials()}
+            rating={designerProfile?.rating}
+            isOnline={designerProfile?.is_online}
+            showPublicProfile={true}
+            publicProfileLink={`/designer/${designerProfile?.id}`}
+          />
 
           <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

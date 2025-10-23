@@ -41,6 +41,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserSettings } from '@/hooks/useUserSettings';
 import { CustomerSidebar } from '@/components/CustomerSidebar';
+import { DashboardHeader } from '@/components/DashboardHeader';
 import {
   SidebarProvider,
   SidebarTrigger,
@@ -110,21 +111,14 @@ export default function CustomerSettings() {
         <CustomerSidebar />
         
         <main className="flex-1 min-w-0 overflow-x-hidden">
-          {/* Header */}
-          <header className="bg-gradient-to-r from-green-400 to-blue-500 px-4 sm:px-6 py-6 sm:py-8">
-            <div className="flex items-center justify-between">
+          <DashboardHeader
+            title="Settings"
+            subtitle="Manage your account preferences"
+            avatarImage={profile?.avatar_url}
+            userInitials={getInitials()}
+            isOnline={true}
+            actionButton={
               <div className="flex items-center space-x-2 sm:space-x-4">
-                <SidebarTrigger className="text-white hover:bg-white/20" />
-                <div>
-                  <h1 className="text-xl sm:text-2xl font-bold text-white">Settings</h1>
-                  <p className="text-white/80 text-sm sm:text-base">Manage your account preferences</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2 sm:space-x-4">
-                <div className="hidden sm:flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
-                  <span className="text-white/80 text-sm font-medium">Online</span>
-                </div>
                 <Bell className="w-5 h-5 text-white/80" />
                 <Popover>
                   <PopoverTrigger asChild>
@@ -181,8 +175,8 @@ export default function CustomerSettings() {
                   </PopoverContent>
                 </Popover>
               </div>
-            </div>
-          </header>
+            }
+          />
 
           <div className="p-4 sm:p-6 space-y-6 sm:space-y-8 overflow-x-hidden">
             {/* Settings Overview Cards */}

@@ -18,6 +18,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { CustomerSidebar } from "@/components/CustomerSidebar";
+import { DashboardHeader } from "@/components/DashboardHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -422,10 +423,17 @@ export default function CustomerRecentDesigners() {
       <SidebarProvider>
         <div className="min-h-screen flex w-full bg-gray-50">
           <CustomerSidebar />
-          <main className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-              <p className="mt-4 text-muted-foreground">Loading recent designers...</p>
+          <main className="flex-1">
+            <DashboardHeader
+              title="Recent Designers"
+              subtitle="Designers you've worked with previously"
+              icon={<Users className="w-6 h-6 sm:w-8 sm:h-8 text-white" />}
+            />
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+                <p className="mt-4 text-muted-foreground">Loading recent designers...</p>
+              </div>
             </div>
           </main>
         </div>
@@ -439,54 +447,11 @@ export default function CustomerRecentDesigners() {
         <CustomerSidebar />
         
         <main className="flex-1">
-          {/* Header */}
-          <header className="bg-gradient-to-r from-green-400 via-teal-500 to-blue-500 border-b-0 px-4 sm:px-6 py-4 sm:py-8 shadow-lg">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
-                <SidebarTrigger className="text-white hover:bg-white/20 rounded-lg p-2 flex-shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <h1 className="text-xl sm:text-2xl font-bold text-white truncate">Recent Designers</h1>
-                  <p className="text-white/90 text-xs sm:text-sm hidden sm:block">Designers you've worked with previously</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
-                <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-white/80 hover:text-white cursor-pointer transition-colors" />
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button className="w-7 h-7 sm:w-8 sm:h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-all duration-200 ring-2 ring-white/30">
-                      <span className="text-white font-semibold text-xs sm:text-sm">U</span>
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-64 p-0" align="end">
-                    <div className="p-4">
-                      <div className="flex items-center space-x-3 mb-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-                          <span className="text-white font-semibold text-sm">U</span>
-                        </div>
-                        <div>
-                          <p className="font-semibold text-gray-900">User</p>
-                          <p className="text-sm text-gray-500">{user?.email}</p>
-                        </div>
-                      </div>
-                      <Separator className="my-3" />
-                      <div className="space-y-1">
-                        <Link 
-                          to="/customer-dashboard" 
-                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 rounded-md transition-colors"
-                        >
-                          Dashboard
-                        </Link>
-                        <button className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-red-50 rounded-md transition-colors">
-                          <LogOut className="w-4 h-4 mr-3" />
-                          Log out
-                        </button>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-          </header>
+          <DashboardHeader
+            title="Recent Designers"
+            subtitle="Designers you've worked with previously"
+            icon={<Users className="w-6 h-6 sm:w-8 sm:h-8 text-white" />}
+          />
 
           <div className="p-4 sm:p-6">
             {/* Filters and Search */}

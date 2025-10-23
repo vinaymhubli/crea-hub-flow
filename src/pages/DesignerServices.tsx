@@ -16,6 +16,7 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { DesignerSidebar } from '@/components/DesignerSidebar';
+import { DashboardHeader } from '@/components/DashboardHeader';
 import { 
   Plus, 
   Edit, 
@@ -415,25 +416,33 @@ export default function DesignerServices() {
 
   if (loading) {
     return (
-      <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">My Services</h1>
-            <p className="text-gray-600">Manage your service offerings</p>
-          </div>
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full bg-background">
+          <DesignerSidebar />
+          
+          <main className="flex-1">
+            <div className="p-6 space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-3xl font-bold">My Services</h1>
+                  <p className="text-gray-600">Manage your service offerings</p>
+                </div>
+              </div>
+              <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {[1, 2, 3].map(i => (
+                  <Card key={i} className="animate-pulse">
+                    <div className="h-40 sm:h-48 bg-gray-200 rounded-t-lg"></div>
+                    <CardContent className="p-3 sm:p-4">
+                      <div className="h-3 sm:h-4 bg-gray-200 rounded mb-2"></div>
+                      <div className="h-2.5 sm:h-3 bg-gray-200 rounded"></div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </main>
         </div>
-        <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3].map(i => (
-            <Card key={i} className="animate-pulse">
-              <div className="h-40 sm:h-48 bg-gray-200 rounded-t-lg"></div>
-              <CardContent className="p-3 sm:p-4">
-                <div className="h-3 sm:h-4 bg-gray-200 rounded mb-2"></div>
-                <div className="h-2.5 sm:h-3 bg-gray-200 rounded"></div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
+      </SidebarProvider>
     );
   }
 
@@ -443,27 +452,30 @@ export default function DesignerServices() {
         <DesignerSidebar />
         
         <main className="flex-1">
-          {/* Header */}
-          <header className="bg-gradient-to-r from-green-400 to-blue-500 px-4 sm:px-6 py-4 sm:py-8">
-            <div className="flex items-center space-x-3 sm:space-x-4">
-              <SidebarTrigger className="text-white hover:bg-white/20 flex-shrink-0" />
-              <div className="min-w-0 flex-1">
-                <h1 className="text-xl sm:text-2xl font-bold text-white truncate">My Services</h1>
-                <p className="text-white/80 text-xs sm:text-sm truncate">Create and manage your design services</p>
+          <DashboardHeader
+            title="My Services"
+            subtitle="Create and manage your design services"
+            icon={<Package className="w-6 h-6 sm:w-8 sm:h-8 text-white" />}
+            additionalInfo={
+              <div className="flex items-center space-x-2 sm:space-x-4 text-xs sm:text-sm">
+                <span className="text-white/90 font-medium">{services.length} Total Services</span>
+                <span className="text-white/60">•</span>
+                <span className="text-white/90 font-medium">{services.filter(s => s.is_active).length} Active</span>
               </div>
-            </div>
-          </header>
+            }
+            actionButton={
+              <Button 
+                onClick={() => setCreateDialogOpen(true)}
+                className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-200 text-xs sm:text-sm w-full sm:w-auto"
+              >
+                <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                Create Service
+              </Button>
+            }
+          />
 
           <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
-            {/* Create Service Button */}
-            <div className="flex justify-end">
-              <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create Service
-                  </Button>
-                </DialogTrigger>
+            <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create New Service</DialogTitle>
@@ -1148,7 +1160,6 @@ export default function DesignerServices() {
           ))}
           </div>
         )}
-      </div>
         </main>
       </div>
     </SidebarProvider>

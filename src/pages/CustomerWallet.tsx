@@ -26,6 +26,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { CustomerSidebar } from '@/components/CustomerSidebar';
+import { DashboardHeader } from '@/components/DashboardHeader';
 import {
   Sidebar,
   SidebarContent,
@@ -209,23 +210,19 @@ export default function CustomerWallet() {
         <CustomerSidebar />
         
         <main className="flex-1">
-          {/* Header */}
-          <header className="bg-gradient-to-br from-green-400 via-teal-500 to-blue-500 text-white px-4 sm:px-6 py-6 sm:py-12 relative overflow-hidden">
-            <div className="absolute inset-0 bg-black/10"></div>
-            <div className="relative z-10 flex items-center justify-between">
-              <div className="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
-                <SidebarTrigger className="text-white flex-shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2 truncate">Wallet</h1>
-                  <p className="text-green-100 text-xs sm:text-sm hidden sm:block">Manage your wallet balance and transactions</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
+          <DashboardHeader
+            title="Wallet"
+            subtitle="Manage your wallet balance and transactions"
+            icon={<Wallet className="w-6 h-6 sm:w-8 sm:h-8 text-white" />}
+            userInitials={userInitials}
+            isOnline={true}
+            actionButton={
+              <div className="flex items-center space-x-2 sm:space-x-3">
                 <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-green-100" />
                 <Popover>
                   <PopoverTrigger asChild>
                     <button className="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
-                          <span className="text-white font-semibold text-xs sm:text-sm">{userInitials}</span>
+                      <span className="text-white font-semibold text-xs sm:text-sm">{userInitials}</span>
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-64 p-0" align="end">
@@ -272,13 +269,8 @@ export default function CustomerWallet() {
                   </PopoverContent>
                 </Popover>
               </div>
-            </div>
-            
-            {/* Floating decorative elements */}
-            <div className="absolute top-4 right-20 w-2 h-2 bg-white/30 rounded-full animate-pulse"></div>
-            <div className="absolute bottom-6 right-32 w-1 h-1 bg-white/20 rounded-full animate-pulse delay-1000"></div>
-            <div className="absolute top-12 right-40 w-1.5 h-1.5 bg-white/25 rounded-full animate-pulse delay-500"></div>
-          </header>
+            }
+          />
 
           <div className="p-4 sm:p-6 space-y-6 sm:space-y-8">
             {/* Balance and Payment Methods */}

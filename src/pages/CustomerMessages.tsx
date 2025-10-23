@@ -20,6 +20,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { CustomerSidebar } from "@/components/CustomerSidebar";
+import { DashboardHeader } from "@/components/DashboardHeader";
 import { RingingBell } from "@/components/RingingBell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -730,55 +731,11 @@ export default function CustomerMessages() {
         <CustomerSidebar />
         
         <main className="flex-1 flex flex-col">
-          {/* Header */}
-          <header className="bg-gradient-to-br from-green-400 via-teal-500 to-blue-500 text-white px-4 sm:px-6 py-4 sm:py-8 flex-shrink-0 relative overflow-hidden">
-            <div className="absolute inset-0 bg-black/10"></div>
-            <div className="relative z-10 flex items-center justify-between">
-              <div className="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
-                <SidebarTrigger className="text-white flex-shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-1 sm:mb-2 truncate">Messages</h1>
-                  <p className="text-green-100 text-xs sm:text-sm hidden sm:block">Chat with your designers and collaborate in real-time</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
-                <RingingBell className="w-4 h-4 sm:w-5 sm:h-5 text-green-100" />
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button className="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
-                      <span className="text-white font-semibold text-xs sm:text-sm">U</span>
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-64 p-0" align="end">
-                    <div className="p-4">
-                      <div className="flex items-center space-x-3 mb-3">
-                        <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-teal-500 rounded-full flex items-center justify-center">
-                          <span className="text-white font-semibold text-sm">U</span>
-                        </div>
-                        <div>
-                          <p className="font-semibold text-foreground">User</p>
-                          <p className="text-sm text-muted-foreground">{user?.email}</p>
-                        </div>
-                      </div>
-                      <Separator className="my-3" />
-                      <div className="space-y-1">
-                        <Link 
-                          to="/customer-dashboard" 
-                          className="flex items-center px-3 py-2 text-sm text-foreground hover:bg-accent rounded-md transition-colors"
-                        >
-                          Dashboard
-                        </Link>
-                        <button className="flex items-center w-full px-3 py-2 text-sm text-foreground hover:bg-accent rounded-md transition-colors">
-                          <LogOut className="w-4 h-4 mr-3" />
-                          Log out
-                        </button>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-          </header>
+          <DashboardHeader
+            title="Messages"
+            subtitle="Chat with your designers and collaborate in real-time"
+            icon={<MessageCircle className="w-6 h-6 sm:w-8 sm:h-8 text-white" />}
+          />
 
           <div className="flex-1 flex overflow-hidden">
             {/* Conversations List */}

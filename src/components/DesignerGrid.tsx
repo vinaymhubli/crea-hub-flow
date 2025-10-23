@@ -679,21 +679,21 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
                             className="bg-background border border-green-600 text-green-600 py-2 px-4 rounded-xl text-sm font-medium hover:bg-green-50 transition-all duration-200 flex items-center justify-center space-x-2 w-full"
                           >
                             <MessageCircle className="w-4 h-4" />
-                            <span>Chat (Sign in required)</span>
+                            <span>Chat</span>
                           </button>
                           <button 
                             onClick={() => navigate('/auth')}
                             className="bg-background border border-blue-600 text-blue-600 py-2 px-4 rounded-xl text-sm font-medium hover:bg-blue-50 transition-all duration-200 flex items-center justify-center space-x-2 w-full"
                           >
                             <Calendar className="w-4 h-4" />
-                            <span>Book Session (Sign in required)</span>
+                            <span>Book Session</span>
                           </button>
                           <button 
                             onClick={() => navigate('/auth')}
                             className="bg-background border border-purple-600 text-purple-600 py-2 px-4 rounded-xl text-sm font-medium hover:bg-purple-50 transition-all duration-200 flex items-center justify-center space-x-2 w-full"
                           >
                             <Video className="w-4 h-4" />
-                            <span>Live Session (Sign in required)</span>
+                            <span>Live Session</span>
                           </button>
                         </div>
                       )}

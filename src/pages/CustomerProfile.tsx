@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { CustomerSidebar } from "@/components/CustomerSidebar";
+import { DashboardHeader } from "@/components/DashboardHeader";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import {
   Card,
@@ -254,25 +255,14 @@ export default function CustomerProfile() {
         <CustomerSidebar />
 
         <main className="flex-1">
-          {/* Header */}
-          <header className="bg-gradient-to-r from-green-400 to-blue-500 px-6 py-8">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <SidebarTrigger className="text-white hover:bg-white/20" />
-                <div>
-                  <h1 className="text-2xl font-bold text-white">Profile</h1>
-                  <p className="text-white/80">
-                    Manage your personal information
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
-                  <span className="text-white/80 text-sm font-medium">
-                    Online
-                  </span>
-                </div>
+          <DashboardHeader
+            title="Profile"
+            subtitle="Manage your personal information"
+            avatarImage={avatarImage}
+            userInitials={getInitials()}
+            isOnline={true}
+            actionButton={
+              <div className="flex items-center space-x-2 sm:space-x-4">
                 <Bell className="w-5 h-5 text-white/80" />
                 <Popover>
                   <PopoverTrigger asChild>
@@ -318,8 +308,8 @@ export default function CustomerProfile() {
                   </PopoverContent>
                 </Popover>
               </div>
-            </div>
-          </header>
+            }
+          />
 
           <div className="p-6 space-y-8">
             {/* Stats Cards */}

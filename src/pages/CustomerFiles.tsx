@@ -16,6 +16,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { CustomerSidebar } from '@/components/CustomerSidebar';
+import { DashboardHeader } from '@/components/DashboardHeader';
 import {
   SidebarProvider,
   SidebarTrigger,
@@ -345,14 +346,11 @@ export default function CustomerFiles() {
         <div className="flex h-screen bg-gray-50">
           <CustomerSidebar />
           <div className="flex-1 flex flex-col">
-            <header className="bg-white border-b border-gray-200 px-6 py-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <SidebarTrigger />
-                  <h1 className="text-2xl font-bold text-gray-900">My Files</h1>
-                </div>
-              </div>
-            </header>
+            <DashboardHeader
+              title="My Files"
+              subtitle="Manage and organize your design files"
+              icon={<FileText className="w-6 h-6 sm:w-8 sm:h-8 text-white" />}
+            />
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -370,15 +368,16 @@ export default function CustomerFiles() {
       <div className="flex h-screen bg-gray-50">
         <CustomerSidebar />
         <div className="flex-1 flex flex-col">
-          <header className="bg-white border-b border-gray-200 px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <SidebarTrigger />
-                <h1 className="text-2xl font-bold text-gray-900">My Files</h1>
-                <Badge variant="secondary">{files.length} files</Badge>
-              </div>
-            </div>
-          </header>
+          <DashboardHeader
+            title="My Files"
+            subtitle="Manage and organize your design files"
+            icon={<FileText className="w-6 h-6 sm:w-8 sm:h-8 text-white" />}
+            additionalInfo={
+              <Badge className="bg-white/20 text-white backdrop-blur-sm border border-white/30">
+                {files.length} files
+              </Badge>
+            }
+          />
 
           <div className="flex-1 overflow-auto p-6">
             <div className="max-w-7xl mx-auto">

@@ -9,6 +9,8 @@ import { Receipt, Download, Eye, Search, Filter, RefreshCw } from 'lucide-react'
 import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
 import { DesignerSidebar } from '@/components/DesignerSidebar'
+import { DashboardHeader } from '@/components/DashboardHeader'
+import { SidebarProvider } from '@/components/ui/sidebar'
 
 interface DesignerInvoice {
   id: string
@@ -154,146 +156,153 @@ export default function DesignerInvoices() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen">
-        <DesignerSidebar />
-        <div className="flex-1 p-6">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-2 text-gray-600">Loading invoices...</p>
+      <SidebarProvider>
+        <div className="flex min-h-screen">
+          <DesignerSidebar />
+          <div className="flex-1 p-6">
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="mt-2 text-gray-600">Loading invoices...</p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </SidebarProvider>
     )
   }
 
   return (
-    <div className="flex min-h-screen">
-      <DesignerSidebar />
-      <div className="flex-1 p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">My Invoices</h1>
-            <p className="text-gray-600">View and download your invoices</p>
-          </div>
-          <Button onClick={fetchInvoices} variant="outline">
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh
-          </Button>
-        </div>
-
-        {/* Search and Filters */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-wrap gap-4">
-              <div className="flex-1 min-w-[300px]">
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Search invoices..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="All Types" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="withdrawal">Designer Withdrawal</SelectItem>
-                  <SelectItem value="session_earnings">Session Earnings</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="All Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="generated">Generated</SelectItem>
-                  <SelectItem value="sent">Sent</SelectItem>
-                  <SelectItem value="paid">Paid</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
+    <SidebarProvider>
+      <div className="flex min-h-screen">
+        <DesignerSidebar />
+        <div className="flex-1">
+          <DashboardHeader
+            title="My Invoices"
+            subtitle="View and download your invoices"
+            icon={<Receipt className="w-6 h-6 sm:w-8 sm:h-8 text-white" />}
+          />
+          <div className="p-6 space-y-6">
+            <div className="flex justify-end">
+              <Button onClick={fetchInvoices} variant="outline">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Refresh
+              </Button>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Invoices Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Receipt className="w-5 h-5" />
-              My Invoices ({filteredInvoices.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {filteredInvoices.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500">No invoices found</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Invoice #</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Client</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredInvoices.map((invoice) => (
-                      <TableRow key={invoice.id}>
-                        <TableCell className="font-mono text-sm">
-                          {invoice.invoice_number}
-                        </TableCell>
-                        <TableCell>
-                          {getInvoiceTypeBadge(invoice.invoice_type)}
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{invoice.customer_name}</div>
-                            <div className="text-sm text-gray-500">{invoice.customer_email}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-semibold">
-                          {formatCurrency(invoice.total_amount)}
-                        </TableCell>
-                        <TableCell>
-                          {getStatusBadge(invoice.status)}
-                        </TableCell>
-                        <TableCell className="text-sm text-gray-600">
-                          {formatDate(invoice.created_at)}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Button variant="outline" size="sm">
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                            <Button variant="outline" size="sm">
-                              <Download className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+            {/* Search and Filters */}
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex flex-wrap gap-4">
+                  <div className="flex-1 min-w-[300px]">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input
+                        placeholder="Search invoices..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+                  <Select value={filterType} onValueChange={setFilterType}>
+                    <SelectTrigger className="w-[150px]">
+                      <SelectValue placeholder="All Types" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
+                      <SelectItem value="withdrawal">Designer Withdrawal</SelectItem>
+                      <SelectItem value="session_earnings">Session Earnings</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={filterStatus} onValueChange={setFilterStatus}>
+                    <SelectTrigger className="w-[150px]">
+                      <SelectValue placeholder="All Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="generated">Generated</SelectItem>
+                      <SelectItem value="sent">Sent</SelectItem>
+                      <SelectItem value="paid">Paid</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Invoices Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Receipt className="w-5 h-5" />
+                  My Invoices ({filteredInvoices.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {filteredInvoices.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">No invoices found</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Invoice #</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Client</TableHead>
+                          <TableHead>Amount</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredInvoices.map((invoice) => (
+                          <TableRow key={invoice.id}>
+                            <TableCell className="font-mono text-sm">
+                              {invoice.invoice_number}
+                            </TableCell>
+                            <TableCell>
+                              {getInvoiceTypeBadge(invoice.invoice_type)}
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <div className="font-medium">{invoice.customer_name}</div>
+                                <div className="text-sm text-gray-500">{invoice.customer_email}</div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="font-semibold">
+                              {formatCurrency(invoice.total_amount)}
+                            </TableCell>
+                            <TableCell>
+                              {getStatusBadge(invoice.status)}
+                            </TableCell>
+                            <TableCell className="text-sm text-gray-600">
+                              {formatDate(invoice.created_at)}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Button variant="outline" size="sm">
+                                  <Eye className="w-4 h-4" />
+                                </Button>
+                                <Button variant="outline" size="sm">
+                                  <Download className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   )
 }

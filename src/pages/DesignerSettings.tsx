@@ -24,6 +24,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { DesignerSidebar } from '@/components/DesignerSidebar';
+import { DashboardHeader } from '@/components/DashboardHeader';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -177,33 +178,24 @@ export default function DesignerSettings() {
         <DesignerSidebar />
         
         <main className="flex-1">
-          {/* Enhanced Header */}
-          <header className="bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 px-4 sm:px-6 py-4 sm:py-8 relative overflow-hidden">
-            <div className="absolute inset-0 bg-black/10"></div>
-            <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex items-center space-x-3 sm:space-x-6 min-w-0 flex-1">
-                <SidebarTrigger className="text-white hover:bg-white/20 rounded-lg p-2 flex-shrink-0" />
-                <div className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 backdrop-blur-sm rounded-xl sm:rounded-2xl flex items-center justify-center border border-white/30 shadow-xl flex-shrink-0">
-                    <Settings className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white truncate">Settings</h1>
-                    <p className="text-white/90 text-xs sm:text-sm lg:text-lg truncate hidden sm:block">Manage your account settings and preferences</p>
-                    <div className="flex flex-wrap items-center gap-x-2 sm:gap-x-4 gap-y-1 mt-1 sm:mt-2 text-xs sm:text-sm">
-                      <span className="text-white/90 font-medium">Account active</span>
-                      <span className="text-white/60 hidden sm:inline">•</span>
-                      <span className="text-white/90 font-medium">All systems operational</span>
-                    </div>
-                  </div>
-                </div>
+          <DashboardHeader
+            title="Settings"
+            subtitle="Manage your account settings and preferences"
+            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8 text-white" />}
+            additionalInfo={
+              <div className="flex flex-wrap items-center gap-x-2 sm:gap-x-4 gap-y-1 text-xs sm:text-sm">
+                <span className="text-white/90 font-medium">Account active</span>
+                <span className="text-white/60 hidden sm:inline">•</span>
+                <span className="text-white/90 font-medium">All systems operational</span>
               </div>
+            }
+            actionButton={
               <Button className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-200 text-xs sm:text-sm w-full sm:w-auto">
                 <Save className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
                 Save All Changes
               </Button>
-            </div>
-          </header>
+            }
+          />
 
           <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 sm:space-y-8">
             {/* Enhanced Tabs */}

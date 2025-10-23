@@ -19,6 +19,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { DesignerSidebar } from "@/components/DesignerSidebar";
+import { DashboardHeader } from "@/components/DashboardHeader";
 import { RingingBell } from "@/components/RingingBell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -603,86 +604,11 @@ export default function DesignerMessages() {
         <DesignerSidebar />
 
         <main className="flex-1">
-          {/* Header */}
-          <header className="bg-gradient-to-r from-green-400 to-blue-500 px-4 sm:px-6 py-4 sm:py-8">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex items-center space-x-3 sm:space-x-4">
-                <SidebarTrigger className="text-white hover:bg-white/20 flex-shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <h1 className="text-xl sm:text-2xl font-bold text-white truncate">Messages</h1>
-                  <p className="text-white/80 text-xs sm:text-sm truncate hidden sm:block">
-                    Communicate with your clients and manage project discussions
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center justify-between sm:justify-end space-x-3 sm:space-x-4">
-                <div className="flex items-center space-x-1.5 sm:space-x-2">
-                  <div className="w-2 h-2 sm:w-3 sm:h-3 bg-white rounded-full animate-pulse"></div>
-                  <span className="text-white/80 text-xs sm:text-sm font-medium">
-                    Online
-                  </span>
-                </div>
-                <RingingBell className="w-4 h-4 sm:w-5 sm:h-5 text-white/80" />
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button className="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors flex-shrink-0">
-                      <span className="text-white font-semibold text-xs">
-                        MD
-                      </span>
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-64 p-0" align="end">
-                    <div className="p-4">
-                      <div className="flex items-center space-x-3 mb-3">
-                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                          <span className="text-primary font-semibold text-xs">
-                            MD
-                          </span>
-                        </div>
-                        <div>
-                          <p className="font-semibold text-foreground">
-                            Meet My Designer
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            lvbn200@gmail.com
-                          </p>
-                        </div>
-                      </div>
-                      <Separator className="my-3" />
-                      <div className="space-y-1">
-                        <Link
-                          to="/designer-dashboard"
-                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
-                        >
-                          <LayoutDashboard className="w-4 h-4 mr-3" />
-                          Dashboard
-                        </Link>
-                        <Link
-                          to="/designer-dashboard/earnings"
-                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
-                        >
-                          <DollarSign className="w-4 h-4 mr-3" />
-                          Earnings
-                        </Link>
-                        <Link
-                          to="/designer-dashboard/profile"
-                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
-                        >
-                          <User className="w-4 h-4 mr-3" />
-                          Profile
-                        </Link>
-                        <Separator className="my-2" />
-                        <button className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
-                          <LogOut className="w-4 h-4 mr-3" />
-                          Log out
-                        </button>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-          </header>
+          <DashboardHeader
+            title="Messages"
+            subtitle="Communicate with your clients and manage project discussions"
+            icon={<MessageSquare className="w-6 h-6 sm:w-8 sm:h-8 text-white" />}
+          />
 
           <div className="p-4 sm:p-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 h-[calc(100vh-180px)] sm:h-[calc(100vh-200px)]">

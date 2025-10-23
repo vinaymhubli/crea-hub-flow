@@ -9,6 +9,7 @@ import { Receipt, Download, Eye, Search, Filter, RefreshCw, Calendar, User } fro
 import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
 import { CustomerSidebar } from '@/components/CustomerSidebar'
+import { DashboardHeader } from '@/components/DashboardHeader'
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 
 interface CustomerInvoice {
@@ -156,7 +157,12 @@ export default function CustomerInvoices() {
       <SidebarProvider>
         <div className="flex min-h-screen bg-gray-50 overflow-hidden">
           <CustomerSidebar />
-          <div className="flex-1 p-4 sm:p-6 overflow-x-hidden">
+          <div className="flex-1">
+            <DashboardHeader
+              title="My Invoices"
+              subtitle="View and download your invoices"
+              icon={<Receipt className="w-6 h-6 sm:w-8 sm:h-8 text-white" />}
+            />
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -174,22 +180,17 @@ export default function CustomerInvoices() {
       <div className="flex min-h-screen bg-gray-50 overflow-hidden">
         <CustomerSidebar />
         <div className="flex-1 overflow-x-hidden">
-          {/* Header */}
-          <header className="bg-white shadow-sm border-b">
-            <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
-              <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0 overflow-hidden">
-                <SidebarTrigger className="flex-shrink-0" />
-                <div className="min-w-0 flex-1 overflow-hidden">
-                  <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 truncate">My Invoices</h1>
-                  <p className="text-gray-600 text-xs sm:text-sm hidden sm:block truncate">View and download your invoices</p>
-                </div>
-              </div>
+          <DashboardHeader
+            title="My Invoices"
+            subtitle="View and download your invoices"
+            icon={<Receipt className="w-6 h-6 sm:w-8 sm:h-8 text-white" />}
+            actionButton={
               <Button onClick={fetchInvoices} variant="outline" size="sm" className="flex-shrink-0">
                 <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2" />
                 <span className="hidden sm:inline">Refresh</span>
               </Button>
-            </div>
-          </header>
+            }
+          />
 
           <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 overflow-x-hidden">
 
