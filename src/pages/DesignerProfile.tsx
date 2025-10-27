@@ -32,6 +32,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import NotificationBell from '@/components/NotificationBell';
 
 
 export default function DesignerProfile() {

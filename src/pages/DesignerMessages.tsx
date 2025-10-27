@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { ScreenShareModal } from "@/components/ScreenShareModal";
+import NotificationBell from '@/components/NotificationBell';
 
 interface Message {
   id: string;

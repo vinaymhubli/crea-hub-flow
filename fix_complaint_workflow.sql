@@ -61,7 +61,7 @@ BEGIN
             INSERT INTO public.notifications (user_id, type, title, message, related_id, created_at)
             VALUES (
                 v_complaint.designer_id,
-                'message',
+                'complaint_received',
                 'Complaint Approved - Action Required',
                 'A customer complaint has been approved by admin. Please upload a corrected file.',
                 p_complaint_id,

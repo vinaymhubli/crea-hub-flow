@@ -3,7 +3,11 @@ import { DesignerEarningsDashboard } from '@/components/DesignerEarningsDashboar
 import { DesignerSidebar } from '@/components/DesignerSidebar';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+
+import NotificationBell from '@/components/NotificationBell';
+=======
 import { DollarSign } from 'lucide-react';
+
 
 export default function DesignerEarnings() {
   return (

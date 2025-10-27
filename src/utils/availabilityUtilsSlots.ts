@@ -162,7 +162,7 @@ export async function checkDesignerBookingAvailability(
 
     return {
       isAvailable: isInSchedule,
-      reason: isInSchedule ? undefined : "Current time is outside available time slots",
+      reason: isInSchedule ? undefined : "Designer is not available at this time, please choose different time slot",
       isInSchedule,
       isOnline,
     };
@@ -285,7 +285,7 @@ export async function checkDesignerAvailabilityForDateTime(
     if (!designerSlots || designerSlots.length === 0) {
       return {
         isAvailable: false,
-        reason: "Designer has no time slots configured for this day",
+        reason: "Designer is not available for this day",
         isInSchedule: false,
         isOnline: false,
       };
@@ -299,7 +299,7 @@ export async function checkDesignerAvailabilityForDateTime(
 
     return {
       isAvailable: isInSchedule,
-      reason: isInSchedule ? undefined : "Scheduled time is outside available time slots",
+      reason: isInSchedule ? undefined : "Designer is not available at this time, please choose different time slot",
       isInSchedule,
       isOnline: false,
     };

@@ -25,7 +25,10 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import DesignerFileReuploadDialog from "@/components/DesignerFileReuploadDialog";
+
+import DesignerFileReuploadDialog from '@/components/DesignerFileReuploadDialog';
+import NotificationBell from '@/components/NotificationBell';
+
 
 interface Complaint {
   id: string;
