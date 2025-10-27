@@ -21,6 +21,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { CustomerSidebar } from "@/components/CustomerSidebar";
+import { DashboardHeader } from "@/components/DashboardHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -388,65 +389,18 @@ export default function CustomerNotifications() {
         <CustomerSidebar />
         
         <main className="flex-1">
-          {/* Header */}
-          <header className="bg-gradient-to-r from-green-400 to-blue-500 px-6 py-8">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <SidebarTrigger className="text-white hover:bg-white/20" />
-                <div>
-                  <div className="flex items-center space-x-3">
-                    <h1 className="text-2xl font-bold text-white">Notifications</h1>
-                    {unreadCount > 0 && (
-                      <Badge className="bg-white/20 text-white backdrop-blur-sm border border-white/30">
-                        {unreadCount} new
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-white/80">Stay updated with your design projects</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
-                  <span className="text-white/80 text-sm font-medium">Online</span>
-                </div>
-                <Bell className="w-5 h-5 text-white/80" />
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
-                      <span className="text-white font-semibold text-sm">U</span>
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-64 p-0" align="end">
-                    <div className="p-4">
-                      <div className="flex items-center space-x-3 mb-3">
-                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                          <span className="text-primary font-semibold text-sm">U</span>
-                        </div>
-                        <div>
-                          <p className="font-semibold text-foreground">User</p>
-                          <p className="text-sm text-muted-foreground">{user?.email}</p>
-                        </div>
-                      </div>
-                      <Separator className="my-3" />
-                      <div className="space-y-1">
-                        <Link 
-                          to="/customer-dashboard" 
-                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
-                        >
-                          Dashboard
-                        </Link>
-                        <button className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
-                          <LogOut className="w-4 h-4 mr-3" />
-                          Log out
-                        </button>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-          </header>
+          <DashboardHeader
+            title="Notifications"
+            subtitle="Stay updated with your design projects"
+            icon={<Bell className="w-6 h-6 sm:w-8 sm:h-8 text-white" />}
+            additionalInfo={
+              unreadCount > 0 && (
+                <Badge className="bg-white/20 text-white backdrop-blur-sm border border-white/30">
+                  {unreadCount} new
+                </Badge>
+              )
+            }
+          />
 
           <div className="p-6 space-y-8">
             {/* Stats Cards */}

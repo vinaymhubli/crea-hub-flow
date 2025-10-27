@@ -42,6 +42,7 @@ import { Separator } from "@/components/ui/separator";
 import { CustomerSidebar } from '@/components/CustomerSidebar';
 import { RingingBell } from '@/components/RingingBell';
 import NotificationBell from '@/components/NotificationBell';
+import { DashboardHeader } from '@/components/DashboardHeader';
 import SessionRatingDialog from '@/components/SessionRatingDialog';
 
 export default function CustomerDashboard() {
@@ -228,35 +229,14 @@ export default function CustomerDashboard() {
         <CustomerSidebar />
         
         <main className="flex-1">
-          {/* Header */}
-          <header className="bg-gradient-to-r from-green-400 to-blue-500 px-4 sm:px-6 py-4 sm:py-8">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="grid grid-cols-1 sm:flex items-center space-x-3 sm:space-x-4">
-                <SidebarTrigger className="text-white hover:bg-white/20 flex-shrink-0" />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => navigate('/')}
-                  className="text-white hover:bg-white/20 flex items-center space-x-2 text-xs sm:text-sm"
-                >
-                  <Home className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Back to Home</span>
-                  <span className="sm:hidden">Home</span>
-                </Button>
-                <div className="min-w-0 flex-1">
-                  <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-white truncate">
-                    Welcome back, {profile?.first_name || 'Customer'}!
-                  </h1>
-                  <p className="text-white/80 text-xs sm:text-sm hidden sm:block">
-                    Explore amazing designs and connect with talented designers
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center justify-between sm:justify-end space-x-2 sm:space-x-4">
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 sm:w-3 sm:h-3 bg-white rounded-full animate-pulse"></div>
-                  <span className="text-white/80 text-xs sm:text-sm font-medium">Online</span>
-                </div>
+          <DashboardHeader
+            title={`Welcome back, ${profile?.first_name || 'Customer'}!`}
+            subtitle="Explore amazing designs and connect with talented designers"
+            userInitials={userInitials}
+            isOnline={true}
+            showHomeButton={true}
+            actionButton={
+              <div className="flex items-center space-x-2 sm:space-x-4">
                 <NotificationBell />
                 <Popover>
                   <PopoverTrigger asChild>
@@ -311,8 +291,8 @@ export default function CustomerDashboard() {
                   </PopoverContent>
                 </Popover>
               </div>
-            </div>
-          </header>
+            }
+          />
 
           <div className="p-4 sm:p-6 space-y-6 sm:space-y-8">
             {/* Quick Actions */}

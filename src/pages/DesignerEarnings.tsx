@@ -1,25 +1,25 @@
 import React from 'react';
 import { DesignerEarningsDashboard } from '@/components/DesignerEarningsDashboard';
 import { DesignerSidebar } from '@/components/DesignerSidebar';
+import { DashboardHeader } from '@/components/DashboardHeader';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+
 import NotificationBell from '@/components/NotificationBell';
+=======
+import { DollarSign } from 'lucide-react';
+
 
 export default function DesignerEarnings() {
   return (
     <SidebarProvider>
       <DesignerSidebar />
       <SidebarInset>
-        <div className="flex flex-1 flex-col gap-4 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Earnings</h1>
-              <p className="text-muted-foreground">
-                Track your earnings and manage withdrawals
-              </p>
-            </div>
-            <NotificationBell />
-          </div>
-          
+        <DashboardHeader
+          title="Earnings"
+          subtitle="Track your earnings and manage withdrawals"
+          icon={<DollarSign className="w-6 h-6 sm:w-8 sm:h-8 text-white" />}
+        />
+        <div className="flex flex-1 flex-col gap-4 p-4 sm:p-6">
           <DesignerEarningsDashboard />
         </div>
       </SidebarInset>

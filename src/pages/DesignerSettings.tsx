@@ -24,6 +24,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { DesignerSidebar } from '@/components/DesignerSidebar';
+import { DashboardHeader } from '@/components/DashboardHeader';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -177,38 +178,29 @@ export default function DesignerSettings() {
         <DesignerSidebar />
         
         <main className="flex-1">
-          {/* Enhanced Header */}
-          <header className="bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 px-6 py-8 relative overflow-hidden">
-            <div className="absolute inset-0 bg-black/10"></div>
-            <div className="relative z-10 flex items-center justify-between">
-              <div className="flex items-center space-x-6">
-                <SidebarTrigger className="text-white hover:bg-white/20 rounded-lg p-2" />
-                <div className="flex items-center space-x-4">
-                  <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/30 shadow-xl">
-                    <Settings className="w-8 h-8 text-white" />
-                  </div>
-                  <div>
-                    <h1 className="text-3xl font-bold text-white">Settings</h1>
-                    <p className="text-white/90 text-lg">Manage your account settings and preferences</p>
-                    <div className="flex items-center space-x-4 mt-2">
-                      <span className="text-white/90 font-medium">Account active</span>
-                      <span className="text-white/60">•</span>
-                      <span className="text-white/90 font-medium">All systems operational</span>
-                    </div>
-                  </div>
-                </div>
+          <DashboardHeader
+            title="Settings"
+            subtitle="Manage your account settings and preferences"
+            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8 text-white" />}
+            additionalInfo={
+              <div className="flex flex-wrap items-center gap-x-2 sm:gap-x-4 gap-y-1 text-xs sm:text-sm">
+                <span className="text-white/90 font-medium">Account active</span>
+                <span className="text-white/60 hidden sm:inline">•</span>
+                <span className="text-white/90 font-medium">All systems operational</span>
               </div>
-              <Button className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-200">
-                <Save className="w-4 h-4 mr-2" />
+            }
+            actionButton={
+              <Button className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-200 text-xs sm:text-sm w-full sm:w-auto">
+                <Save className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
                 Save All Changes
               </Button>
-            </div>
-          </header>
+            }
+          />
 
-          <div className="p-8 max-w-7xl mx-auto space-y-8">
+          <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 sm:space-y-8">
             {/* Enhanced Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-2 mb-8">
+              <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl border border-gray-100 p-1.5 sm:p-2 mb-6 sm:mb-8 overflow-x-auto">
                 <TabsList className="grid w-auto grid-cols-5 bg-transparent gap-2">
                   <TabsTrigger 
                     value="general"

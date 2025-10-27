@@ -71,9 +71,9 @@ function SidebarUserInfo() {
       </div>
       <div>
         <p className="font-semibold text-gray-900">{getDisplayName()}</p>
-        <p className="text-sm text-gray-500">
+        {/* <p className="text-sm text-gray-500">
           {designerProfile?.is_online ? 'Online' : 'Offline'}
-        </p>
+        </p> */}
       </div>
     </div>
   );
