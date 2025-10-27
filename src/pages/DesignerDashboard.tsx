@@ -957,6 +957,7 @@ export default function DesignerDashboard() {
             bookingId={undefined} // Live sessions don't have booking IDs
           />
         )}
+        
       </div>
     </SidebarProvider>
   );

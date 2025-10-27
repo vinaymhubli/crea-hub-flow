@@ -2,6 +2,7 @@ import React from 'react';
 import { DesignerEarningsDashboard } from '@/components/DesignerEarningsDashboard';
 import { DesignerSidebar } from '@/components/DesignerSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import NotificationBell from '@/components/NotificationBell';
 
 export default function DesignerEarnings() {
   return (
@@ -16,6 +17,7 @@ export default function DesignerEarnings() {
                 Track your earnings and manage withdrawals
               </p>
             </div>
+            <NotificationBell />
           </div>
           
           <DesignerEarningsDashboard />

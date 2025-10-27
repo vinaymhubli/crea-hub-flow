@@ -24,6 +24,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import DesignerFileReuploadDialog from '@/components/DesignerFileReuploadDialog';
+import NotificationBell from '@/components/NotificationBell';
 
 interface Complaint {
   id: string;
@@ -222,6 +223,9 @@ export default function DesignerComplaints() {
               <div className="flex items-center gap-4">
                 <SidebarTrigger />
                 <h1 className="text-2xl font-semibold text-gray-900">Complaints</h1>
+              </div>
+              <div className="flex items-center space-x-4">
+                <NotificationBell />
               </div>
             </div>
           </header>

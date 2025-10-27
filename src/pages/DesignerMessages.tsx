@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { ScreenShareModal } from "@/components/ScreenShareModal";
+import NotificationBell from '@/components/NotificationBell';
 
 interface Message {
   id: string;
@@ -621,6 +622,7 @@ export default function DesignerMessages() {
                     Online
                   </span>
                 </div>
+                <NotificationBell />
                 <RingingBell className="w-5 h-5 text-white/80" />
                 <Popover>
                   <PopoverTrigger asChild>

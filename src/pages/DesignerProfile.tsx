@@ -31,6 +31,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import NotificationBell from '@/components/NotificationBell';
 
 
 export default function DesignerProfile() {
@@ -332,20 +333,23 @@ export default function DesignerProfile() {
                   </div>
                 </div>
               </div>
-              <Button 
-                asChild 
-                className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-200"
-                disabled={!designerProfile?.id}
-              >
-                <Link 
-                  to={`/designer/${designerProfile?.id}`}
-                  state={{ hideGlobalChrome: true, fromProfile: true }}
+              <div className="flex items-center space-x-4">
+                <NotificationBell />
+                <Button 
+                  asChild 
+                  className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-200"
+                  disabled={!designerProfile?.id}
                 >
-                  <Eye className="w-4 h-4" />
-                  <span>View Public Profile</span>
-                  <ChevronRight className="w-4 h-4" />
-                </Link>
-              </Button>
+                  <Link 
+                    to={`/designer/${designerProfile?.id}`}
+                    state={{ hideGlobalChrome: true, fromProfile: true }}
+                  >
+                    <Eye className="w-4 h-4" />
+                    <span>View Public Profile</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </Link>
+                </Button>
+              </div>
             </div>
           </header>
 

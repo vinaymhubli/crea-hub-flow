@@ -43,6 +43,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import NotificationBell from '@/components/NotificationBell';
 
 export default function DesignerBookings() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -523,13 +524,16 @@ export default function DesignerBookings() {
                   </div>
                 </div>
               </div>
-              <Button 
-                onClick={handleCalendarView}
-                className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-2.5 font-medium"
-              >
-                <CalendarDays className="w-4 h-4 mr-2" />
-                {showCalendarView ? 'List View' : 'Calendar View'}
-              </Button>
+              <div className="flex items-center space-x-4">
+                <NotificationBell />
+                <Button 
+                  onClick={handleCalendarView}
+                  className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-2.5 font-medium"
+                >
+                  <CalendarDays className="w-4 h-4 mr-2" />
+                  {showCalendarView ? 'List View' : 'Calendar View'}
+                </Button>
+              </div>
             </div>
           </header>
 
