@@ -787,12 +787,12 @@ export default function NotificationBell() {
 
 
   return (
-    <div className="relative">
+    <div className="relative z-[999999]">
       <Button
         variant="ghost"
         size="sm"
         onClick={() => setIsOpen(!isOpen)}
-        className="relative"
+        className="relative z-[999999]"
       >
         <Bell className="w-5 h-5" />
         {unreadCount > 0 && (
@@ -807,8 +807,11 @@ export default function NotificationBell() {
       
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-80 z-50">
-          <Card className="shadow-lg border">
+        <>
+          {/* Backdrop to ensure notification is on top */}
+          <div className="fixed inset-0 z-[999998] bg-transparent" onClick={() => setIsOpen(false)}></div>
+          <div className="fixed right-4 top-20 w-80 z-[999999] bg-white shadow-2xl border-2 border-gray-200 rounded-lg">
+            <Card className="shadow-lg border bg-white">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">Notifications</CardTitle>
@@ -871,6 +874,7 @@ export default function NotificationBell() {
             </CardContent>
           </Card>
         </div>
+        </>
       )}
     </div>
   );
