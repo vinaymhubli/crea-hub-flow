@@ -5,7 +5,6 @@ import { DashboardHeader } from '@/components/DashboardHeader';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 
 import NotificationBell from '@/components/NotificationBell';
-=======
 import { DollarSign } from 'lucide-react';
 
 
