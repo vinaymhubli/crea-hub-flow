@@ -192,18 +192,8 @@ export const useRealtimeBookings = () => {
         if (fullBooking) {
           setBookings(prev => [...prev, fullBooking]);
           
-          // For designers, show notification for new pending bookings
+          // For designers, call the callback if provided (toast notification handled by NotificationBell)
           if (profile?.user_type === 'designer' && fullBooking.status === 'pending') {
-            const customerName = fullBooking.customer 
-              ? `${fullBooking.customer.first_name || ''} ${fullBooking.customer.last_name || ''}`.trim()
-              : 'A customer';
-            
-            toast({
-              title: "New Booking Request!",
-              description: `${customerName} wants to book ${fullBooking.service}`,
-              duration: 10000,
-            });
-
             // Call the callback if provided
             if (onNewBooking) {
               onNewBooking(fullBooking);

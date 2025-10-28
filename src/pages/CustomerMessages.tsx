@@ -36,8 +36,7 @@ import { ScreenShareModal } from "@/components/ScreenShareModal";
 interface Message {
   id: string;
   sender_id: string;
-  booking_id?: string;
-  conversation_id?: string;
+  conversation_id: string;
   content: string;
   message_type: string;
   file_url: string | null;
@@ -45,8 +44,7 @@ interface Message {
 }
 
 interface Conversation {
-  conversation_id?: string;
-  booking_id?: string;
+  conversation_id: string;
   designer_id: string;
   designer_name: string;
   designer_rating: number;
@@ -55,7 +53,6 @@ interface Conversation {
   last_message: string;
   last_message_time: string;
   unread_count: number;
-  type: 'booking' | 'direct';
 }
 
 export default function CustomerMessages() {
@@ -124,7 +121,6 @@ export default function CustomerMessages() {
 
 
   const designerId = searchParams.get('designer_id');
-  const bookingId = searchParams.get('booking_id');
 
   // Helper function to clear unread count for a conversation
   const clearUnreadCount = useCallback(async (conversation: Conversation) => {
@@ -133,17 +129,14 @@ export default function CustomerMessages() {
         // Update local state immediately for better UX
         setConversations(prev => 
           prev.map(c => 
-            c.conversation_id === conversation.conversation_id || 
-            c.booking_id === conversation.booking_id
+            c.conversation_id === conversation.conversation_id
               ? { ...c, unread_count: 0 }
               : c
           )
         );
 
         // Store the last viewed timestamp in localStorage to track read status
-        const lastViewedKey = conversation.booking_id 
-          ? `last_viewed_booking_${conversation.booking_id}`
-          : `last_viewed_conversation_${conversation.conversation_id}`;
+        const lastViewedKey = `last_viewed_conversation_${conversation.conversation_id}`;
         
         localStorage.setItem(lastViewedKey, new Date().toISOString());
       } catch (error) {
@@ -158,32 +151,18 @@ export default function CustomerMessages() {
         setLoading(true);
       }
       
-      // Get both booking-based and direct conversations
-      const [bookingConversations, directConversations] = await Promise.all([
-        fetchBookingConversations(),
-        fetchDirectConversations()
-      ]);
-
-      const allConversations = [...directConversations, ...bookingConversations];
-      setConversations(allConversations);
+      // Only fetch direct conversations - no booking-related chats
+      const directConversations = await fetchDirectConversations();
+      setConversations(directConversations);
       
-      console.log('URL params - designerId:', designerId, 'bookingId:', bookingId);
+      console.log('URL params - designerId:', designerId);
       
-      if (bookingId) {
-        const conversation = allConversations.find(c => c.type === 'booking' && c.booking_id === bookingId);
-        if (conversation) {
-          console.log('Found existing booking conversation:', conversation);
-          setSelectedConversation(conversation);
-          clearUnreadCount(conversation);
-          return;
-        }
-      }
       
       if (designerId) {
         // Find or create a direct conversation with this designer
-        const designerConversation = allConversations.find(c => c.designer_id === designerId);
+        const designerConversation = directConversations.find(c => c.designer_id === designerId);
         if (designerConversation) {
-          console.log('Found existing direct conversation:', designerConversation);
+          console.log('Found existing conversation with designer:', designerConversation);
           setSelectedConversation(designerConversation);
           clearUnreadCount(designerConversation);
           // Remove designer_id from URL after successful selection
@@ -201,8 +180,8 @@ export default function CustomerMessages() {
       }
       
       // Only auto-select first conversation on desktop (not on mobile)
-      if (allConversations.length > 0 && !selectedConversation && window.innerWidth >= 640) {
-        const firstConversation = allConversations[0];
+      if (directConversations.length > 0 && !selectedConversation && window.innerWidth >= 640) {
+        const firstConversation = directConversations[0];
         setSelectedConversation(firstConversation);
         clearUnreadCount(firstConversation);
       }
@@ -213,94 +192,8 @@ export default function CustomerMessages() {
         setLoading(false);
       }
     }
-  }, [designerId, bookingId, selectedConversation, user?.id, setSearchParams]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [designerId, selectedConversation, user?.id, setSearchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const fetchBookingConversations = useCallback(async () => {
-    const { data: bookings, error: bookingsError } = await supabase
-      .from('bookings')
-      .select('id, designer_id')
-      .eq('customer_id', user?.id)
-      .order('updated_at', { ascending: false });
-
-    if (bookingsError || !bookings) return [];
-
-    const designerIds = [...new Set(bookings.map(b => b.designer_id))];
-    if (designerIds.length === 0) return [];
-
-    const { data: designers } = await supabase
-      .from('designers')
-      .select('id, user_id, rating, is_online')
-      .in('id', designerIds);
-
-    if (!designers) return [];
-
-    const userIds = designers.map(d => d.user_id);
-    const { data: designerProfiles } = await supabase
-      .from('profiles')
-      .select('user_id, first_name, last_name')
-      .in('user_id', userIds);
-
-    const conversationPromises = bookings.map(async (booking) => {
-      const designer = designers?.find(d => d.id === booking.designer_id);
-      const designerProfile = designerProfiles?.find(p => p.user_id === designer?.user_id);
-      
-      const designerName = designerProfile 
-        ? `${designerProfile.first_name || ''} ${designerProfile.last_name || ''}`.trim() || 'Designer'
-        : 'Designer';
-      const designerInitials = designerProfile 
-        ? `${designerProfile.first_name?.[0] || ''}${designerProfile.last_name?.[0] || ''}` || 'D'
-        : 'D';
-
-      const { data: latestMessage } = await supabase
-        .from('messages')
-        .select('content, created_at')
-        .eq('booking_id', booking.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      // Get the last viewed timestamp from localStorage
-      const lastViewedKey = `last_viewed_booking_${booking.id}`;
-      const lastViewed = localStorage.getItem(lastViewedKey);
-      
-      let unreadCount = 0;
-      if (lastViewed) {
-        // Count messages after the last viewed timestamp
-        const { count } = await supabase
-          .from('messages')
-          .select('*', { count: 'exact', head: true })
-          .eq('booking_id', booking.id)
-          .neq('sender_id', user?.id)
-          .gt('created_at', lastViewed);
-        unreadCount = count || 0;
-      } else {
-        // If no last viewed timestamp, count all messages from others
-        const { count } = await supabase
-          .from('messages')
-          .select('*', { count: 'exact', head: true })
-          .eq('booking_id', booking.id)
-          .neq('sender_id', user?.id);
-        unreadCount = count || 0;
-      }
-
-      return {
-        booking_id: booking.id,
-        designer_id: booking.designer_id,
-        designer_name: designerName,
-        designer_rating: designer?.rating || 0,
-        designer_initials: designerInitials,
-        designer_online: designer?.is_online || false,
-        last_message: latestMessage?.content || 'No messages yet',
-        last_message_time: latestMessage?.created_at 
-          ? new Date(latestMessage.created_at).toLocaleDateString()
-          : '',
-        unread_count: Math.min(unreadCount || 0, 9),
-        type: 'booking' as const
-      };
-    });
-
-    return Promise.all(conversationPromises);
-  }, [user?.id]);
 
   const fetchDirectConversations = useCallback(async () => {
     const { data: conversations, error } = await supabase
@@ -386,8 +279,7 @@ export default function CustomerMessages() {
         last_message_time: latestMessage?.created_at 
           ? new Date(latestMessage.created_at).toLocaleDateString()
           : '',
-        unread_count: Math.min(unreadCount || 0, 9),
-        type: 'direct' as const
+        unread_count: Math.min(unreadCount || 0, 9)
       };
     });
 
@@ -446,8 +338,7 @@ export default function CustomerMessages() {
         designer_online: designer?.is_online || false,
         last_message: 'Start chatting...',
         last_message_time: new Date().toLocaleDateString(),
-        unread_count: 0,
-        type: 'direct'
+        unread_count: 0
       };
 
       console.log('Optimistically selecting new conversation:', newConversation);
@@ -471,25 +362,15 @@ export default function CustomerMessages() {
     }
   }, [user?.id, setSearchParams]);
 
-  const fetchMessages = useCallback(async (conversationOrBookingId: string) => {
+  const fetchMessages = useCallback(async (conversationId: string) => {
     if (!selectedConversation) return;
 
     try {
-      let data, error;
-      
-      if (selectedConversation.type === 'direct' && selectedConversation.conversation_id) {
-        ({ data, error } = await supabase
-          .from('conversation_messages')
-          .select('*')
-          .eq('conversation_id', selectedConversation.conversation_id)
-          .order('created_at', { ascending: true }));
-      } else if (selectedConversation.booking_id) {
-        ({ data, error } = await supabase
-          .from('messages')
-          .select('*')
-          .eq('booking_id', selectedConversation.booking_id)
-          .order('created_at', { ascending: true }));
-      }
+      const { data, error } = await supabase
+        .from('conversation_messages')
+        .select('*')
+        .eq('conversation_id', selectedConversation.conversation_id)
+        .order('created_at', { ascending: true });
 
       if (error) {
         console.error('Error fetching messages:', error);
@@ -514,7 +395,6 @@ export default function CustomerMessages() {
     const optimisticMessage: Message = {
       id: tempId,
       sender_id: user?.id || '',
-      booking_id: selectedConversation.booking_id,
       conversation_id: selectedConversation.conversation_id,
       content: messageContent,
       message_type: 'text',
@@ -527,27 +407,15 @@ export default function CustomerMessages() {
 
     try {
       setIsSending(true);
-      let error;
 
-      if (selectedConversation.type === 'direct' && selectedConversation.conversation_id) {
-        ({ error } = await supabase
-          .from('conversation_messages')
-          .insert({
-            conversation_id: selectedConversation.conversation_id,
-            sender_id: user?.id,
-            content: messageContent,
-            message_type: 'text'
-          }));
-      } else if (selectedConversation.booking_id) {
-        ({ error } = await supabase
-          .from('messages')
-          .insert({
-            booking_id: selectedConversation.booking_id,
-            sender_id: user?.id,
-            content: messageContent,
-            message_type: 'text'
-          }));
-      }
+      const { error } = await supabase
+        .from('conversation_messages')
+        .insert({
+          conversation_id: selectedConversation.conversation_id,
+          sender_id: user?.id,
+          content: messageContent,
+          message_type: 'text'
+        });
 
       if (error) {
         console.error('Error sending message:', error);
@@ -571,56 +439,30 @@ export default function CustomerMessages() {
     }
   };
 
-  const setupRealtimeSubscription = useCallback((conversationOrBookingId: string) => {
+  const setupRealtimeSubscription = useCallback((conversationId: string) => {
     if (!selectedConversation) return;
 
-    const channels: ReturnType<typeof supabase.channel>[] = [];
-
-    if (selectedConversation.type === 'direct' && selectedConversation.conversation_id) {
-      const channel = supabase
-        .channel(`customer-conversation-${selectedConversation.conversation_id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'conversation_messages',
-            filter: `conversation_id=eq.${selectedConversation.conversation_id}`
-          },
-          (payload) => {
-            setMessages(prev => [...prev, payload.new as Message]);
-            // Throttle conversation refresh
-            setTimeout(() => fetchConversations(), 1000);
-          }
-        )
-        .subscribe();
-      channels.push(channel);
-    }
-
-    if (selectedConversation.booking_id) {
-      const channel = supabase
-        .channel(`customer-messages-${selectedConversation.booking_id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'messages',
-            filter: `booking_id=eq.${selectedConversation.booking_id}`
-          },
-           (payload) => {
-            console.log('New booking message received:', payload.new);
-            setMessages(prev => [...prev, payload.new as Message]);
-            // Throttle conversation refresh
-            setTimeout(() => fetchConversations(), 1000);
-          }
-        )
-        .subscribe();
-      channels.push(channel);
-    }
+    const channel = supabase
+      .channel(`customer-conversation-${selectedConversation.conversation_id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'conversation_messages',
+          filter: `conversation_id=eq.${selectedConversation.conversation_id}`
+        },
+        (payload) => {
+          console.log('New conversation message received:', payload.new);
+          setMessages(prev => [...prev, payload.new as Message]);
+          // Throttle conversation refresh
+          setTimeout(() => fetchConversations(), 1000);
+        }
+      )
+      .subscribe();
 
     return () => {
-      channels.forEach(channel => supabase.removeChannel(channel));
+      supabase.removeChannel(channel);
     };
   }, [selectedConversation]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -669,10 +511,10 @@ export default function CustomerMessages() {
   useEffect(() => {
     if (user) {
       // Only show loading on initial load or when URL params change
-      const shouldShowLoading = initialLoad || Boolean(designerId) || Boolean(bookingId);
+      const shouldShowLoading = initialLoad || Boolean(designerId);
       fetchConversations(shouldShowLoading);
     }
-  }, [user, designerId, bookingId, initialLoad, fetchConversations]);
+  }, [user, designerId, initialLoad, fetchConversations]);
 
   // Separate effect to handle initial load state
   useEffect(() => {
@@ -686,9 +528,9 @@ export default function CustomerMessages() {
     let screenShareCleanup: (() => void) | undefined;
     
     if (selectedConversation) {
-      fetchMessages(selectedConversation.conversation_id || selectedConversation.booking_id || '');
-      cleanup = setupRealtimeSubscription(selectedConversation.conversation_id || selectedConversation.booking_id || '');
-      screenShareCleanup = setupScreenShareNotification(selectedConversation.conversation_id || selectedConversation.booking_id || '');
+      fetchMessages(selectedConversation.conversation_id);
+      cleanup = setupRealtimeSubscription(selectedConversation.conversation_id);
+      screenShareCleanup = setupScreenShareNotification(selectedConversation.conversation_id);
     }
     
     return () => {
@@ -767,14 +609,13 @@ export default function CustomerMessages() {
                 ) : (
                   filteredConversations.map((conversation) => (
                     <div
-                      key={conversation.conversation_id || conversation.booking_id}
+                      key={conversation.conversation_id}
                       onClick={() => {
                         setSelectedConversation(conversation);
                         clearUnreadCount(conversation);
                       }}
                       className={`p-3 sm:p-4 border-b border-teal-200/20 cursor-pointer transition-all duration-300 hover:bg-gradient-to-r hover:from-teal-50 hover:to-blue-50 ${
-                        selectedConversation?.conversation_id === conversation.conversation_id || 
-                        selectedConversation?.booking_id === conversation.booking_id
+                        selectedConversation?.conversation_id === conversation.conversation_id
                           ? 'bg-gradient-to-r from-teal-100 to-blue-100 border-teal-300'
                           : ''
                       }`}
@@ -1007,7 +848,7 @@ export default function CustomerMessages() {
         <ScreenShareModal
           isOpen={showScreenShare}
           onClose={() => setShowScreenShare(false)}
-          roomId={selectedConversation.conversation_id || selectedConversation.booking_id || ''}
+          roomId={selectedConversation.conversation_id}
           isHost={false}
           participantName={selectedConversation.designer_name}
         />

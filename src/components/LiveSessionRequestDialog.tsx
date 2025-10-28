@@ -231,6 +231,29 @@ export default function LiveSessionRequestDialog({
 
       if (error) throw error;
 
+      // Create or ensure conversation exists between customer and designer
+      try {
+        const { data: existingConversation } = await supabase
+          .from('conversations')
+          .select('id')
+          .eq('customer_id', user.id)
+          .eq('designer_id', designer.id)
+          .single();
+
+        if (!existingConversation) {
+          // Create new conversation
+          await supabase
+            .from('conversations')
+            .insert({
+              customer_id: user.id,
+              designer_id: designer.id
+            });
+        }
+      } catch (conversationError) {
+        console.log('Conversation already exists or error creating:', conversationError);
+        // Don't fail the request if conversation creation fails
+      }
+
       setRequestMessage('');
       toast({
         title: "Request sent",

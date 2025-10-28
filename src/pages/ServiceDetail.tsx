@@ -181,30 +181,43 @@ export default function ServiceDetail() {
     }
 
     try {
-      // Check for existing booking with this designer
-      const { data: existingBooking, error } = await supabase
-        .from('bookings')
+      // Check for existing conversation with this designer
+      const { data: existingConversation, error } = await supabase
+        .from('conversations')
         .select('id')
         .eq('customer_id', user.id)
         .eq('designer_id', service?.designer.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
         .single();
 
       if (error && error.code !== 'PGRST116') {
-        console.error('Error checking for existing booking:', error);
+        console.error('Error checking for existing conversation:', error);
         toast.error('Failed to check existing conversations');
         return;
       }
 
-      if (existingBooking) {
+      if (existingConversation) {
         // Navigate to existing conversation
-        navigate(`/customer-dashboard/messages?booking_id=${existingBooking.id}`);
+        navigate(`/customer-dashboard/messages?designer_id=${service?.designer.id}`);
       } else {
-        // Prompt user to book first
-        toast.error('Please book a session first to start messaging this designer');
-        // Optionally scroll to booking section
-        document.querySelector('[data-booking-section]')?.scrollIntoView({ behavior: 'smooth' });
+        // Create new conversation and navigate to it
+        const { data: newConversation, error: createError } = await supabase
+          .from('conversations')
+          .insert({
+            customer_id: user.id,
+            designer_id: service?.designer.id
+          })
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('Error creating conversation:', createError);
+          toast.error('Failed to start conversation');
+          return;
+        }
+
+        // Navigate to the new conversation
+        navigate(`/customer-dashboard/messages?designer_id=${service?.designer.id}`);
+        toast.success('Started conversation with designer');
       }
     } catch (error) {
       console.error('Error:', error);

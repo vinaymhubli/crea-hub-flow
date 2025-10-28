@@ -70,17 +70,28 @@ export default function NotificationBell() {
           });
           setUnreadCount(prev => prev + 1);
           
-          // Show toast for important notifications
-          if (newNotification.type === 'booking_confirmation' || 
-              newNotification.type === 'message' || 
-              newNotification.type === 'complaint_received' ||
-              newNotification.type === 'invoice_generated') {
-            toast({
-              title: newNotification.title,
-              description: newNotification.message,
-              duration: 5000,
-            });
-          }
+           // Show toast for important notifications (excluding chat messages)
+           if (newNotification.type === 'booking_confirmation' || 
+               newNotification.type === 'booking_confirmed' ||
+               newNotification.type === 'booking_cancelled' ||
+               newNotification.type === 'booking_accepted' ||
+               newNotification.type === 'booking_rejected' ||
+               newNotification.type === 'booking_requested' ||
+               newNotification.type === 'complaint_received' ||
+               newNotification.type === 'complaint_approved' ||
+               newNotification.type === 'complaint_rejected' ||
+               newNotification.type === 'complaint_registered' ||
+               newNotification.type === 'file_ready_for_review' ||
+               newNotification.type === 'file_uploaded' ||
+               newNotification.type === 'invoice_generated' ||
+               newNotification.type === 'wallet_transaction' ||
+               newNotification.type === 'session_ended') {
+             toast({
+               title: newNotification.title,
+               description: newNotification.message,
+               duration: 5000,
+             });
+           }
         }
       )
       .subscribe();
@@ -113,7 +124,7 @@ export default function NotificationBell() {
             async (payload) => {
               const newBooking = payload.new;
               if (newBooking.status === 'pending') {
-                // Fetch customer name
+                // Fetch customer name for toast notification only
                 const { data: customer } = await supabase
                   .from('profiles')
                   .select('first_name, last_name')
@@ -124,51 +135,7 @@ export default function NotificationBell() {
                   ? `${customer.first_name || ''} ${customer.last_name || ''}`.trim()
                   : 'A customer';
                 
-                const notification: Notification = {
-                  id: `booking-${newBooking.id}`,
-                  type: 'booking_confirmation',
-                  title: 'New Booking Request!',
-                  message: `${customerName} wants to book ${newBooking.service}`,
-                  is_read: false,
-                  related_id: newBooking.id,
-                  data: { booking_id: newBooking.id },
-                  created_at: new Date().toISOString()
-                };
-                
-                // Add notification to state immediately for UI (with deduplication)
-                setNotifications(prev => {
-                  // Check if notification already exists (by message_id or content)
-                  const exists = prev.some(n => 
-                    n.data?.message_id === notification.data?.message_id ||
-                    (n.type === 'message' && n.message === notification.message && 
-                     Math.abs(new Date(n.created_at).getTime() - new Date(notification.created_at).getTime()) < 1000)
-                  );
-                  if (exists) {
-                    console.log('🔔 Duplicate notification prevented:', notification.message);
-                    return prev;
-                  }
-                  return [notification, ...prev];
-                });
-                setUnreadCount(prev => prev + 1);
-                
-                // Try to save to database, but don't fail if it doesn't work
-                try {
-                  await supabase
-                    .from('notifications')
-                    .insert({
-                      user_id: user.id,
-                      type: 'booking_confirmation',
-                      title: 'New Booking Request!',
-                      message: `${customerName} wants to book ${newBooking.service}`,
-                      is_read: false,
-                      related_id: newBooking.id,
-                      data: { booking_id: newBooking.id }
-                    });
-                } catch (dbError) {
-                  console.warn('Could not save notification to database:', dbError);
-                  // Continue anyway - the notification is already in the UI
-                }
-                
+                // Only show toast notification - database trigger will handle the persistent notification
                 toast({
                   title: "New Booking Request!",
                   description: `${customerName} wants to book ${newBooking.service}`,
@@ -205,13 +172,13 @@ export default function NotificationBell() {
           if (designerData?.id) {
             console.log('✅ Designer ID found for messages:', designerData.id);
             messagesChannel = supabase
-              .channel('designer_messages')
+              .channel('designer_conversation_messages')
               .on(
                 'postgres_changes',
                 {
                   event: 'INSERT',
                   schema: 'public',
-                  table: 'messages'
+                  table: 'conversation_messages'
                 },
                 async (payload) => {
                   console.log('🔔 Message notification received:', payload);
@@ -225,25 +192,25 @@ export default function NotificationBell() {
                   // Check if message is not from current user
                   if (newMessage.sender_id !== user.id) {
                     console.log('🔔 Message is NOT from current user, proceeding...');
-                    // Check if this message is for this designer by checking the booking
-                    const { data: booking, error: bookingError } = await supabase
-                      .from('bookings')
+                    // Check if this message is for this designer by checking the conversation
+                    const { data: conversation, error: conversationError } = await supabase
+                      .from('conversations')
                       .select('designer_id, customer_id')
-                      .eq('id', newMessage.booking_id)
+                      .eq('id', newMessage.conversation_id)
                       .single();
 
-                    if (bookingError) {
-                      console.error('❌ Error fetching booking for message:', bookingError);
+                    if (conversationError) {
+                      console.error('❌ Error fetching conversation for message:', conversationError);
                       return;
                     }
                     
-                    console.log('🔔 Booking data:', booking);
-                    console.log('🔔 Booking designer_id:', booking?.designer_id);
-                    console.log('🔔 Booking customer_id:', booking?.customer_id);
+                    console.log('🔔 Conversation data:', conversation);
+                    console.log('🔔 Conversation designer_id:', conversation?.designer_id);
+                    console.log('🔔 Conversation customer_id:', conversation?.customer_id);
                     console.log('🔔 Current designer ID:', designerData.id);
                     
-                    // Only process if this booking belongs to the current designer
-                    if (booking?.designer_id === designerData.id) {
+                    // Only process if this conversation belongs to the current designer
+                    if (conversation?.designer_id === designerData.id) {
                       console.log('🔔 Processing message notification for designer');
                       // Fetch sender name and booking details
                       const { data: sender, error: senderError } = await supabase
@@ -269,10 +236,10 @@ export default function NotificationBell() {
                         title: 'New Message',
                         message: `${senderName}: ${newMessage.content.substring(0, 50)}${newMessage.content.length > 50 ? '...' : ''}`,
                         is_read: false,
-                        related_id: newMessage.booking_id,
+                        related_id: newMessage.conversation_id,
                         data: { 
                           message_id: newMessage.id, 
-                          booking_id: newMessage.booking_id,
+                          conversation_id: newMessage.conversation_id,
                           sender_id: newMessage.sender_id
                         },
                         created_at: new Date().toISOString()
@@ -304,10 +271,10 @@ export default function NotificationBell() {
                             title: 'New Message',
                             message: `${senderName}: ${newMessage.content.substring(0, 50)}${newMessage.content.length > 50 ? '...' : ''}`,
                             is_read: false,
-                            related_id: newMessage.booking_id,
+                            related_id: newMessage.conversation_id,
                             data: { 
                               message_id: newMessage.id, 
-                              booking_id: newMessage.booking_id,
+                              conversation_id: newMessage.conversation_id,
                               sender_id: newMessage.sender_id
                             }
                           });
@@ -317,15 +284,10 @@ export default function NotificationBell() {
                         // Continue anyway - the notification is already in the UI
                       }
                       
-                      toast({
-                        title: "New Message",
-                        description: `${senderName}: ${newMessage.content.substring(0, 50)}${newMessage.content.length > 50 ? '...' : ''}`,
-                        duration: 5000,
-                      });
-                      console.log('🔔 Message toast notification sent!');
+                      console.log('🔔 Designer message notification added to bell!');
                     } else {
-                      console.log('🔔 Message booking does not belong to current designer or booking not found.');
-                      console.log('🔔 Booking designer_id:', booking?.designer_id, 'vs Current designer ID:', designerData.id);
+                      console.log('🔔 Message conversation does not belong to current designer or conversation not found.');
+                      console.log('🔔 Conversation designer_id:', conversation?.designer_id, 'vs Current designer ID:', designerData.id);
                     }
                   } else {
                     console.log('🔔 Message is from current user, skipping notification.');
@@ -343,14 +305,13 @@ export default function NotificationBell() {
       // For customers
       console.log('🔔 Setting up message notifications for customer...');
       messagesChannel = supabase
-        .channel('customer_messages')
+        .channel('customer_conversation_messages')
         .on(
           'postgres_changes',
           {
             event: 'INSERT',
             schema: 'public',
-            table: 'messages',
-            filter: `booking_id IN (SELECT id FROM bookings WHERE customer_id = '${user.id}')`
+            table: 'conversation_messages'
           },
           async (payload) => {
             console.log('🔔 Customer message notification received:', payload);
@@ -360,81 +321,99 @@ export default function NotificationBell() {
             // Check if message is not from current user
             if (newMessage.sender_id !== user.id) {
               console.log('🔔 Processing customer message notification...');
-              // Fetch sender name and booking details
-              const { data: sender, error: senderError } = await supabase
-                .from('profiles')
-                .select('first_name, last_name')
-                .eq('user_id', newMessage.sender_id)
+              
+              // Check if this message is for this customer by checking the conversation
+              const { data: conversation, error: conversationError } = await supabase
+                .from('conversations')
+                .select('customer_id, designer_id')
+                .eq('id', newMessage.conversation_id)
                 .single();
 
-              if (senderError) {
-                console.error('❌ Error fetching sender for customer message:', senderError);
+              if (conversationError) {
+                console.error('❌ Error fetching conversation for customer message:', conversationError);
                 return;
               }
               
-              const senderName = sender 
-                ? `${sender.first_name || ''} ${sender.last_name || ''}`.trim()
-                : 'Someone';
+              console.log('🔔 Conversation data:', conversation);
+              console.log('🔔 Conversation customer_id:', conversation?.customer_id);
+              console.log('🔔 Current user ID:', user.id);
               
-              const notification: Notification = {
-                id: `message-${newMessage.id}`,
-                type: 'message',
-                title: 'New Message',
-                message: `${senderName}: ${newMessage.content.substring(0, 50)}${newMessage.content.length > 50 ? '...' : ''}`,
-                is_read: false,
-                related_id: newMessage.booking_id,
-                data: {
-                  message_id: newMessage.id, 
-                  booking_id: newMessage.booking_id,
-                  sender_id: newMessage.sender_id
-                },
-                created_at: new Date().toISOString()
-              };
-              
-              // Add notification to state immediately for UI (with deduplication)
-              setNotifications(prev => {
-                // Check if notification already exists (by message_id or content)
-                const exists = prev.some(n => 
-                  n.data?.message_id === notification.data?.message_id ||
-                  (n.type === 'message' && n.message === notification.message && 
-                   Math.abs(new Date(n.created_at).getTime() - new Date(notification.created_at).getTime()) < 1000)
-                );
-                if (exists) {
-                  console.log('🔔 Duplicate notification prevented:', notification.message);
-                  return prev;
+              // Only process if this conversation belongs to the current customer
+              if (conversation?.customer_id === user.id) {
+                console.log('🔔 Processing message notification for customer');
+                // Fetch sender name and booking details
+                const { data: sender, error: senderError } = await supabase
+                  .from('profiles')
+                  .select('first_name, last_name')
+                  .eq('user_id', newMessage.sender_id)
+                  .single();
+
+                if (senderError) {
+                  console.error('❌ Error fetching sender for customer message:', senderError);
+                  // Continue with a generic sender name if profile fetch fails
                 }
-                return [notification, ...prev];
-              });
-            setUnreadCount(prev => prev + 1);
-              
-              // Try to save to database, but don't fail if it doesn't work
-              try {
-                await supabase
-                  .from('notifications')
-                  .insert({
-                    user_id: user.id,
-                    type: 'message',
-                    title: 'New Message',
-                    message: `${senderName}: ${newMessage.content.substring(0, 50)}${newMessage.content.length > 50 ? '...' : ''}`,
-                    is_read: false,
-                    related_id: newMessage.booking_id,
-                    data: {
-                      message_id: newMessage.id, 
-                      booking_id: newMessage.booking_id,
-                      sender_id: newMessage.sender_id
-                    }
-                  });
-              } catch (dbError) {
-                console.warn('Could not save message notification to database:', dbError);
-                // Continue anyway - the notification is already in the UI
+                
+                const senderName = sender 
+                  ? `${sender.first_name || ''} ${sender.last_name || ''}`.trim()
+                  : 'Designer';
+                
+                const notification: Notification = {
+                  id: `message-${newMessage.id}`,
+                  type: 'message',
+                  title: 'New Message',
+                  message: `${senderName}: ${newMessage.content.substring(0, 50)}${newMessage.content.length > 50 ? '...' : ''}`,
+                  is_read: false,
+                  related_id: newMessage.conversation_id,
+                  data: {
+                    message_id: newMessage.id, 
+                    conversation_id: newMessage.conversation_id,
+                    sender_id: newMessage.sender_id
+                  },
+                  created_at: new Date().toISOString()
+                };
+                
+                // Add notification to state immediately for UI (with deduplication)
+                setNotifications(prev => {
+                  // Check if notification already exists (by message_id or content)
+                  const exists = prev.some(n => 
+                    n.data?.message_id === notification.data?.message_id ||
+                    (n.type === 'message' && n.message === notification.message && 
+                     Math.abs(new Date(n.created_at).getTime() - new Date(notification.created_at).getTime()) < 1000)
+                  );
+                  if (exists) {
+                    console.log('🔔 Duplicate notification prevented:', notification.message);
+                    return prev;
+                  }
+                  return [notification, ...prev];
+                });
+                setUnreadCount(prev => prev + 1);
+                
+                // Try to save to database, but don't fail if it doesn't work
+                try {
+                  await supabase
+                    .from('notifications')
+                    .insert({
+                      user_id: user.id,
+                      type: 'message',
+                      title: 'New Message',
+                      message: `${senderName}: ${newMessage.content.substring(0, 50)}${newMessage.content.length > 50 ? '...' : ''}`,
+                      is_read: false,
+                      related_id: newMessage.conversation_id,
+                      data: {
+                        message_id: newMessage.id, 
+                        conversation_id: newMessage.conversation_id,
+                        sender_id: newMessage.sender_id
+                      }
+                    });
+                } catch (dbError) {
+                  console.warn('Could not save message notification to database:', dbError);
+                  // Continue anyway - the notification is already in the UI
+                }
+                
+                console.log('🔔 Customer message notification added to bell!');
+              } else {
+                console.log('🔔 Message conversation does not belong to current customer.');
               }
-              
-              toast({
-                title: "New Message",
-                description: `${senderName}: ${newMessage.content.substring(0, 50)}${newMessage.content.length > 50 ? '...' : ''}`,
-                duration: 5000,
-              });
-              console.log('🔔 Customer message toast notification sent!');
             } else {
               console.log('🔔 Customer message is from current user, skipping notification.');
             }
@@ -521,6 +500,145 @@ export default function NotificationBell() {
         .subscribe();
           }
         });
+    } else {
+      // Set up real-time subscription for complaints (for customers)
+      complaintsChannel = supabase
+        .channel('customer_complaints')
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'customer_complaints',
+            filter: `customer_id=eq.${user.id}`
+          },
+          async (payload) => {
+            const updatedComplaint = payload.new;
+            const oldComplaint = payload.old;
+            
+            // Check if complaint status changed to approved by admin
+            if (updatedComplaint.status === 'approved' && oldComplaint.status !== 'approved') {
+              const notification: Notification = {
+                id: `customer-complaint-approved-${updatedComplaint.id}`,
+                type: 'complaint_approved',
+                title: 'Complaint Approved',
+                message: 'Your complaint has been approved by admin. The designer will provide a corrected version.',
+                is_read: false,
+                related_id: updatedComplaint.id,
+                data: { 
+                  complaint_id: updatedComplaint.id,
+                  file_id: updatedComplaint.file_id
+                },
+                created_at: new Date().toISOString()
+              };
+              
+              setNotifications(prev => {
+                const exists = prev.some(n => 
+                  n.id === notification.id ||
+                  (n.type === notification.type && n.related_id === notification.related_id && 
+                   Math.abs(new Date(n.created_at).getTime() - new Date(notification.created_at).getTime()) < 1000)
+                );
+                if (exists) {
+                  console.log('🔔 Duplicate customer complaint approved notification prevented');
+                  return prev;
+                }
+                return [notification, ...prev];
+              });
+              setUnreadCount(prev => prev + 1);
+              
+              toast({
+                title: "Complaint Approved",
+                description: "Your complaint has been approved by admin. The designer will provide a corrected version.",
+                duration: 5000,
+              });
+            }
+            
+            // Check if complaint status changed to rejected by admin
+            if (updatedComplaint.status === 'rejected' && oldComplaint.status !== 'rejected') {
+              const notification: Notification = {
+                id: `customer-complaint-rejected-${updatedComplaint.id}`,
+                type: 'complaint_rejected',
+                title: 'Complaint Rejected',
+                message: 'Your complaint has been reviewed and rejected by our admin team.',
+                is_read: false,
+                related_id: updatedComplaint.id,
+                data: { 
+                  complaint_id: updatedComplaint.id,
+                  admin_notes: updatedComplaint.admin_notes
+                },
+                created_at: new Date().toISOString()
+              };
+              
+              setNotifications(prev => {
+                const exists = prev.some(n => 
+                  n.id === notification.id ||
+                  (n.type === notification.type && n.related_id === notification.related_id && 
+                   Math.abs(new Date(n.created_at).getTime() - new Date(notification.created_at).getTime()) < 1000)
+                );
+                if (exists) {
+                  console.log('🔔 Duplicate customer complaint rejected notification prevented');
+                  return prev;
+                }
+                return [notification, ...prev];
+              });
+              setUnreadCount(prev => prev + 1);
+              
+              toast({
+                title: "Complaint Rejected",
+                description: "Your complaint has been reviewed and rejected by our admin team.",
+                duration: 5000,
+              });
+            }
+            
+            // Check if designer uploaded a new file for review
+            if (updatedComplaint.status === 'file_uploaded' && oldComplaint.status !== 'file_uploaded') {
+              const { data: designer } = await supabase
+                .from('profiles')
+                .select('first_name, last_name')
+                .eq('user_id', updatedComplaint.designer_id)
+                .single();
+              
+              const designerName = designer 
+                ? `${designer.first_name || ''} ${designer.last_name || ''}`.trim()
+                : 'The designer';
+              
+              const notification: Notification = {
+                id: `customer-file-ready-${updatedComplaint.id}`,
+                type: 'file_ready_for_review',
+                title: 'New File Ready for Review',
+                message: `${designerName} has uploaded a corrected version. Please review and approve or reject it.`,
+                is_read: false,
+                related_id: updatedComplaint.id,
+                data: { 
+                  complaint_id: updatedComplaint.id,
+                  new_file_id: updatedComplaint.new_file_id
+                },
+                created_at: new Date().toISOString()
+              };
+              
+              setNotifications(prev => {
+                const exists = prev.some(n => 
+                  n.id === notification.id ||
+                  (n.type === notification.type && n.related_id === notification.related_id && 
+                   Math.abs(new Date(n.created_at).getTime() - new Date(notification.created_at).getTime()) < 1000)
+                );
+                if (exists) {
+                  console.log('🔔 Duplicate customer file ready notification prevented');
+                  return prev;
+                }
+                return [notification, ...prev];
+              });
+              setUnreadCount(prev => prev + 1);
+              
+              toast({
+                title: "New File Ready for Review",
+                description: `${designerName} has uploaded a corrected version. Please review and approve or reject it.`,
+                duration: 8000,
+              });
+            }
+          }
+        )
+        .subscribe();
     }
 
     // Set up real-time subscription for invoices (for designers)
@@ -587,6 +705,174 @@ export default function NotificationBell() {
               .subscribe();
           }
         });
+    } else {
+      // Set up real-time subscription for invoices (for customers)
+      invoicesChannel = supabase
+        .channel('customer_invoices')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'invoices',
+            filter: `customer_id=eq.${user.id}`
+          },
+          (payload) => {
+            const newInvoice = payload.new;
+            
+            // Only notify customers about their invoices (invoice_type = 'customer')
+            if (newInvoice.invoice_type === 'customer') {
+              const notification: Notification = {
+                id: `customer-invoice-${newInvoice.id}`,
+                type: 'invoice_generated',
+                title: 'Session Invoice Generated',
+                message: `Your session invoice ${newInvoice.invoice_number} for ₹${newInvoice.total_amount} has been generated.`,
+                is_read: false,
+                related_id: newInvoice.id,
+                data: { 
+                  invoice_id: newInvoice.id,
+                  invoice_number: newInvoice.invoice_number,
+                  session_id: newInvoice.session_id
+                },
+                created_at: new Date().toISOString()
+              };
+              
+              setNotifications(prev => {
+                // Check if notification already exists (by ID or content)
+                const exists = prev.some(n => 
+                  n.id === notification.id ||
+                  (n.type === notification.type && n.message === notification.message && 
+                   Math.abs(new Date(n.created_at).getTime() - new Date(notification.created_at).getTime()) < 1000)
+                );
+                if (exists) {
+                  console.log('🔔 Duplicate customer invoice notification prevented:', notification.message);
+                  return prev;
+                }
+                return [notification, ...prev];
+              });
+              setUnreadCount(prev => prev + 1);
+              
+              toast({
+                title: "Session Invoice Generated",
+                description: `Your session invoice ${newInvoice.invoice_number} for ₹${newInvoice.total_amount} has been generated.`,
+                duration: 5000,
+              });
+            }
+          }
+        )
+        .subscribe();
+    }
+
+    // Set up real-time subscription for session files (for customers)
+    let sessionFilesChannel: any = null;
+    if (profile.user_type === 'customer') {
+      sessionFilesChannel = supabase
+        .channel('customer_session_files')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'session_files'
+          },
+          async (payload) => {
+            const newFile = payload.new;
+            console.log('🔔 Customer session file notification received:', newFile);
+            
+            // Check if this file is for a session where the current user is the customer
+            if (newFile.uploaded_by_type === 'designer' && newFile.booking_id) {
+              const { data: booking, error: bookingError } = await supabase
+                .from('bookings')
+                .select('customer_id, designer_id')
+                .eq('id', newFile.booking_id)
+                .single();
+
+              if (bookingError) {
+                console.error('❌ Error fetching booking for session file:', bookingError);
+                return;
+              }
+              
+              // Only notify if this booking belongs to the current customer
+              if (booking?.customer_id === user.id) {
+                console.log('🔔 Processing session file notification for customer');
+                
+                const { data: designer } = await supabase
+                  .from('profiles')
+                  .select('first_name, last_name')
+                  .eq('user_id', newFile.uploaded_by_id)
+                  .single();
+                
+                const designerName = designer 
+                  ? `${designer.first_name || ''} ${designer.last_name || ''}`.trim()
+                  : 'The designer';
+                
+                const notification: Notification = {
+                  id: `session-file-${newFile.id}`,
+                  type: 'file_uploaded',
+                  title: 'Final Design File Uploaded',
+                  message: `${designerName} has uploaded your final design file: ${newFile.name}`,
+                  is_read: false,
+                  related_id: newFile.session_id,
+                  data: { 
+                    file_id: newFile.id,
+                    file_name: newFile.name,
+                    file_url: newFile.file_url,
+                    session_id: newFile.session_id,
+                    booking_id: newFile.booking_id
+                  },
+                  created_at: new Date().toISOString()
+                };
+                
+                setNotifications(prev => {
+                  const exists = prev.some(n => 
+                    n.id === notification.id ||
+                    (n.type === notification.type && n.data?.file_id === notification.data?.file_id && 
+                     Math.abs(new Date(n.created_at).getTime() - new Date(notification.created_at).getTime()) < 1000)
+                  );
+                  if (exists) {
+                    console.log('🔔 Duplicate session file notification prevented');
+                    return prev;
+                  }
+                  return [notification, ...prev];
+                });
+                setUnreadCount(prev => prev + 1);
+                
+                // Try to save to database
+                try {
+                  await supabase
+                    .from('notifications')
+                    .insert({
+                      user_id: user.id,
+                      type: 'file_uploaded',
+                      title: 'Final Design File Uploaded',
+                      message: `${designerName} has uploaded your final design file: ${newFile.name}`,
+                      is_read: false,
+                      related_id: newFile.session_id,
+                      data: { 
+                        file_id: newFile.id,
+                        file_name: newFile.name,
+                        file_url: newFile.file_url,
+                        session_id: newFile.session_id,
+                        booking_id: newFile.booking_id
+                      }
+                    });
+                } catch (dbError) {
+                  console.warn('Could not save session file notification to database:', dbError);
+                }
+                
+                toast({
+                  title: "Final Design File Uploaded",
+                  description: `${designerName} has uploaded your final design file: ${newFile.name}`,
+                  duration: 8000,
+                });
+                console.log('🔔 Customer session file toast notification sent!');
+              }
+            }
+          }
+        )
+        .subscribe((status) => {
+          console.log('🔔 Customer session files subscription status:', status);
+        });
     }
 
     return () => {
@@ -595,6 +881,7 @@ export default function NotificationBell() {
       if (messagesChannel) supabase.removeChannel(messagesChannel);
       if (complaintsChannel) supabase.removeChannel(complaintsChannel);
       if (invoicesChannel) supabase.removeChannel(invoicesChannel);
+      if (sessionFilesChannel) supabase.removeChannel(sessionFilesChannel);
     };
   }, [user?.id, profile?.user_type]);
 
@@ -671,6 +958,21 @@ export default function NotificationBell() {
           navigate('/designer-dashboard/bookings');
         }
         break;
+      case 'booking_confirmed':
+      case 'booking_cancelled':
+      case 'booking_accepted':
+      case 'booking_rejected':
+        // Navigate to customer bookings page
+        if (profile?.user_type === 'client') {
+          navigate('/customer-dashboard/bookings');
+        }
+        break;
+      case 'booking_requested':
+        // Navigate to designer bookings page
+        if (profile?.user_type === 'designer') {
+          navigate('/designer-dashboard/bookings');
+        }
+        break;
       case 'message':
         // Navigate to messages page
         if (profile?.user_type === 'designer') {
@@ -685,10 +987,48 @@ export default function NotificationBell() {
           navigate('/designer/complaints');
         }
         break;
+      case 'complaint_approved':
+      case 'complaint_rejected':
+      case 'file_ready_for_review':
+        // Navigate to customer complaints page
+        if (profile?.user_type === 'client') {
+          navigate('/customer/complaints');
+        }
+        break;
+      case 'complaint_registered':
+        // Navigate to designer complaints page
+        if (profile?.user_type === 'designer') {
+          navigate('/designer/complaints');
+        }
+        break;
+      case 'file_uploaded':
+        // Navigate to customer files or session history
+        if (profile?.user_type === 'client') {
+          navigate('/customer-dashboard/files');
+        }
+        break;
+      case 'wallet_transaction':
+        // Navigate to wallet page
+        if (profile?.user_type === 'client') {
+          navigate('/customer-dashboard/wallet');
+        } else if (profile?.user_type === 'designer') {
+          navigate('/designer-dashboard/earnings');
+        }
+        break;
+      case 'session_ended':
+        // Navigate to session history or invoices
+        if (profile?.user_type === 'client') {
+          navigate('/customer-dashboard/invoices');
+        } else if (profile?.user_type === 'designer') {
+          navigate('/designer-dashboard/invoices');
+        }
+        break;
       case 'invoice_generated':
-        // Navigate to designer invoices or earnings page
+        // Navigate to invoices page based on user type
         if (profile?.user_type === 'designer') {
           navigate('/designer-dashboard/earnings');
+        } else {
+          navigate('/customer-dashboard/invoices');
         }
         break;
       case 'session_earnings':
@@ -730,12 +1070,30 @@ export default function NotificationBell() {
     switch (type) {
       case 'booking_confirmation':
         return '📅';
+      case 'booking_confirmed':
+      case 'booking_accepted':
+        return '✅';
+      case 'booking_cancelled':
+      case 'booking_rejected':
+        return '❌';
+      case 'booking_requested':
+        return '📅';
       case 'message':
         return '💬';
       case 'complaint_received':
       case 'complaint_resolved':
       case 'complaint_updated':
         return '❗';
+      case 'complaint_approved':
+        return '✅';
+      case 'complaint_rejected':
+        return '❌';
+      case 'complaint_registered':
+        return '❗';
+      case 'file_ready_for_review':
+        return '📋';
+      case 'file_uploaded':
+        return '📎';
       case 'invoice_generated':
         return '📄';
       case 'session_earnings':
@@ -750,6 +1108,10 @@ export default function NotificationBell() {
         return '💰';
       case 'withdrawal_completed':
         return '🏦';
+      case 'wallet_transaction':
+        return '💰';
+      case 'session_ended':
+        return '🏁';
       case 'session_reminder':
         return '⏰';
       case 'admin_message':
