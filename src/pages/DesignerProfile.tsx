@@ -39,6 +39,7 @@ export default function DesignerProfile() {
   const { user, refetchProfile } = useAuth();
   const { profile, loading: profileLoading } = useProfile();
   const { toast } = useToast();
+  const [minRate, setMinRate] = useState<number>(5.0);
   
   // Local state for avatar image to ensure instant UI updates
   const [avatarImage, setAvatarImage] = useState<string | null>(null);
@@ -65,6 +66,11 @@ export default function DesignerProfile() {
   const [isSaving, setIsSaving] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const portfolioInputRef = useRef<HTMLInputElement>(null);
+  const kycInputRef = useRef<HTMLInputElement>(null);
+  const [kycUploading, setKycUploading] = useState(false);
+  const [kycUrls, setKycUrls] = useState<{ aadhaar_front?: string; aadhaar_back?: string; pan_front?: string; pan_back?: string }>({});
+  const [verificationStatus, setVerificationStatus] = useState<string | null>(null);
+  const [kycStatus, setKycStatus] = useState<string | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -129,8 +135,153 @@ export default function DesignerProfile() {
         skills: designerProfile.skills || [],
         portfolio_images: designerProfile.portfolio_images || []
       }));
+      // load verification status if available
+      setVerificationStatus((designerProfile as any)?.verification_status ?? null);
     }
   }, [designerProfile]);
+
+  useEffect(() => {
+    // Load existing KYC url if present
+    const loadKyc = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('designers')
+          .select('kyc_aadhaar_front_url, kyc_aadhaar_back_url, kyc_pan_front_url, kyc_pan_back_url, verification_status, kyc_status')
+          .eq('user_id', user?.id)
+          .single();
+        if (!error && data) {
+          setKycUrls({
+            aadhaar_front: (data as any).kyc_aadhaar_front_url || undefined,
+            aadhaar_back: (data as any).kyc_aadhaar_back_url || undefined,
+            pan_front: (data as any).kyc_pan_front_url || undefined,
+            pan_back: (data as any).kyc_pan_back_url || undefined,
+          });
+          setVerificationStatus(data.verification_status || null);
+          setKycStatus((data as any).kyc_status || null);
+        }
+      } catch (_) {}
+    };
+    if (user?.id) loadKyc();
+  }, [user?.id]);
+
+  const handleKycUpload = async (event: React.ChangeEvent<HTMLInputElement>, kind: 'aadhaar_front' | 'aadhaar_back' | 'pan_front' | 'pan_back') => {
+    const file = event.target.files?.[0];
+    if (!file || !user?.id) return;
+    setKycUploading(true);
+    try {
+      const bucket = 'kyc-docs';
+      const path = `${user.id}/${Date.now()}_${file.name}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage.from(bucket).upload(path, file, {
+        upsert: true
+      });
+      if (uploadError) throw uploadError;
+      const { data: pubUrl } = supabase.storage.from(bucket).getPublicUrl(uploadData.path);
+      const url = pubUrl?.publicUrl;
+      // Only store URLs on upload. Do NOT flip status yet; status changes on explicit submit
+      const payload: any = { updated_at: new Date().toISOString() };
+      if (kind === 'aadhaar_front') payload.kyc_aadhaar_front_url = url;
+      if (kind === 'aadhaar_back') payload.kyc_aadhaar_back_url = url;
+      if (kind === 'pan_front') payload.kyc_pan_front_url = url;
+      if (kind === 'pan_back') payload.kyc_pan_back_url = url;
+      const { error: updErr } = await supabase
+        .from('designers')
+        .update(payload)
+        .eq('user_id', user.id);
+      if (updErr) throw updErr;
+      setKycUrls(prev => ({ ...prev, [kind]: url || undefined }));
+      toast({ title: 'Uploaded', description: 'Document uploaded. Submit when all files are attached.' });
+    } catch (e: any) {
+      console.error('KYC upload error:', e);
+      toast({ title: 'Error', description: e?.message ?? 'Failed to upload KYC', variant: 'destructive' });
+    } finally {
+      setKycUploading(false);
+      if (kycInputRef.current) kycInputRef.current.value = '';
+    }
+  };
+
+  const allKycUploaded = !!(kycUrls.aadhaar_front && kycUrls.aadhaar_back && kycUrls.pan_front && kycUrls.pan_back);
+
+  const openKycFile = async (kind: 'aadhaar_front' | 'aadhaar_back' | 'pan_front' | 'pan_back') => {
+    const url = (kycUrls as any)[kind] as string | undefined;
+    if (!url) return;
+    try {
+      const bucket = 'kyc-docs';
+      // Extract path from URL - handle both public and private URLs
+      let path = url;
+      if (url.includes('/storage/v1/object/')) {
+        // Handle full Supabase URLs (both public and private)
+        const parts = url.split('/storage/v1/object/');
+        if (parts.length > 1) {
+          path = parts[1].replace('public/', '').replace('private/', '');
+          // Remove bucket name from path since we specify it in the storage call
+          if (path.startsWith('kyc-docs/')) {
+            path = path.substring('kyc-docs/'.length);
+          }
+        }
+      } else if (url.includes('kyc-docs/')) {
+        // Handle direct bucket paths
+        const idx = url.indexOf('kyc-docs/');
+        path = url.substring(idx + 'kyc-docs/'.length);
+      }
+      
+      const decodedPath = decodeURIComponent(path);
+      console.log('Opening KYC file, path:', decodedPath);
+      const { data, error } = await supabase.storage.from(bucket).createSignedUrl(decodedPath, 60);
+      if (error || !data?.signedUrl) throw error || new Error('Failed to create signed URL');
+      window.open(data.signedUrl, '_blank');
+    } catch (e: any) {
+      console.error('Open KYC file error:', e);
+      toast({ title: 'Cannot open file', description: e?.message ?? 'Failed to open document', variant: 'destructive' });
+    }
+  };
+
+  const handleSubmitKyc = async () => {
+    if (!user?.id) return;
+    if (!allKycUploaded) {
+      toast({ title: 'Missing documents', description: 'Please upload all four documents before submitting', variant: 'destructive' });
+      return;
+    }
+    try {
+      const { error } = await supabase
+        .from('designers')
+        .update({ kyc_status: 'pending', kyc_submitted_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+        .eq('user_id', user.id);
+      if (error) throw error;
+      setKycStatus('pending');
+      toast({ title: 'Submitted for review', description: 'Admin will review and update your KYC status shortly' });
+    } catch (e: any) {
+      console.error('KYC submit error:', e);
+      toast({ title: 'Error', description: e?.message ?? 'Failed to submit KYC', variant: 'destructive' });
+    }
+  };
+
+  // Load platform minimum per-minute rate
+  useEffect(() => {
+    const loadMinRate = async () => {
+      try {
+        // Prefer RPC helper if available
+        const { data, error } = await supabase.rpc('get_min_rate_per_minute');
+        if (!error) {
+          const value = Array.isArray(data) ? parseFloat(data?.[0]) : parseFloat(data as any);
+          if (!isNaN(value)) setMinRate(value);
+          return;
+        }
+        // Fallback to platform_settings column if RPC not available
+        const { data: rows } = await supabase
+          .from('platform_settings')
+          .select('min_rate_per_minute')
+          .order('updated_at', { ascending: false })
+          .limit(1);
+        if (rows && rows.length > 0) {
+          const v = parseFloat(rows[0].min_rate_per_minute ?? 5.0);
+          if (!isNaN(v)) setMinRate(v);
+        }
+      } catch (e) {
+        // Keep default 5.0 if anything fails
+      }
+    };
+    loadMinRate();
+  }, []);
 
   const handleInputChange = (field: string, value: string | number | boolean | string[]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -169,6 +320,15 @@ export default function DesignerProfile() {
   const handleSaveProfessional = async () => {
     setIsSaving(true);
     try {
+      if ((formData.hourly_rate ?? 0) < minRate) {
+        toast({
+          title: 'Below platform minimum',
+          description: `You cannot set below ₹${minRate.toFixed(2)} / min`,
+          variant: 'destructive'
+        });
+        setIsSaving(false);
+        return;
+      }
       await updateDesignerProfile({
         specialty: formData.specialty,
         hourly_rate: formData.hourly_rate,
@@ -576,9 +736,21 @@ export default function DesignerProfile() {
                           placeholder="0" 
                           className="border-gray-200 focus:border-green-400 focus:ring-green-200" 
                           value={formData.hourly_rate}
-                          onChange={(e) => handleInputChange('hourly_rate', parseFloat(e.target.value) || 0)}
+                          onChange={(e) => {
+                            const val = parseFloat(e.target.value) || 0;
+                            if (val < minRate) {
+                              toast({
+                                title: 'Below platform minimum',
+                                description: `You cannot set below ₹${minRate.toFixed(2)} / min`,
+                                variant: 'destructive'
+                              });
+                              handleInputChange('hourly_rate', minRate);
+                            } else {
+                              handleInputChange('hourly_rate', val);
+                            }
+                          }}
                         />
-                        <p className="text-xs sm:text-sm text-gray-500">The rate you charge per minute for your design services</p>
+                        <p className="text-xs sm:text-sm text-gray-500">The rate you charge per minute for your design services. Minimum allowed: ₹{minRate.toFixed(2)} / min</p>
                       </div>
                       <div className="space-y-3 sm:space-y-4">
                         <div className="flex items-center justify-between gap-3 p-3 sm:p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
@@ -650,6 +822,71 @@ export default function DesignerProfile() {
                         {isSaving ? 'Saving...' : 'Save Changes'}
                       </Button>
                     </div>
+                  </CardContent>
+                </Card>
+
+                {/* KYC Verification */}
+                <Card className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+                  <CardHeader className="bg-gradient-to-r from-green-400 to-blue-500 text-white rounded-t-lg p-4 sm:p-6">
+                    <CardTitle className="text-base sm:text-lg lg:text-xl font-bold">KYC Verification</CardTitle>
+                    <CardDescription className="text-white/80 text-xs sm:text-sm">Upload a government-issued document for verification.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+                    <div className="flex items-center justify-between p-3 sm:p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+                      <div className="min-w-0 flex-1">
+                        <Label className="font-semibold text-gray-700 text-sm sm:text-base">Current Status</Label>
+                        <p className="text-xs sm:text-sm text-gray-600 mt-1">{kycStatus ? kycStatus.toUpperCase() : 'NOT SUBMITTED'}</p>
+                      </div>
+                    </div>
+
+                    {kycStatus === 'pending' ? (
+                      <div className="p-4 bg-yellow-50 border border-yellow-200 rounded text-yellow-800 text-sm">Admin is currently reviewing your KYC documents.</div>
+                    ) : kycStatus === 'approved' ? (
+                      <div className="p-4 bg-green-50 border border-green-200 rounded text-green-800 text-sm">KYC Verified ✅</div>
+                    ) : (
+                      <>
+                        {/* Aadhaar Section */}
+                        <div className="rounded-lg border p-4">
+                          <div className="font-semibold mb-2">Aadhaar</div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div className="flex items-center gap-3">
+                              <div className="w-36 text-sm">Front</div>
+                              <input ref={kycInputRef} type="file" accept="image/*,application/pdf" onChange={(e) => handleKycUpload(e, 'aadhaar_front')} className="text-sm" />
+                              {kycUrls.aadhaar_front && <button type="button" onClick={() => openKycFile('aadhaar_front')} className="text-xs text-blue-600 underline">View</button>}
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className="w-36 text-sm">Back</div>
+                              <input type="file" accept="image/*,application/pdf" onChange={(e) => handleKycUpload(e, 'aadhaar_back')} className="text-sm" />
+                              {kycUrls.aadhaar_back && <button type="button" onClick={() => openKycFile('aadhaar_back')} className="text-xs text-blue-600 underline">View</button>}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* PAN Section */}
+                        <div className="rounded-lg border p-4">
+                          <div className="font-semibold mb-2">PAN</div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div className="flex items-center gap-3">
+                              <div className="w-36 text-sm">Front</div>
+                              <input type="file" accept="image/*,application/pdf" onChange={(e) => handleKycUpload(e, 'pan_front')} className="text-sm" />
+                              {kycUrls.pan_front && <button type="button" onClick={() => openKycFile('pan_front')} className="text-xs text-blue-600 underline">View</button>}
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className="w-36 text-sm">Back</div>
+                              <input type="file" accept="image/*,application/pdf" onChange={(e) => handleKycUpload(e, 'pan_back')} className="text-sm" />
+                              {kycUrls.pan_back && <button type="button" onClick={() => openKycFile('pan_back')} className="text-xs text-blue-600 underline">View</button>}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-end">
+                          <Button onClick={handleSubmitKyc} disabled={!allKycUploaded || kycUploading} className="bg-gradient-to-r from-green-400 to-blue-500 text-white">
+                            Submit for Review
+                          </Button>
+                        </div>
+                        <p className="text-xs text-gray-500">Upload Aadhaar (front/back) and PAN (front/back). Submit to send for admin review.</p>
+                      </>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>

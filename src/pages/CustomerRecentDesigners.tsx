@@ -92,7 +92,13 @@ function DesignerCard({ designer, favorites, onToggleFavorite, onMessage, onBook
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 text-base sm:text-lg truncate">{designerName}</h3>
+              <h3 className="font-semibold text-gray-900 text-base sm:text-lg truncate flex items-center gap-2">{designerName}
+                {(designer.verification_status === 'approved' || designer.kyc_status === 'approved') && (
+                  <span className="inline-flex items-center text-green-700 text-[10px] sm:text-xs bg-green-100 px-1.5 py-0.5 rounded">
+                    ✓ Verified
+                  </span>
+                )}
+              </h3>
               <p className="text-gray-600 font-medium text-sm sm:text-base truncate">{designer.specialty}</p>
               <div className="flex items-center space-x-1 mt-1">
                 <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400 fill-current" />
@@ -292,6 +298,8 @@ export default function CustomerRecentDesigners() {
             reviews_count,
             rating,
             response_time,
+            verification_status,
+            kyc_status,
             user:profiles!user_id(
               first_name,
               last_name,

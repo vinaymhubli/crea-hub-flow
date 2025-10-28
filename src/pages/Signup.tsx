@@ -216,30 +216,53 @@ export default function Signup() {
                     </select>
                   </div>
 
-                  <div>
-                    <label htmlFor="ratePerMinute" className="block text-sm font-medium text-gray-700 mb-2">
-                      Rate per minute (INR)
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₹</span>
-                      <input
-                        type="number"
-                        id="ratePerMinute"
-                        name="ratePerMinute"
-                        value={formData.ratePerMinute}
-                        onChange={handleInputChange}
-                        min="0.5"
-                        max="50"
-                        step="0.1"
-                        required
-                        className="w-full pl-8 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                        placeholder="2.5"
-                      />
-                    </div>
-                    <p className="mt-1 text-xs text-gray-500">
-                      Set your consultation rate (recommended: ₹1.5 - ₹5.0 per minute)
-                    </p>
-                  </div>
+              <div>
+                <label htmlFor="ratePerMinute" className="block text-sm font-medium text-gray-700 mb-2">
+                  Rate per minute (INR)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₹</span>
+                  <input
+                    type="number"
+                    id="ratePerMinute"
+                    name="ratePerMinute"
+                    value={formData.ratePerMinute}
+                    onChange={handleInputChange}
+                    min="0.5"
+                    max="50"
+                    step="0.1"
+                    required
+                    className="w-full pl-8 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="2.5"
+                  />
+                </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  Set your consultation rate (recommended: ₹1.5 - ₹5.0 per minute)
+                </p>
+              </div>
+
+              {/* Optional KYC at signup */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  KYC (optional) - Govt ID (PDF/JPG/PNG)
+                </label>
+                <input type="file" accept="image/*,application/pdf" onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  try {
+                    const { data: userResp } = await supabase.auth.getUser();
+                    const userId = userResp.user?.id;
+                    if (!userId) return;
+                    const bucket = 'kyc-docs';
+                    const path = `${userId}/${Date.now()}_${file.name}`;
+                    const { data: up, error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
+                    if (error) throw error;
+                    const { data: pub } = supabase.storage.from(bucket).getPublicUrl(up.path);
+                    await supabase.from('designers').update({ kyc_document_url: pub.publicUrl, verification_status: 'pending' }).eq('user_id', userId);
+                  } catch (_) {}
+                }} />
+                <p className="mt-1 text-xs text-gray-500">You can also upload later from your profile.</p>
+              </div>
                 </>
               )}
 

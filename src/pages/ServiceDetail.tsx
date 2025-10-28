@@ -458,8 +458,13 @@ export default function ServiceDetail() {
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <h4 className="font-medium">
+                    <h4 className="font-medium flex items-center gap-2">
                       {service.designer.profiles?.first_name || 'Unknown'} {service.designer.profiles?.last_name || 'User'}
+                      {service.designer.verification_status === 'approved' && (
+                        <span className="inline-flex items-center text-green-700 text-[10px] bg-green-100 px-1.5 py-0.5 rounded">
+                          ✓ Verified
+                        </span>
+                      )}
                     </h4>
                     <div className="flex items-center text-sm text-gray-600">
                       <Star className="w-3 h-3 fill-yellow-400 text-yellow-400 mr-1" />

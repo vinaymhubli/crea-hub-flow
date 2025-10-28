@@ -206,7 +206,7 @@ const DesignerDetails: React.FC = () => {
                 </div>
                 
                 <div className="flex-1 min-w-0">
-                  <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2 truncate">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2 truncate flex items-center gap-2">
                     {(() => {
                       const firstName = designer.first_name || '';
                       const lastName = designer.last_name || '';
@@ -221,6 +221,11 @@ const DesignerDetails: React.FC = () => {
                       }
                       return 'Designer';
                     })()}
+                    {(designer.verification_status === 'approved' || designer.kyc_status === 'approved') && (
+                      <span className="inline-flex items-center text-green-700 text-[10px] bg-green-100 px-1.5 py-0.5 rounded">
+                        ✓ Verified
+                      </span>
+                    )}
                   </h1>
                   <p className="text-green-600 font-semibold text-base sm:text-lg mb-2">{designer.specialty}</p>
                   

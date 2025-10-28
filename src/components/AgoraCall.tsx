@@ -17,6 +17,8 @@ import AgoraRTC, {
   IMicrophoneAudioTrack,
 } from "agora-rtc-sdk-ng";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Mic,
   MicOff,
@@ -92,6 +94,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
     },
     ref
   ) => {
+    const { toast } = useToast();
     const clientRef = useRef<IAgoraRTCClient | null>(null);
     const [joined, setJoined] = useState(false);
     // NOTE: media persistence hooks moved below state declarations to avoid "uninitialized variable" errors
@@ -347,16 +350,50 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
       setFullscreenVideo(null);
     }, [sessionId]);
 
+    // Platform minimum per-minute rate
+    const [minRate, setMinRate] = useState<number>(5.0);
+
+    useEffect(() => {
+      const loadMinRate = async () => {
+        try {
+          const { data, error } = await supabase.rpc('get_min_rate_per_minute');
+          if (!error) {
+            const value = Array.isArray(data) ? parseFloat((data as any)?.[0]) : parseFloat(data as any);
+            if (!isNaN(value)) setMinRate(value);
+          } else {
+            const { data: rows } = await supabase
+              .from('platform_settings')
+              .select('min_rate_per_minute')
+              .order('updated_at', { ascending: false })
+              .limit(1);
+            if (rows && rows.length > 0) {
+              const v = parseFloat((rows as any)[0].min_rate_per_minute ?? 5.0);
+              if (!isNaN(v)) setMinRate(v);
+            }
+          }
+        } catch (_) {}
+      };
+      loadMinRate();
+    }, []);
+
     // Handle rate change
     const handleRateSubmit = useCallback(() => {
       const newRate = parseFloat(rateInput);
-      if (!isNaN(newRate) && newRate > 0 && onRateChange) {
-        // Trigger approval dialog in parent component
+      if (isNaN(newRate) || newRate <= 0) return;
+      if (newRate < minRate) {
+        toast({
+          title: 'Below platform minimum',
+          description: `You cannot set below ₹${minRate.toFixed(2)} / min`,
+          variant: 'destructive'
+        });
+        return;
+      }
+      if (onRateChange) {
         onRateChange(newRate);
         setShowRateInput(false);
         setRateInput("");
       }
-    }, [rateInput, onRateChange]);
+    }, [rateInput, onRateChange, minRate, toast]);
 
     const handleRateKeyPress = useCallback(
       (e: React.KeyboardEvent) => {
@@ -1751,6 +1788,10 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
                     </div>
                     <div className="text-xs text-gray-500 mt-1">
                       Current: ₹{currentRate || 0}/min
+                    </div>
+                    {/* Inline helper - enforce min rate on submit (validated server-side too) */}
+                    <div className="text-[10px] text-gray-400 mt-1">
+                      Note: Minimum allowed is the platform minimum per minute set by admin.
                     </div>
                   </div>
                 )}

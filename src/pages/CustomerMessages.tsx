@@ -631,7 +631,14 @@ export default function CustomerMessages() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
-                            <p className="font-semibold text-foreground truncate text-sm sm:text-base">{conversation.designer_name}</p>
+                            <p className="font-semibold text-foreground truncate text-sm sm:text-base flex items-center gap-2">
+                              {conversation.designer_name}
+                              {conversation.designer_verification_status === 'approved' && (
+                                <span className="inline-flex items-center text-green-700 text-[10px] bg-green-100 px-1.5 py-0.5 rounded">
+                                  ✓ Verified
+                                </span>
+                              )}
+                            </p>
                             <div className="flex items-center space-x-1 flex-shrink-0">
                               {conversation.unread_count > 0 && (
                                 <Badge className="bg-gradient-to-r from-green-400 to-teal-500 text-white text-xs px-2 py-0.5 shadow-lg">

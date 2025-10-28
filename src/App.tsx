@@ -25,6 +25,7 @@ import AdminFinalFiles from "./pages/admin/AdminFinalFiles";
 import AdminComplaints from "./pages/admin/AdminComplaints";
 // import AdminRefunds from "./pages/admin/AdminRefunds";
 import DesignerVerification from "./pages/admin/DesignerVerification";
+import AdminKycVerification from "./pages/admin/AdminKycVerification";
 import SessionControl from "./pages/admin/SessionControl";
 import AdminDesignerAvailability from "./pages/admin/DesignerAvailability";
 import AdminInvoiceManagement from "./pages/admin/AdminInvoiceManagement";
@@ -254,6 +255,16 @@ function AppContent() {
               <ProtectedAdminRoute>
                 <AdminLayout>
                   <DesignerVerification />
+                </AdminLayout>
+              </ProtectedAdminRoute>
+            }
+          />
+          <Route
+            path="/admin/kyc-verification"
+            element={
+              <ProtectedAdminRoute>
+                <AdminLayout>
+                  <AdminKycVerification />
                 </AdminLayout>
               </ProtectedAdminRoute>
             }

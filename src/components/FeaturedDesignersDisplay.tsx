@@ -263,7 +263,7 @@ export function FeaturedDesignersDisplay({
               {/* Verification Status */}
               <div className="flex items-center justify-between mb-4 pb-4 border-b border-teal-100">
                 <div className="flex items-center space-x-2">
-                  {designer.designer_verified ? (
+                  {designer.designer_verified || designer.verification_status === 'approved' || designer.kyc_status === 'approved' ? (
                     <Badge className="bg-gradient-to-r from-green-100 to-teal-100 text-green-800 border-green-200">
                       <CheckCircle className="w-3 h-3 mr-1" />
                       Verified

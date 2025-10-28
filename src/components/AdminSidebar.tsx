@@ -88,6 +88,11 @@ const mainSections = [
     icon: UserCheck,
   },
   {
+    title: "KYC Verification",
+    url: "/admin/kyc-verification",
+    icon: Shield,
+  },
+  {
     title: "Designer Availability",
     url: "/admin/designer-availability",
     icon: Calendar,
