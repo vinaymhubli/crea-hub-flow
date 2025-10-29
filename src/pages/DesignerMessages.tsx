@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   MessageSquare,
   Send,
@@ -54,6 +54,13 @@ interface Conversation {
   last_message: string;
   last_message_time: string;
   unread_count: number;
+  booking_id?: string;
+}
+
+interface CustomerProfile {
+  user_id: string;
+  first_name: string | null;
+  last_name: string | null;
 }
 
 export default function DesignerMessages() {
@@ -71,6 +78,12 @@ export default function DesignerMessages() {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when messages change
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -105,9 +118,15 @@ export default function DesignerMessages() {
     };
   }, [selectedConversation]);
 
+  // Auto-scroll when messages change
   useEffect(() => {
-    // Auto-select first conversation if none selected
-    if (conversations.length > 0 && !selectedConversation) {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
+
+  useEffect(() => {
+    // Auto-select first conversation only on large screens (desktop)
+    const isLargeScreen = typeof window !== "undefined" && window.matchMedia('(min-width: 1024px)').matches;
+    if (isLargeScreen && conversations.length > 0 && !selectedConversation) {
       setSelectedConversation(conversations[0]);
     }
   }, [conversations, selectedConversation]);
@@ -172,13 +191,13 @@ export default function DesignerMessages() {
     if (error || !conversations) return [];
 
     const customerIds = conversations.map((c) => c.customer_id);
-    let customerProfiles: any[] = [];
+    let customerProfiles: CustomerProfile[] = [];
     if (customerIds.length > 0) {
       const { data } = await supabase
         .from("profiles")
         .select("user_id, first_name, last_name")
         .in("user_id", customerIds);
-      customerProfiles = data || [];
+      customerProfiles = (data as CustomerProfile[]) || [];
     }
 
     const conversationPromises = conversations.map(async (conversation) => {
@@ -243,11 +262,13 @@ export default function DesignerMessages() {
         }
 
         setMessages(data || []);
+        // Scroll to bottom after messages are loaded
+        setTimeout(() => scrollToBottom(), 100);
       } catch (error) {
         console.error("Error:", error);
       }
     },
-    [selectedConversation]
+    [selectedConversation, scrollToBottom]
   );
 
   const setupRealtimeSubscription = useCallback(
@@ -267,6 +288,8 @@ export default function DesignerMessages() {
           (payload) => {
             console.log("New conversation message received:", payload.new);
             setMessages((prev) => [...prev, payload.new as Message]);
+            // Scroll to bottom when new message is received
+            setTimeout(() => scrollToBottom(), 100);
             // Throttle conversation refresh
             setTimeout(() => fetchConversations(), 1000);
           }
@@ -277,7 +300,7 @@ export default function DesignerMessages() {
         supabase.removeChannel(channel);
       };
     },
-    [selectedConversation, fetchConversations]
+    [selectedConversation, fetchConversations, scrollToBottom]
   );
 
   const [isSending, setIsSending] = useState(false);
@@ -301,6 +324,8 @@ export default function DesignerMessages() {
 
     setMessages((prev) => [...prev, optimisticMessage]);
     setNewMessage("");
+    // Scroll to bottom when sending message
+    setTimeout(() => scrollToBottom(), 100);
 
     try {
       setIsSending(true);
@@ -663,6 +688,8 @@ export default function DesignerMessages() {
                             </div>
                           ))
                         )}
+                        {/* Scroll anchor */}
+                        <div ref={messagesEndRef} />
                       </div>
 
                       {/* Message Input */}

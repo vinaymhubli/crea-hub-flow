@@ -12,6 +12,7 @@ import HowToUse from "./pages/HowToUse";
 import Contact from "./pages/Contact";
 import Designers from "./pages/Designers";
 import DesignerDetails from "./pages/DesignerDetails";
+import FeaturedDesigners from "./pages/FeaturedDesigners";
 import Services from "./pages/Services";
 import ServiceDetail from "./pages/ServiceDetail";
 import Auth from "./pages/Auth";
@@ -153,6 +154,7 @@ function AppContent() {
           <Route path="/how-to-use" element={<HowToUse />} />
           <Route path="/contact" element={<ContactDynamic />} />
           <Route path="/designers" element={<Designers />} />
+          <Route path="/featured-designers" element={<FeaturedDesigners />} />
           <Route path="/designer/:id" element={<DesignerDetails />} />
           <Route path="/services" element={<Services />} />
           <Route path="/services/:id" element={<ServiceDetail />} />
