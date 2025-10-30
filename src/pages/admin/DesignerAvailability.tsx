@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AdminLayout } from '@/components/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -114,6 +114,22 @@ export default function DesignerAvailability() {
     },
   });
 
+  // Fetch all designer slots for admins
+  const { data: designerSlots = [] } = useQuery({
+    queryKey: ['admin-designer-slots'],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from('designer_slots')
+        .select('*')
+        .order('designer_id', { ascending: true })
+        .order('day_of_week', { ascending: true })
+        .order('start_time', { ascending: true });
+
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   const { data: specialDays = [] } = useQuery({
     queryKey: ['admin-special-days'],
     queryFn: async () => {
@@ -127,6 +143,38 @@ export default function DesignerAvailability() {
       return data || [];
     },
   });
+
+  // Realtime updates for admin view so schedule/slots reflect immediately
+  useEffect(() => {
+    const channel = supabase
+      .channel('admin-availability-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'designer_slots' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['admin-designer-slots'] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'designer_weekly_schedule' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['admin-weekly-schedules'] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'designer_special_days' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['admin-special-days'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      try { supabase.removeChannel(channel); } catch {}
+    };
+  }, [queryClient]);
 
   // Mutation for updating online status
   const updateOnlineStatusMutation = useMutation({
@@ -266,6 +314,19 @@ export default function DesignerAvailability() {
     return specialDays.filter(day => day.designer_id === designerId);
   };
 
+  const getDesignerSlots = (designerId: string) => {
+    return (designerSlots as any[]).filter(slot => slot.designer_id === designerId && slot.is_active);
+  };
+
+  const groupSlotsByDay = (slots: any[]) => {
+    const grouped: { [key: number]: { start_time: string; end_time: string }[] } = {};
+    for (let i = 0; i < 7; i++) grouped[i] = [];
+    slots.forEach(s => {
+      grouped[s.day_of_week].push({ start_time: s.start_time, end_time: s.end_time });
+    });
+    return grouped;
+  };
+
   const filteredDesigners = designers.filter(designer => {
     const matchesSearch = designer.specialty.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          designer.bio?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -317,6 +378,8 @@ export default function DesignerAvailability() {
           {filteredDesigners.map((designer) => {
             const schedule = getDesignerSchedule(designer.id);
             const upcomingSpecialDays = getDesignerSpecialDays(designer.id);
+            const slots = getDesignerSlots(designer.id);
+            const slotsByDay = groupSlotsByDay(slots);
             
             return (
               <Card key={designer.id} className="hover:shadow-lg transition-shadow">
@@ -391,25 +454,42 @@ export default function DesignerAvailability() {
                     </div>
                   </div>
 
-                  {/* Weekly Schedule */}
+                  {/* Exact Schedule (Slots) or Weekly Schedule fallback */}
                   <div>
                     <h4 className="font-medium text-sm text-muted-foreground mb-2 flex items-center gap-1">
                       <Clock className="w-3 h-3" />
-                      Weekly Schedule
+                      Schedule
                     </h4>
-                    {schedule.length > 0 ? (
+                    {slots.length > 0 ? (
                       <div className="space-y-1">
-                        {schedule.map((day) => (
-                          <div key={day.id} className="flex justify-between text-xs">
-                            <span className="font-medium">{daysOfWeek[day.day_of_week]}:</span>
-                            <span className={day.is_available ? 'text-green-600' : 'text-muted-foreground'}>
-                              {day.is_available ? `${day.start_time} - ${day.end_time}` : 'Unavailable'}
+                        {daysOfWeek.map((dayLabel, idx) => (
+                          <div key={dayLabel} className="flex justify-between text-xs">
+                            <span className="font-medium">{dayLabel}:</span>
+                            <span className={slotsByDay[idx].length > 0 ? 'text-green-600' : 'text-muted-foreground'}>
+                              {slotsByDay[idx].length > 0 
+                                ? slotsByDay[idx].map(r => `${r.start_time} - ${r.end_time}`).join(', ')
+                                : 'Unavailable'}
                             </span>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs text-muted-foreground">No schedule set</p>
+                      <>
+                        {schedule.length > 0 ? (
+                          <div className="space-y-1">
+                            {schedule.map((day) => (
+                              <div key={day.id} className="flex justify-between text-xs">
+                                <span className="font-medium">{daysOfWeek[day.day_of_week]}:</span>
+                                <span className={day.is_available ? 'text-green-600' : 'text-muted-foreground'}>
+                                  {day.is_available ? `${day.start_time} - ${day.end_time}` : 'Unavailable'}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">No schedule set</p>
+                        )}
+                      </>
                     )}
                   </div>
 
