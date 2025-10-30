@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,6 +43,10 @@ export function BookingDialog({ designer, children, service }: BookingDialogProp
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  // Slots for the currently selected day
+  const [daySlots, setDaySlots] = useState<{ start_time: string; end_time: string }[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+
   const getCurrentPackage = () => {
     if (service?.packages && service.packages.length > 0) {
       return service.packages.find(p => p.tier === selectedPackage) || service.packages[0];
@@ -55,7 +59,49 @@ export function BookingDialog({ designer, children, service }: BookingDialogProp
     if (currentPackage) {
       return currentPackage.price;
     }
-    return service?.price || (designer.hourly_rate * bookingData.duration_hours);
+    // Designer rate stored per minute; total for hours = perMin * 60 * hours
+    const perMinuteRate = designer.hourly_rate || 0;
+    return service?.price || (perMinuteRate * 60 * bookingData.duration_hours);
+  };
+
+  // Fetch slots for the selected day
+  useEffect(() => {
+    const fetchDaySlots = async () => {
+      try {
+        setSlotsLoading(true);
+        // Determine day of week from the selected date, default to today if empty
+        const dateStr = bookingData.scheduled_date || new Date().toISOString().slice(0, 16);
+        const localDate = new Date(dateStr);
+        const dayOfWeek = localDate.getDay(); // 0=Sun ... 6=Sat
+
+        const { data, error } = await (supabase as any)
+          .from('designer_slots')
+          .select('start_time,end_time,is_active,day_of_week')
+          .eq('designer_id', designer.id)
+          .eq('day_of_week', dayOfWeek)
+          .eq('is_active', true)
+          .order('start_time', { ascending: true });
+
+        if (error) throw error;
+        setDaySlots((data || []).map((s: any) => ({ start_time: s.start_time, end_time: s.end_time })));
+      } catch (e) {
+        setDaySlots([]);
+      } finally {
+        setSlotsLoading(false);
+      }
+    };
+
+    fetchDaySlots();
+  }, [bookingData.scheduled_date, designer.id]);
+
+  const handleSlotPick = (startTimeHHMM: string) => {
+    // Keep the selected date part, set the time to the slot start
+    const base = bookingData.scheduled_date ? new Date(bookingData.scheduled_date) : new Date();
+    const yyyy = base.getFullYear();
+    const mm = String(base.getMonth() + 1).padStart(2, '0');
+    const dd = String(base.getDate()).padStart(2, '0');
+    const newValue = `${yyyy}-${mm}-${dd}T${startTimeHHMM.slice(0,5)}`;
+    setBookingData({ ...bookingData, scheduled_date: newValue });
   };
 
   const handleBooking = async () => {
@@ -269,6 +315,23 @@ export function BookingDialog({ designer, children, service }: BookingDialogProp
               onChange={(e) => setBookingData({...bookingData, scheduled_date: e.target.value})}
               min={new Date().toISOString().slice(0, 16)}
             />
+            {/* Available Slots for the selected day */}
+            <div className="mt-2">
+              <div className="text-xs text-gray-600 mb-1">Available slots for this day:</div>
+              {slotsLoading ? (
+                <div className="text-xs text-gray-500">Loading slots...</div>
+              ) : daySlots.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {daySlots.map((s, idx) => (
+                    <Button key={idx} variant="outline" size="sm" onClick={() => handleSlotPick(s.start_time)}>
+                      {s.start_time.slice(0,5)} - {s.end_time.slice(0,5)}
+                    </Button>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-xs text-gray-500">No active slots for this day. Try another date.</div>
+              )}
+            </div>
           </div>
           
           <div className="p-4 bg-gray-50 rounded-lg">
