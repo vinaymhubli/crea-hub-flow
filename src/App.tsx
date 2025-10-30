@@ -66,6 +66,7 @@ import UsageAnalytics from "./pages/admin/analytics/UsageAnalytics";
 import RevenueAnalytics from "./pages/admin/analytics/RevenueAnalytics";
 import EngagementAnalytics from "./pages/admin/analytics/EngagementAnalytics";
 import AdminPlatformSettings from "./pages/admin/AdminPlatformSettings";
+import AdminSecurity from "./pages/admin/AdminSecurity";
 import CustomerDashboard from "./pages/CustomerDashboard";
 import CustomerProfile from "./pages/CustomerProfile";
 import CustomerBookings from "./pages/CustomerBookings";
@@ -597,6 +598,17 @@ function AppContent() {
               <ProtectedAdminRoute>
                 <AdminLayout>
                   <AdminPlatformSettings />
+                </AdminLayout>
+              </ProtectedAdminRoute>
+            }
+          />
+
+          <Route
+            path="/admin/security"
+            element={
+              <ProtectedAdminRoute>
+                <AdminLayout>
+                  <AdminSecurity />
                 </AdminLayout>
               </ProtectedAdminRoute>
             }

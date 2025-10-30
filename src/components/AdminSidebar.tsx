@@ -235,6 +235,11 @@ const platformSections = [
     icon: Settings,
   },
   {
+    title: "Security",
+    url: "/admin/security",
+    icon: Shield,
+  },
+  {
     title: "Invoice Management",
     url: "/admin/invoice-management",
     icon: FileText,
