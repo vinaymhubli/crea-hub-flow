@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { playNotificationSound, initializeNotificationSound } from '@/utils/notificationSound';
 
 interface Notification {
   id: string;
@@ -33,6 +34,9 @@ export default function NotificationBell() {
     console.log('🔔 NotificationBell useEffect triggered');
     console.log('🔔 User:', user?.id);
     console.log('🔔 Profile:', profile?.user_type);
+    
+    // Initialize notification sound system
+    initializeNotificationSound();
     
     if (!user || !profile) {
       console.log('🔔 Missing user or profile, returning early');
@@ -69,6 +73,11 @@ export default function NotificationBell() {
             return [newNotification, ...prev];
           });
           setUnreadCount(prev => prev + 1);
+          
+          // Play bell sound for new notification
+          playNotificationSound(0.7).catch(err => {
+            console.warn('Could not play notification sound:', err);
+          });
           
            // Show toast for important notifications (excluding chat messages)
            if (newNotification.type === 'booking_confirmation' || 

@@ -33,6 +33,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserSettings } from "@/hooks/useUserSettings";
 import { toast } from "sonner";
+import { playNotificationSound, initializeNotificationSound } from "@/utils/notificationSound";
 
 interface Notification {
   id: string;
@@ -204,6 +205,9 @@ export default function CustomerNotifications() {
   const navigate = useNavigate();
   
   useEffect(() => {
+    // Initialize notification sound system
+    initializeNotificationSound();
+    
     if (user) {
       fetchNotifications();
       
@@ -219,6 +223,10 @@ export default function CustomerNotifications() {
             filter: `user_id=eq.${user.id}`
           },
           () => {
+            // Play bell sound for new notification
+            playNotificationSound(0.7).catch(err => {
+              console.warn('Could not play notification sound:', err);
+            });
             fetchNotifications();
           }
         )

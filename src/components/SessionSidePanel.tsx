@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Edit, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { checkForContactInfo } from "@/utils/chatMonitor";
 
 interface SessionSidePanelProps {
   sessionId: string;
@@ -464,6 +465,18 @@ export default function SessionSidePanel({
 
   const sendMessage = async () => {
     if (!newMessage.trim() || !userId) return;
+
+    // Check for contact information (phone numbers and email addresses)
+    // Pass sessionId and userId for pattern detection across messages
+    const contactCheck = checkForContactInfo(newMessage.trim(), sessionId, userId);
+    if (contactCheck.hasContactInfo) {
+      toast({
+        title: "Contact Information Detected",
+        description: contactCheck.message,
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       // Get current user profile for sender name

@@ -12,6 +12,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
 import { Video, MessageCircle, Clock, User, X, Check, Send } from 'lucide-react';
 import { checkDesignerBookingAvailability } from '@/utils/availabilityUtilsSlots';
+import { checkForContactInfo } from '@/utils/chatMonitor';
+import { playNotificationSound } from '@/utils/notificationSound';
 
 interface LiveSessionRequestDialogProps {
   isOpen: boolean;
@@ -190,6 +192,12 @@ export default function LiveSessionRequestDialog({
         },
         (payload) => {
           console.log('Session request updated:', payload);
+          // Play bell sound when customer receives accept/reject notification
+          if (payload.eventType === 'UPDATE' && payload.new?.status !== 'pending') {
+            playNotificationSound(0.8).catch(err => {
+              console.warn('Could not play notification sound:', err);
+            });
+          }
           loadSessionRequests();
         }
       )
@@ -202,6 +210,17 @@ export default function LiveSessionRequestDialog({
 
   const sendSessionRequest = async () => {
     if (!user || !requestMessage.trim()) return;
+
+    // Check for contact information (phone numbers and email addresses)
+    const contactCheck = checkForContactInfo(requestMessage.trim());
+    if (contactCheck.hasContactInfo) {
+      toast({
+        title: "Contact Information Detected",
+        description: contactCheck.message,
+        variant: "destructive",
+      });
+      return;
+    }
 
     // Check if designer is available based on their schedule
     const availabilityResult = await checkDesignerBookingAvailability(designer.id);
@@ -313,6 +332,11 @@ export default function LiveSessionRequestDialog({
         .eq('id', requestId);
 
       if (error) throw error;
+
+      // Play bell sound for accept/reject action
+      playNotificationSound(0.8).catch(err => {
+        console.warn('Could not play notification sound:', err);
+      });
 
       if (status === 'accepted') {
         // Generate session ID and start screen sharing

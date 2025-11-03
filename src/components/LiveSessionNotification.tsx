@@ -6,6 +6,7 @@ import { Video, X, Check, MessageCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
+import { playNotificationSound } from '@/utils/notificationSound';
 
 interface LiveSessionNotificationProps {
   designerId: string;
@@ -202,6 +203,11 @@ export default function LiveSessionNotification({ designerId, onSessionStart }: 
         .eq('id', requestId);
 
       if (error) throw error;
+
+      // Play bell sound for accept/reject
+      playNotificationSound(0.8).catch(err => {
+        console.warn('Could not play notification sound:', err);
+      });
 
       if (status === 'accepted') {
         // Generate session ID and start screen sharing

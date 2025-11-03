@@ -17,6 +17,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { checkForContactInfo } from "@/utils/chatMonitor";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { DesignerSidebar } from "@/components/DesignerSidebar";
 import { DashboardHeader } from "@/components/DashboardHeader";
@@ -307,6 +308,18 @@ export default function DesignerMessages() {
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation || isSending) return;
+
+    // Check for contact information (phone numbers and email addresses)
+    // Pass conversation ID and user ID for pattern detection across messages
+    const contactCheck = checkForContactInfo(
+      newMessage.trim(),
+      selectedConversation.conversation_id,
+      user?.id
+    );
+    if (contactCheck.hasContactInfo) {
+      toast.error(contactCheck.message);
+      return;
+    }
 
     const messageContent = newMessage.trim();
     const tempId = `temp_${Date.now()}`;

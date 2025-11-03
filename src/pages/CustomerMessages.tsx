@@ -33,6 +33,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { ScreenShareModal } from "@/components/ScreenShareModal";
+import { checkForContactInfo } from "@/utils/chatMonitor";
 
 interface Message {
   id: string;
@@ -396,6 +397,18 @@ export default function CustomerMessages() {
 
   const handleSendMessage = async () => {
     if (!messageInput.trim() || !selectedConversation || isSending) return;
+
+    // Check for contact information (phone numbers and email addresses)
+    // Pass conversation ID and user ID for pattern detection across messages
+    const contactCheck = checkForContactInfo(
+      messageInput.trim(),
+      selectedConversation.conversation_id,
+      user?.id
+    );
+    if (contactCheck.hasContactInfo) {
+      toast.error(contactCheck.message);
+      return;
+    }
 
     const messageContent = messageInput.trim();
     const tempId = `temp_${Date.now()}`;

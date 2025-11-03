@@ -32,6 +32,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { checkForContactInfo } from "@/utils/chatMonitor";
 
 interface Announcement {
   id: string;
@@ -191,6 +192,13 @@ export default function Communications() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Check for contact information (phone numbers and email addresses) in announcement message
+    const contactCheck = checkForContactInfo(formData.message.trim());
+    if (contactCheck.hasContactInfo) {
+      toast.error(contactCheck.message);
+      return;
+    }
 
     try {
       if (editingAnnouncement) {
