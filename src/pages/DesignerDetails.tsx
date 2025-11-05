@@ -233,7 +233,6 @@ const DesignerDetails: React.FC = () => {
                     <div className="flex items-center gap-1">
                       <Star className="w-4 h-4 sm:w-5 sm:h-5 fill-yellow-400 text-yellow-400" />
                       <span className="font-semibold text-sm sm:text-base">{designer.rating}</span>
-                      <span className="text-muted-foreground text-xs sm:text-sm">({designer.reviews_count} reviews)</span>
                     </div>
                     
                     {designer.location && (

@@ -187,7 +187,6 @@ const SuccessStories = () => {
                           {[...Array(5)].map((_, i) => (
                             <Star key={i} className="w-4 h-4 fill-green-500 text-green-500 mr-1" />
                           ))}
-                          <span className="text-sm text-gray-600 ml-2">5.0 (127 reviews)</span>
                         </div>
                       </div>
                     </div>

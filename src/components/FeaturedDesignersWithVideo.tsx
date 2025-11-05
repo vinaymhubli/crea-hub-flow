@@ -45,6 +45,8 @@ interface FeaturedDesigner {
   is_online?: boolean;
   position: number;
   verification_status: string;
+  kyc_status?: string | null;
+  response_time?: string;
   portfolio_items?: any[];
   social_media_links?: any[];
 }
@@ -98,7 +100,7 @@ export function FeaturedDesignersWithVideo() {
 
       // Get designer details from designers table
       const designerIds = featuredData.map((fd) => fd.designer_id);
-      const { data: designersData, error: designersError } = await supabase
+      const { data: designersData, error: designersError } = await (supabase as any)
         .from("designers")
         .select(
           `
@@ -108,10 +110,12 @@ export function FeaturedDesignersWithVideo() {
           rating,
           reviews_count,
           hourly_rate,
+          response_time,
           bio,
           location,
           is_online,
           verification_status,
+          kyc_status,
           portfolio_images,
           skills
         `
@@ -187,6 +191,7 @@ export function FeaturedDesignersWithVideo() {
             rating: designer.rating || 0,
             reviews_count: designer.reviews_count || 0,
             hourly_rate: designer.hourly_rate || 0,
+            response_time: designer.response_time || "1 hour",
             bio:
               designer.bio ||
               "Professional designer ready to help with your projects.",
@@ -194,6 +199,7 @@ export function FeaturedDesignersWithVideo() {
             is_online: designer.is_online || false,
             position: featured.position,
             verification_status: designer.verification_status || "pending",
+            kyc_status: designer.kyc_status || null,
             portfolio_items: designer.portfolio_images || [],
             social_media_links: designer.skills || [],
           };
@@ -466,7 +472,7 @@ export function FeaturedDesignersWithVideo() {
           {/* Left Side - Video Section */}
           <div className="space-y-6 order-2 lg:order-1">
             {/* Video/Illustration Section */}
-            <div className="relative bg-gradient-to-br from-green-100 to-blue-100 rounded-2xl sm:rounded-3xl p-6 sm:p-8 overflow-hidden aspect-video">
+            <div className="relative bg-gradient-to-br from-green-100 to-blue-100 rounded-2xl sm:rounded-3xl p-6 sm:p-8 overflow-hidden aspect-square">
               {videoContent?.youtube_url ? (
                 <div className="relative h-full w-full">
                   <iframe
@@ -607,12 +613,11 @@ export function FeaturedDesignersWithVideo() {
                                             {designer.designer_name ||
                                               "Unknown Designer"}
                                           </h4>
-                                          {designer.verification_status ===
-                                            "verified" && (
+                                          {(designer.verification_status === "verified" || designer.kyc_status === "approved") && (
                                             <div className="flex items-center space-x-1 flex-shrink-0">
                                               <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-500" />
                                               <span className="text-xs text-green-600 font-medium">
-                                                Verified
+                                                {designer.kyc_status === "approved" ? "KYC Verified" : "Verified"}
                                               </span>
                                             </div>
                                           )}
@@ -628,9 +633,9 @@ export function FeaturedDesignersWithVideo() {
                                             <span className="text-xs sm:text-sm font-medium text-gray-700">
                                               {designer.rating || 0}
                                             </span>
-                                            <span className="text-xs sm:text-sm text-gray-500">
+                                            {/* <span className="text-xs sm:text-sm text-gray-500">
                                               ({designer.reviews_count || 0})
-                                            </span>
+                                            </span> */}
                                           </div>
                                           <span className="text-xs sm:text-sm text-green-600 font-medium">
                                             {designer.is_online
@@ -678,7 +683,7 @@ export function FeaturedDesignersWithVideo() {
                                           ₹{designer.hourly_rate || 0}/min
                                         </p>
                                         <p className="text-xs sm:text-sm text-gray-500 sm:mb-0">
-                                          Responds in 1hr
+                                          Responds in {designer.response_time}
                                         </p>
                                       </div>
 

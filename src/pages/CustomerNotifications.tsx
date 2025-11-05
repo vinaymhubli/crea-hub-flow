@@ -13,7 +13,10 @@ import {
   Trash2,
   Archive,
   MessageCircle,
-  AlertTriangle
+  AlertTriangle,
+  LayoutDashboard,
+  Wallet,
+  User
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -22,6 +25,7 @@ import {
 } from "@/components/ui/sidebar";
 import { CustomerSidebar } from "@/components/CustomerSidebar";
 import { DashboardHeader } from "@/components/DashboardHeader";
+import NotificationBell from '@/components/NotificationBell';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -200,9 +204,18 @@ function NotificationCard({ notification, onMarkAsRead, onDelete, onViewDetails 
 export default function CustomerNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const { settings, updateSetting, saving } = useUserSettings();
   const navigate = useNavigate();
+
+  const userDisplayName = profile?.first_name && profile?.last_name 
+    ? `${profile.first_name} ${profile.last_name}`
+    : user?.email || 'Customer';
+
+  const userInitials = profile?.first_name && profile?.last_name 
+    ? `${profile.first_name[0]}${profile.last_name[0]}`
+    : user?.email ? user.email.substring(0, 2).toUpperCase()
+    : 'CU';
   
   useEffect(() => {
     // Initialize notification sound system
@@ -401,12 +414,77 @@ export default function CustomerNotifications() {
             title="Notifications"
             subtitle="Stay updated with your design projects"
             icon={<Bell className="w-6 h-6 sm:w-8 sm:h-8 text-white" />}
+            userInitials={userInitials}
+            isOnline={true}
             additionalInfo={
               unreadCount > 0 && (
                 <Badge className="bg-white/20 text-white backdrop-blur-sm border border-white/30">
                   {unreadCount} new
                 </Badge>
               )
+            }
+            actionButton={
+              <div className="flex items-center space-x-2 sm:space-x-4">
+                <NotificationBell />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors flex-shrink-0">
+                      <span className="text-white font-semibold text-xs sm:text-sm">{userInitials}</span>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="min-w-64 w-fit p-0" align="end">
+                    <div className="p-4">
+                      <div className="flex items-center space-x-3 mb-3">
+                        <div className="w-10 min-w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                          <span className="text-primary font-semibold text-sm">{userInitials}</span>
+                        </div>
+                        <div>
+                          <p className="font-semibold text-foreground">{userDisplayName}</p>
+                          <p className="text-sm text-muted-foreground">{user?.email}</p>
+                        </div>
+                      </div>
+                      <Separator className="my-3" />
+                      <div className="space-y-1">
+                        <Link 
+                          to="/customer-dashboard" 
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                        >
+                          <LayoutDashboard className="w-4 h-4 mr-3" />
+                          Dashboard
+                        </Link>
+                        <Link 
+                          to="/customer-dashboard/wallet" 
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                        >
+                          <Wallet className="w-4 h-4 mr-3" />
+                          Wallet
+                        </Link>
+                        <Link 
+                          to="/customer-dashboard/profile" 
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                        >
+                          <User className="w-4 h-4 mr-3" />
+                          Profile
+                        </Link>
+                        <Separator className="my-2" />
+                        <button 
+                          onClick={async () => {
+                            try {
+                              await signOut();
+                            } catch (error) {
+                              console.error('Error signing out:', error);
+                            }
+                          }}
+                          className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                        >
+                          <LogOut className="w-4 h-4 mr-3" />
+                          Log out
+                        </button>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
             }
           />
 

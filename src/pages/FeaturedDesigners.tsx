@@ -43,6 +43,7 @@ interface FeaturedDesigner {
   is_online?: boolean;
   position: number;
   verification_status: string;
+  kyc_status?: string | null;
   portfolio_items?: any[];
   social_media_links?: any[];
 }
@@ -77,7 +78,7 @@ export default function FeaturedDesigners() {
       
       // Get designer details from designers table
       const designerIds = featuredData.map((fd: any) => fd.designer_id);
-      const { data: designersData, error: designersError } = await supabase
+      const { data: designersData, error: designersError } = await (supabase as any)
         .from('designers')
         .select(`
           id,
@@ -90,6 +91,7 @@ export default function FeaturedDesigners() {
           location,
           is_online,
           verification_status,
+          kyc_status,
           portfolio_images,
           skills
         `)
@@ -142,6 +144,7 @@ export default function FeaturedDesigners() {
           is_online: designer.is_online || false,
           position: featured.position,
           verification_status: designer.verification_status || 'pending',
+          kyc_status: (designer as any).kyc_status || null,
           portfolio_items: designer.portfolio_images || [],
           social_media_links: designer.skills || []
         };
@@ -365,10 +368,12 @@ export default function FeaturedDesigners() {
                           <h3 className="font-bold text-gray-900 text-lg truncate">
                             {designer.designer_name || 'Unknown Designer'}
                           </h3>
-                          {designer.verification_status === 'verified' && (
+                          {(designer.verification_status === 'verified' || (designer as any).kyc_status === 'approved') && (
                             <div className="flex items-center space-x-1 flex-shrink-0">
                               <CheckCircle className="w-4 h-4 text-green-500" />
-                              <span className="text-xs text-green-600 font-medium">Verified</span>
+                              <span className="text-xs text-green-600 font-medium">
+                                {(designer as any).kyc_status === 'approved' ? 'KYC Verified' : 'Verified'}
+                              </span>
                             </div>
                           )}
                         </div>
@@ -379,7 +384,7 @@ export default function FeaturedDesigners() {
                           <div className="flex items-center space-x-1">
                             <Star className="w-4 h-4 text-yellow-400 fill-current" />
                             <span className="text-sm font-medium text-gray-700">{designer.rating || 0}</span>
-                            <span className="text-sm text-gray-500">({designer.reviews_count || 0})</span>
+                           
                           </div>
                           <span className="text-sm text-green-600 font-medium">
                             {designer.is_online ? 'Online' : 'Offline'}

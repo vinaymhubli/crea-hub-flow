@@ -23,11 +23,14 @@ import {
   Award,
   TrendingUp,
   Eye,
+  LayoutDashboard,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { CustomerSidebar } from "@/components/CustomerSidebar";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import NotificationBell from '@/components/NotificationBell';
+import { Link } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -263,7 +266,7 @@ export default function CustomerProfile() {
             isOnline={true}
             actionButton={
               <div className="flex items-center space-x-2 sm:space-x-4">
-                <Bell className="w-5 h-5 text-white/80" />
+                <NotificationBell />
                 <Popover>
                   <PopoverTrigger asChild>
                     <button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
@@ -280,7 +283,7 @@ export default function CustomerProfile() {
                       )}
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-64 p-0" align="end">
+                  <PopoverContent className="min-w-64 w-fit p-0" align="end">
                     <div className="p-4">
                       <div className="flex items-center space-x-3 mb-3">
                         <Avatar>
@@ -297,13 +300,37 @@ export default function CustomerProfile() {
                         </div>
                       </div>
                       <Separator className="my-3" />
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
-                      >
-                        <LogOut className="w-4 h-4 mr-3" />
-                        Log out
-                      </button>
+                      <div className="space-y-1">
+                        <Link 
+                          to="/customer-dashboard" 
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                        >
+                          <LayoutDashboard className="w-4 h-4 mr-3" />
+                          Dashboard
+                        </Link>
+                        <Link 
+                          to="/customer-dashboard/wallet" 
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                        >
+                          <Wallet className="w-4 h-4 mr-3" />
+                          Wallet
+                        </Link>
+                        <Link 
+                          to="/customer-dashboard/profile" 
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                        >
+                          <User className="w-4 h-4 mr-3" />
+                          Profile
+                        </Link>
+                        <Separator className="my-2" />
+                        <button
+                          onClick={handleLogout}
+                          className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                        >
+                          <LogOut className="w-4 h-4 mr-3" />
+                          Log out
+                        </button>
+                      </div>
                     </div>
                   </PopoverContent>
                 </Popover>

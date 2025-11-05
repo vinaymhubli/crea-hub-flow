@@ -34,19 +34,67 @@ const Designers = () => {
   });
   const [categories, setCategories] = useState<Array<{ name: string; count: number }>>([]);
   const [skills, setSkills] = useState<string[]>([]);
+  const [totalDesigners, setTotalDesigners] = useState<number>(0);
 
   // Skip redirect when component is rendered within customer dashboard
   const isInDashboard = location.pathname.includes('/customer-dashboard');
+
+  const fetchTotalDesigners = async () => {
+    try {
+      // First, get all designers with their profile blocked status
+      const { data: designers, error } = await supabase
+        .from('designers')
+        .select(`
+          id,
+          user:profiles!user_id(blocked)
+        `);
+
+      if (error) {
+        console.error('Error fetching total designers:', error);
+        // Fallback: try a simpler count query
+        const { count: simpleCount, error: simpleError } = await supabase
+          .from('designers')
+          .select('*', { count: 'exact', head: true });
+
+        if (!simpleError && simpleCount !== null) {
+          setTotalDesigners(simpleCount);
+        }
+        return;
+      }
+
+      // Filter out blocked designers and count
+      interface DesignerWithProfile {
+        id: string;
+        user?: { blocked?: boolean };
+      }
+      const nonBlockedCount = (designers as DesignerWithProfile[])?.filter(
+        (designer) => !designer.user?.blocked
+      ).length || 0;
+
+      setTotalDesigners(nonBlockedCount);
+    } catch (error) {
+      console.error('Error fetching total designers:', error);
+      // Fallback count
+      const { count } = await supabase
+        .from('designers')
+        .select('*', { count: 'exact', head: true });
+      
+      if (count !== null) {
+        setTotalDesigners(count);
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchFiltersData();
+    fetchTotalDesigners();
+  }, []);
 
   // Only redirect if we're on the public route and user is a client
   if (!loading && user && profile?.user_type === 'client' && !isInDashboard) {
     window.location.href = '/customer-dashboard/designers';
     return null;
   }
-
-  useEffect(() => {
-    fetchFiltersData();
-  }, []);
 
   const fetchFiltersData = async () => {
     try {
@@ -110,7 +158,7 @@ const Designers = () => {
             <div className="text-center mb-12">
               <div className="inline-flex items-center space-x-2 bg-green-100 text-green-700 px-4 py-2 rounded-full text-sm font-medium mb-6">
                 <span>🔥</span>
-                <span>247 Designers Available</span>
+                <span>{totalDesigners > 0 ? `${totalDesigners} Designer${totalDesigners !== 1 ? 's' : ''} Available` : 'Designers Available'}</span>
               </div>
               <h1 className="text-5xl font-bold text-foreground mb-6 leading-tight">
                 Find Your Perfect

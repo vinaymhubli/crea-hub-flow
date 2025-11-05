@@ -64,6 +64,8 @@ interface ServiceDetail {
     rating: number;
     completion_rate: number;
     response_time: string;
+    verification_status?: string;
+    kyc_status?: string;
     profiles: {
       first_name: string;
       last_name: string;
@@ -90,7 +92,7 @@ export default function ServiceDetail() {
     try {
       setLoading(true);
       
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('services')
         .select(`
           *,
@@ -104,6 +106,8 @@ export default function ServiceDetail() {
             rating,
             completion_rate,
             response_time,
+            verification_status,
+            kyc_status,
             profiles (
               first_name,
               last_name,
@@ -269,7 +273,7 @@ export default function ServiceDetail() {
                   <div className="flex items-center space-x-2 ml-4">
                     <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                     <span className="font-medium">{service.rating}</span>
-                    <span className="text-gray-500">({service.reviews_count})</span>
+                    
                   </div>
                 </div>
                 <div className="flex items-center space-x-2 mt-4">
@@ -460,9 +464,9 @@ export default function ServiceDetail() {
                   <div>
                     <h4 className="font-medium flex items-center gap-2">
                       {service.designer.profiles?.first_name || 'Unknown'} {service.designer.profiles?.last_name || 'User'}
-                      {service.designer.verification_status === 'approved' && (
+                      {(service.designer.verification_status === 'approved' || service.designer.kyc_status === 'approved') && (
                         <span className="inline-flex items-center text-green-700 text-[10px] bg-green-100 px-1.5 py-0.5 rounded">
-                          ✓ Verified
+                          ✓ {service.designer.kyc_status === 'approved' ? 'KYC Verified' : 'Verified'}
                         </span>
                       )}
                     </h4>

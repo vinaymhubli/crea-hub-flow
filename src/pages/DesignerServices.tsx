@@ -1103,7 +1103,7 @@ export default function DesignerServices() {
                   <div className="flex items-center space-x-1">
                     <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-yellow-400 text-yellow-400" />
                     <span className="text-xs sm:text-sm font-medium">{service.rating}</span>
-                    <span className="text-xs text-gray-500">({service.reviews_count})</span>
+                    
                   </div>
                 </div>
                 

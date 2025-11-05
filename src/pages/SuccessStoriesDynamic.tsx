@@ -204,9 +204,7 @@ export default function SuccessStoriesDynamic() {
                       <div className="font-semibold text-gray-900">{story.designer_data?.name}</div>
                       <div className="flex items-center gap-2 mt-2">
                         {renderStars(story.designer_data?.rating || 5)}
-                        <span className="text-sm text-gray-600">
-                          {story.designer_data?.rating || 5}.0 ({story.designer_data?.reviews || 0} reviews)
-                        </span>
+                        
                       </div>
                     </div>
                   </div>

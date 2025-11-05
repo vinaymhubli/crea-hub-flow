@@ -160,7 +160,7 @@ const HowItWorks = () => {
   return (
     <section className="py-20 bg-gradient-to-br from-gray-50 to-white">
       <div className="max-w-7xl mx-auto px-6">
-        <div className="text-center mb-16">
+        {/* <div className="text-center mb-16">
           <div className="inline-flex items-center bg-green-100 text-green-800 px-4 py-2 rounded-full text-sm font-medium mb-4">
             <span className="mr-2">✨</span>
             {mainContent?.description || "Simple & Secure Process"}
@@ -172,12 +172,12 @@ const HowItWorks = () => {
             {mainContent?.subtitle ||
               "Connect with world-class designers in minutes. Our innovative platform makes hiring creative talent as easy as ordering your morning coffee."}
           </p>
-        </div>
+        </div> */}
 
         {/* Video Section - Show BEFORE the 4 cards if video exists */}
         {videoContent && videoContent.youtube_url && (
           <div className="mb-16">
-            {/* <div className="text-center mb-8">
+            <div className="text-center mb-8">
               <div className="inline-flex items-center bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium mb-4">
                 <Play className="w-4 h-4 mr-2" />
                 Watch & Learn
@@ -189,7 +189,7 @@ const HowItWorks = () => {
                 {videoContent.subtitle ||
                   "Watch our complete platform walkthrough"}
               </p>
-            </div> */}
+            </div>
 
             <div className="max-w-4xl mx-auto">
               <div className="relative bg-gray-900 rounded-2xl overflow-hidden shadow-2xl">
@@ -297,13 +297,13 @@ const HowItWorks = () => {
                 <span className="mr-2">🔍</span>
                 Browse Designers
               </Link>
-              <a
+              {/* <a
                 href="/post-project"
                 className="bg-transparent border-2 border-white text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-white hover:text-green-600 transition-colors whitespace-nowrap"
               >
                 <span className="mr-2">➕</span>
                 Post a Project
-              </a>
+              </a> */}
             </div>
           </div>
         </div>

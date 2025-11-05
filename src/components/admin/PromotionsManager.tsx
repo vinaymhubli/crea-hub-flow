@@ -62,6 +62,7 @@ export function PromotionsManager() {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(null);
   const [activeTab, setActiveTab] = useState('all');
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -98,13 +99,13 @@ export function PromotionsManager() {
   const fetchPromotions = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('promotions')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setPromotions(data || []);
+      setPromotions((data || []) as Promotion[]);
     } catch (error) {
       console.error('Error fetching promotions:', error);
       toast.error('Failed to fetch promotions');
@@ -116,7 +117,7 @@ export function PromotionsManager() {
   const createPromotion = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.rpc('create_promotion', {
+      const { data, error } = await (supabase as any).rpc('create_promotion', {
         p_title: formData.title,
         p_description: formData.description || null,
         p_promotion_type: formData.promotion_type,
@@ -153,10 +154,101 @@ export function PromotionsManager() {
     }
   };
 
+  const updatePromotion = async () => {
+    if (!editingPromotion) return;
+    
+    try {
+      setLoading(true);
+      const { error } = await (supabase as any)
+        .from('promotions')
+        .update({
+          title: formData.title,
+          description: formData.description || null,
+          promotion_type: formData.promotion_type,
+          discount_type: formData.discount_type || null,
+          discount_value: formData.discount_value ? parseFloat(formData.discount_value) : null,
+          discount_code: formData.discount_code || null,
+          min_order_amount: formData.min_order_amount ? parseFloat(formData.min_order_amount) : null,
+          max_discount_amount: formData.max_discount_amount ? parseFloat(formData.max_discount_amount) : null,
+          usage_limit: formData.usage_limit ? parseInt(formData.usage_limit) : null,
+          start_date: formData.start_date || new Date().toISOString(),
+          end_date: formData.end_date || null,
+          target_audience: formData.target_audience,
+          display_location: formData.display_location,
+          priority: formData.priority,
+          banner_image_url: formData.banner_image_url || null,
+          banner_text_color: formData.banner_text_color,
+          banner_background_color: formData.banner_background_color,
+          cta_text: formData.cta_text,
+          cta_url: formData.cta_url || null,
+          admin_notes: formData.admin_notes || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', editingPromotion.id);
+
+      if (error) throw error;
+
+      toast.success('Promotion updated successfully');
+      setShowEditDialog(false);
+      setEditingPromotion(null);
+      resetForm();
+      fetchPromotions();
+    } catch (error) {
+      console.error('Error updating promotion:', error);
+      toast.error('Failed to update promotion');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadPromotionForEdit = (promotion: Promotion) => {
+    setEditingPromotion(promotion);
+    // Format dates for datetime-local input (remove timezone info)
+    const formatDateForInput = (dateString: string) => {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
+
+    setFormData({
+      title: promotion.title || '',
+      description: promotion.description || '',
+      promotion_type: promotion.promotion_type || 'announcement',
+      discount_type: promotion.discount_type || '',
+      discount_value: promotion.discount_value?.toString() || '',
+      discount_code: promotion.discount_code || '',
+      min_order_amount: promotion.min_order_amount?.toString() || '',
+      max_discount_amount: promotion.max_discount_amount?.toString() || '',
+      usage_limit: promotion.usage_limit?.toString() || '',
+      start_date: formatDateForInput(promotion.start_date),
+      end_date: promotion.end_date ? formatDateForInput(promotion.end_date) : '',
+      target_audience: promotion.target_audience || 'all',
+      display_location: promotion.display_location || ['homepage'],
+      priority: promotion.priority || 1,
+      banner_image_url: promotion.banner_image_url || '',
+      banner_text_color: promotion.banner_text_color || '#000000',
+      banner_background_color: promotion.banner_background_color || '#ffffff',
+      cta_text: promotion.cta_text || 'Learn More',
+      cta_url: promotion.cta_url || '',
+      admin_notes: promotion.admin_notes || ''
+    });
+    
+    if (promotion.banner_image_url) {
+      setImagePreview(promotion.banner_image_url);
+    }
+    
+    setShowEditDialog(true);
+  };
+
   const togglePromotionStatus = async (promotionId: string, isActive: boolean) => {
     try {
       setLoading(true);
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('promotions')
         .update({ is_active: !isActive })
         .eq('id', promotionId);
@@ -176,7 +268,7 @@ export function PromotionsManager() {
   const deletePromotion = async (promotionId: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('promotions')
         .delete()
         .eq('id', promotionId);
@@ -661,6 +753,330 @@ export function PromotionsManager() {
         </Dialog>
       </div>
 
+      {/* Edit Promotion Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={(open) => {
+        setShowEditDialog(open);
+        if (!open) {
+          setEditingPromotion(null);
+          resetForm();
+        }
+      }}>
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Promotion</DialogTitle>
+            <DialogDescription>
+              Update promotion details and settings
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* Basic Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Basic Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Title *</Label>
+                  <Input
+                    placeholder="Enter promotion title"
+                    value={formData.title}
+                    onChange={(e) => setFormData({...formData, title: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Promotion Type *</Label>
+                  <Select value={formData.promotion_type} onValueChange={(value) => setFormData({...formData, promotion_type: value})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="announcement">Announcement</SelectItem>
+                      <SelectItem value="discount">Discount</SelectItem>
+                      <SelectItem value="offer">Special Offer</SelectItem>
+                      <SelectItem value="banner">Banner</SelectItem>
+                      <SelectItem value="popup">Popup</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Textarea
+                  placeholder="Enter promotion description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                />
+              </div>
+            </div>
+
+            {/* Discount Settings */}
+            {formData.promotion_type === 'discount' && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Discount Settings</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Discount Type</Label>
+                    <Select value={formData.discount_type} onValueChange={(value) => setFormData({...formData, discount_type: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select discount type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="percentage">Percentage</SelectItem>
+                        <SelectItem value="fixed_amount">Fixed Amount</SelectItem>
+                        <SelectItem value="free_service">Free Service</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Discount Value</Label>
+                    <Input
+                      type="number"
+                      placeholder="Enter discount value"
+                      value={formData.discount_value}
+                      onChange={(e) => setFormData({...formData, discount_value: e.target.value})}
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Discount Code (Optional)</Label>
+                    <Input
+                      placeholder="Enter discount code"
+                      value={formData.discount_code}
+                      onChange={(e) => setFormData({...formData, discount_code: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Minimum Order Amount</Label>
+                    <Input
+                      type="number"
+                      placeholder="Enter minimum order amount"
+                      value={formData.min_order_amount}
+                      onChange={(e) => setFormData({...formData, min_order_amount: e.target.value})}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Display Settings */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Display Settings</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Target Audience</Label>
+                  <Select value={formData.target_audience} onValueChange={(value) => setFormData({...formData, target_audience: value})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Users</SelectItem>
+                      <SelectItem value="customers">Customers Only</SelectItem>
+                      <SelectItem value="designers">Designers Only</SelectItem>
+                      <SelectItem value="new_users">New Users</SelectItem>
+                      <SelectItem value="existing_users">Existing Users</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Priority</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={formData.priority}
+                    onChange={(e) => setFormData({...formData, priority: parseInt(e.target.value) || 1})}
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Display Locations</Label>
+                <div className="flex flex-wrap gap-2">
+                  {['homepage', 'designers', 'services', 'about', 'contact'].map((location) => (
+                    <label key={location} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={formData.display_location.includes(location)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setFormData({
+                              ...formData,
+                              display_location: [...formData.display_location, location]
+                            });
+                          } else {
+                            setFormData({
+                              ...formData,
+                              display_location: formData.display_location.filter(l => l !== location)
+                            });
+                          }
+                        }}
+                      />
+                      <span className="text-sm capitalize">{location}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Banner Settings */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Banner Settings</h3>
+              
+              {/* Image Upload Section */}
+              <div className="space-y-4">
+                <Label>Banner Image</Label>
+                
+                {/* Upload Area */}
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                  {imagePreview || formData.banner_image_url ? (
+                    <div className="space-y-4">
+                      <div className="relative inline-block">
+                        <img
+                          src={imagePreview || formData.banner_image_url}
+                          alt="Banner preview"
+                          className="max-w-full max-h-48 rounded-lg mx-auto"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="absolute -top-2 -right-2"
+                          onClick={removeImage}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <p className="text-sm text-gray-600">Image uploaded successfully</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                        <ImageIcon className="w-6 h-6 text-gray-400" />
+                      </div>
+                      <div>
+                        <Label htmlFor="image-upload-edit" className="cursor-pointer">
+                          <div className="flex items-center justify-center space-x-2">
+                            <Upload className="w-4 h-4" />
+                            <span className="text-sm font-medium">
+                              {uploadingImage ? 'Uploading...' : 'Click to upload image'}
+                            </span>
+                          </div>
+                        </Label>
+                        <input
+                          id="image-upload-edit"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          className="hidden"
+                          disabled={uploadingImage}
+                        />
+                        <p className="text-xs text-gray-500 mt-2">
+                          PNG, JPG, GIF up to 5MB
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Manual URL Input */}
+                <div className="space-y-2">
+                  <Label>Or enter image URL manually</Label>
+                  <Input
+                    placeholder="Enter banner image URL"
+                    value={formData.banner_image_url}
+                    onChange={(e) => setFormData({...formData, banner_image_url: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>CTA Text</Label>
+                  <Input
+                    placeholder="Enter CTA text"
+                    value={formData.cta_text}
+                    onChange={(e) => setFormData({...formData, cta_text: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>CTA URL</Label>
+                  <Input
+                    placeholder="Enter CTA URL"
+                    value={formData.cta_url}
+                    onChange={(e) => setFormData({...formData, cta_url: e.target.value})}
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Text Color</Label>
+                  <Input
+                    type="color"
+                    value={formData.banner_text_color}
+                    onChange={(e) => setFormData({...formData, banner_text_color: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Background Color</Label>
+                  <Input
+                    type="color"
+                    value={formData.banner_background_color}
+                    onChange={(e) => setFormData({...formData, banner_background_color: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>CTA URL</Label>
+                  <Input
+                    placeholder="Enter CTA URL"
+                    value={formData.cta_url}
+                    onChange={(e) => setFormData({...formData, cta_url: e.target.value})}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Schedule */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Schedule</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Start Date</Label>
+                  <Input
+                    type="datetime-local"
+                    value={formData.start_date}
+                    onChange={(e) => setFormData({...formData, start_date: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>End Date (Optional)</Label>
+                  <Input
+                    type="datetime-local"
+                    value={formData.end_date}
+                    onChange={(e) => setFormData({...formData, end_date: e.target.value})}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => {
+                setShowEditDialog(false);
+                setEditingPromotion(null);
+                resetForm();
+              }}>
+                Cancel
+              </Button>
+              <Button onClick={updatePromotion} disabled={loading || !formData.title}>
+                {loading ? 'Updating...' : 'Update Promotion'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Promotions List */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-5">
@@ -723,7 +1139,7 @@ export function PromotionsManager() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => setEditingPromotion(promotion)}
+                        onClick={() => loadPromotionForEdit(promotion)}
                       >
                         <Edit className="w-4 h-4" />
                       </Button>

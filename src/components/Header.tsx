@@ -165,7 +165,7 @@ export default function Header() {
                     variant="ghost" 
                     size="sm"
                     onClick={() => navigate('/customer-dashboard/wallet')}
-                    className="flex items-center space-x-2 text-gray-700 hover:text-green-600 hover:bg-green-50"
+                    className="flex items-center space-x-2 text-gray-700 hover:text-green-600 hover:bg-green-50 sm:block hidden"
                   >
                     <Wallet className="w-5 h-5" />
                     <div className="flex flex-col items-start">
@@ -184,7 +184,7 @@ export default function Header() {
                 <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <div className="w-8 h-8 bg-gradient-to-r from-green-600 to-blue-600 rounded-full flex items-center justify-center">
+                    <div className="w-8 min-w-8 h-8 bg-gradient-to-r from-green-600 to-blue-600 rounded-full flex items-center justify-center">
                       <User className="w-4 h-4 text-white" />
                     </div>
                   </Button>
@@ -225,12 +225,12 @@ export default function Header() {
               </>
             ) : (
               <div className="flex items-center space-x-4">
-                <Link to="/auth">
+                <Link to="/login" className='sm:block hidden'>
                   <Button variant="ghost" className="text-gray-700 hover:text-green-600">
                     Sign In
                   </Button>
                 </Link>
-                <Link to="/auth">
+                <Link to="/signup">
                   <Button className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white">
                     Get Started
                   </Button>

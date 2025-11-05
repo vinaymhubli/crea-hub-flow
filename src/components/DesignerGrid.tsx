@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { cleanupStaleSessions } from '@/utils/sessionCleanup';
 import { FilterState } from '../pages/Designers';
 import { useAuth } from '@/hooks/useAuth';
-import { Video, MessageCircle, Calendar, Eye } from 'lucide-react';
+import { Video, MessageCircle, Calendar, Eye, CheckCircle } from 'lucide-react';
 import { checkDesignerBookingAvailability } from '@/utils/availabilityUtilsSlots';
 
 interface DesignerGridProps {
@@ -583,11 +583,19 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
               <div className="flex-1 min-w-0">
                 <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                   <div className="flex-1">
-                    <h3 className="text-xl font-semibold text-foreground group-hover:text-green-600 transition-colors duration-200 mb-1">
-                      {designer.profiles?.first_name && designer.profiles?.last_name 
-                        ? `${designer.profiles.first_name} ${designer.profiles.last_name}` 
-                        : designer.profiles?.email?.split('@')[0] || 'Designer'}
-                    </h3>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="text-xl font-semibold text-foreground group-hover:text-green-600 transition-colors duration-200">
+                        {designer.profiles?.first_name && designer.profiles?.last_name 
+                          ? `${designer.profiles.first_name} ${designer.profiles.last_name}` 
+                          : designer.profiles?.email?.split('@')[0] || 'Designer'}
+                      </h3>
+                      {designer.kyc_status === 'approved' && (
+                        <span className="inline-flex items-center gap-1 text-xs font-medium bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                          <CheckCircle className="w-3 h-3" />
+                          KYC Verified
+                        </span>
+                      )}
+                    </div>
                     <p className="text-green-600 font-medium text-sm mb-1">{designer.specialty}</p>
                     
                     {/* Rating */}
@@ -595,7 +603,6 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
                       <div className="flex items-center">
                         <span className="text-yellow-400 text-lg">★</span>
                         <span className="text-lg font-semibold text-foreground ml-1">{designer.rating || 4.8}</span>
-                        <span className="text-sm text-muted-foreground ml-1">({designer.reviews_count || 0})</span>
                       </div>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         (designer.activity?.is_online || designer.is_online)

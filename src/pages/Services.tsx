@@ -404,7 +404,7 @@ export default function Services() {
                     <div className="flex items-center space-x-1">
                       <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
                       <span className="text-xs text-gray-600">{service.rating}</span>
-                      <span className="text-xs text-gray-500">({service.reviews_count})</span>
+                      
                     </div>
                   </div>
                 </div>

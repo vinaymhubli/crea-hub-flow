@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { AdminLayout } from '@/components/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -172,7 +172,9 @@ export default function DesignerAvailability() {
       .subscribe();
 
     return () => {
-      try { supabase.removeChannel(channel); } catch {}
+      try { supabase.removeChannel(channel); } catch {
+        // Ignore errors when removing channel
+      }
     };
   }, [queryClient]);
 
@@ -258,34 +260,53 @@ export default function DesignerAvailability() {
     });
   };
 
+  const getDesignerSchedule = useCallback((designerId: string) => {
+    return weeklySchedules.filter(schedule => schedule.designer_id === designerId);
+  }, [weeklySchedules]);
+
   const openScheduleDialog = (designer: DesignerWithAvailability) => {
     setSelectedDesigner(designer);
-    
-    // Load existing schedule
-    const existingSchedule = getDesignerSchedule(designer.id);
-    const scheduleMap: {[key: number]: {is_available: boolean, start_time: string, end_time: string}} = {};
-    
-    // Initialize with default values
-    for (let i = 0; i < 7; i++) {
-      scheduleMap[i] = {
-        is_available: false,
-        start_time: '09:00',
-        end_time: '17:00'
-      };
-    }
-    
-    // Override with existing data
-    existingSchedule.forEach(day => {
-      scheduleMap[day.day_of_week] = {
-        is_available: day.is_available,
-        start_time: day.start_time,
-        end_time: day.end_time
-      };
-    });
-    
-    setScheduleData(scheduleMap);
     setIsScheduleDialogOpen(true);
   };
+
+  // Load schedule data when dialog opens
+  useEffect(() => {
+    if (isScheduleDialogOpen && selectedDesigner) {
+      // Load existing schedule
+      const existingSchedule = getDesignerSchedule(selectedDesigner.id);
+      const scheduleMap: {[key: number]: {is_available: boolean, start_time: string, end_time: string}} = {};
+      
+      // Initialize with default values for all 7 days
+      for (let i = 0; i < 7; i++) {
+        scheduleMap[i] = {
+          is_available: false,
+          start_time: '09:00',
+          end_time: '17:00'
+        };
+      }
+      
+      // Override with existing data
+      existingSchedule.forEach(day => {
+        // Convert time format from HH:MM:SS to HH:MM if needed
+        const formatTime = (time: string) => {
+          if (!time) return '09:00';
+          // If time is in HH:MM:SS format, convert to HH:MM
+          if (time.includes(':') && time.split(':').length === 3) {
+            return time.substring(0, 5);
+          }
+          return time;
+        };
+        
+        scheduleMap[day.day_of_week] = {
+          is_available: day.is_available || false,
+          start_time: formatTime(day.start_time || '09:00'),
+          end_time: formatTime(day.end_time || '17:00')
+        };
+      });
+      
+      setScheduleData(scheduleMap);
+    }
+  }, [isScheduleDialogOpen, selectedDesigner, getDesignerSchedule]);
 
   const saveSchedule = () => {
     if (!selectedDesigner) return;
@@ -304,10 +325,6 @@ export default function DesignerAvailability() {
         [field]: value
       }
     }));
-  };
-
-  const getDesignerSchedule = (designerId: string) => {
-    return weeklySchedules.filter(schedule => schedule.designer_id === designerId);
   };
 
   const getDesignerSpecialDays = (designerId: string) => {

@@ -244,10 +244,10 @@ export default function CustomerDashboard() {
                       <span className="text-white font-semibold text-xs sm:text-sm">{userInitials}</span>
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-64 p-0" align="end">
+                  <PopoverContent className="min-w-64 w-fit p-0" align="end">
                     <div className="p-4">
                       <div className="flex items-center space-x-3 mb-3">
-                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                        <div className="w-10 min-w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
                           <span className="text-primary font-semibold text-sm">{userInitials}</span>
                         </div>
                         <div>

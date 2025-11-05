@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { CustomerSidebar } from "@/components/CustomerSidebar";
 import { DashboardHeader } from "@/components/DashboardHeader";
+import NotificationBell from '@/components/NotificationBell';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -146,7 +147,7 @@ export default function CustomerBookings() {
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showRescheduleDialog, setShowRescheduleDialog] = useState(false);
   
-  const { user } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -262,25 +263,42 @@ export default function CustomerBookings() {
           <DashboardHeader
             title="My Bookings"
             subtitle="Manage your design sessions and appointments"
-            userInitials="U"
+            userInitials={profile?.first_name && profile?.last_name 
+              ? `${profile.first_name[0]}${profile.last_name[0]}`
+              : user?.email ? user.email.substring(0, 2).toUpperCase()
+              : 'CU'}
             isOnline={true}
             actionButton={
               <div className="flex items-center space-x-2 sm:space-x-4">
-                <Bell className="w-5 h-5 text-white/80" />
+                <NotificationBell />
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
-                      <span className="text-white font-semibold text-sm">U</span>
+                    <button className="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors flex-shrink-0">
+                      <span className="text-white font-semibold text-xs sm:text-sm">
+                        {profile?.first_name && profile?.last_name 
+                          ? `${profile.first_name[0]}${profile.last_name[0]}`
+                          : user?.email ? user.email.substring(0, 2).toUpperCase()
+                          : 'CU'}
+                      </span>
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-64 p-0" align="end">
+                  <PopoverContent className="min-w-64 w-fit p-0" align="end">
                     <div className="p-4">
                       <div className="flex items-center space-x-3 mb-3">
-                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                          <span className="text-primary font-semibold text-sm">U</span>
+                        <div className="w-10 min-w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                          <span className="text-primary font-semibold text-sm">
+                            {profile?.first_name && profile?.last_name 
+                              ? `${profile.first_name[0]}${profile.last_name[0]}`
+                              : user?.email ? user.email.substring(0, 2).toUpperCase()
+                              : 'CU'}
+                          </span>
                         </div>
                         <div>
-                          <p className="font-semibold text-foreground">User</p>
+                          <p className="font-semibold text-foreground">
+                            {profile?.first_name && profile?.last_name 
+                              ? `${profile.first_name} ${profile.last_name}`
+                              : user?.email || 'Customer'}
+                          </p>
                           <p className="text-sm text-muted-foreground">{user?.email}</p>
                         </div>
                       </div>
@@ -292,7 +310,16 @@ export default function CustomerBookings() {
                         >
                           Dashboard
                         </Link>
-                        <button className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
+                        <button 
+                          onClick={async () => {
+                            try {
+                              await signOut();
+                            } catch (error) {
+                              console.error('Error signing out:', error);
+                            }
+                          }}
+                          className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                        >
                           <LogOut className="w-4 h-4 mr-3" />
                           Log out
                         </button>

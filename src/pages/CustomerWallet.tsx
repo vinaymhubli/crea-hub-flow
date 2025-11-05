@@ -27,6 +27,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { CustomerSidebar } from '@/components/CustomerSidebar';
 import { DashboardHeader } from '@/components/DashboardHeader';
+import NotificationBell from '@/components/NotificationBell';
 import {
   Sidebar,
   SidebarContent,
@@ -73,7 +74,7 @@ function AddFundsButton({ onSuccess }: { onSuccess?: () => void }) {
 }
 
 export default function CustomerWallet() {
-  const { user, profile } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState("all");
   const [walletBalance, setWalletBalance] = useState(0);
   const [transactions, setTransactions] = useState([]);
@@ -218,14 +219,14 @@ export default function CustomerWallet() {
             isOnline={true}
             actionButton={
               <div className="flex items-center space-x-2 sm:space-x-3">
-                <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-green-100" />
+                <NotificationBell />
                 <Popover>
                   <PopoverTrigger asChild>
                     <button className="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
                       <span className="text-white font-semibold text-xs sm:text-sm">{userInitials}</span>
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-64 p-0" align="end">
+                  <PopoverContent className="min-w-64 w-fit p-0" align="end">
                     <div className="p-4">
                       <div className="flex items-center space-x-3 mb-3">
                         <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-teal-500 rounded-full flex items-center justify-center">
@@ -240,27 +241,36 @@ export default function CustomerWallet() {
                       <div className="space-y-1">
                         <Link 
                           to="/customer-dashboard" 
-                          className="flex items-center px-3 py-2 text-sm text-foreground hover:bg-accent rounded-md transition-colors"
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
                         >
                           <LayoutDashboard className="w-4 h-4 mr-3" />
                           Dashboard
                         </Link>
                         <Link 
                           to="/customer-dashboard/wallet" 
-                          className="flex items-center px-3 py-2 text-sm text-foreground hover:bg-accent rounded-md transition-colors"
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
                         >
                           <Wallet className="w-4 h-4 mr-3" />
                           Wallet
                         </Link>
                         <Link 
                           to="/customer-dashboard/profile" 
-                          className="flex items-center px-3 py-2 text-sm text-foreground hover:bg-accent rounded-md transition-colors"
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
                         >
                           <User className="w-4 h-4 mr-3" />
                           Profile
                         </Link>
                         <Separator className="my-2" />
-                        <button className="flex items-center w-full px-3 py-2 text-sm text-foreground hover:bg-accent rounded-md transition-colors">
+                        <button 
+                          onClick={async () => {
+                            try {
+                              await signOut();
+                            } catch (error) {
+                              console.error('Error signing out:', error);
+                            }
+                          }}
+                          className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                        >
                           <LogOut className="w-4 h-4 mr-3" />
                           Log out
                         </button>

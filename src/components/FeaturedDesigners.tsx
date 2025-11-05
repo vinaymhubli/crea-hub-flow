@@ -150,8 +150,8 @@ const FeaturedDesigners = () => {
                                 <div className="flex items-center space-x-1">
                                   <Star className="w-4 h-4 text-yellow-400 fill-current" />
                                   <span className="text-sm font-semibold text-gray-700">{designer.rating}</span>
-                                  <span className="text-xs text-gray-500">({designer.reviews})</span>
-                                </div>
+                                  {/* <span className="text-xs text-gray-500">({designer.reviews})</span>
+                                </div> */}
                               </div>
                               
                               <p className="text-green-600 font-medium text-sm mb-2">{designer.specialty}</p>
