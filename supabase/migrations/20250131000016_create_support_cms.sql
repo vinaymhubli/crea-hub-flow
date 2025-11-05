@@ -33,7 +33,7 @@ CREATE TRIGGER support_page_content_updated_at
 -- Insert initial support page data
 INSERT INTO public.support_page_content (section_type, title, subtitle, description, sort_order, is_published) VALUES
 -- Hero section
-('hero', 'How can we help you?', 'Find answers, get support, and make the most of Meet My Designer', 'Find answers, get support, and make the most of Meet My Designer', 0, true),
+('hero', 'How can we help you?', 'Find answers, get support, and make the most of Meetmydesigners', 'Find answers, get support, and make the most of Meetmydesigners', 0, true),
 
 -- Tabs section
 ('tabs', 'Support Navigation', 'FAQ, Guides, System Status, Contact', 'Support Navigation Tabs', 1, true),

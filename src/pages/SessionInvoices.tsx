@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, FileText, Calendar, User, DollarSign, Eye, Search, LayoutDashboard, Wallet, LogOut } from 'lucide-react';
+import { Download, FileText, Calendar, User, DollarSign, Eye, Search, LayoutDashboard, Wallet, LogOut, Package } from 'lucide-react';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { DesignerSidebar } from "@/components/DesignerSidebar";
 import { CustomerSidebar } from "@/components/CustomerSidebar";
@@ -531,27 +531,62 @@ export default function SessionInvoices() {
                       </div>
                       <Separator className="my-3" />
                       <div className="space-y-1">
-                        <Link 
-                          to="/customer-dashboard" 
-                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
-                        >
-                          <LayoutDashboard className="w-4 h-4 mr-3" />
-                          Dashboard
-                        </Link>
-                        <Link 
-                          to="/customer-dashboard/wallet" 
-                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
-                        >
-                          <Wallet className="w-4 h-4 mr-3" />
-                          Wallet
-                        </Link>
-                        <Link 
-                          to="/customer-dashboard/profile" 
-                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
-                        >
-                          <User className="w-4 h-4 mr-3" />
-                          Profile
-                        </Link>
+                        {isDesigner ? (
+                          <>
+                            <Link 
+                              to="/designer-dashboard" 
+                              className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                            >
+                              <LayoutDashboard className="w-4 h-4 mr-3" />
+                              Dashboard
+                            </Link>
+                            <Link 
+                              to="/designer-dashboard/services" 
+                              className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                            >
+                              <Package className="w-4 h-4 mr-3" />
+                              Services
+                            </Link>
+                            <Link 
+                              to="/designer-dashboard/earnings" 
+                              className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                            >
+                              <DollarSign className="w-4 h-4 mr-3" />
+                              Earnings
+                            </Link>
+                            <Link 
+                              to="/designer-dashboard/profile" 
+                              className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                            >
+                              <User className="w-4 h-4 mr-3" />
+                              Profile
+                            </Link>
+                          </>
+                        ) : (
+                          <>
+                            <Link 
+                              to="/customer-dashboard" 
+                              className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                            >
+                              <LayoutDashboard className="w-4 h-4 mr-3" />
+                              Dashboard
+                            </Link>
+                            <Link 
+                              to="/customer-dashboard/wallet" 
+                              className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                            >
+                              <Wallet className="w-4 h-4 mr-3" />
+                              Wallet
+                            </Link>
+                            <Link 
+                              to="/customer-dashboard/profile" 
+                              className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                            >
+                              <User className="w-4 h-4 mr-3" />
+                              Profile
+                            </Link>
+                          </>
+                        )}
                         <Separator className="my-2" />
                         <button 
                           onClick={async () => {

@@ -22,7 +22,7 @@ INSERT INTO public.promotions (
   cta_url,
   admin_notes
 ) VALUES (
-  'Welcome to Meet My Designer!',
+  'Welcome to Meetmydesigners!',
   'Get 20% off your first design session with any of our talented designers. Start your creative journey today!',
   'discount',
   'percentage',

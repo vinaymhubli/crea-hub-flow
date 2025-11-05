@@ -24,8 +24,8 @@ export default function BlogManagement() {
   const [posts, setPosts] = useState<BlogPost[]>([
     {
       id: '1',
-      title: 'Welcome to Meet My Designer',
-      content: 'We are excited to launch Meet My Designer, a revolutionary platform that connects clients with verified designers for real-time collaboration.',
+      title: 'Welcome to Meetmydesigners',
+      content: 'We are excited to launch Meetmydesigners, a revolutionary platform that connects clients with verified designers for real-time collaboration.',
       excerpt: 'Learn about our new platform and how it revolutionizes design collaboration.',
       is_published: true,
       created_at: new Date().toISOString(),

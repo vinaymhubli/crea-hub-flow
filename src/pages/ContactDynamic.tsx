@@ -49,7 +49,7 @@ export default function ContactDynamic() {
         .order('sort_order', { ascending: true });
 
       if (error) throw error;
-      setContent(data as any || []);
+      setContent((data as ContactContent[]) || []);
     } catch (error) {
       console.error('Error fetching contact content:', error);
     } finally {
@@ -85,6 +85,132 @@ export default function ContactDynamic() {
       }
     };
     return colorMap[colorScheme as keyof typeof colorMap] || colorMap.green;
+  };
+
+  const getMapEmbedUrl = (url: string | undefined, address: string | undefined): string | null => {
+    if (!url && !address) return null;
+
+    let query = '';
+    let coordinates: { lat: string; lng: string } | null = null;
+
+    // If URL is provided, check if it's a valid embed URL
+    if (url) {
+      // If it's already an embed URL, return it
+      if (url.includes('google.com/maps/embed') || url.includes('maps/embed?pb=')) {
+        return url;
+      }
+      
+      // If it's a directions URL, extract coordinates and create embed URL
+      if (url.includes('google.com/maps/dir/')) {
+        // Extract final destination coordinates from data parameter
+        // Pattern: !2d86.2260129!2d22.8248439 means lng=86.2260129, lat=22.8248439
+        const finalCoordMatch = url.match(/!2d([0-9.]+)!2d([0-9.]+)/);
+        if (finalCoordMatch) {
+          const lng = finalCoordMatch[1];
+          const lat = finalCoordMatch[2];
+          coordinates = { lat, lng };
+          query = `${lat},${lng}`;
+        } else {
+          // Try to extract coordinates from @lat,lng pattern
+          const coordMatch = url.match(/@([0-9.]+),([0-9.]+)/);
+          if (coordMatch) {
+            const lat = coordMatch[1];
+            const lng = coordMatch[2];
+            coordinates = { lat, lng };
+            query = `${lat},${lng}`;
+          } else {
+            // Try to extract place ID from the URL (format: 1s0x39f5e3f606068939:0x40a99a510a2c3403)
+            const placeIdMatch = url.match(/1s([0-9a-fA-Fx]+):([0-9a-fA-Fx]+)/);
+            if (placeIdMatch) {
+              const placeId = `${placeIdMatch[1]}:${placeIdMatch[2]}`;
+              query = `place_id:${placeId}`;
+            } else {
+              // Fallback: extract place name from URL path
+              const placeNameMatch = url.match(/maps\/dir\/[^/]+\/([^/@]+)/);
+              if (placeNameMatch) {
+                query = decodeURIComponent(placeNameMatch[1].replace(/\+/g, ' '));
+              }
+            }
+          }
+        }
+      }
+      // If it's a place URL, convert to embed
+      else if (url.includes('google.com/maps/place/')) {
+        const placeName = url.split('/place/')[1]?.split('/')[0] || '';
+        query = address || placeName.replace(/\+/g, ' ');
+      }
+      // If it's a search URL, convert to embed
+      else if (url.includes('google.com/maps/search/')) {
+        const queryMatch = url.match(/query=([^&]+)/);
+        if (queryMatch) {
+          query = decodeURIComponent(queryMatch[1]);
+        }
+      }
+    }
+
+    // Fallback: use address to create embed URL
+    if (!query && address) {
+      query = address;
+    }
+
+    if (!query) return null;
+
+    // Construct proper Google Maps embed URL
+    // Use coordinates directly for precise location with marker
+    if (coordinates) {
+      // Use coordinates with center and zoom for precise location
+      return `https://www.google.com/maps?q=${coordinates.lat},${coordinates.lng}&hl=en&z=17&output=embed&iwloc=near`;
+    } else {
+      // Use query string for address/place name with higher zoom for better precision
+      return `https://www.google.com/maps?q=${encodeURIComponent(query)}&hl=en&z=17&output=embed`;
+    }
+  };
+
+  const handleContactMethodClick = (method: ContactContent) => {
+    const titleLower = method.title.toLowerCase();
+    const actionTextLower = method.action_text.toLowerCase();
+    const contactInfo = method.contact_info || '';
+
+    // Check if it's a directions/visit office method
+    if (titleLower.includes('office') || titleLower.includes('visit') || 
+        actionTextLower.includes('direction') || actionTextLower.includes('visit')) {
+      // Open Google Maps with the address
+      const address = contactInfo || method.office_address || '';
+      if (address) {
+        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+        window.open(mapsUrl, '_blank');
+      }
+      return;
+    }
+
+    // Check if it's a live chat method
+    if (titleLower.includes('chat') || titleLower.includes('live') || actionTextLower.includes('chat')) {
+      // Open Gmail compose with the contact email
+      const email = contactInfo.includes('@') ? contactInfo : 'support@meetmydesigners.com';
+      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}`;
+      window.open(gmailUrl, '_blank');
+      return;
+    }
+
+    // Check if it's a phone number
+    const phoneRegex = /[\d\s\-+()]{7,}/;
+    if (phoneRegex.test(contactInfo)) {
+      // Remove spaces and special characters except + for tel: protocol
+      const phoneNumber = contactInfo.replace(/[\s\-()]/g, '');
+      window.location.href = `tel:${phoneNumber}`;
+      return;
+    }
+
+    // Check if it's an email address
+    if (contactInfo.includes('@')) {
+      window.location.href = `mailto:${contactInfo}`;
+      return;
+    }
+
+    // Default: Open Gmail compose for any other method
+    const defaultEmail = 'support@meetmydesigners.com';
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(defaultEmail)}`;
+    window.open(gmailUrl, '_blank');
   };
 
   if (loading) {
@@ -180,7 +306,10 @@ export default function ContactDynamic() {
                     {method.contact_info}
                   </p>
                   
-                  <button className={`${colors.buttonBg} text-white px-6 py-3 rounded-full font-medium transition-colors cursor-pointer whitespace-nowrap hover:shadow-md`}>
+                  <button 
+                    onClick={() => handleContactMethodClick(method)}
+                    className={`${colors.buttonBg} text-white px-6 py-3 rounded-full font-medium transition-colors cursor-pointer whitespace-nowrap hover:shadow-md`}
+                  >
                     {method.action_text}
                   </button>
                 </div>
@@ -266,20 +395,40 @@ export default function ContactDynamic() {
               {/* Map and Schedule Visit */}
               <div className="space-y-8">
                 {/* Google Maps Embed */}
-                {officeInfo.map_embed_url && (
-                  <div className="rounded-2xl overflow-hidden shadow-lg">
-                    <iframe
-                      src={officeInfo.map_embed_url}
-                      width="100%"
-                      height="300"
-                      style={{ border: 0 }}
-                      allowFullScreen
-                      loading="lazy"
-                      referrerPolicy="no-referrer-when-downgrade"
-                      title="Office Location Map"
-                    ></iframe>
-                  </div>
-                )}
+                {(officeInfo.map_embed_url || officeInfo.office_address) && (() => {
+                  const embedUrl = getMapEmbedUrl(officeInfo.map_embed_url, officeInfo.office_address);
+                  return (
+                    <div className="rounded-2xl overflow-hidden shadow-lg bg-gray-100">
+                      {embedUrl ? (
+                        <iframe
+                          src={embedUrl}
+                          width="100%"
+                          height="300"
+                          style={{ border: 0 }}
+                          allowFullScreen
+                          loading="lazy"
+                          referrerPolicy="no-referrer-when-downgrade"
+                          title="Office Location Map"
+                        ></iframe>
+                      ) : (
+                        <div className="w-full h-[300px] flex items-center justify-center bg-gray-100">
+                          <div className="text-center p-6">
+                            <i className="ri-map-pin-line text-4xl text-gray-400 mb-4"></i>
+                            <p className="text-gray-600 mb-4">{officeInfo.office_address}</p>
+                            <a
+                              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(officeInfo.office_address || '')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-block bg-green-600 text-white px-6 py-3 rounded-full font-medium hover:bg-green-700 transition-colors"
+                            >
+                              View on Google Maps
+                            </a>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {/* Schedule a Visit Card */}
                 <div className="bg-gradient-to-r from-green-500 to-blue-500 rounded-2xl p-8 text-white">

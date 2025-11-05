@@ -35,7 +35,7 @@ INSERT INTO public.privacy_policy_content (section_type, title, subtitle, descri
 
 -- Insert content sections
 INSERT INTO public.privacy_policy_content (section_type, title, description, sort_order, is_published) VALUES
-('content', 'Information We Collect', 'At Meet My Designer, we collect information you provide directly to us, such as when you create an account, update your profile, make a purchase, or contact us for support.', 1, true),
+('content', 'Information We Collect', 'At Meetmydesigners, we collect information you provide directly to us, such as when you create an account, update your profile, make a purchase, or contact us for support.', 1, true),
 ('content', 'How We Use Your Information', 'We use the information we collect to provide, maintain, and improve our services, process transactions, and communicate with you.', 2, true),
 ('content', 'Information Sharing', 'We do not sell, trade, or otherwise transfer your personal information to third parties without your consent, except as described in this policy.', 3, true),
 ('content', 'Data Security', 'We implement appropriate security measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction.', 4, true),

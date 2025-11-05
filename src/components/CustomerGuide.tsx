@@ -177,7 +177,7 @@ export default function CustomerGuide() {
               </div>
               
               <div className="mt-8 pt-6 border-t border-gray-200">
-                <Link to="/designers" className="bg-green-500 text-white px-6 py-3 rounded-full font-semibold hover:bg-green-600 transition-colors cursor-pointer whitespace-nowrap inline-flex items-center">
+                <Link to="/signup" className="bg-green-500 text-white px-6 py-3 rounded-full font-semibold hover:bg-green-600 transition-colors cursor-pointer whitespace-nowrap inline-flex items-center">
                   <i className="ri-arrow-right-line mr-2"></i>
                   Get Started Now
                 </Link>

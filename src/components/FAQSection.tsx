@@ -209,11 +209,17 @@ export default function FAQSection() {
               Can't find the answer you're looking for? Our friendly support team is here to help you 24/7.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="bg-purple-500 text-white px-6 py-3 rounded-full font-semibold hover:bg-purple-600 transition-colors cursor-pointer whitespace-nowrap">
-                <i className="ri-chat-3-line mr-2"></i>
-                Start Live Chat
+              <button 
+                onClick={() => window.location.href = 'tel:+916201233267'}
+                className="bg-purple-500 text-white px-6 py-3 rounded-full font-semibold hover:bg-purple-600 transition-colors cursor-pointer whitespace-nowrap"
+              >
+                <i className="ri-phone-line mr-2"></i>
+                Call Us Now
               </button>
-              <button className="bg-white text-purple-600 border-2 border-purple-200 px-6 py-3 rounded-full font-semibold hover:bg-purple-50 transition-colors cursor-pointer whitespace-nowrap">
+              <button 
+                onClick={() => window.open('https://mail.google.com/mail/?view=cm&fs=1&to=meetmydesigners@gmail.com', '_blank')}
+                className="bg-white text-purple-600 border-2 border-purple-200 px-6 py-3 rounded-full font-semibold hover:bg-purple-50 transition-colors cursor-pointer whitespace-nowrap"
+              >
                 <i className="ri-mail-line mr-2"></i>
                 Send Email
               </button>

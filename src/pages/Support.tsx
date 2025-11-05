@@ -99,7 +99,7 @@ const Support = () => {
             How can we help you?
           </h1>
           <p className="text-xl text-gray-600 mb-8">
-            Find answers, get support, and make the most of Meet My Designer
+            Find answers, get support, and make the most of Meetmydesigners
           </p>
           
           <div className="relative max-w-2xl mx-auto">

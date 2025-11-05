@@ -1,4 +1,4 @@
-# Meet My Designer 🎨
+# Meetmydesigners 🎨
 
 A revolutionary real-time design collaboration platform that connects visionary clients with world-class designers for seamless creative collaboration worldwide.
 
@@ -130,7 +130,7 @@ This project is licensed under the MIT License.
 
 ## 🌍 About
 
-Meet My Designer is designed to revolutionize how businesses connect with creative talent. Our platform eliminates the traditional barriers of design collaboration, making it easier than ever to bring creative visions to life.
+Meetmydesigners is designed to revolutionize how businesses connect with creative talent. Our platform eliminates the traditional barriers of design collaboration, making it easier than ever to bring creative visions to life.
 
 ---
 

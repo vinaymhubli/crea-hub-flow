@@ -22,7 +22,7 @@ export default function HelpCenterManagement() {
     title: 'Help Center',
     content: `# Help Center
 
-Welcome to the Meet My Designer Help Center. Find answers to common questions and get the support you need.
+Welcome to the Meetmydesigners Help Center. Find answers to common questions and get the support you need.
 
 ## Getting Started
 

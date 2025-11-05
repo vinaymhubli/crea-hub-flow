@@ -133,11 +133,11 @@ We believe every business deserves access to exceptional design talent. Our plat
 Ready to start your next design project? We're here to help you connect with the perfect designer for your needs.`,
       'SupportHero': `# How can we help you?
 
-Find answers, get support, and make the most of Meet My Designer.`,
+Find answers, get support, and make the most of Meetmydesigners.`,
       'RefundHero': `# Refund & Cancellation Policy
 
 Last updated: January 1, 2024`,
-      'OverviewSection': `At Meet My Designer, we strive to provide excellent service and ensure customer satisfaction. This policy outlines our refund and cancellation procedures for all services and transactions.`,
+      'OverviewSection': `At Meetmydesigners, we strive to provide excellent service and ensure customer satisfaction. This policy outlines our refund and cancellation procedures for all services and transactions.`,
       'GeneralRefundPolicy': `• Refunds are processed within 5-10 business days
 • Refunds will be issued to the original payment method
 • Processing fees may apply to certain refunds

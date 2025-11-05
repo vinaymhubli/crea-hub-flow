@@ -29,7 +29,7 @@ CREATE INDEX IF NOT EXISTS idx_website_sections_sort ON public.website_sections(
 -- Insert refund policy sections
 INSERT INTO public.website_sections (page, section_name, section_type, title, content, icon, background_color, is_published, sort_order) VALUES
 ('refund-policy', 'RefundHero', 'hero', 'Refund & Cancellation Policy', 'Last updated: January 1, 2024', 'Scale', 'bg-gradient-to-br from-primary/10 via-background to-secondary/10', true, 1),
-('refund-policy', 'OverviewSection', 'content', 'Overview', 'At Meet My Designer, we strive to provide excellent service and ensure customer satisfaction. This policy outlines our refund and cancellation procedures for all services and transactions.', null, 'bg-white', true, 2),
+('refund-policy', 'OverviewSection', 'content', 'Overview', 'At Meetmydesigners, we strive to provide excellent service and ensure customer satisfaction. This policy outlines our refund and cancellation procedures for all services and transactions.', null, 'bg-white', true, 2),
 ('refund-policy', 'GeneralRefundPolicy', 'card', 'General Refund Policy', '• Refunds are processed within 5-10 business days
 • Refunds will be issued to the original payment method
 • Processing fees may apply to certain refunds

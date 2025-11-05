@@ -4,11 +4,11 @@ SET
   title = 'Terms and Conditions',
   content = '<h2>1. Acceptance of Terms</h2>
 
-<p>By accessing and using Meet My Designer ("the Platform"), you accept and agree to be bound by the terms and provision of this agreement.</p>
+<p>By accessing and using Meetmydesigners ("the Platform"), you accept and agree to be bound by the terms and provision of this agreement.</p>
 
 <h2>2. Description of Service</h2>
 
-<p>Meet My Designer is a platform that connects clients with verified designers for real-time collaboration and consultation services.</p>
+<p>Meetmydesigners is a platform that connects clients with verified designers for real-time collaboration and consultation services.</p>
 
 <h2>3. User Accounts</h2>
 
@@ -93,7 +93,7 @@ SET
 
 <h2>8. Limitation of Liability</h2>
 
-<p>Meet My Designer is not liable for indirect, incidental, or consequential damages, loss of profits, or damages exceeding the amount paid for services.</p>
+<p>Meetmydesigners is not liable for indirect, incidental, or consequential damages, loss of profits, or damages exceeding the amount paid for services.</p>
 
 <h2>9. Termination</h2>
 
@@ -113,11 +113,11 @@ WHERE page_type = 'terms';
 INSERT INTO public.content_pages (page_type, title, content, is_published, created_at, updated_at) 
 SELECT 'terms', 'Terms and Conditions', '<h2>1. Acceptance of Terms</h2>
 
-<p>By accessing and using Meet My Designer ("the Platform"), you accept and agree to be bound by the terms and provision of this agreement.</p>
+<p>By accessing and using Meetmydesigners ("the Platform"), you accept and agree to be bound by the terms and provision of this agreement.</p>
 
 <h2>2. Description of Service</h2>
 
-<p>Meet My Designer is a platform that connects clients with verified designers for real-time collaboration and consultation services.</p>
+<p>Meetmydesigners is a platform that connects clients with verified designers for real-time collaboration and consultation services.</p>
 
 <h2>3. User Accounts</h2>
 
@@ -202,7 +202,7 @@ SELECT 'terms', 'Terms and Conditions', '<h2>1. Acceptance of Terms</h2>
 
 <h2>8. Limitation of Liability</h2>
 
-<p>Meet My Designer is not liable for indirect, incidental, or consequential damages, loss of profits, or damages exceeding the amount paid for services.</p>
+<p>Meetmydesigners is not liable for indirect, incidental, or consequential damages, loss of profits, or damages exceeding the amount paid for services.</p>
 
 <h2>9. Termination</h2>
 

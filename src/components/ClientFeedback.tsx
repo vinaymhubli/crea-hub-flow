@@ -61,7 +61,7 @@ function DesignerSidebar() {
               <span className="text-white font-semibold text-xs">MD</span>
             </div>
             <div>
-              <p className="font-semibold text-gray-900">Meet My Designer</p>
+              <p className="font-semibold text-gray-900">Meetmydesigners</p>
               <p className="text-sm text-gray-500">Designer</p>
             </div>
           </div>

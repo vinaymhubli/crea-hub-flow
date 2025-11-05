@@ -42,7 +42,7 @@ const REFUND_POLICY_SECTIONS: RefundPolicySection[] = [
     name: 'OverviewSection',
     type: 'content',
     title: 'Overview',
-    content: 'At Meet My Designer, we strive to provide excellent service and ensure customer satisfaction. This policy outlines our refund and cancellation procedures for all services and transactions.',
+    content: 'At Meetmydesigners, we strive to provide excellent service and ensure customer satisfaction. This policy outlines our refund and cancellation procedures for all services and transactions.',
     is_published: true,
     sort_order: 2
   },

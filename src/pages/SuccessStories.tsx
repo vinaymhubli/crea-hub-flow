@@ -17,7 +17,7 @@ const SuccessStories = () => {
       revenue: "₹10M+",
       growth: "300%",
       timeline: "18 months",
-      quote: "Working with Sarah through Meet My Designer transformed our entire brand. Her strategic approach to UX design increased our conversion rate by 300% and helped us secure Series A funding.",
+      quote: "Working with Sarah through Meetmydesigners transformed our entire brand. Her strategic approach to UX design increased our conversion rate by 300% and helped us secure Series A funding.",
       clientName: "Mark Rodriguez",
       clientTitle: "CEO, TechFlow Solutions",
       results: [

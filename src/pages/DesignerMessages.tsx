@@ -12,6 +12,7 @@ import {
   Clock,
   Monitor,
   ArrowLeft,
+  Package,
 } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -76,7 +77,7 @@ export default function DesignerMessages() {
   const [designerId, setDesignerId] = useState<string | null>(null);
   const [showScreenShare, setShowScreenShare] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-  const { user } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -493,6 +494,97 @@ export default function DesignerMessages() {
             title="Messages"
             subtitle="Communicate with your clients and manage project discussions"
             icon={<MessageSquare className="w-6 h-6 sm:w-8 sm:h-8 text-white" />}
+            userInitials={profile?.first_name && profile?.last_name 
+              ? `${profile.first_name[0]}${profile.last_name[0]}`
+              : user?.email ? user.email.substring(0, 2).toUpperCase()
+              : 'D'}
+            isOnline={true}
+            actionButton={
+              <div className="flex items-center space-x-2 sm:space-x-4">
+                <NotificationBell />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors flex-shrink-0">
+                      <span className="text-white font-semibold text-xs sm:text-sm">
+                        {profile?.first_name && profile?.last_name 
+                          ? `${profile.first_name[0]}${profile.last_name[0]}`
+                          : user?.email ? user.email.substring(0, 2).toUpperCase()
+                          : 'D'}
+                      </span>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="min-w-64 w-fit p-0" align="end">
+                    <div className="p-4">
+                      <div className="flex items-center space-x-3 mb-3">
+                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                          <span className="text-primary font-semibold text-sm">
+                            {profile?.first_name && profile?.last_name 
+                              ? `${profile.first_name[0]}${profile.last_name[0]}`
+                              : user?.email ? user.email.substring(0, 2).toUpperCase()
+                              : 'D'}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="font-semibold text-foreground">
+                            {profile?.first_name && profile?.last_name 
+                              ? `${profile.first_name} ${profile.last_name}`
+                              : user?.email?.split('@')[0] || 'Designer'}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {user?.email}
+                          </p>
+                        </div>
+                      </div>
+                      <Separator className="my-3" />
+                      <div className="space-y-1">
+                        <Link
+                          to="/designer-dashboard"
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                        >
+                          <LayoutDashboard className="w-4 h-4 mr-3" />
+                          Dashboard
+                        </Link>
+                        <Link
+                          to="/designer-dashboard/services"
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                        >
+                          <Package className="w-4 h-4 mr-3" />
+                          Services
+                        </Link>
+                        <Link
+                          to="/designer-dashboard/earnings"
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                        >
+                          <DollarSign className="w-4 h-4 mr-3" />
+                          Earnings
+                        </Link>
+                        <Link
+                          to="/designer-dashboard/profile"
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                        >
+                          <User className="w-4 h-4 mr-3" />
+                          Profile
+                        </Link>
+                        <Separator className="my-2" />
+                        <button
+                          onClick={async () => {
+                            try {
+                              await signOut();
+                            } catch (error) {
+                              console.error('Error signing out:', error);
+                            }
+                          }}
+                          className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                        >
+                          <LogOut className="w-4 h-4 mr-3" />
+                          Log out
+                        </button>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            }
           />
 
           <div className="p-4 sm:p-6">

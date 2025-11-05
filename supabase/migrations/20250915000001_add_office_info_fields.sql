@@ -46,7 +46,7 @@ INSERT INTO public.contact_page_content (
     'blue',
     100,
     true,
-    'Meet My Designers Pvt Ltd
+    'Meetmydesignerss Pvt Ltd
 Plot No. C-54, G Block
 Bandra Kurla Complex
 Mumbai, Maharashtra 400051',

@@ -75,7 +75,7 @@ const ForDesigners = () => {
       image: "/placeholder.svg",
       rating: 5,
       earnings: "₹150K+",
-      quote: "Meet My Designer transformed my freelance career. I've tripled my income and work with amazing clients who truly value design."
+      quote: "Meetmydesigners transformed my freelance career. I've tripled my income and work with amazing clients who truly value design."
     },
     {
       name: "Alex Rodriguez",
@@ -147,7 +147,7 @@ const ForDesigners = () => {
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold mb-4">Why Choose Meet My Designer?</h2>
+            <h2 className="text-3xl font-bold mb-4">Why Choose Meetmydesigners?</h2>
             <p className="text-muted-foreground">
               Join thousands of designers who've elevated their careers with us
             </p>

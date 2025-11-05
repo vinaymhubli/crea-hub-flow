@@ -26,11 +26,11 @@ Last updated: January 31, 2025
 
 ## 1. Acceptance of Terms
 
-By accessing and using Meet My Designer ("the Platform"), you accept and agree to be bound by the terms and provision of this agreement.
+By accessing and using Meetmydesigners ("the Platform"), you accept and agree to be bound by the terms and provision of this agreement.
 
 ## 2. Description of Service
 
-Meet My Designer is a platform that connects clients with verified designers for real-time collaboration and consultation services.
+Meetmydesigners is a platform that connects clients with verified designers for real-time collaboration and consultation services.
 
 ## 3. User Accounts
 
@@ -91,7 +91,7 @@ Users may not:
 
 ## 8. Limitation of Liability
 
-Meet My Designer is not liable for:
+Meetmydesigners is not liable for:
 - Indirect, incidental, or consequential damages
 - Loss of profits or business opportunities
 - Damages exceeding the amount paid for services
@@ -116,7 +116,7 @@ We reserve the right to modify these terms at any time. Users will be notified o
 
 For questions about these terms, please contact us at:
 - Email: legal@meetmydesigner.com
-- Address: Meet My Designer Inc., 123 Design Street, New York, NY 10001`,
+- Address: Meetmydesigners Inc., 123 Design Street, New York, NY 10001`,
     is_published: true
   });
   const [loading, setLoading] = useState(true);

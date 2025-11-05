@@ -200,7 +200,7 @@ export default function DesignerGuide() {
             </div>
 
             <div className="pt-6">
-              <Link to="/designers" className="bg-blue-500 text-white px-8 py-4 rounded-full font-semibold hover:bg-blue-600 transition-colors cursor-pointer whitespace-nowrap inline-flex items-center">
+              <Link to="/signup" className="bg-blue-500 text-white px-8 py-4 rounded-full font-semibold hover:bg-blue-600 transition-colors cursor-pointer whitespace-nowrap inline-flex items-center">
                 <i className="ri-user-add-line mr-2"></i>
                 Join as Designer
               </Link>

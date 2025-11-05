@@ -585,10 +585,10 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="text-xl font-semibold text-foreground group-hover:text-green-600 transition-colors duration-200">
-                        {designer.profiles?.first_name && designer.profiles?.last_name 
-                          ? `${designer.profiles.first_name} ${designer.profiles.last_name}` 
-                          : designer.profiles?.email?.split('@')[0] || 'Designer'}
-                      </h3>
+                      {designer.profiles?.first_name && designer.profiles?.last_name 
+                        ? `${designer.profiles.first_name} ${designer.profiles.last_name}` 
+                        : designer.profiles?.email?.split('@')[0] || 'Designer'}
+                    </h3>
                       {designer.kyc_status === 'approved' && (
                         <span className="inline-flex items-center gap-1 text-xs font-medium bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
                           <CheckCircle className="w-3 h-3" />
