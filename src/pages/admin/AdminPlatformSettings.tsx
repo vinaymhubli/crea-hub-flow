@@ -477,7 +477,10 @@ export default function AdminPlatformSettings() {
                 </div>
               </div>
 
-              {settings
+              {/* COMMENTED OUT: Static Platform Fee Rate - Not used in payment processing
+                  Actual commission is calculated from commission_settings table (Commission Rules)
+                  This setting is display-only and not functional */}
+              {/* {settings
                 .filter(s => s.setting_key === 'platform_fee_rate')
                 .map((setting) => (
                   <div key={setting.setting_key} className="flex items-center justify-between p-4 border rounded-lg">
@@ -498,7 +501,7 @@ export default function AdminPlatformSettings() {
                       />
                     </div>
                   </div>
-                ))}
+                ))} */}
             </CardContent>
           </Card>
 

@@ -85,8 +85,9 @@ export default function Earnings() {
       const { data: platformSettings } = await supabase
         .from('platform_settings')
         .select('setting_key, setting_value')
-        .in('setting_key', ['gst_rate', 'platform_fee_rate']);
+        .in('setting_key', ['gst_rate']); // Removed 'platform_fee_rate' - using commission_settings instead
       
+      // Get active commission rule (this is what's actually used in payments)
       const { data: commissionSettings } = await supabase
         .from('commission_settings')
         .select('commission_type, commission_value')
@@ -102,10 +103,12 @@ export default function Earnings() {
 
       // Parse settings from key-value structure
       const gstSetting = platformSettings?.find(s => s.setting_key === 'gst_rate');
-      const commissionSetting = platformSettings?.find(s => s.setting_key === 'platform_fee_rate');
+      // COMMENTED OUT: platform_fee_rate is static/display-only, not used in actual payments
+      // const commissionSetting = platformSettings?.find(s => s.setting_key === 'platform_fee_rate');
       
       const gstRate = (gstSetting?.setting_value as any)?.value ? (gstSetting.setting_value as any).value / 100 : 0.18; // Convert percentage to decimal
-      const commissionRate = (commissionSetting?.setting_value as any)?.value || commissionSettings?.[0]?.commission_value || 30; // Default 30%
+      // Use commission_settings (active rule) - this is what's actually used in payment processing
+      const commissionRate = commissionSettings?.[0]?.commission_value || 30; // Default 30%
       const tdsRate = tdsSettings?.tds_rate || 10; // Default 10%
 
       console.log('⚙️ Admin Settings:');
