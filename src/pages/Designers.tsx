@@ -41,20 +41,23 @@ const Designers = () => {
 
   const fetchTotalDesigners = async () => {
     try {
-      // First, get all designers with their profile blocked status
+      // First, get all approved and non-blocked designers
       const { data: designers, error } = await supabase
         .from('designers')
         .select(`
           id,
+          verification_status,
           user:profiles!user_id(blocked)
-        `);
+        `)
+        .eq('verification_status', 'approved'); // Only count approved designers
 
       if (error) {
         console.error('Error fetching total designers:', error);
         // Fallback: try a simpler count query
         const { count: simpleCount, error: simpleError } = await supabase
           .from('designers')
-          .select('*', { count: 'exact', head: true });
+          .select('*', { count: 'exact', head: true })
+          .eq('verification_status', 'approved');
 
         if (!simpleError && simpleCount !== null) {
           setTotalDesigners(simpleCount);
@@ -65,19 +68,21 @@ const Designers = () => {
       // Filter out blocked designers and count
       interface DesignerWithProfile {
         id: string;
+        verification_status?: string;
         user?: { blocked?: boolean };
       }
       const nonBlockedCount = (designers as DesignerWithProfile[])?.filter(
-        (designer) => !designer.user?.blocked
+        (designer) => !designer.user?.blocked && designer.verification_status === 'approved'
       ).length || 0;
 
       setTotalDesigners(nonBlockedCount);
     } catch (error) {
       console.error('Error fetching total designers:', error);
-      // Fallback count
+      // Fallback count - only approved designers
       const { count } = await supabase
         .from('designers')
-        .select('*', { count: 'exact', head: true });
+        .select('*', { count: 'exact', head: true })
+        .eq('verification_status', 'approved');
       
       if (count !== null) {
         setTotalDesigners(count);

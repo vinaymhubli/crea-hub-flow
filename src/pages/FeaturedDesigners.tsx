@@ -95,7 +95,8 @@ export default function FeaturedDesigners() {
           portfolio_images,
           skills
         `)
-        .in('user_id', designerIds);
+        .in('user_id', designerIds)
+        .eq('verification_status', 'approved'); // Only show approved designers
       
       if (designersError) throw designersError;
       

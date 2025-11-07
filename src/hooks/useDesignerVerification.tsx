@@ -59,7 +59,7 @@ export const useDesignerVerification = () => {
         return;
       }
 
-      const status = designer?.verification_status || 'pending';
+      const status = designer?.verification_status || 'draft';
       
       setVerificationStatus({
         isVerified: status === 'approved',
@@ -85,7 +85,7 @@ export const useDesignerVerification = () => {
     if (!user?.id) return;
 
     try {
-      // Create designer row with pending status
+      // Create designer row with draft status (not pending - they need to fill profile first)
       const { data: newDesigner, error } = await supabase
         .from('designers')
         .insert({
@@ -96,33 +96,32 @@ export const useDesignerVerification = () => {
           location: '',
           skills: [],
           portfolio_images: [],
-          verification_status: 'pending'
+          verification_status: 'draft' // Start as draft, not pending
         })
         .select('id')
         .single();
 
       if (error) throw error;
       
-      // Notify admins about new designer signup
-      await notifyAdminsNewDesigner(user.id);
+      // Don't notify admins yet - wait until they submit profile
       
-      // Set status to pending
+      // Set status to draft
       setVerificationStatus({
         isVerified: false,
-        isPending: true,
+        isPending: false,
         isRejected: false,
-        verificationStatus: 'pending',
+        verificationStatus: 'draft',
         loading: false
       });
 
-      console.log('✅ Created pending designer record:', newDesigner.id);
+      console.log('✅ Created draft designer record:', newDesigner.id);
     } catch (error) {
-      console.error('❌ Error creating pending designer record:', error);
+      console.error('❌ Error creating draft designer record:', error);
       setVerificationStatus({
         isVerified: false,
-        isPending: true, // Default to pending even if creation fails
+        isPending: false,
         isRejected: false,
-        verificationStatus: 'pending',
+        verificationStatus: 'draft',
         loading: false
       });
     }

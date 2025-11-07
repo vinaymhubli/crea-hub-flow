@@ -65,14 +65,19 @@ const DesignerDetails: React.FC = () => {
     try {
       setLoading(true);
       
-      // Fetch designer data
+      // Fetch designer data - only show if approved
       const { data: designerData, error: designerError } = await supabase
         .from('designers')
         .select('*')
         .eq('id', id)
+        .eq('verification_status', 'approved') // Only show approved designers
         .single();
 
-      if (designerError) throw designerError;
+      if (designerError) {
+        // If designer not found or not approved, redirect
+        navigate('/designers');
+        return;
+      }
 
       // Fetch profile data separately
       const { data: profileData, error: profileError } = await supabase
@@ -304,7 +309,7 @@ const DesignerDetails: React.FC = () => {
           <div className="flex space-x-1 bg-muted p-1 rounded-lg w-fit min-w-full sm:min-w-0">
             {[
               { id: 'about', label: 'About' },
-              { id: 'services', label: 'Services' },
+              // { id: 'services', label: 'Services' }, // Services tab commented out
               { id: 'portfolio', label: 'Portfolio' }
             ].map((tab) => (
               <button
@@ -346,7 +351,8 @@ const DesignerDetails: React.FC = () => {
           </Card>
         )}
 
-        {activeTab === 'services' && (
+        {/* Services tab commented out */}
+        {/* {activeTab === 'services' && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {services.length > 0 ? (
               services.map((service) => (
@@ -393,7 +399,7 @@ const DesignerDetails: React.FC = () => {
               </div>
             )}
           </div>
-        )}
+        )} */}
 
         {activeTab === 'portfolio' && (
           <Card>

@@ -93,7 +93,8 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
           *,
           user:profiles!user_id(blocked)
         `)
-        .eq('user.blocked', false); // Only show non-blocked designers
+        .eq('user.blocked', false) // Only show non-blocked designers
+        .eq('verification_status', 'approved'); // Only show approved designers
 
       // Filter by designers who have services in selected categories
       if (designerIds.length > 0) {

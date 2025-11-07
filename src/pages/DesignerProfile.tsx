@@ -30,8 +30,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDesignerProfile } from '@/hooks/useDesignerProfile';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuth';
+import { useDesignerVerification } from '@/hooks/useDesignerVerification';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 import NotificationBell from '@/components/NotificationBell';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
@@ -42,6 +44,8 @@ export default function DesignerProfile() {
   const { user, profile: authProfile, signOut, refetchProfile } = useAuth();
   const { profile, loading: profileLoading } = useProfile();
   const { toast } = useToast();
+  const { refetch: refetchVerification } = useDesignerVerification();
+  const navigate = useNavigate();
   const [minRate, setMinRate] = useState<number>(5.0);
   
   // Local state for avatar image to ensure instant UI updates
@@ -346,6 +350,59 @@ export default function DesignerProfile() {
     }
   };
 
+  const handleSubmitForApproval = async () => {
+    setIsSaving(true);
+    try {
+      // First save all profile data
+      await updateProfile({
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        display_name: formData.display_name,
+        email: formData.email,
+        phone: formData.phone
+      });
+
+      if ((formData.hourly_rate ?? 0) < minRate) {
+        toast({
+          title: 'Below platform minimum',
+          description: `You cannot set below ₹${minRate.toFixed(2)} / min`,
+          variant: 'destructive'
+        });
+        setIsSaving(false);
+        return;
+      }
+
+      // Then submit for approval with all designer data
+      const success = await updateDesignerProfile({
+        bio: formData.bio,
+        location: formData.location,
+        specialty: formData.specialty,
+        hourly_rate: formData.hourly_rate,
+        experience_years: formData.experience_years,
+        display_hourly_rate: formData.display_hourly_rate,
+        available_for_urgent: formData.available_for_urgent,
+        response_time: formData.response_time,
+        skills: formData.skills
+      }, true); // true = submit for approval
+
+      if (success) {
+        // Show success message
+        toast({
+          title: "Profile Submitted",
+          description: "Your profile has been submitted for admin approval. Redirecting...",
+        });
+        
+        // Refresh verification status hook
+        await refetchVerification();
+        
+        // Navigate to dashboard - the guard will detect pending status and show pending screen
+        navigate('/designer-dashboard');
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -559,7 +616,7 @@ export default function DesignerProfile() {
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               {/* Enhanced Tab Navigation */}
               <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl border border-gray-100 p-1.5 sm:p-2 mb-6 sm:mb-8 overflow-x-auto">
-                <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 bg-transparent gap-1.5 sm:gap-2 min-w-max sm:min-w-0 !h-fit">
+                <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 bg-transparent gap-1.5 sm:gap-2 min-w-max sm:min-w-0 !h-fit">
                   <TabsTrigger 
                     value="personal" 
                     className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 hover:scale-105 rounded-lg sm:rounded-xl py-2 sm:py-3 font-semibold text-xs sm:text-sm whitespace-nowrap"
@@ -582,13 +639,14 @@ export default function DesignerProfile() {
                     <FolderOpen className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                     Portfolio
                   </TabsTrigger>
-                  <TabsTrigger 
+                  {/* Reviews tab commented out */}
+                  {/* <TabsTrigger 
                     value="reviews" 
                     className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 hover:scale-105 rounded-lg sm:rounded-xl py-2 sm:py-3 font-semibold text-xs sm:text-sm whitespace-nowrap"
                   >
                     <Star className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                     Reviews
-                  </TabsTrigger>
+                  </TabsTrigger> */}
                 </TabsList>
               </div>
 
@@ -897,6 +955,24 @@ export default function DesignerProfile() {
                       </div>
                     </div>
 
+                    {/* Show submit for approval button if status is draft */}
+                    {verificationStatus === 'draft' && (
+                      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-4">
+                        <p className="text-sm text-blue-800 mb-3">
+                          {verificationStatus === 'draft' 
+                            ? "Complete your profile and submit it for admin approval to start accepting projects."
+                            : "Your profile needs to be completed. Please fill in all required fields and submit for approval."}
+                        </p>
+                        <Button 
+                          onClick={handleSubmitForApproval}
+                          disabled={isSaving}
+                          className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 w-full sm:w-auto"
+                        >
+                          {isSaving ? 'Submitting...' : 'Submit for Approval'}
+                        </Button>
+                      </div>
+                    )}
+
                     <div className="flex flex-col sm:flex-row justify-end gap-3 sm:space-x-3">
                       <Button variant="outline" className="border-gray-300 hover:border-gray-400 w-full sm:w-auto order-2 sm:order-1">Cancel</Button>
                       <Button 
@@ -1047,7 +1123,8 @@ export default function DesignerProfile() {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="reviews" className="space-y-4 sm:space-y-6 animate-fade-in">
+              {/* Reviews tab content commented out */}
+              {/* <TabsContent value="reviews" className="space-y-4 sm:space-y-6 animate-fade-in">
                 <Card className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
                   <CardHeader className="bg-gradient-to-r from-green-400 to-blue-500 text-white rounded-t-lg p-4 sm:p-6">
                     <CardTitle className="text-base sm:text-lg lg:text-xl font-bold">Reviews</CardTitle>
@@ -1095,7 +1172,7 @@ export default function DesignerProfile() {
                     )}
                   </CardContent>
                 </Card>
-              </TabsContent>
+              </TabsContent> */}
             </Tabs>
           </div>
         </main>

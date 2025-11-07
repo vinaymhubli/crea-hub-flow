@@ -69,8 +69,9 @@ export function FeaturedDesignersDisplay({
           try {
             const { data: designerData, error: designerError } = await supabase
               .from('designers')
-              .select('id')
+              .select('id, verification_status')
               .eq('user_id', designer.designer_id)
+              .eq('verification_status', 'approved') // Only show approved designers
               .single();
             
             if (designerError) {

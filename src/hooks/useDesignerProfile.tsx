@@ -94,7 +94,7 @@ export const useDesignerProfile = () => {
         return existingDesigner.id;
       }
 
-      // Create designer row with minimal data - PENDING VERIFICATION
+      // Create designer row with minimal data - DRAFT STATUS (not pending yet)
       const { data: newDesigner, error } = await supabase
         .from('designers')
         .insert({
@@ -105,15 +105,14 @@ export const useDesignerProfile = () => {
           location: '',
           skills: [],
           portfolio_images: [],
-          verification_status: 'pending' // NEW: Require admin approval
+          verification_status: 'draft' // Start as draft, submit for approval after profile is filled
         })
         .select('id')
         .single();
 
       if (error) throw error;
       
-      // Notify admins about new designer signup
-      await notifyAdminsNewDesigner(user.id);
+      // Don't notify admins yet - wait until they submit profile for approval
       
       await fetchDesignerProfile(); // Refresh data
       return newDesigner.id;
@@ -128,12 +127,55 @@ export const useDesignerProfile = () => {
     }
   };
 
-  const updateDesignerProfile = async (updates: Partial<DesignerProfile>) => {
+  const updateDesignerProfile = async (updates: Partial<DesignerProfile>, submitForApproval: boolean = false) => {
     if (!user?.id) return false;
 
     try {
       const designerId = await ensureDesignerRow();
       if (!designerId) return false;
+
+      // If submitting for approval, check profile completeness and set status to pending
+      if (submitForApproval) {
+        // Get current profile data to check completeness
+        const { data: currentProfile } = await supabase
+          .from('profiles')
+          .select('first_name, last_name, email, phone')
+          .eq('user_id', user.id)
+          .single();
+
+        const { data: currentDesigner } = await supabase
+          .from('designers')
+          .select('bio, location, specialty, hourly_rate, skills')
+          .eq('user_id', user.id)
+          .single();
+
+        // Merge updates with current data to check completeness
+        const mergedDesigner = { ...currentDesigner, ...updates };
+        
+        // Check if profile is complete enough
+        const isComplete = 
+          currentProfile?.first_name && 
+          currentProfile?.last_name && 
+          currentProfile?.email &&
+          mergedDesigner?.bio &&
+          mergedDesigner?.location &&
+          mergedDesigner?.specialty &&
+          mergedDesigner?.hourly_rate &&
+          (mergedDesigner?.skills?.length || 0) > 0;
+
+        if (!isComplete) {
+          toast({
+            title: "Profile Incomplete",
+            description: "Please fill in all required fields (name, bio, location, specialty, hourly rate, and at least one skill) before submitting for approval.",
+            variant: "destructive"
+          });
+          return false;
+        }
+
+        // Set status to pending and notify admins
+        updates.verification_status = 'pending' as any;
+        await notifyAdminsNewDesigner(user.id);
+      }
 
       const { error } = await supabase
         .from('designers')
@@ -143,10 +185,18 @@ export const useDesignerProfile = () => {
       if (error) throw error;
 
       await fetchDesignerProfile(); // Refresh data
-      toast({
-        title: "Success",
-        description: "Designer profile updated successfully"
-      });
+      
+      if (submitForApproval) {
+        toast({
+          title: "Profile Submitted",
+          description: "Your profile has been submitted for admin approval. You'll be notified once it's reviewed."
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Designer profile updated successfully"
+        });
+      }
       return true;
     } catch (err) {
       console.error('Error updating designer profile:', err);

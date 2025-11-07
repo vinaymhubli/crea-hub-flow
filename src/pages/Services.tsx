@@ -165,6 +165,7 @@ export default function Services() {
           designer:designers (
             id,
             user_id,
+            verification_status,
             profiles (
               first_name,
               last_name,
@@ -173,6 +174,7 @@ export default function Services() {
           )
         `)
         .eq('is_active', true)
+        .eq('designer.verification_status', 'approved') // Only show services from approved designers
         .order('created_at', { ascending: false });
 
       if (supabaseError) {

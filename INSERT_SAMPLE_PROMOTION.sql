@@ -69,3 +69,4 @@ INSERT INTO public.promotions (
 
 
 
+

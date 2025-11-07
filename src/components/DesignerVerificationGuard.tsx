@@ -9,7 +9,7 @@ interface DesignerVerificationGuardProps {
 
 export const DesignerVerificationGuard: React.FC<DesignerVerificationGuardProps> = ({ children }) => {
   const { user, profile } = useAuth();
-  const { isVerified, isPending, isRejected, loading } = useDesignerVerification();
+  const { isVerified, isPending, isRejected, verificationStatus, loading } = useDesignerVerification();
 
   // Only apply verification guard to designers
   if (!user || profile?.user_type !== 'designer') {
@@ -28,32 +28,36 @@ export const DesignerVerificationGuard: React.FC<DesignerVerificationGuardProps>
     );
   }
 
-  // Show pending verification screen
-  if (isPending) {
-    return <DesignerPendingVerification />;
-  }
-
-  // Show rejected screen (optional - you can customize this)
-  if (isRejected) {
+  // Allow draft designers to access their profile to make changes
+  // They can access profile page but not other dashboard features
+  if (verificationStatus === 'draft') {
+    // Check if they're trying to access profile page
+    const currentPath = window.location.pathname;
+    if (currentPath.includes('/designer-dashboard/profile') || currentPath.includes('/profile')) {
+      return <>{children}</>; // Allow access to profile page
+    }
+    // For other pages, show a message directing them to complete their profile
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 via-pink-50 to-rose-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
         <div className="w-full max-w-2xl">
           <div className="bg-white rounded-lg shadow-xl p-8 text-center">
-            <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
-              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Profile Rejected</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Complete Your Profile
+            </h1>
             <p className="text-gray-600 mb-6">
-              Unfortunately, your designer profile has been rejected. Please contact our support team for more information.
+              Please complete your profile and submit it for admin approval to access all features.
             </p>
             <div className="space-y-3">
               <button 
-                onClick={() => window.location.href = '/contact'}
+                onClick={() => window.location.href = '/designer-dashboard/profile'}
                 className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
               >
-                Contact Support
+                Go to Profile
               </button>
               <button 
                 onClick={() => window.location.href = '/auth'}
@@ -66,6 +70,11 @@ export const DesignerVerificationGuard: React.FC<DesignerVerificationGuardProps>
         </div>
       </div>
     );
+  }
+
+  // Show pending verification screen
+  if (isPending) {
+    return <DesignerPendingVerification />;
   }
 
   // If verified, show the protected content

@@ -166,11 +166,15 @@ export default function Auth() {
       if (session) {
         console.log("User already logged in, redirecting...");
         // Redirect based on user role
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("role, user_type, is_admin")
           .eq("user_id", session.user.id)
-          .single();
+          .maybeSingle();
+
+        if (profileError) {
+          console.error("Error fetching profile:", profileError);
+        }
 
         // Check if user is admin first
         if (profile?.is_admin || profile?.user_type === "admin") {
@@ -209,7 +213,12 @@ export default function Auth() {
         .from("profiles")
         .select("email")
         .eq("email", email)
-        .single();
+        .maybeSingle();
+
+      if (checkError) {
+        console.error("Error checking existing user:", checkError);
+        // Continue with signup even if check fails
+      }
 
       if (existingUser) {
         setError(
@@ -273,11 +282,15 @@ export default function Auth() {
       if (data.user) {
         console.log("Sign in successful for:", data.user.email);
         // Get user role and redirect accordingly
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("role, user_type, is_admin")
           .eq("user_id", data.user.id)
-          .single();
+          .maybeSingle();
+
+        if (profileError) {
+          console.error("Error fetching profile on signin:", profileError);
+        }
 
         // Check if user is admin first
         if (profile?.is_admin || profile?.user_type === "admin") {

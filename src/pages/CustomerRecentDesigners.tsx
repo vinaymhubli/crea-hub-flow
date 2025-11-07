@@ -320,6 +320,7 @@ export default function CustomerRecentDesigners() {
           )
         `)
         .eq('customer_id', user?.id)
+        .eq('designer.verification_status', 'approved') // Only show approved designers
         .order('created_at', { ascending: false });
 
       if (error) {

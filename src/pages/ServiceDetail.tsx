@@ -117,6 +117,7 @@ export default function ServiceDetail() {
         `)
         .eq('id', id)
         .eq('is_active', true)
+        .eq('designer.verification_status', 'approved') // Only show services from approved designers
         .single();
 
       if (error) {

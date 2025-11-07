@@ -12,6 +12,7 @@ import { CheckCircle, XCircle, Clock, Search, Filter, Eye } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { AdminDesignerProfileDialog } from '@/components/admin/AdminDesignerProfileDialog';
 
 interface DesignerWithProfile {
   id: string;
@@ -37,6 +38,8 @@ interface DesignerWithProfile {
 export default function DesignerVerification() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('pending');
+  const [selectedDesigner, setSelectedDesigner] = useState<DesignerWithProfile | null>(null);
+  const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -48,7 +51,7 @@ export default function DesignerVerification() {
         .from('designers')
         .select(`
           *,
-          user:profiles!user_id(first_name, last_name, email, avatar_url)
+          user:profiles!user_id(first_name, last_name, email, avatar_url, phone)
         `);
 
       if (statusFilter !== 'all') {
@@ -95,32 +98,14 @@ export default function DesignerVerification() {
 
   const handleReject = async (designerId: string) => {
     try {
-      // First update the designer status to rejected
-      await updateVerificationMutation.mutateAsync({ designerId, status: 'rejected' });
+      // Update the designer status to draft (they can make changes and resubmit)
+      await updateVerificationMutation.mutateAsync({ designerId, status: 'draft' });
       
-      // Then block the user account
-      const { error: blockError } = await supabase
-        .from('profiles')
-        .update({
-          blocked: true,
-          blocked_at: new Date().toISOString(),
-          blocked_reason: 'Account rejected by admin'
-        } as Record<string, unknown>)
-        .eq('user_id', designerId);
-      
-      if (blockError) {
-        console.error('Error blocking user:', blockError);
-        toast({
-          title: "Warning",
-          description: "Designer rejected but blocking failed. Please check manually.",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Success",
-          description: "Designer rejected and account blocked successfully.",
-        });
-      }
+      // Don't block the account - let them make changes and resubmit
+      toast({
+        title: "Success",
+        description: "Designer profile rejected. They can make changes and resubmit for approval.",
+      });
     } catch (error) {
       console.error('Error rejecting designer:', error);
     }
@@ -166,6 +151,8 @@ export default function DesignerVerification() {
         return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />Rejected</Badge>;
       case 'pending':
         return <Badge variant="secondary"><Clock className="w-3 h-3 mr-1" />Pending</Badge>;
+      case 'draft':
+        return <Badge variant="outline" className="bg-gray-100 text-gray-700"><Clock className="w-3 h-3 mr-1" />Draft</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -380,7 +367,10 @@ export default function DesignerVerification() {
                         variant="outline" 
                         size="sm" 
                         className="w-full"
-                        onClick={() => navigate(`/designer/${designer.id}`)}
+                        onClick={() => {
+                          setSelectedDesigner(designer);
+                          setIsProfileDialogOpen(true);
+                        }}
                       >
                         <Eye className="w-4 h-4 mr-1" />
                         View Full Profile
@@ -402,6 +392,13 @@ export default function DesignerVerification() {
             )}
           </TabsContent>
         </Tabs>
+
+        {/* Full Profile Dialog */}
+        <AdminDesignerProfileDialog
+          designer={selectedDesigner}
+          open={isProfileDialogOpen}
+          onOpenChange={setIsProfileDialogOpen}
+        />
       </div>
     // </AdminLayout>
   );
