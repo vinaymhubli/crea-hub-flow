@@ -5,6 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Calendar, 
@@ -19,7 +22,8 @@ import {
   RefreshCw,
   CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  Eye
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -50,6 +54,11 @@ export default function DemoRequests() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedRequest, setSelectedRequest] = useState<DemoRequest | null>(null);
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState('');
+  const [scheduleTime, setScheduleTime] = useState('');
+  const [scheduleNotes, setScheduleNotes] = useState('');
 
   if (!user || !profile?.is_admin) {
     return <Navigate to="/admin-login" replace />;
@@ -77,15 +86,25 @@ export default function DemoRequests() {
     }
   };
 
-  const updateRequestStatus = async (id: string, status: string, notes?: string) => {
+  const updateRequestStatus = async (id: string, status: string, notes?: string, scheduledAt?: string) => {
     try {
+      const updateData: any = {
+        status,
+        updated_at: new Date().toISOString()
+      };
+
+      if (notes !== undefined) {
+        updateData.notes = notes;
+      }
+
+      if (scheduledAt) {
+        updateData.scheduled_at = scheduledAt;
+        updateData.assigned_to = user.id;
+      }
+
       const { error } = await supabase
         .from('free_demo_requests')
-        .update({
-          status,
-          notes,
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', id);
 
       if (error) throw error;
@@ -93,10 +112,164 @@ export default function DemoRequests() {
       toast.success('Request status updated successfully');
       fetchRequests();
       setSelectedRequest(null);
+      setIsScheduleDialogOpen(false);
+      setScheduleDate('');
+      setScheduleTime('');
+      setScheduleNotes('');
     } catch (error) {
       console.error('Error updating request:', error);
       toast.error('Failed to update request status');
     }
+  };
+
+  const handleViewDetails = (request: DemoRequest) => {
+    setSelectedRequest(request);
+    setIsDetailsDialogOpen(true);
+  };
+
+  const handleScheduleClick = (request: DemoRequest) => {
+    setSelectedRequest(request);
+    // Pre-fill with preferred date/time if available
+    if (request.preferred_date) {
+      setScheduleDate(request.preferred_date);
+    }
+    if (request.preferred_time) {
+      setScheduleTime(request.preferred_time);
+    }
+    setScheduleNotes(request.notes || '');
+    setIsScheduleDialogOpen(true);
+  };
+
+  const handleConfirmSchedule = () => {
+    if (!selectedRequest) return;
+
+    if (!scheduleDate || !scheduleTime) {
+      toast.error('Please select both date and time');
+      return;
+    }
+
+    // Combine date and time into ISO string
+    const [timeStart] = scheduleTime.split('-');
+    const [hours, minutes] = timeStart.split(':');
+    const scheduledDateTime = new Date(`${scheduleDate}T${hours}:${minutes}:00`);
+    
+    updateRequestStatus(
+      selectedRequest.id,
+      'scheduled',
+      scheduleNotes,
+      scheduledDateTime.toISOString()
+    );
+
+    // Send notification email to customer
+    sendScheduleNotificationEmail(selectedRequest, scheduleDate, scheduleTime);
+    
+    // Create in-app notification if user has account
+    if (selectedRequest.user_id) {
+      createInAppNotification(selectedRequest, scheduledDateTime);
+    }
+  };
+
+  const sendScheduleNotificationEmail = (request: DemoRequest, date: string, time: string) => {
+    const formattedDate = new Date(date).toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    
+    const subject = `Your Free Demo Session is Scheduled - ${formattedDate}`;
+    const body = `Hello ${request.name},
+
+Great news! Your free demo session has been scheduled.
+
+📅 Date: ${formattedDate}
+⏰ Time: ${time}
+
+Project Type: ${request.project_type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+${request.company ? `Company: ${request.company}\n` : ''}
+
+We're excited to discuss your project requirements and show you how our design experts can help bring your vision to life.
+
+${scheduleNotes ? `\nAdditional Notes:\n${scheduleNotes}\n` : ''}
+
+If you need to reschedule or have any questions, please don't hesitate to reach out to us.
+
+Looking forward to speaking with you!
+
+Best regards,
+MeetMyDesigners Team`;
+
+    const mailtoLink = `mailto:${request.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = mailtoLink;
+    
+    toast.success('Email client opened. Please send the notification email to the customer.');
+  };
+
+  const createInAppNotification = async (request: DemoRequest, scheduledDateTime: Date) => {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .insert([{
+          user_id: request.user_id,
+          type: 'demo_scheduled',
+          title: 'Demo Session Scheduled',
+          message: `Your free demo session has been scheduled for ${scheduledDateTime.toLocaleDateString()} at ${scheduledDateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+          action_url: '/dashboard',
+          metadata: {
+            demo_request_id: request.id,
+            scheduled_at: scheduledDateTime.toISOString()
+          }
+        }]);
+
+      if (error) {
+        console.error('Error creating notification:', error);
+      }
+    } catch (error) {
+      console.error('Error creating in-app notification:', error);
+    }
+  };
+
+  const handleSendNotificationEmail = (request: DemoRequest) => {
+    if (!request.scheduled_at) {
+      toast.error('This demo session is not scheduled yet');
+      return;
+    }
+
+    const scheduledDate = new Date(request.scheduled_at);
+    const formattedDate = scheduledDate.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    const formattedTime = scheduledDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    
+    const subject = `Your Free Demo Session is Scheduled - ${formattedDate}`;
+    const body = `Hello ${request.name},
+
+Great news! Your free demo session has been scheduled.
+
+📅 Date: ${formattedDate}
+⏰ Time: ${formattedTime}
+
+Project Type: ${request.project_type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+${request.company ? `Company: ${request.company}\n` : ''}
+
+We're excited to discuss your project requirements and show you how our design experts can help bring your vision to life.
+
+${request.notes ? `\nAdditional Notes:\n${request.notes}\n` : ''}
+
+If you need to reschedule or have any questions, please don't hesitate to reach out to us.
+
+Looking forward to speaking with you!
+
+Best regards,
+MeetMyDesigners Team`;
+
+    const mailtoLink = `mailto:${request.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = mailtoLink;
+    
+    toast.success('Email client opened. Please send the notification email to the customer.');
   };
 
   const getStatusBadge = (status: string) => {
@@ -231,14 +404,33 @@ export default function DemoRequests() {
                       </div>
                     </div>
                     <div className="text-right text-sm text-gray-500">
-                      <div className="flex items-center space-x-1 mb-1">
-                        <Calendar className="w-4 h-4" />
-                        <span>{new Date(request.preferred_date).toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Clock className="w-4 h-4" />
-                        <span>{request.preferred_time}</span>
-                      </div>
+                      {request.status === 'scheduled' && request.scheduled_at ? (
+                        <>
+                          <div className="flex items-center space-x-1 mb-1">
+                            <Calendar className="w-4 h-4" />
+                            <span className="font-semibold text-blue-600">
+                              {new Date(request.scheduled_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Clock className="w-4 h-4" />
+                            <span className="font-semibold text-blue-600">
+                              {new Date(request.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex items-center space-x-1 mb-1">
+                            <Calendar className="w-4 h-4" />
+                            <span>Preferred: {new Date(request.preferred_date).toLocaleDateString()}</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Clock className="w-4 h-4" />
+                            <span>Preferred: {request.preferred_time}</span>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -259,21 +451,23 @@ export default function DemoRequests() {
                     <div className="text-sm text-gray-500">
                       Submitted: {new Date(request.created_at).toLocaleString()}
                     </div>
-                    <div className="flex space-x-2">
+                    <div className="flex space-x-2 flex-wrap gap-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setSelectedRequest(request)}
+                        onClick={() => handleViewDetails(request)}
                       >
+                        <Eye className="w-4 h-4 mr-1" />
                         View Details
                       </Button>
                       {request.status === 'pending' && (
                         <>
                           <Button
                             size="sm"
-                            onClick={() => updateRequestStatus(request.id, 'scheduled')}
+                            onClick={() => handleScheduleClick(request)}
                             className="bg-blue-600 hover:bg-blue-700"
                           >
+                            <Calendar className="w-4 h-4 mr-1" />
                             Schedule
                           </Button>
                           <Button
@@ -286,13 +480,33 @@ export default function DemoRequests() {
                         </>
                       )}
                       {request.status === 'scheduled' && (
-                        <Button
-                          size="sm"
-                          onClick={() => updateRequestStatus(request.id, 'completed')}
-                          className="bg-green-600 hover:bg-green-700"
-                        >
-                          Mark Complete
-                        </Button>
+                        <>
+                          <Button
+                            size="sm"
+                            onClick={() => handleSendNotificationEmail(request)}
+                            variant="outline"
+                            className="border-green-600 text-green-600 hover:bg-green-50"
+                          >
+                            <Mail className="w-4 h-4 mr-1" />
+                            Send Email
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => handleScheduleClick(request)}
+                            variant="outline"
+                            className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                          >
+                            <Calendar className="w-4 h-4 mr-1" />
+                            Reschedule
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => updateRequestStatus(request.id, 'completed')}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            Mark Complete
+                          </Button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -302,6 +516,245 @@ export default function DemoRequests() {
           )}
         </div>
       </div>
+
+      {/* Details Dialog */}
+      <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Demo Request Details</DialogTitle>
+            <DialogDescription>
+              Complete information about this demo session request
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedRequest && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Name</label>
+                  <p className="text-sm text-gray-900">{selectedRequest.name}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Email</label>
+                  <p className="text-sm text-gray-900">{selectedRequest.email}</p>
+                </div>
+                {selectedRequest.phone && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Phone</label>
+                    <p className="text-sm text-gray-900">{selectedRequest.phone}</p>
+                  </div>
+                )}
+                {selectedRequest.company && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Company</label>
+                    <p className="text-sm text-gray-900">{selectedRequest.company}</p>
+                  </div>
+                )}
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Project Type</label>
+                  <p className="text-sm text-gray-900 capitalize">{selectedRequest.project_type.replace('-', ' ')}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Status</label>
+                  <div className="mt-1">{getStatusBadge(selectedRequest.status)}</div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Preferred Date</label>
+                  <p className="text-sm text-gray-900">{new Date(selectedRequest.preferred_date).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Preferred Time</label>
+                  <p className="text-sm text-gray-900">{selectedRequest.preferred_time}</p>
+                </div>
+                {selectedRequest.scheduled_at && (
+                  <>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Scheduled Date</label>
+                      <p className="text-sm text-gray-900 font-semibold text-blue-600">
+                        {new Date(selectedRequest.scheduled_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Scheduled Time</label>
+                      <p className="text-sm text-gray-900 font-semibold text-blue-600">
+                        {new Date(selectedRequest.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  </>
+                )}
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Submitted</label>
+                  <p className="text-sm text-gray-900">{new Date(selectedRequest.created_at).toLocaleString()}</p>
+                </div>
+              </div>
+              
+              {selectedRequest.message && (
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Message</label>
+                  <div className="mt-1 bg-gray-50 p-3 rounded-lg">
+                    <p className="text-sm text-gray-900 whitespace-pre-wrap">{selectedRequest.message}</p>
+                  </div>
+                </div>
+              )}
+
+              {selectedRequest.notes && (
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Admin Notes</label>
+                  <div className="mt-1 bg-blue-50 p-3 rounded-lg">
+                    <p className="text-sm text-gray-900 whitespace-pre-wrap">{selectedRequest.notes}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsDetailsDialogOpen(false);
+                    setSelectedRequest(null);
+                  }}
+                >
+                  Close
+                </Button>
+                {selectedRequest.status === 'scheduled' && selectedRequest.scheduled_at && (
+                  <Button
+                    onClick={() => handleSendNotificationEmail(selectedRequest)}
+                    variant="outline"
+                    className="border-green-600 text-green-600 hover:bg-green-50"
+                  >
+                    <Mail className="w-4 h-4 mr-1" />
+                    Send Notification Email
+                  </Button>
+                )}
+                {selectedRequest.status === 'pending' && (
+                  <Button
+                    onClick={() => {
+                      setIsDetailsDialogOpen(false);
+                      handleScheduleClick(selectedRequest);
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Calendar className="w-4 h-4 mr-1" />
+                    Schedule
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Schedule Dialog */}
+      <Dialog open={isScheduleDialogOpen} onOpenChange={setIsScheduleDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Schedule Demo Session</DialogTitle>
+            <DialogDescription>
+              Set the date and time for this demo session
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedRequest && (
+            <div className="space-y-4">
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-sm text-gray-600 mb-1">Client: <span className="font-semibold text-gray-900">{selectedRequest.name}</span></p>
+                <p className="text-sm text-gray-600 mb-1">Email: <span className="font-semibold text-gray-900">{selectedRequest.email}</span></p>
+                <p className="text-sm text-gray-600">Preferred: <span className="font-semibold text-gray-900">
+                  {new Date(selectedRequest.preferred_date).toLocaleDateString()} at {selectedRequest.preferred_time}
+                </span></p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="scheduleDate">Schedule Date *</Label>
+                  <Input
+                    id="scheduleDate"
+                    type="date"
+                    value={scheduleDate}
+                    onChange={(e) => setScheduleDate(e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
+                    required
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="scheduleTime">Schedule Time *</Label>
+                  <Select value={scheduleTime} onValueChange={setScheduleTime}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select time slot" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="09:00-09:30">9:00 AM - 9:30 AM</SelectItem>
+                      <SelectItem value="09:30-10:00">9:30 AM - 10:00 AM</SelectItem>
+                      <SelectItem value="10:00-10:30">10:00 AM - 10:30 AM</SelectItem>
+                      <SelectItem value="10:30-11:00">10:30 AM - 11:00 AM</SelectItem>
+                      <SelectItem value="11:00-11:30">11:00 AM - 11:30 AM</SelectItem>
+                      <SelectItem value="11:30-12:00">11:30 AM - 12:00 PM</SelectItem>
+                      <SelectItem value="14:00-14:30">2:00 PM - 2:30 PM</SelectItem>
+                      <SelectItem value="14:30-15:00">2:30 PM - 3:00 PM</SelectItem>
+                      <SelectItem value="15:00-15:30">3:00 PM - 3:30 PM</SelectItem>
+                      <SelectItem value="15:30-16:00">3:30 PM - 4:00 PM</SelectItem>
+                      <SelectItem value="16:00-16:30">4:00 PM - 4:30 PM</SelectItem>
+                      <SelectItem value="16:30-17:00">4:30 PM - 5:00 PM</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="scheduleNotes">Admin Notes (Optional)</Label>
+                <Textarea
+                  id="scheduleNotes"
+                  value={scheduleNotes}
+                  onChange={(e) => setScheduleNotes(e.target.value)}
+                  placeholder="Add any notes about this scheduled session..."
+                  rows={3}
+                  className="mt-1"
+                />
+              </div>
+
+              <div className="bg-blue-50 p-3 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>Scheduled Session:</strong> {scheduleDate && scheduleTime ? (
+                    <span>{new Date(scheduleDate).toLocaleDateString()} at {scheduleTime}</span>
+                  ) : (
+                    <span className="text-gray-500">Select date and time above</span>
+                  )}
+                </p>
+              </div>
+
+              <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
+                <p className="text-sm text-green-800">
+                  <strong>📧 Email Notification:</strong> After scheduling, your email client will automatically open with a pre-filled notification email to send to the customer.
+                </p>
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsScheduleDialogOpen(false);
+                    setSelectedRequest(null);
+                    setScheduleDate('');
+                    setScheduleTime('');
+                    setScheduleNotes('');
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleConfirmSchedule}
+                  className="bg-blue-600 hover:bg-blue-700"
+                  disabled={!scheduleDate || !scheduleTime}
+                >
+                  <Calendar className="w-4 h-4 mr-1" />
+                  Confirm Schedule & Send Email
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

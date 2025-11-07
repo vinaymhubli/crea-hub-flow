@@ -27,6 +27,7 @@ import {
   Zap,
   BarChart3,
   MessageSquare,
+  Mail,
   Bell,
   ChevronRight,
   Users,
@@ -76,6 +77,16 @@ const mainSections = [
     title: "Complaints",
     url: "/admin/complaints",
     icon: MessageSquare,
+  },
+  {
+    title: "Contact Submissions",
+    url: "/admin/contact-submissions",
+    icon: Mail,
+  },
+  {
+    title: "Demo Requests",
+    url: "/admin/demo-requests",
+    icon: Calendar,
   },
   // {
   //   title: "Refunds",

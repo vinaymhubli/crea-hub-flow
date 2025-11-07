@@ -50,6 +50,8 @@ import SuccessStoriesDynamic from "./pages/SuccessStoriesDynamic";
 import AboutManagement from "./pages/admin/AboutManagement";
 import AboutDynamic from "./pages/AboutDynamic";
 import ContactManagement from "./pages/admin/ContactManagement";
+import ContactSubmissions from "./pages/admin/ContactSubmissions";
+import DemoRequests from "./pages/admin/DemoRequests";
 import ContactDynamic from "./pages/ContactDynamic";
 import SocialMediaManagement from "./pages/admin/SocialMediaManagement";
 import LogoManagement from "./pages/admin/LogoManagement";
@@ -234,6 +236,30 @@ function AppContent() {
               <ProtectedAdminRoute>
                 <AdminLayout>
                   <AdminComplaints />
+                </AdminLayout>
+              </ProtectedAdminRoute>
+            }
+          />
+
+          {/* Contact Form Submissions */}
+          <Route
+            path="/admin/contact-submissions"
+            element={
+              <ProtectedAdminRoute>
+                <AdminLayout>
+                  <ContactSubmissions />
+                </AdminLayout>
+              </ProtectedAdminRoute>
+            }
+          />
+
+          {/* Demo Requests */}
+          <Route
+            path="/admin/demo-requests"
+            element={
+              <ProtectedAdminRoute>
+                <AdminLayout>
+                  <DemoRequests />
                 </AdminLayout>
               </ProtectedAdminRoute>
             }

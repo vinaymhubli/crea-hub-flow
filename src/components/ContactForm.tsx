@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 export default function ContactForm() {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -25,29 +29,56 @@ export default function ContactForm() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const form = e.target as HTMLFormElement;
-    const formDataToSend = new FormData(form);
-
     try {
-      const response = await fetch('https://formsubmit.co/support@meetmydesigners.com', {
-        method: 'POST',
-        body: formDataToSend
-      });
+      // Save to database
+      const { error: dbError } = await supabase
+        .from('contact_form_submissions')
+        .insert([{
+          user_id: user?.id || null,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone || null,
+          subject: formData.subject,
+          user_type: formData.userType || null,
+          priority: formData.priority || null,
+          message: formData.message,
+          status: 'new'
+        }]);
 
-      if (response.ok) {
-        setIsSubmitted(true);
-        setFormData({
-          name: '',
-          email: '',
-          phone: '',
-          subject: '',
-          userType: '',
-          priority: '',
-          message: ''
-        });
+      if (dbError) {
+        console.error('Database error:', dbError);
+        toast.error('Failed to save your message. Please try again.');
+        return;
       }
+
+      // Also send email (optional - keeping existing functionality)
+      const form = e.target as HTMLFormElement;
+      const formDataToSend = new FormData(form);
+      
+      try {
+        await fetch('https://formsubmit.co/support@meetmydesigners.com', {
+          method: 'POST',
+          body: formDataToSend
+        });
+      } catch (emailError) {
+        // Email sending is optional, so we don't fail if it errors
+        console.warn('Email sending failed:', emailError);
+      }
+
+      setIsSubmitted(true);
+      toast.success('Message sent successfully! We\'ll get back to you soon.');
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        subject: '',
+        userType: '',
+        priority: '',
+        message: ''
+      });
     } catch (error) {
       console.error('Form submission error:', error);
+      toast.error('Failed to submit your message. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
