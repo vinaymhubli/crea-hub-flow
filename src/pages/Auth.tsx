@@ -198,11 +198,28 @@ export default function Auth() {
     setError(null);
 
     const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") as string;
+    const email = (formData.get("email") as string)?.trim().toLowerCase();
     const password = formData.get("password") as string;
     const firstName = formData.get("firstName") as string;
     const lastName = formData.get("lastName") as string;
     const role = formData.get("role") as string;
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      setError("Please enter a valid email address.");
+      setLoading(false);
+      return;
+    }
+
+    // Block common test/fake email domains that cause bounces
+    const blockedDomains = ['test.com', 'example.com', 'fake.com', 'invalid.com', 'test.test'];
+    const emailDomain = email.split('@')[1]?.toLowerCase();
+    if (emailDomain && blockedDomains.includes(emailDomain)) {
+      setError("Please use a real email address. Test email addresses are not allowed.");
+      setLoading(false);
+      return;
+    }
 
     // Combine first and last name for full_name
     const fullName = `${firstName} ${lastName}`.trim();

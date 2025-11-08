@@ -8,8 +8,12 @@ const supabase = createClient(
 async function testSignup() {
   console.log('\n🔍 Testing signup flow...\n');
   
+  // ⚠️ WARNING: Using @test.com will cause email bounces from Supabase Auth
+  // This can lead to email sending privileges being disabled
+  // For testing, use a real email address or disable email confirmation in Supabase dashboard
   const testEmail = 'testuser' + Date.now() + '@test.com';
-  console.log('Test email:', testEmail);
+  console.log('⚠️  WARNING: Test email will cause bounce:', testEmail);
+  console.log('   Consider using a real email or disabling email confirmation for testing\n');
   
   const { data, error } = await supabase.auth.signUp({
     email: testEmail,

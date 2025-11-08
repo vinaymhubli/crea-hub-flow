@@ -46,6 +46,22 @@ export default function Signup() {
     e.preventDefault();
     setError('');
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const normalizedEmail = formData.email.trim().toLowerCase();
+    if (!normalizedEmail || !emailRegex.test(normalizedEmail)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+
+    // Block common test/fake email domains that cause bounces
+    const blockedDomains = ['test.com', 'example.com', 'fake.com', 'invalid.com', 'test.test'];
+    const emailDomain = normalizedEmail.split('@')[1]?.toLowerCase();
+    if (emailDomain && blockedDomains.includes(emailDomain)) {
+      setError('Please use a real email address. Test email addresses are not allowed.');
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -66,7 +82,7 @@ export default function Signup() {
       rate_per_minute: formData.userType === 'designer' ? formData.ratePerMinute : null,
     };
 
-    const { error } = await signUp(formData.email, formData.password, userData);
+    const { error } = await signUp(normalizedEmail, formData.password, userData);
     
     if (error) {
       setError(error.message);

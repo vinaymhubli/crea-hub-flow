@@ -142,10 +142,25 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const signUp = async (email: string, password: string, metadata?: any) => {
     try {
+      // Validate email format before sending to Supabase
+      const normalizedEmail = email.trim().toLowerCase();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      
+      if (!normalizedEmail || !emailRegex.test(normalizedEmail)) {
+        return { error: { message: 'Please enter a valid email address.' } as AuthError };
+      }
+
+      // Block common test/fake email domains that cause bounces
+      const blockedDomains = ['test.com', 'example.com', 'fake.com', 'invalid.com', 'test.test'];
+      const emailDomain = normalizedEmail.split('@')[1]?.toLowerCase();
+      if (emailDomain && blockedDomains.includes(emailDomain)) {
+        return { error: { message: 'Please use a real email address. Test email addresses are not allowed.' } as AuthError };
+      }
+
       const redirectUrl = `${window.location.origin}/`;
       
       const { error } = await supabase.auth.signUp({
-        email,
+        email: normalizedEmail,
         password,
         options: {
           emailRedirectTo: redirectUrl,
