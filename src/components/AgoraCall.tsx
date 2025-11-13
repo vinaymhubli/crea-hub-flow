@@ -927,17 +927,6 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
         return;
       }
 
-      // Prevent customers from stopping screen sharing once started
-      if (screenSharingRef.current && !isDesigner) {
-        console.warn("⚠️ Customer cannot stop screen sharing once started");
-        toast({
-          title: "Screen Sharing Active",
-          description: "Screen sharing cannot be stopped by customer. Please continue sharing.",
-          variant: "default"
-        });
-        return;
-      }
-
       // Check if someone else is already screen sharing
       if (!screenSharingRef.current && remoteScreenSharing) {
         console.log("🚫 Screen share blocked: Remote user is already sharing");
@@ -1036,19 +1025,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
 
           // Handle user clicking "Stop Sharing" in browser bar
           screenTrack.on("track-ended", () => {
-            console.log("🛑 Screen share ended by user");
-            // Prevent customers from stopping screen sharing
-            if (!isDesigner) {
-              console.warn("⚠️ Customer tried to stop screen sharing via browser - restarting");
-              toast({
-                title: "Screen Sharing Must Continue",
-                description: "Please continue sharing your screen.",
-                variant: "default"
-              });
-              // Note: We can't actually prevent the browser from stopping the track,
-              // but we can show a message to the customer
-              return;
-            }
+            console.log("🛑 Screen share ended by user via browser stop button");
             toggleScreenShare();
           });
         } else {
