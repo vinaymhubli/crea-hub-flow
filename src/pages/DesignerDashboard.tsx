@@ -61,6 +61,10 @@ export default function DesignerDashboard() {
   const { activity } = useDesignerActivity();
   const { toast } = useToast();
   const [totalEarnings, setTotalEarnings] = useState(0);
+  const [weeklyEarnings, setWeeklyEarnings] = useState(0);
+  const [avgRating, setAvgRating] = useState(0);
+  const [completionRate, setCompletionRate] = useState(0);
+  const [totalCompletedSessions, setTotalCompletedSessions] = useState(0);
   const [showScreenShare, setShowScreenShare] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [sessionCustomerName, setSessionCustomerName] =
@@ -71,8 +75,10 @@ export default function DesignerDashboard() {
   const completedBookings = getCompletedBookings();
 
   useEffect(() => {
-    if (designerProfile) {
-      calculateTotalEarnings().then(setTotalEarnings);
+    if (designerProfile && user) {
+      fetchTotalEarnings();
+      fetchWeeklyEarnings();
+      fetchRatingAndCompletionRate();
       // Automatically set designer online when they access dashboard
       setDesignerOnline();
       
@@ -86,7 +92,148 @@ export default function DesignerDashboard() {
         setShowOnboarding(false);
       }
     }
-  }, [designerProfile]);
+  }, [designerProfile, user]);
+
+  const fetchWeeklyEarnings = async () => {
+    if (!designerProfile?.id || !user?.id) return;
+
+    try {
+      const now = new Date();
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+      // Fetch earnings from wallet_transactions (deposit type) for the designer
+      const { data: transactions, error } = await supabase
+        .from('wallet_transactions')
+        .select('amount')
+        .eq('user_id', user.id)
+        .eq('transaction_type', 'deposit')
+        .eq('status', 'completed')
+        .gte('created_at', weekAgo.toISOString());
+
+      if (error) throw error;
+
+      const weeklyTotal = transactions?.reduce((sum, t) => sum + (Number(t.amount) || 0), 0) || 0;
+      setWeeklyEarnings(weeklyTotal);
+    } catch (error) {
+      console.error('Error fetching weekly earnings:', error);
+    }
+  };
+
+  const fetchTotalEarnings = async () => {
+    if (!user?.id) return;
+
+    try {
+      // Fetch total earnings from wallet_transactions (deposit type)
+      const { data: transactions, error } = await supabase
+        .from('wallet_transactions')
+        .select('amount')
+        .eq('user_id', user.id)
+        .eq('transaction_type', 'deposit')
+        .eq('status', 'completed');
+
+      if (error) throw error;
+
+      const total = transactions?.reduce((sum, t) => sum + (Number(t.amount) || 0), 0) || 0;
+      setTotalEarnings(total);
+    } catch (error) {
+      console.error('Error fetching total earnings:', error);
+      // Fallback to calculateTotalEarnings if wallet_transactions fails
+      calculateTotalEarnings().then(setTotalEarnings).catch(() => setTotalEarnings(0));
+    }
+  };
+
+  const fetchRatingAndCompletionRate = async () => {
+    if (!designerProfile?.id) return;
+
+    try {
+      // Fetch all bookings to calculate completion rate
+      const { data: allBookingsData, error: bookingsError } = await supabase
+        .from('bookings')
+        .select('id, status')
+        .eq('designer_id', designerProfile.id);
+
+      if (bookingsError) throw bookingsError;
+
+      // Also fetch live sessions (active_sessions)
+      const { data: liveSessionsData, error: liveSessionsError } = await supabase
+        .from('active_sessions')
+        .select('id, status')
+        .eq('designer_id', designerProfile.id);
+
+      // Combine bookings and live sessions for completion rate calculation
+      const allBookings = allBookingsData || [];
+      const allLiveSessions = liveSessionsData || [];
+      
+      const completedBookings = allBookings.filter(b => b.status === 'completed').length;
+      const completedLiveSessions = allLiveSessions.filter(s => s.status === 'ended' || s.status === 'completed').length;
+      
+      const totalBookings = allBookings.length;
+      const totalLiveSessions = allLiveSessions.length;
+      const total = totalBookings + totalLiveSessions;
+      const completed = completedBookings + completedLiveSessions;
+
+      // Calculate completion rate - if no sessions, rate should be 0%, not 100%
+      const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+      setCompletionRate(rate);
+      
+      // Set total completed sessions (bookings + live sessions)
+      setTotalCompletedSessions(completed);
+
+      // Calculate average rating from session_reviews (same logic as session history page)
+      try {
+        // Get session IDs from active_sessions for this designer
+        const { data: designerSessions } = await supabase
+          .from('active_sessions')
+          .select('session_id')
+          .eq('designer_id', designerProfile.id);
+        
+        const sessionIds = (designerSessions || []).map(s => s.session_id);
+        
+        // Get ratings via session linkage
+        let ratings: number[] = [];
+        if (sessionIds.length > 0) {
+          const { data: ratingsData } = await supabase
+            .from('session_reviews')
+            .select('rating')
+            .in('session_id', sessionIds);
+          ratings = (ratingsData || []).map(r => Number((r as any).rating) || 0).filter(r => r > 0);
+        }
+        
+        // Fallback: ratings matched by designer_name text
+        let byNameRatings: number[] = [];
+        if (profile?.first_name || profile?.last_name) {
+          const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+          if (fullName) {
+            const { data: nameReviews } = await supabase
+              .from('session_reviews')
+              .select('rating')
+              .eq('designer_name', fullName);
+            byNameRatings = (nameReviews || []).map(r => Number((r as any).rating) || 0).filter(r => r > 0);
+          }
+        }
+        
+        // Combine all ratings and calculate average
+        const allRatings = [...ratings, ...byNameRatings];
+        if (allRatings.length > 0) {
+          const avgRaw = allRatings.reduce((a, b) => a + b, 0) / allRatings.length;
+          const avg = Math.round(avgRaw * 10) / 10; // Round to 1 decimal place
+          setAvgRating(avg);
+        } else {
+          // Fallback to designer profile rating if no reviews found
+          setAvgRating(designerProfile.rating ? Number(designerProfile.rating) : 0);
+        }
+      } catch (ratingError) {
+        console.error('Error calculating rating from session_reviews:', ratingError);
+        // Fallback to designer profile rating
+        setAvgRating(designerProfile.rating ? Number(designerProfile.rating) : 0);
+      }
+    } catch (error) {
+      console.error('Error fetching rating and completion rate:', error);
+      // Use designer profile rating as fallback
+      setAvgRating(designerProfile?.rating ? Number(designerProfile.rating) : 0);
+      setCompletionRate(0); // Default to 0 if error
+    }
+  };
 
   const setDesignerOnline = async () => {
     if (!designerProfile?.id) return;
@@ -137,9 +284,44 @@ export default function DesignerDashboard() {
     return Math.round((completedFields / fields.length) * 100);
   };
 
-  const uniqueClients = new Set(
-    completedBookings.map((booking) => booking.customer_id)
-  ).size;
+  // Calculate unique clients from both bookings and live sessions
+  const [uniqueClients, setUniqueClients] = useState(0);
+  
+  useEffect(() => {
+    const fetchUniqueClients = async () => {
+      if (!designerProfile?.id) return;
+      
+      try {
+        // Get unique clients from completed bookings
+        const bookingClients = new Set(
+          completedBookings.map((booking) => booking.customer_id)
+        );
+        
+        // Get unique clients from completed live sessions
+        const { data: liveSessions } = await supabase
+          .from('active_sessions')
+          .select('customer_id')
+          .eq('designer_id', designerProfile.id)
+          .in('status', ['ended', 'completed']);
+        
+        liveSessions?.forEach((session) => {
+          if (session.customer_id) {
+            bookingClients.add(session.customer_id);
+          }
+        });
+        
+        setUniqueClients(bookingClients.size);
+      } catch (error) {
+        console.error('Error fetching unique clients:', error);
+        // Fallback to just bookings
+        setUniqueClients(new Set(completedBookings.map((b) => b.customer_id)).size);
+      }
+    };
+    
+    if (designerProfile && completedBookings) {
+      fetchUniqueClients();
+    }
+  }, [designerProfile, completedBookings]);
 
   const handleLogout = async () => {
     try {
@@ -619,7 +801,7 @@ export default function DesignerDashboard() {
                         Total Earnings
                       </p>
                       <p className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                        ${totalEarnings.toFixed(2)}
+                        ₹{totalEarnings.toFixed(2)}
                       </p>
                       <Link
                         to="/designer-dashboard/earnings"
@@ -673,12 +855,12 @@ export default function DesignerDashboard() {
                       </p>
                       <div className="flex items-center space-x-2 mb-2 sm:mb-3">
                         <p className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
-                          {designerProfile?.rating?.toFixed(1) || "0.0"}
+                          {avgRating.toFixed(1)}
                         </p>
                         <Star className="w-4 h-4 sm:w-6 sm:h-6 text-yellow-400 fill-current" />
                       </div>
                       <p className="text-xs sm:text-sm text-yellow-600 font-medium">
-                        From {designerProfile?.reviews_count || 0} completed
+                        From {totalCompletedSessions} completed
                         sessions
                       </p>
                     </div>
@@ -700,10 +882,10 @@ export default function DesignerDashboard() {
                         Completion Rate
                       </p>
                       <p className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                        {designerProfile?.completion_rate || 0}%
+                        {completionRate}%
                       </p>
                       <p className="text-xs sm:text-sm text-purple-600 mt-2 sm:mt-3 font-medium">
-                        {completedBookings.length} completed sessions
+                        {totalCompletedSessions} completed sessions
                       </p>
                     </div>
                     <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
@@ -731,19 +913,35 @@ export default function DesignerDashboard() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-4 sm:p-6">
-                  <div className="h-48 sm:h-64 flex items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl">
-                    <div className="text-center">
-                      <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                        <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-500" />
+                  {weeklyEarnings > 0 ? (
+                    <div className="h-48 sm:h-64 flex items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl">
+                      <div className="text-center">
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                          <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-500" />
+                        </div>
+                        <h3 className="font-bold text-gray-800 text-2xl sm:text-3xl mb-2">
+                          ₹{weeklyEarnings.toFixed(2)}
+                        </h3>
+                        <p className="text-gray-600 text-sm sm:text-base px-4">
+                          Earnings this week
+                        </p>
                       </div>
-                      <h3 className="font-bold text-gray-800 text-base sm:text-lg mb-2">
-                        No Earnings Data
-                      </h3>
-                      <p className="text-gray-600 text-sm sm:text-base px-4">
-                        Start taking sessions to see your weekly progress
-                      </p>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="h-48 sm:h-64 flex items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl">
+                      <div className="text-center">
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                          <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-500" />
+                        </div>
+                        <h3 className="font-bold text-gray-800 text-base sm:text-lg mb-2">
+                          No Earnings Data
+                        </h3>
+                        <p className="text-gray-600 text-sm sm:text-base px-4">
+                          Start taking sessions to see your weekly progress
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -829,7 +1027,7 @@ export default function DesignerDashboard() {
             </div>
 
             {/* Performance Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               <Card
                 className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in"
                 style={{ animationDelay: "1.1s" }}
@@ -855,7 +1053,7 @@ export default function DesignerDashboard() {
                 </CardContent>
               </Card>
 
-              <Card
+              {/* <Card
                 className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in"
                 style={{ animationDelay: "1.2s" }}
               >
@@ -880,7 +1078,7 @@ export default function DesignerDashboard() {
                     Update your portfolio to attract clients
                   </p>
                 </CardContent>
-              </Card>
+              </Card> */}
 
               <Card
                 className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in"

@@ -73,6 +73,7 @@ export default function EngagementAnalytics() {
       // Fetch session metrics - try active_sessions first, fallback to bookings
       let sessionData = null;
       let sessionError = null;
+      let bookingsData = null;
       
       try {
         const { data, error } = await supabase
@@ -84,9 +85,10 @@ export default function EngagementAnalytics() {
         console.log('active_sessions table not found, trying bookings...');
         const { data, error } = await supabase
           .from('bookings')
-          .select('id, scheduled_date, created_at, status')
+          .select('id, scheduled_date, created_at, status, duration_hours')
           .eq('status', 'completed');
         sessionData = data;
+        bookingsData = data;
         sessionError = error;
       }
 
@@ -126,15 +128,21 @@ export default function EngagementAnalytics() {
       if (sessionData && completedSessions > 0) {
         if (sessionData[0]?.started_at && sessionData[0]?.ended_at) {
           // active_sessions format
-          avgSessionDuration = sessionData
-            .filter(s => s.ended_at && s.started_at)
-            .reduce((acc, session) => {
+          const sessionsWithDuration = sessionData.filter(s => s.ended_at && s.started_at);
+          if (sessionsWithDuration.length > 0) {
+            avgSessionDuration = sessionsWithDuration.reduce((acc, session) => {
               const duration = new Date(session.ended_at).getTime() - new Date(session.started_at).getTime();
               return acc + (duration / (1000 * 60)); // Convert to minutes
-            }, 0) / completedSessions;
-        } else {
-          // bookings format - use a default duration
-          avgSessionDuration = 60; // Default 60 minutes for completed bookings
+            }, 0) / sessionsWithDuration.length;
+          }
+        } else if (bookingsData) {
+          // bookings format - calculate from duration_hours
+          const bookingsWithDuration = bookingsData.filter(b => b.duration_hours && b.duration_hours > 0);
+          if (bookingsWithDuration.length > 0) {
+            avgSessionDuration = bookingsWithDuration.reduce((acc, booking) => {
+              return acc + (booking.duration_hours * 60); // Convert hours to minutes
+            }, 0) / bookingsWithDuration.length;
+          }
         }
       }
 

@@ -112,10 +112,11 @@ export default function CustomerWallet() {
       } else if (activeTab === 'payments') {
         countQuery = countQuery.eq('transaction_type', 'payment');
         dataQuery = dataQuery.eq('transaction_type', 'payment');
-      } else if (activeTab === 'refunds') {
-        countQuery = countQuery.eq('transaction_type', 'refund');
-        dataQuery = dataQuery.eq('transaction_type', 'refund');
       }
+      // } else if (activeTab === 'refunds') {
+      //   countQuery = countQuery.eq('transaction_type', 'refund');
+      //   dataQuery = dataQuery.eq('transaction_type', 'refund');
+      // }
 
       // Get total count
       const { count, error: countError } = await countQuery;
@@ -365,11 +366,11 @@ export default function CustomerWallet() {
               </CardHeader>
               <CardContent className="p-4 sm:p-6 pt-0">
                 <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-                  <TabsList className="grid w-full grid-cols-4 bg-gradient-to-r from-teal-50 to-blue-50">
+                  <TabsList className="grid w-full grid-cols-3 bg-gradient-to-r from-teal-50 to-blue-50">
                     <TabsTrigger value="all" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-teal-500 data-[state=active]:text-white text-xs sm:text-sm">All</TabsTrigger>
                     <TabsTrigger value="deposits" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-teal-500 data-[state=active]:text-white text-xs sm:text-sm">Deposits</TabsTrigger>
                     <TabsTrigger value="payments" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-teal-500 data-[state=active]:text-white text-xs sm:text-sm">Payments</TabsTrigger>
-                    <TabsTrigger value="refunds" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-teal-500 data-[state=active]:text-white text-xs sm:text-sm">Refunds</TabsTrigger>
+                    {/* <TabsTrigger value="refunds" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-teal-500 data-[state=active]:text-white text-xs sm:text-sm">Refunds</TabsTrigger> */}
                   </TabsList>
                   <TabsContent value={activeTab} className="mt-4 sm:mt-6">
                     {loading ? (
