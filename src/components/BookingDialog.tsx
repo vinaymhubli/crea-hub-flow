@@ -40,7 +40,7 @@ export function BookingDialog({ designer, children, service }: BookingDialogProp
     scheduled_date: ''
   });
   const [loading, setLoading] = useState(false);
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
 
   // Slots for the currently selected day
@@ -107,6 +107,12 @@ export function BookingDialog({ designer, children, service }: BookingDialogProp
   const handleBooking = async () => {
     if (!user) {
       toast.error('Please login to book a session');
+      return;
+    }
+
+    // Prevent designers from booking sessions with other designers
+    if (profile?.user_type === 'designer') {
+      toast.error('Designers cannot book sessions with other designers. Only clients can book design sessions.');
       return;
     }
 

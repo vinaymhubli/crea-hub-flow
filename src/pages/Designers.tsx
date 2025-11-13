@@ -103,46 +103,43 @@ const Designers = () => {
 
   const fetchFiltersData = async () => {
     try {
-      // Fetch categories from services table
-      const { data: services, error: servicesError } = await supabase
-        .from('services')
-        .select('category')
-        .eq('is_active', true);
+      // Fetch categories from admin-managed categories table
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from('categories')
+        .select('name')
+        .eq('is_active', true)
+        .order('name', { ascending: true });
 
-      if (servicesError) {
-        console.error('Error fetching services:', servicesError);
+      if (categoriesError) {
+        console.error('Error fetching categories:', categoriesError);
         return;
       }
 
-      // Fetch skills from designers table
-      const { data: designers, error: designersError } = await supabase
-        .from('designers')
-        .select('skills');
+      // Fetch skills from admin-managed skills table
+      const { data: skillsData, error: skillsError } = await supabase
+        .from('skills')
+        .select('name')
+        .eq('is_active', true)
+        .order('name', { ascending: true });
 
-      if (designersError) {
-        console.error('Error fetching designers:', designersError);
+      if (skillsError) {
+        console.error('Error fetching skills:', skillsError);
         return;
       }
 
-      // Extract categories with counts
+      // Count designers per category by checking services table
       const categoryMap = new Map<string, number>();
-      services?.forEach(service => {
-        if (service.category) {
-          const current = categoryMap.get(service.category) || 0;
-          categoryMap.set(service.category, current + 1);
-        }
-      });
-
-      // Extract unique skills
-      const allSkills = new Set<string>();
-      designers?.forEach(designer => {
-        if (designer.skills && Array.isArray(designer.skills)) {
-          designer.skills.forEach(skill => allSkills.add(skill));
-        }
-      });
+      for (const cat of (categoriesData || [])) {
+        const { count } = await supabase
+          .from('services')
+          .select('*', { count: 'exact', head: true })
+          .eq('category', cat.name)
+          .eq('is_active', true);
+        categoryMap.set(cat.name, count || 0);
+      }
 
       setCategories(Array.from(categoryMap.entries()).map(([name, count]) => ({ name, count })));
-      setSkills(Array.from(allSkills));
+      setSkills((skillsData || []).map(s => s.name));
     } catch (error) {
       console.error('Error fetching filters data:', error);
     }

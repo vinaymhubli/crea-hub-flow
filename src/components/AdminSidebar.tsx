@@ -202,6 +202,11 @@ const contentSections = [
     url: "/admin/homepage-video",
     icon: Play,
   },
+  {
+    title: "Categories & Skills",
+    url: "/admin/categories-skills",
+    icon: Database,
+  },
   // {
   //   title: "Help Center",
   //   url: "/admin/cms/help-center",

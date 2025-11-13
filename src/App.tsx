@@ -60,6 +60,7 @@ import AdminFeaturedDesigners from "./pages/admin/FeaturedDesigners";
 import AdminPromotions from "./pages/admin/Promotions";
 import PricingManagement from "./pages/admin/PricingManagement";
 import HomepageVideoManagement from "./pages/admin/HomepageVideoManagement";
+import CategoriesAndSkills from "./pages/admin/CategoriesAndSkills";
 // import HelpCenterManagement from "./pages/admin/HelpCenterManagement"
 // import BlogManagement from "./pages/admin/BlogManagement"
 // import WebsiteSectionManager from "./pages/admin/WebsiteSectionManager"
@@ -537,6 +538,16 @@ function AppContent() {
               <ProtectedAdminRoute>
                 <AdminLayout>
                   <HomepageVideoManagement />
+                </AdminLayout>
+              </ProtectedAdminRoute>
+            }
+          />
+          <Route
+            path="/admin/categories-skills"
+            element={
+              <ProtectedAdminRoute>
+                <AdminLayout>
+                  <CategoriesAndSkills />
                 </AdminLayout>
               </ProtectedAdminRoute>
             }

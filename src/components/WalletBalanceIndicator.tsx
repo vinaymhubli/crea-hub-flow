@@ -70,41 +70,41 @@ export function WalletBalanceIndicator({ className = '', showActions = true }: W
   return (
     <>
       <Card className={`bg-gradient-to-r from-green-50 to-teal-50 border-green-200 hover:shadow-md transition-all duration-300 ${className}`}>
-        <CardContent className="p-3">
+        <CardContent className="p-2">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                <Wallet className="w-4 h-4 text-green-600" />
+            <div className="flex items-center space-x-2">
+              <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Wallet className="w-3.5 h-3.5 text-green-600" />
               </div>
-              <div>
-                <div className="flex items-center space-x-2">
-                  <p className="text-sm font-medium text-green-800">
-                    {isDesigner ? 'Earnings' : 'Wallet Balance'}
+              <div className="min-w-0">
+                <div className="flex items-center space-x-1.5">
+                  <p className="text-xs font-medium text-green-800 whitespace-nowrap">
+                    {isDesigner ? 'Earnings' : 'Wallet'}
                   </p>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setShowBalance(!showBalance)}
-                    className="h-4 w-4 p-0 hover:bg-green-100"
+                    className="h-3 w-3 p-0 hover:bg-green-100 flex-shrink-0"
                   >
-                    {showBalance ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                    {showBalance ? <Eye className="w-2.5 h-2.5" /> : <EyeOff className="w-2.5 h-2.5" />}
                   </Button>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1.5">
                   {loading || earningsLoading ? (
                     <div className="flex items-center space-x-1">
-                      <RefreshCw className="w-3 h-3 animate-spin text-green-600" />
+                      <RefreshCw className="w-2.5 h-2.5 animate-spin text-green-600" />
                       <span className="text-xs text-green-600">Loading...</span>
                     </div>
                   ) : (
                     <>
-                      <p className="text-lg font-bold text-green-900">
+                      <p className="text-sm font-bold text-green-900 whitespace-nowrap">
                         {showBalance ? `₹${(isDesigner ? earnings : balance).toFixed(2)}` : '••••••'}
                       </p>
                       {isDesigner && (
-                        <Badge className="bg-green-100 text-green-800 text-xs">
-                          <TrendingUp className="w-3 h-3 mr-1" />
-                          Earnings
+                        <Badge className="bg-green-100 text-green-800 text-[10px] px-1.5 py-0.5 h-4 flex items-center">
+                          <TrendingUp className="w-2.5 h-2.5 mr-0.5" />
+                          <span className="leading-none">Earnings</span>
                         </Badge>
                       )}
                     </>

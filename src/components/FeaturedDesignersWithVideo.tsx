@@ -346,20 +346,26 @@ export function FeaturedDesignersWithVideo() {
       navigate("/auth");
       return;
     }
+    
+    // Prevent designers from booking sessions with other designers
+    if (profile?.user_type === "designer") {
+      toast.error("Designers cannot book sessions with other designers. Only clients can request live sessions.");
+      return;
+    }
+    
     if (profile?.user_type !== "client") {
       toast.error("Only clients can request live sessions");
       return;
     }
 
-    // Check designer schedule availability
+    // Check designer online status (live sessions require designer to be online)
     const availabilityResult = await checkDesignerBookingAvailability(
       designer.id
     );
-    if (!availabilityResult.isAvailable) {
-      toast.error(
-        availabilityResult.reason ||
-          "Designer is not available for live sessions"
-      );
+    
+    // For live sessions, designer MUST be online (regardless of schedule)
+    if (!availabilityResult.isOnline) {
+      toast.error("Designer is currently offline. Live sessions are only available when the designer is online.");
       return;
     }
 
