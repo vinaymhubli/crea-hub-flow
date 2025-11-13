@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 
 interface AdminUser {
   id: string;
+  user_id: string;
   first_name: string;
   last_name: string;
   email: string;
@@ -42,30 +43,45 @@ export const useAdminUsers = () => {
     }
   };
 
-  const toggleAdminStatus = async (userId: string, currentStatus: boolean) => {
+  const toggleAdminStatus = async (profileId: string, currentStatus: boolean) => {
     try {
+      // Find the user to get their user_id
+      const user = users.find(u => u.id === profileId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      // Profiles table has both 'id' (primary key) and 'user_id' (references auth.users.id)
+      // We need to update using 'id' (the profile's primary key) since that's what we're passing
       const { error } = await supabase
         .from('profiles')
         .update({ is_admin: !currentStatus })
-        .eq('user_id', userId);
+        .eq('id', profileId); // Use profile id (primary key) to update
 
-      if (error) throw error;
+      if (error) {
+        console.error('Update error details:', error);
+        throw error;
+      }
 
+      // Update local state immediately for better UX
       setUsers(prev => 
-        prev.map(user => 
-          user.id === userId ? { ...user, is_admin: !currentStatus } : user
+        prev.map(u => 
+          u.id === profileId ? { ...u, is_admin: !currentStatus } : u
         )
       );
       
+      // Refetch to ensure data is in sync with database
+      await fetchUsers();
+      
       toast({
         title: "Success",
-        description: "Admin status updated successfully",
+        description: `User ${!currentStatus ? 'promoted to' : 'removed from'} admin successfully`,
       });
     } catch (error) {
       console.error('Error updating admin status:', error);
       toast({
         title: "Error",
-        description: "Failed to update admin status",
+        description: "Failed to update admin status. Please try again.",
         variant: "destructive",
       });
     }

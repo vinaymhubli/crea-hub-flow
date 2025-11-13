@@ -11,13 +11,9 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Settings, 
   DollarSign, 
-  Receipt, 
-  CreditCard, 
-  TrendingUp,
   Save,
   RefreshCw,
   AlertCircle,
-  CheckCircle,
   Info
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,20 +28,10 @@ interface PlatformSetting {
   updated_at: string;
 }
 
-interface PlatformEarnings {
-  total_platform_fees: number;
-  total_gst_collected: number;
-  total_penalty_fees: number; // deprecated
-  total_earnings: number;
-  total_commission_earned?: number; // optional for backward compatibility
-  transaction_count: number;
-}
-
 export default function AdminPlatformSettings() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [settings, setSettings] = useState<PlatformSetting[]>([]);
-  const [platformEarnings, setPlatformEarnings] = useState<PlatformEarnings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editedSettings, setEditedSettings] = useState<{ [key: string]: any }>({});
@@ -69,7 +55,6 @@ export default function AdminPlatformSettings() {
   useEffect(() => {
     if (user) {
       fetchSettings();
-      fetchPlatformEarnings();
       loadMinRate();
       loadDesignersRates();
     }
@@ -94,16 +79,6 @@ export default function AdminPlatformSettings() {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchPlatformEarnings = async () => {
-    try {
-      const { data, error } = await supabase.rpc('get_platform_earnings_summary');
-      if (error) throw error;
-      setPlatformEarnings(data?.[0] || null);
-    } catch (error) {
-      console.error('Error fetching platform earnings:', error);
     }
   };
 
@@ -366,8 +341,8 @@ export default function AdminPlatformSettings() {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Platform Settings</h1>
-          <p className="text-gray-600">Manage GST rates, platform fees, and other platform settings</p>
+          <h1 className="text-3xl font-bold">Rate Per Minute</h1>
+          <p className="text-gray-600">Manage minimum rate per minute and designer rates</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={fetchSettings} disabled={loading}>
@@ -389,57 +364,6 @@ export default function AdminPlatformSettings() {
           </Button>
         </div>
       </div>
-
-      {/* Platform Earnings Summary */}
-      {platformEarnings && platformEarnings.total_platform_fees !== undefined && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Platform Fees</p>
-                  <p className="text-2xl font-bold">₹{(platformEarnings.total_platform_fees || 0).toFixed(2)}</p>
-                </div>
-                <DollarSign className="w-8 h-8 text-purple-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">GST Collected</p>
-                  <p className="text-2xl font-bold">₹{(platformEarnings.total_gst_collected || 0).toFixed(2)}</p>
-                </div>
-                <Receipt className="w-8 h-8 text-indigo-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  {/* Penalty Fees removed */}
-                  <p className="text-sm font-medium text-gray-600">Net Admin Earnings</p>
-                  <p className="text-2xl font-bold">₹{(platformEarnings.total_commission_earned || 0).toFixed(2)}</p>
-                </div>
-                <AlertCircle className="w-8 h-8 text-red-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Earnings</p>
-                  <p className="text-2xl font-bold">₹{(platformEarnings.total_earnings || 0).toFixed(2)}</p>
-                </div>
-                <TrendingUp className="w-8 h-8 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
 
       <Tabs defaultValue="fees" className="space-y-6">
         <TabsList>

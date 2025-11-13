@@ -405,34 +405,38 @@ export default function TransactionManagement() {
 
       {/* Stats Cards */}
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="border-2 hover:shadow-lg transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-base font-semibold">
                 Total Volume
               </CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+              <DollarSign className="h-5 w-5 text-green-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-3xl font-bold text-gray-900 mb-1">
               ₹{stats.total_volume.toFixed(2)}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground font-medium">
                 {stats.total_transactions} transactions
               </p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Completed</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+          <Card className="border-2 hover:shadow-lg transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-base font-semibold">Completed</CardTitle>
+              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+              <CheckCircle className="h-5 w-5 text-blue-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-3xl font-bold text-gray-900 mb-1">
                 {stats.completed_transactions}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground font-medium">
                 {(
                   (stats.completed_transactions / stats.total_transactions) *
                   100
@@ -442,31 +446,18 @@ export default function TransactionManagement() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {stats.pending_transactions}
+          <Card className="border-2 hover:shadow-lg transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-base font-semibold">This Month</CardTitle>
+              <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
+              <TrendingUp className="h-5 w-5 text-purple-600" />
               </div>
-              <p className="text-xs text-muted-foreground">
-                Awaiting processing
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">This Month</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-3xl font-bold text-gray-900 mb-1">
               ₹{stats.this_month_volume.toFixed(2)}
               </div>
-              <p className="text-xs text-muted-foreground">Monthly volume</p>
+              <p className="text-sm text-muted-foreground font-medium">Monthly volume</p>
             </CardContent>
           </Card>
         </div>
@@ -474,7 +465,7 @@ export default function TransactionManagement() {
 
       {/* Transaction Type Breakdown */}
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium">Deposits</CardTitle>
@@ -492,16 +483,6 @@ export default function TransactionManagement() {
             <CardContent>
               <div className="text-2xl font-bold text-blue-600">
                 {stats.payments}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Refunds</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-orange-600">
-                {stats.refunds}
               </div>
             </CardContent>
           </Card>

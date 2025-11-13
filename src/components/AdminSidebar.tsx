@@ -17,7 +17,6 @@ import {
   LayoutDashboard,
   UserCheck,
   Calendar,
-  PlayCircle,
   Play,
   BookOpen,
   Wallet,
@@ -107,11 +106,6 @@ const mainSections = [
     title: "Designer Availability",
     url: "/admin/designer-availability",
     icon: Calendar,
-  },
-  {
-    title: "Session Control",
-    url: "/admin/session-control",
-    icon: PlayCircle,
   },
 ];
 
@@ -246,7 +240,7 @@ const analyticsSections = [
 // Platform Configuration section items
 const platformSections = [
   {
-    title: "Platform Settings",
+    title: "Rate Per Minute",
     url: "/admin/platform/settings",
     icon: Settings,
   },

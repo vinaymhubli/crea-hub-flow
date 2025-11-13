@@ -689,7 +689,7 @@ export function PromotionsManager() {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Text Color</Label>
                     <Input
@@ -704,14 +704,6 @@ export function PromotionsManager() {
                       type="color"
                       value={formData.banner_background_color}
                       onChange={(e) => setFormData({...formData, banner_background_color: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>CTA URL</Label>
-                    <Input
-                      placeholder="Enter CTA URL"
-                      value={formData.cta_url}
-                      onChange={(e) => setFormData({...formData, cta_url: e.target.value})}
                     />
                   </div>
                 </div>
@@ -1010,7 +1002,7 @@ export function PromotionsManager() {
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Text Color</Label>
                   <Input
@@ -1025,14 +1017,6 @@ export function PromotionsManager() {
                     type="color"
                     value={formData.banner_background_color}
                     onChange={(e) => setFormData({...formData, banner_background_color: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>CTA URL</Label>
-                  <Input
-                    placeholder="Enter CTA URL"
-                    value={formData.cta_url}
-                    onChange={(e) => setFormData({...formData, cta_url: e.target.value})}
                   />
                 </div>
               </div>
@@ -1077,9 +1061,52 @@ export function PromotionsManager() {
         </DialogContent>
       </Dialog>
 
+      {/* Statistics */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Promotion Statistics</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="text-center p-4 bg-purple-50 rounded-lg">
+              <div className="text-3xl font-bold text-purple-600 mb-1">
+                {promotions.length}
+              </div>
+              <div className="text-sm text-muted-foreground font-medium">
+                Total Promotions
+              </div>
+            </div>
+            <div className="text-center p-4 bg-green-50 rounded-lg">
+              <div className="text-3xl font-bold text-green-600 mb-1">
+                {promotions.filter(p => p.is_active).length}
+              </div>
+              <div className="text-sm text-muted-foreground font-medium">
+                Active Promotions
+              </div>
+            </div>
+            <div className="text-center p-4 bg-blue-50 rounded-lg">
+              <div className="text-3xl font-bold text-blue-600 mb-1">
+                {promotions.reduce((sum, p) => sum + p.used_count, 0)}
+              </div>
+              <div className="text-sm text-muted-foreground font-medium">
+                Total Usage
+              </div>
+            </div>
+            <div className="text-center p-4 bg-orange-50 rounded-lg">
+              <div className="text-3xl font-bold text-orange-600 mb-1">
+                {promotions.filter(p => p.promotion_type === 'discount').length}
+              </div>
+              <div className="text-sm text-muted-foreground font-medium">
+                Discount Offers
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Promotions List */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-5 lg:w-auto">
           <TabsTrigger value="all">All</TabsTrigger>
           <TabsTrigger value="active">Active</TabsTrigger>
           <TabsTrigger value="inactive">Inactive</TabsTrigger>
@@ -1106,17 +1133,16 @@ export function PromotionsManager() {
             </Card>
           ) : (
             filteredPromotions.map((promotion) => (
-              <Card key={promotion.id} className="border-l-4 border-l-purple-500">
+              <Card key={promotion.id} className="border-l-4 border-l-purple-500 hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      {getPromotionTypeIcon(promotion.promotion_type)}
-                      <div>
-                        <h3 className="font-semibold">{promotion.title}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {promotion.description}
-                        </p>
-                        <div className="flex items-center space-x-2 mt-1">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center space-x-3 flex-1 min-w-0">
+                      <div className="flex-shrink-0">
+                        {getPromotionTypeIcon(promotion.promotion_type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold text-base">{promotion.title}</h3>
                           <Badge variant="outline" className="text-xs">
                             {promotion.promotion_type}
                           </Badge>
@@ -1127,10 +1153,39 @@ export function PromotionsManager() {
                           )}
                           {getStatusBadge(promotion)}
                         </div>
+                        {promotion.description && (
+                          <p className="text-sm text-muted-foreground mb-2 line-clamp-1">
+                            {promotion.description}
+                          </p>
+                        )}
+                        <div className="flex items-center gap-4 text-sm">
+                          <div>
+                            <span className="text-muted-foreground text-xs">Priority: </span>
+                            <span className="font-medium">{promotion.priority}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground text-xs">Usage: </span>
+                            <span className="font-medium">
+                              {promotion.used_count}/{promotion.usage_limit || '∞'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground text-xs">Start: </span>
+                            <span className="font-medium">
+                              {new Date(promotion.start_date).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground text-xs">End: </span>
+                            <span className="font-medium">
+                              {promotion.end_date ? new Date(promotion.end_date).toLocaleDateString() : 'No end date'}
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       <Switch
                         checked={promotion.is_active}
                         onCheckedChange={() => togglePromotionStatus(promotion.id, promotion.is_active)}
@@ -1140,6 +1195,7 @@ export function PromotionsManager() {
                         size="sm"
                         variant="outline"
                         onClick={() => loadPromotionForEdit(promotion)}
+                        className="h-8 w-8 p-0"
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
@@ -1148,35 +1204,10 @@ export function PromotionsManager() {
                         variant="outline"
                         onClick={() => deletePromotion(promotion.id)}
                         disabled={loading}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Priority:</span>
-                      <span className="ml-1 font-medium">{promotion.priority}</span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Usage:</span>
-                      <span className="ml-1 font-medium">
-                        {promotion.used_count}/{promotion.usage_limit || '∞'}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Start:</span>
-                      <span className="ml-1 font-medium">
-                        {new Date(promotion.start_date).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">End:</span>
-                      <span className="ml-1 font-medium">
-                        {promotion.end_date ? new Date(promotion.end_date).toLocaleDateString() : 'No end date'}
-                      </span>
                     </div>
                   </div>
                 </CardContent>
@@ -1185,49 +1216,6 @@ export function PromotionsManager() {
           )}
         </TabsContent>
       </Tabs>
-
-      {/* Statistics */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Promotion Statistics</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">
-                {promotions.length}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                Total Promotions
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">
-                {promotions.filter(p => p.is_active).length}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                Active Promotions
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">
-                {promotions.reduce((sum, p) => sum + p.used_count, 0)}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                Total Usage
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">
-                {promotions.filter(p => p.promotion_type === 'discount').length}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                Discount Offers
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

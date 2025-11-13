@@ -80,12 +80,12 @@ export default function DesignerAvailability() {
             .eq('designer_id', designer.id)
             .maybeSingle();
 
-          // Get upcoming bookings count
+          // Get upcoming bookings count (pending, confirmed, and in_progress)
           const { count } = await supabase
             .from('bookings')
             .select('*', { count: 'exact', head: true })
             .eq('designer_id', designer.id)
-            .in('status', ['pending', 'confirmed'])
+            .in('status', ['pending', 'confirmed', 'in_progress'])
             .gte('scheduled_date', new Date().toISOString());
 
           return {
@@ -535,7 +535,7 @@ export default function DesignerAvailability() {
                     </div>
                   )}
 
-                  <div className="pt-4">
+                  {/* <div className="pt-4">
                     <Button 
                       variant="outline" 
                       size="sm" 
@@ -545,7 +545,7 @@ export default function DesignerAvailability() {
                       <Settings className="w-4 h-4 mr-1" />
                       Manage Schedule
                     </Button>
-                  </div>
+                  </div> */}
                 </CardContent>
               </Card>
             );

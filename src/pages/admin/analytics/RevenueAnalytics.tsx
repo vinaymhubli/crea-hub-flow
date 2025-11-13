@@ -539,19 +539,6 @@ export default function RevenueAnalytics() {
             </p>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Net Admin Earnings</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">₹{stats.net_admin_earnings?.toLocaleString() || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              Commission + TDS
-            </p>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Money Distribution Breakdown */}

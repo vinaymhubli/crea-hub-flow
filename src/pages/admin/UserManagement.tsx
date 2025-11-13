@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { 
-  Users, Search, Filter, Edit, Eye, Shield, ShieldCheck, 
+  Users, Search, Filter, Shield, ShieldCheck, 
   UserCheck, UserX, Mail, Phone, MapPin, Calendar,
   DollarSign, Star, Activity, AlertTriangle, CheckCircle,
   XCircle, Clock, Download, Upload, Trash2, Plus
@@ -122,7 +122,7 @@ export default function UserManagement() {
 
           return {
             ...user,
-            is_active: true, // Assuming all users are active unless specified
+            is_active: !user.blocked, // Active = not blocked
             wallet_balance: 0, // Would need to calculate from wallet_transactions
             total_spent: totalSpent,
             total_earned: totalEarned,
@@ -231,15 +231,42 @@ export default function UserManagement() {
 
   const handleToggleUserStatus = async (userId: string, isActive: boolean) => {
     try {
-      // This would require adding an is_active field to profiles table
-      // For now, we'll just update the local state
+      // Update blocked status in the database (is_active = !blocked)
+      const blocked = !isActive;
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          blocked: blocked,
+          blocked_at: blocked ? new Date().toISOString() : null,
+          blocked_reason: blocked ? 'Account deactivated by admin' : null
+        })
+        .eq('id', userId);
+
+      if (error) {
+        console.error('Error updating user status:', error);
+        // Revert local state on error
+        setUsers(users.map(u => 
+          u.id === userId 
+            ? { ...u, is_active: !isActive }
+            : u
+        ));
+        return;
+      }
+
+      // Update local state on success
       setUsers(users.map(u => 
         u.id === userId 
-          ? { ...u, is_active: isActive }
+          ? { ...u, is_active: isActive, blocked: blocked }
           : u
       ));
     } catch (error) {
       console.error('Error toggling user status:', error);
+      // Revert local state on error
+      setUsers(users.map(u => 
+        u.id === userId 
+          ? { ...u, is_active: !isActive }
+          : u
+      ));
     }
   };
 
@@ -412,8 +439,6 @@ export default function UserManagement() {
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Created</TableHead>
-                  <TableHead>Financial</TableHead>
-                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -457,29 +482,6 @@ export default function UserManagement() {
                     <TableCell>
                       <div className="text-sm">
                         {new Date(user.created_at).toLocaleDateString()}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm space-y-1">
-                        <div>Spent: ₹{user.total_spent?.toFixed(2) || '0.00'}</div>
-                        <div>Earned: ₹{user.total_earned?.toFixed(2) || '0.00'}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEditUser(user)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>

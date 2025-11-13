@@ -112,10 +112,10 @@ export default function AdminDashboard() {
             <ShieldCheck className="h-4 w-4" />
             Administrator
           </Badge>
-          <Button variant="outline" onClick={() => exportData('all')}>
+          {/* <Button variant="outline" onClick={() => exportData('all')}>
             <Download className="h-4 w-4 mr-2" />
             Export Data
-          </Button>
+          </Button> */}
         </div>
       </div>
 
@@ -182,11 +182,11 @@ export default function AdminDashboard() {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto">
+        <TabsList className="grid w-full grid-cols-3 lg:w-auto">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="bookings">Bookings</TabsTrigger>
-          <TabsTrigger value="announcements">Announcements</TabsTrigger>
+          {/* <TabsTrigger value="announcements">Announcements</TabsTrigger> */}
           {/* <TabsTrigger value="communications">Communications</TabsTrigger> */}
           {/* <TabsTrigger value="settings">Settings</TabsTrigger> */}
         </TabsList>
@@ -414,9 +414,9 @@ export default function AdminDashboard() {
         </TabsContent>
 
         {/* Announcements Tab */}
+        {/*
         <TabsContent value="announcements" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Send Announcement */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -464,7 +464,6 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
 
-            {/* Recent Announcements */}
             <Card>
               <CardHeader>
                 <CardTitle>Recent Announcements</CardTitle>
@@ -494,6 +493,7 @@ export default function AdminDashboard() {
             </Card>
           </div>
         </TabsContent>
+        */}
 
         {/* Communications Tab - Commented out */}
         {/*

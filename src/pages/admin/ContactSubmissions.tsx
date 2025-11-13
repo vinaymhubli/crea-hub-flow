@@ -54,8 +54,6 @@ export default function ContactSubmissions() {
   const [selectedSubmission, setSelectedSubmission] = useState<ContactSubmission | null>(null);
   const [adminNotes, setAdminNotes] = useState('');
   const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
-  const [replyMessage, setReplyMessage] = useState('');
-  const [isReplyDialogOpen, setIsReplyDialogOpen] = useState(false);
 
   if (!user || !profile?.is_admin) {
     return <Navigate to="/admin-login" replace />;
@@ -144,25 +142,6 @@ export default function ContactSubmissions() {
     window.location.href = `tel:${phone}`;
   };
 
-  const handleReplyWithMessage = (submission: ContactSubmission) => {
-    setSelectedSubmission(submission);
-    setReplyMessage('');
-    setAdminNotes(submission.admin_notes || '');
-    setIsReplyDialogOpen(true);
-  };
-
-  const sendReplyEmail = (submission: ContactSubmission) => {
-    const subject = `Re: ${submission.subject}`;
-    const body = replyMessage || `Hello ${submission.name},\n\nThank you for contacting us regarding: "${submission.subject}"\n\nWe have reviewed your inquiry and will get back to you shortly.\n\nBest regards,\nSupport Team`;
-    const mailtoLink = `mailto:${submission.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    window.location.href = mailtoLink;
-    
-    // Update status and save notes
-    const notesText = adminNotes || (replyMessage ? `Replied via email: ${replyMessage.substring(0, 100)}${replyMessage.length > 100 ? '...' : ''}` : 'Replied via email');
-    updateSubmissionStatus(submission.id, 'replied', notesText);
-    setIsReplyDialogOpen(false);
-    setReplyMessage('');
-  };
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -256,10 +235,7 @@ export default function ContactSubmissions() {
                   <SelectContent>
                     <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="new">New</SelectItem>
-                    <SelectItem value="read">Read</SelectItem>
-                    <SelectItem value="replied">Replied</SelectItem>
                     <SelectItem value="resolved">Resolved</SelectItem>
-                    <SelectItem value="archived">Archived</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -396,16 +372,6 @@ export default function ContactSubmissions() {
                           Mark as Read
                         </Button>
                       )}
-                      {submission.status !== 'replied' && submission.status !== 'resolved' && (
-                        <Button
-                          size="sm"
-                          onClick={() => handleReplyWithMessage(submission)}
-                          className="bg-green-600 hover:bg-green-700"
-                        >
-                          <Reply className="w-4 h-4 mr-1" />
-                          Reply with Message
-                        </Button>
-                      )}
                       {submission.status !== 'resolved' && (
                         <Button
                           size="sm"
@@ -413,16 +379,6 @@ export default function ContactSubmissions() {
                           className="bg-green-600 hover:bg-green-700"
                         >
                           Mark Resolved
-                        </Button>
-                      )}
-                      {submission.status !== 'archived' && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => updateSubmissionStatus(submission.id, 'archived')}
-                        >
-                          <Archive className="w-4 h-4 mr-1" />
-                          Archive
                         </Button>
                       )}
                     </div>
@@ -573,74 +529,6 @@ export default function ContactSubmissions() {
         </DialogContent>
       </Dialog>
 
-      {/* Reply Dialog */}
-      <Dialog open={isReplyDialogOpen} onOpenChange={setIsReplyDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Reply to {selectedSubmission?.name}</DialogTitle>
-            <DialogDescription>
-              Compose your reply message. This will open your email client with the message pre-filled.
-            </DialogDescription>
-          </DialogHeader>
-          
-          {selectedSubmission && (
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
-                  To: {selectedSubmission.email}
-                </label>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
-                  Subject: Re: {selectedSubmission.subject}
-                </label>
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Your Reply Message</label>
-                <Textarea
-                  value={replyMessage}
-                  onChange={(e) => setReplyMessage(e.target.value)}
-                  placeholder={`Hello ${selectedSubmission.name},\n\nThank you for contacting us regarding: "${selectedSubmission.subject}"\n\n`}
-                  rows={8}
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  This message will be pre-filled in your email client. You can edit it before sending.
-                </p>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Admin Notes (Internal)</label>
-                <Textarea
-                  value={adminNotes}
-                  onChange={(e) => setAdminNotes(e.target.value)}
-                  placeholder="Add internal notes about this reply..."
-                  rows={3}
-                />
-              </div>
-
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setIsReplyDialogOpen(false);
-                    setSelectedSubmission(null);
-                    setReplyMessage('');
-                    setAdminNotes('');
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={() => sendReplyEmail(selectedSubmission)}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  <Mail className="w-4 h-4 mr-1" />
-                  Open Email Client
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
