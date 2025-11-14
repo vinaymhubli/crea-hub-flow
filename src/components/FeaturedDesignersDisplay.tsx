@@ -69,8 +69,13 @@ export function FeaturedDesignersDisplay({
           try {
             const { data: designerData, error: designerError } = await supabase
               .from('designers')
-              .select('id, verification_status')
+              .select(`
+                id, 
+                verification_status,
+                user:profiles!user_id(user_type)
+              `)
               .eq('user_id', designer.designer_id)
+              .eq('user.user_type', 'designer') // Only show users with designer role
               .eq('verification_status', 'approved') // Only show approved designers
               .single();
             

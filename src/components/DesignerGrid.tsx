@@ -91,9 +91,10 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
         .from('designers')
         .select(`
           *,
-          user:profiles!user_id(blocked)
+          user:profiles!user_id(blocked, user_type)
         `)
         .eq('user.blocked', false) // Only show non-blocked designers
+        .eq('user.user_type', 'designer') // Only show users with designer role
         .eq('verification_status', 'approved'); // Only show approved designers
 
       // Filter by designers who have services in selected categories
@@ -152,25 +153,36 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
               console.warn('Activity query error for designer:', designer.user_id, activityResult.error);
             }
             
+            // Use designers.is_online as the source of truth for online status
+            // designer_activity is secondary and may not always be in sync
+            const isOnline = designer.is_online || false;
+            
             return {
               ...designer,
               profiles: profileResult.data,
               activity: activityResult.data || {
-                is_online: designer.is_online || false,
-                activity_status: 'offline',
+                is_online: isOnline,
+                activity_status: isOnline ? 'active' : 'offline',
                 last_seen: new Date().toISOString()
-              }
+              },
+              // Ensure is_online is explicitly set from designers table
+              is_online: isOnline
             };
           } catch (error) {
             console.error('Error fetching data for designer:', designer.user_id, error);
+            // Use designers.is_online as the source of truth
+            const isOnline = designer.is_online || false;
+            
             return {
               ...designer,
               profiles: null,
               activity: {
-                is_online: designer.is_online || false,
-                activity_status: 'offline',
+                is_online: isOnline,
+                activity_status: isOnline ? 'active' : 'offline',
                 last_seen: new Date().toISOString()
-              }
+              },
+              // Ensure is_online is explicitly set from designers table
+              is_online: isOnline
             };
           }
         })
@@ -179,19 +191,17 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
       // Apply client-side filters
       let filteredData = designersWithProfiles;
       
-      // Apply availability filter based on activity status
+      // Apply availability filter based on online status (use designers.is_online as source of truth)
       if (filters.availabilityStatus !== 'all') {
         filteredData = filteredData.filter(designer => {
-          const isOnline = designer.activity?.is_online || designer.is_online;
-          const activityStatus = designer.activity?.activity_status || 'offline';
+          const isOnline = designer.is_online || false;
           
           switch (filters.availabilityStatus) {
             case 'available':
-              return isOnline && (activityStatus === 'available' || activityStatus === 'online');
             case 'active':
-              return isOnline && activityStatus === 'active';
+              return isOnline; // Both 'available' and 'active' mean online
             case 'offline':
-              return !isOnline || activityStatus === 'offline';
+              return !isOnline;
             default:
               return true;
           }
@@ -201,7 +211,7 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
       // Keep the old isOnlineOnly filter for backward compatibility
       if (filters.isOnlineOnly) {
         filteredData = filteredData.filter(designer => 
-          designer.activity?.is_online || designer.is_online
+          designer.is_online || false
         );
       }
       
@@ -426,13 +436,21 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
     }
 
     // Check designer online status (live sessions require designer to be online)
+    // First check local state, then verify with database
+    if (!designer.is_online) {
+      toast.error('Designer is currently offline. Live sessions are only available when the designer is online.');
+      return;
+    }
+    
     console.log('🔍 Designer object for availability check:', designer);
     console.log('🆔 Using designer ID:', designer.id);
     const availabilityResult = await checkDesignerBookingAvailability(designer.id);
     
-    // For live sessions, designer MUST be online (regardless of schedule)
+    // Double-check with database (in case local state is stale)
     if (!availabilityResult.isOnline) {
       toast.error('Designer is currently offline. Live sessions are only available when the designer is online.');
+      // Refresh designer list to get updated status
+      fetchDesigners();
       return;
     }
 
@@ -571,16 +589,8 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
                       </span>
                     )}
                   </div>
-                  {(designer.activity?.is_online || designer.is_online) && (
-                    <div className={`absolute -bottom-1 -right-1 w-6 h-6 sm:w-5 sm:h-5 rounded-full border-2 border-white flex items-center justify-center shadow-lg z-10 ${
-                      designer.activity?.activity_status === 'active' 
-                        ? 'bg-green-400 animate-pulse' 
-                        : designer.activity?.activity_status === 'idle'
-                        ? 'bg-yellow-400'
-                        : designer.is_online
-                        ? 'bg-yellow-400' // Fallback to yellow for online designers without specific activity status
-                        : 'bg-gray-400'
-                    }`}>
+                  {designer.is_online && (
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 sm:w-5 sm:h-5 rounded-full border-2 border-white flex items-center justify-center shadow-lg z-10 bg-green-400 animate-pulse">
                       <span className="text-xs sm:text-[10px] text-white font-bold">●</span>
                     </div>
                   )}
@@ -613,16 +623,11 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
                         <span className="text-lg font-semibold text-foreground ml-1">{designer.rating || 4.8}</span>
                       </div>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        (designer.activity?.is_online || designer.is_online)
-                          ? (designer.activity?.activity_status === 'active' 
-                              ? 'bg-green-100 text-green-700' 
-                              : 'bg-yellow-100 text-yellow-700')
+                        designer.is_online
+                          ? 'bg-green-100 text-green-700' 
                           : 'bg-muted text-muted-foreground'
                       }`}>
-                        {designer.activity?.is_online || designer.is_online
-                          ? (designer.activity?.activity_status === 'active' ? 'Active Now' : 'Available')
-                          : 'Offline'
-                        }
+                        {designer.is_online ? 'Active Now' : 'Offline'}
                       </span>
                     </div>
 
@@ -676,9 +681,9 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
                           </BookingDialog>
                           <button 
                             onClick={() => handleLiveSessionRequest(designer)}
-                            disabled={!(designer.activity?.is_online || designer.is_online)}
+                            disabled={!designer.is_online}
                             className={`py-2 px-4 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center space-x-2 ${
-                              (designer.activity?.is_online || designer.is_online)
+                              designer.is_online
                                 ? 'bg-background border border-purple-600 text-purple-600 hover:bg-purple-50' 
                                 : 'bg-gray-100 border border-gray-300 text-gray-400 cursor-not-allowed'
                             }`}

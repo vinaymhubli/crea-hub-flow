@@ -47,13 +47,15 @@ const Designers = () => {
         .select(`
           id,
           verification_status,
-          user:profiles!user_id(blocked)
+          user:profiles!user_id(blocked, user_type)
         `)
+        .eq('user.user_type', 'designer') // Only count users with designer role
         .eq('verification_status', 'approved'); // Only count approved designers
 
       if (error) {
         console.error('Error fetching total designers:', error);
-        // Fallback: try a simpler count query
+        // Fallback: try a simpler count query (but still filter by user_type)
+        // Note: This fallback may not filter by user_type, but the main query above does
         const { count: simpleCount, error: simpleError } = await supabase
           .from('designers')
           .select('*', { count: 'exact', head: true })

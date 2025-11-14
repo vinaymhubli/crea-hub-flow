@@ -315,11 +315,13 @@ export default function CustomerRecentDesigners() {
             user:profiles!user_id(
               first_name,
               last_name,
-              avatar_url
+              avatar_url,
+              user_type
             )
           )
         `)
         .eq('customer_id', user?.id)
+        .eq('designer.user.user_type', 'designer') // Only show users with designer role
         .eq('designer.verification_status', 'approved') // Only show approved designers
         .order('created_at', { ascending: false });
 

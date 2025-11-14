@@ -93,9 +93,11 @@ export default function FeaturedDesigners() {
           verification_status,
           kyc_status,
           portfolio_images,
-          skills
+          skills,
+          user:profiles!user_id(user_type)
         `)
         .in('user_id', designerIds)
+        .eq('user.user_type', 'designer') // Only show users with designer role
         .eq('verification_status', 'approved'); // Only show approved designers
       
       if (designersError) throw designersError;
@@ -235,9 +237,15 @@ export default function FeaturedDesigners() {
     }
 
     // Check designer online status (live sessions require designer to be online)
+    // First check local state
+    if (!designer.is_online) {
+      toast.error('Designer is currently offline. Live sessions are only available when the designer is online.');
+      return;
+    }
+    
     const availabilityResult = await checkDesignerBookingAvailability(designer.id);
     
-    // For live sessions, designer MUST be online (regardless of schedule)
+    // Double-check with database (in case local state is stale)
     if (!availabilityResult.isOnline) {
       toast.error('Designer is currently offline. Live sessions are only available when the designer is online.');
       return;
@@ -397,7 +405,7 @@ export default function FeaturedDesigners() {
                            
                           </div>
                           <span className="text-sm text-green-600 font-medium">
-                            {designer.is_online ? 'Online' : 'Offline'}
+                            {designer.is_online ? 'Active Now' : 'Offline'}
                           </span>
                         </div>
                         

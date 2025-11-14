@@ -65,11 +65,15 @@ const DesignerDetails: React.FC = () => {
     try {
       setLoading(true);
       
-      // Fetch designer data - only show if approved
+      // Fetch designer data - only show if approved and user_type is designer
       const { data: designerData, error: designerError } = await supabase
         .from('designers')
-        .select('*')
+        .select(`
+          *,
+          user:profiles!user_id(user_type)
+        `)
         .eq('id', id)
+        .eq('user.user_type', 'designer') // Only show users with designer role
         .eq('verification_status', 'approved') // Only show approved designers
         .single();
 
@@ -254,7 +258,7 @@ const DesignerDetails: React.FC = () => {
                     </div>
                     
                     <Badge variant={designer.is_online ? "default" : "secondary"} className="text-xs">
-                      {designer.is_online ? 'Online' : 'Offline'}
+                      {designer.is_online ? 'Active Now' : 'Offline'}
                     </Badge>
                   </div>
                   

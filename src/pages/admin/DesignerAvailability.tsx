@@ -418,7 +418,7 @@ export default function DesignerAvailability() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant={designer.is_online ? 'default' : 'secondary'}>
-                        {designer.is_online ? 'Online' : 'Offline'}
+                        {designer.is_online ? 'Active Now' : 'Offline'}
                       </Badge>
                       <Switch
                         checked={designer.is_online || false}

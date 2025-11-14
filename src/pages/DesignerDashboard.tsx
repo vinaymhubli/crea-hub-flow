@@ -541,18 +541,12 @@ export default function DesignerDashboard() {
                   <div
                     className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full ${
                       activity?.is_online
-                        ? activity.activity_status === "active"
-                          ? "bg-green-400 animate-pulse"
-                          : "bg-yellow-400"
+                        ? "bg-green-400 animate-pulse"
                         : "bg-gray-400"
                     }`}
                   ></div>
                   <span className="text-white/80 text-xs sm:text-sm font-medium hidden sm:inline">
-                    {activity?.is_online
-                      ? activity.activity_status === "active"
-                        ? "Active Now"
-                        : "Available"
-                      : "Offline"}
+                    {activity?.is_online ? "Active Now" : "Offline"}
                   </span>
                   {activity?.is_in_schedule && (
                     <span className="text-xs text-white/60 hidden md:inline">(Scheduled)</span>
@@ -563,22 +557,12 @@ export default function DesignerDashboard() {
                 <div className="flex items-center space-x-1.5 sm:space-x-2 bg-white/10 backdrop-blur-sm rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 border border-white/20">
                   <Power className="w-3 h-3 sm:w-4 sm:h-4 text-white/80 flex-shrink-0" />
                   <Switch
-                    checked={
-                      activity?.is_online
-                        ? activity.activity_status === "active"
-                          ? true
-                          : false
-                        : false
-                    }
+                    checked={activity?.is_online || false}
                     onCheckedChange={toggleOnlineStatus}
                     className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-500 scale-75 sm:scale-100"
                   />
                   <span className="text-white/80 text-xs font-medium hidden sm:inline">
-                    {activity?.is_online
-                      ? activity.activity_status
-                        ? "Online"
-                        : "Offline"
-                      : "Offline"}
+                    {activity?.is_online ? "Online" : "Offline"}
                   </span>
                 </div>
               </div>
