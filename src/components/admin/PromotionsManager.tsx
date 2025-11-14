@@ -1138,7 +1138,7 @@ export function PromotionsManager() {
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center space-x-3 flex-1 min-w-0">
                       <div className="flex-shrink-0">
-                        {getPromotionTypeIcon(promotion.promotion_type)}
+                      {getPromotionTypeIcon(promotion.promotion_type)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">

@@ -7,7 +7,7 @@ export default function AdminPromotions() {
     <AdminLayout>
       <div className="flex flex-1 flex-col gap-4 py-4 pr-4 pl-2 sm:pl-4">
         <div className="w-full">
-          <PromotionsManager />
+        <PromotionsManager />
         </div>
       </div>
     </AdminLayout>

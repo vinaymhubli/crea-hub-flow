@@ -122,6 +122,20 @@ export default function UsageAnalytics() {
         console.error('Error fetching transactions:', transactionsError);
       }
 
+      // Fetch page views for browser and device tracking
+      let pageViewsData: any[] = [];
+      try {
+        const { data: pageViewsFromDB, error: pageViewsError } = await supabase
+          .from('page_views')
+          .select('id, created_at, user_id, page_path, browser_name, device_type');
+        
+        if (!pageViewsError && pageViewsFromDB) {
+          pageViewsData = pageViewsFromDB;
+        }
+      } catch (err) {
+        console.log('page_views table not found, browser/device tracking not available');
+      }
+
       if (users) {
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -164,29 +178,104 @@ export default function UsageAnalytics() {
           }
         }
 
-        // Calculate page views from transactions (proxy for activity)
-        const pageViews = transactions?.length || 0;
-        const uniqueVisitors = new Set(transactions?.map(t => t.user_id) || []).size;
-        const bounceRate = totalUsers > 0 ? ((totalUsers - uniqueVisitors) / totalUsers) * 100 : 0;
+        // Calculate page views - use actual page_views table if available, otherwise use transactions as proxy
+        const pageViewsCount = pageViewsData.length > 0 ? pageViewsData.length : (transactions?.length || 0);
+        const uniqueVisitors = pageViewsData.length > 0 
+          ? new Set(pageViewsData.map(pv => pv.user_id).filter(Boolean)).size
+          : new Set(transactions?.map(t => t.user_id) || []).size;
+        // Bounce rate: users who only had one session/view (simplified calculation)
+        // If we have sessions, calculate bounce rate based on single-session users
+        let bounceRate = 0;
+        if (sessions.length > 0) {
+          const userSessionCounts = new Map<string, number>();
+          sessions.forEach(s => {
+            if (s.customer_id) {
+              userSessionCounts.set(s.customer_id, (userSessionCounts.get(s.customer_id) || 0) + 1);
+            }
+            if (s.designer_id) {
+              userSessionCounts.set(s.designer_id, (userSessionCounts.get(s.designer_id) || 0) + 1);
+            }
+          });
+          const singleSessionUsers = Array.from(userSessionCounts.values()).filter(count => count === 1).length;
+          const totalSessionUsers = userSessionCounts.size;
+          bounceRate = totalSessionUsers > 0 ? (singleSessionUsers / totalSessionUsers) : 0;
+        } else if (totalUsers > 0 && uniqueVisitors > 0) {
+          // Fallback: use transaction-based calculation
+          bounceRate = uniqueVisitors > 0 ? ((totalUsers - uniqueVisitors) / totalUsers) : 0;
+        }
 
-        // Device breakdown - not tracked, set to empty
+        // Device breakdown - calculate from page_views table
         const deviceBreakdown = {
-          desktop: 0,
-          mobile: 0,
-          tablet: 0
+          desktop: pageViewsData.filter(pv => pv.device_type === 'desktop').length,
+          mobile: pageViewsData.filter(pv => pv.device_type === 'mobile').length,
+          tablet: pageViewsData.filter(pv => pv.device_type === 'tablet').length
         };
 
-        // Browser breakdown - not tracked, set to empty
+        // Browser breakdown - calculate from page_views table
+        const browserCounts = new Map<string, number>();
+        pageViewsData.forEach(pv => {
+          if (pv.browser_name) {
+            const browser = pv.browser_name.toLowerCase();
+            if (browser === 'chrome') {
+              browserCounts.set('chrome', (browserCounts.get('chrome') || 0) + 1);
+            } else if (browser === 'firefox') {
+              browserCounts.set('firefox', (browserCounts.get('firefox') || 0) + 1);
+            } else if (browser === 'safari') {
+              browserCounts.set('safari', (browserCounts.get('safari') || 0) + 1);
+            } else if (browser === 'edge') {
+              browserCounts.set('edge', (browserCounts.get('edge') || 0) + 1);
+            } else {
+              browserCounts.set('other', (browserCounts.get('other') || 0) + 1);
+            }
+          }
+        });
+
         const browserBreakdown = {
-          chrome: 0,
-          firefox: 0,
-          safari: 0,
-          edge: 0,
-          other: 0
+          chrome: browserCounts.get('chrome') || 0,
+          firefox: browserCounts.get('firefox') || 0,
+          safari: browserCounts.get('safari') || 0,
+          edge: browserCounts.get('edge') || 0,
+          other: browserCounts.get('other') || 0
         };
 
-        // Top pages - not tracked, set to empty
-        const topPages: Array<{ page: string; views: number; unique_visitors: number }> = [];
+        // Top pages - calculate from page_views table (exclude admin pages)
+        const pageCounts = new Map<string, { views: number; unique_visitors: Set<string> }>();
+        pageViewsData.forEach(pv => {
+          if (pv.page_path) {
+            const page = pv.page_path.split('?')[0]; // Remove query params
+            
+            // Filter out admin pages, dashboard pages, and internal routes
+            if (
+              page.startsWith('/admin') ||
+              page.startsWith('/customer-dashboard') ||
+              page.startsWith('/designer-dashboard') ||
+              page.startsWith('/session/') ||
+              page.startsWith('/live-session/') ||
+              page.startsWith('/auth') ||
+              page.startsWith('/login') ||
+              page.startsWith('/signup') ||
+              page.startsWith('/admin-login')
+            ) {
+              return; // Skip admin and internal pages
+            }
+            
+            const current = pageCounts.get(page) || { views: 0, unique_visitors: new Set() };
+            current.views += 1;
+            if (pv.user_id) {
+              current.unique_visitors.add(pv.user_id);
+            }
+            pageCounts.set(page, current);
+          }
+        });
+
+        const topPages = Array.from(pageCounts.entries())
+          .map(([page, data]) => ({
+            page,
+            views: data.views,
+            unique_visitors: data.unique_visitors.size
+          }))
+          .sort((a, b) => b.views - a.views)
+          .slice(0, 10); // Top 10 pages
 
         // Calculate hourly activity from real session data
         const hourlyActivityMap = new Map<number, { users: Set<string>, sessions: number }>();
@@ -236,24 +325,48 @@ export default function UsageAnalytics() {
         });
 
         // Calculate daily activity from real data for the selected time range
-        const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : timeRange === '90d' ? 90 : 7;
+        const days = timeRange === '24h' ? 1 : timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : timeRange === '90d' ? 90 : 7;
         const dailyActivityMap = new Map<string, { users: Set<string>, sessions: number, page_views: number }>();
         
-        // Initialize all days in range
-        for (let i = 0; i < days; i++) {
-          const date = new Date();
-          date.setDate(date.getDate() - (days - 1 - i));
-          const dateStr = date.toISOString().split('T')[0];
-          dailyActivityMap.set(dateStr, { users: new Set(), sessions: 0, page_views: 0 });
+        // Initialize all days/hours in range
+        if (timeRange === '24h') {
+          // For 24h, show hourly breakdown
+          const now = new Date();
+          for (let i = 23; i >= 0; i--) {
+            const date = new Date(now);
+            date.setHours(date.getHours() - i);
+            const dateStr = date.toISOString().split('T')[0];
+            const hour = date.getHours();
+            const key = `${dateStr}_${hour}`;
+            dailyActivityMap.set(key, { users: new Set(), sessions: 0, page_views: 0 });
+          }
+        } else {
+          // For multi-day ranges, show daily breakdown
+          for (let i = 0; i < days; i++) {
+            const date = new Date();
+            date.setDate(date.getDate() - (days - 1 - i));
+            const dateStr = date.toISOString().split('T')[0];
+            dailyActivityMap.set(dateStr, { users: new Set(), sessions: 0, page_views: 0 });
+          }
         }
 
         // Process users by date
         users.forEach(user => {
           const userDate = new Date(user.created_at || user.updated_at);
-          const dateStr = userDate.toISOString().split('T')[0];
-          const dayData = dailyActivityMap.get(dateStr);
-          if (dayData) {
-            dayData.users.add(user.user_id);
+          if (timeRange === '24h') {
+            const hour = userDate.getHours();
+            const dateStr = userDate.toISOString().split('T')[0];
+            const key = `${dateStr}_${hour}`;
+            const dayData = dailyActivityMap.get(key);
+            if (dayData) {
+              dayData.users.add(user.user_id);
+            }
+          } else {
+            const dateStr = userDate.toISOString().split('T')[0];
+            const dayData = dailyActivityMap.get(dateStr);
+            if (dayData) {
+              dayData.users.add(user.user_id);
+            }
           }
         });
 
@@ -262,12 +375,24 @@ export default function UsageAnalytics() {
           const sessionDate = session.started_at ? new Date(session.started_at) : 
                              session.created_at ? new Date(session.created_at) : null;
           if (sessionDate) {
-            const dateStr = sessionDate.toISOString().split('T')[0];
-            const dayData = dailyActivityMap.get(dateStr);
-            if (dayData) {
-              if (session.customer_id) dayData.users.add(session.customer_id);
-              if (session.designer_id) dayData.users.add(session.designer_id);
-              dayData.sessions += 1;
+            if (timeRange === '24h') {
+              const hour = sessionDate.getHours();
+              const dateStr = sessionDate.toISOString().split('T')[0];
+              const key = `${dateStr}_${hour}`;
+              const dayData = dailyActivityMap.get(key);
+              if (dayData) {
+                if (session.customer_id) dayData.users.add(session.customer_id);
+                if (session.designer_id) dayData.users.add(session.designer_id);
+                dayData.sessions += 1;
+              }
+            } else {
+              const dateStr = sessionDate.toISOString().split('T')[0];
+              const dayData = dailyActivityMap.get(dateStr);
+              if (dayData) {
+                if (session.customer_id) dayData.users.add(session.customer_id);
+                if (session.designer_id) dayData.users.add(session.designer_id);
+                dayData.sessions += 1;
+              }
             }
           }
         });
@@ -278,37 +403,88 @@ export default function UsageAnalytics() {
             const bookingDate = booking.scheduled_date ? new Date(booking.scheduled_date) : 
                                booking.created_at ? new Date(booking.created_at) : null;
             if (bookingDate) {
-              const dateStr = bookingDate.toISOString().split('T')[0];
-              const dayData = dailyActivityMap.get(dateStr);
-              if (dayData) {
-                if (booking.customer_id) dayData.users.add(booking.customer_id);
-                if (booking.designer_id) dayData.users.add(booking.designer_id);
-                dayData.sessions += 1;
+              if (timeRange === '24h') {
+                const hour = bookingDate.getHours();
+                const dateStr = bookingDate.toISOString().split('T')[0];
+                const key = `${dateStr}_${hour}`;
+                const dayData = dailyActivityMap.get(key);
+                if (dayData) {
+                  if (booking.customer_id) dayData.users.add(booking.customer_id);
+                  if (booking.designer_id) dayData.users.add(booking.designer_id);
+                  dayData.sessions += 1;
+                }
+              } else {
+                const dateStr = bookingDate.toISOString().split('T')[0];
+                const dayData = dailyActivityMap.get(dateStr);
+                if (dayData) {
+                  if (booking.customer_id) dayData.users.add(booking.customer_id);
+                  if (booking.designer_id) dayData.users.add(booking.designer_id);
+                  dayData.sessions += 1;
+                }
               }
             }
           });
         }
 
-        // Process transactions for page views by date
-        if (transactions) {
+        // Process page views by date (use page_views table if available, otherwise use transactions as proxy)
+        if (pageViewsData.length > 0) {
+          pageViewsData.forEach(pageView => {
+            const pvDate = new Date(pageView.created_at);
+            if (timeRange === '24h') {
+              const hour = pvDate.getHours();
+              const dateStr = pvDate.toISOString().split('T')[0];
+              const key = `${dateStr}_${hour}`;
+              const dayData = dailyActivityMap.get(key);
+              if (dayData) {
+                dayData.page_views += 1;
+              }
+            } else {
+              const dateStr = pvDate.toISOString().split('T')[0];
+              const dayData = dailyActivityMap.get(dateStr);
+              if (dayData) {
+                dayData.page_views += 1;
+              }
+            }
+          });
+        } else if (transactions) {
+          // Fallback to transactions if page_views table is empty
           transactions.forEach(transaction => {
             const transDate = new Date(transaction.created_at);
-            const dateStr = transDate.toISOString().split('T')[0];
-            const dayData = dailyActivityMap.get(dateStr);
-            if (dayData) {
-              dayData.page_views += 1;
+            if (timeRange === '24h') {
+              const hour = transDate.getHours();
+              const dateStr = transDate.toISOString().split('T')[0];
+              const key = `${dateStr}_${hour}`;
+              const dayData = dailyActivityMap.get(key);
+              if (dayData) {
+                dayData.page_views += 1;
+              }
+            } else {
+              const dateStr = transDate.toISOString().split('T')[0];
+              const dayData = dailyActivityMap.get(dateStr);
+              if (dayData) {
+                dayData.page_views += 1;
+              }
             }
           });
         }
 
         const dailyActivity = Array.from(dailyActivityMap.entries())
-          .map(([date, data]) => ({
-            date,
-            users: data.users.size,
-            sessions: data.sessions,
-            page_views: data.page_views
-          }))
-          .sort((a, b) => a.date.localeCompare(b.date));
+          .map(([date, data]) => {
+            // For 24h view, extract just the date part for display
+            const displayDate = timeRange === '24h' ? date.split('_')[0] + ' ' + date.split('_')[1] + ':00' : date;
+            return {
+              date: displayDate,
+              users: data.users.size,
+              sessions: data.sessions,
+              page_views: data.page_views
+            };
+          })
+          .sort((a, b) => {
+            // Sort by the original key for proper ordering
+            const aKey = timeRange === '24h' ? a.date : a.date;
+            const bKey = timeRange === '24h' ? b.date : b.date;
+            return aKey.localeCompare(bKey);
+        });
 
         const stats: UsageStats = {
           total_users: totalUsers,
@@ -320,7 +496,7 @@ export default function UsageAnalytics() {
           new_registrations_month: newRegistrationsMonth,
           total_sessions: totalSessions,
           average_session_duration: avgSessionDuration,
-          page_views: pageViews,
+          page_views: pageViewsCount,
           unique_visitors: uniqueVisitors,
           bounce_rate: bounceRate,
           device_breakdown: deviceBreakdown,
@@ -477,7 +653,7 @@ export default function UsageAnalytics() {
           <CardContent>
             <div className="text-2xl font-bold">{stats.page_views.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
-              {(stats.bounce_rate * 100).toFixed(1)}% bounce rate
+              {stats.bounce_rate > 0 ? `${(stats.bounce_rate * 100).toFixed(1)}% bounce rate` : 'No bounce data available'}
             </p>
           </CardContent>
         </Card>
@@ -497,36 +673,52 @@ export default function UsageAnalytics() {
             {/* Daily Activity Chart */}
             <Card>
               <CardHeader>
-                <CardTitle>Daily Activity (Last 7 Days)</CardTitle>
+                <CardTitle>
+                  Daily Activity ({timeRange === '24h' ? 'Last 24 Hours' : timeRange === '7d' ? 'Last 7 Days' : timeRange === '30d' ? 'Last 30 Days' : 'Last 90 Days'})
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 {stats.daily_activity.length > 0 ? (
-                  <div className="space-y-4">
+                <div className="space-y-4">
                     {stats.daily_activity.map((day, index) => {
                       const maxUsers = Math.max(...stats.daily_activity.map(d => d.users), 1);
+                      // For 24h view, the date format is "YYYY-MM-DD HH:00"
+                      let dayLabel: string;
+                      if (timeRange === '24h') {
+                        const parts = day.date.split(' ');
+                        if (parts.length >= 2) {
+                          const hourPart = parts[1] || '00:00';
+                          dayLabel = hourPart;
+                        } else {
+                          dayLabel = day.date;
+                        }
+                      } else {
+                        const date = new Date(day.date);
+                        dayLabel = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                      }
                       return (
-                        <div key={index} className="flex items-center justify-between">
-                          <div className="text-sm">
-                            {new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' })}
-                          </div>
-                          <div className="flex items-center space-x-4">
-                            <div className="text-sm text-muted-foreground">
-                              {day.users} users
-                            </div>
-                            <div className="w-32 bg-muted rounded-full h-2">
-                              <div 
-                                className="bg-primary h-2 rounded-full" 
-                                style={{ width: `${(day.users / maxUsers) * 100}%` }}
-                              />
-                            </div>
-                          </div>
+                    <div key={index} className="flex items-center justify-between">
+                          <div className="text-sm font-medium min-w-[100px]">
+                            {dayLabel}
+                      </div>
+                          <div className="flex items-center space-x-4 flex-1">
+                            <div className="text-sm text-muted-foreground min-w-[80px]">
+                              {day.users} users, {day.sessions} sessions
                         </div>
+                        <div className="w-32 bg-muted rounded-full h-2">
+                          <div 
+                            className="bg-primary h-2 rounded-full" 
+                                style={{ width: `${(day.users / maxUsers) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
                       );
                     })}
-                  </div>
+                </div>
                 ) : (
                   <p className="text-sm text-muted-foreground text-center py-4">
-                    No activity data available
+                    No activity data available for the selected time range
                   </p>
                 )}
               </CardContent>
@@ -539,24 +731,24 @@ export default function UsageAnalytics() {
               </CardHeader>
               <CardContent>
                 {stats.top_pages.length > 0 ? (
-                  <div className="space-y-4">
-                    {stats.top_pages.map((page, index) => (
-                      <div key={index} className="flex items-center justify-between">
-                        <div className="text-sm font-medium">{page.page}</div>
-                        <div className="flex items-center space-x-4">
-                          <div className="text-sm text-muted-foreground">
-                            {page.views} views
-                          </div>
-                          <div className="w-24 bg-muted rounded-full h-2">
-                            <div 
-                              className="bg-primary h-2 rounded-full" 
-                              style={{ width: `${(page.views / Math.max(...stats.top_pages.map(p => p.views), 1)) * 100}%` }}
-                            />
-                          </div>
+                <div className="space-y-4">
+                  {stats.top_pages.map((page, index) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <div className="text-sm font-medium">{page.page}</div>
+                      <div className="flex items-center space-x-4">
+                        <div className="text-sm text-muted-foreground">
+                          {page.views} views
                         </div>
+                        <div className="w-24 bg-muted rounded-full h-2">
+                          <div 
+                            className="bg-primary h-2 rounded-full" 
+                              style={{ width: `${(page.views / Math.max(...stats.top_pages.map(p => p.views), 1)) * 100}%` }}
+                          />
+                          </div>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
+                </div>
                 ) : (
                   <p className="text-sm text-muted-foreground text-center py-4">
                     No page view data available
@@ -637,29 +829,34 @@ export default function UsageAnalytics() {
             {/* Hourly Activity */}
             <Card>
               <CardHeader>
-                <CardTitle>Hourly Activity</CardTitle>
+                <CardTitle>Hourly Activity (24 Hours)</CardTitle>
               </CardHeader>
               <CardContent>
                 {stats.hourly_activity.length > 0 ? (
-                  <div className="space-y-2">
-                    {stats.hourly_activity.slice(0, 12).map((hour, index) => {
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {stats.hourly_activity.map((hour, index) => {
                       const maxUsers = Math.max(...stats.hourly_activity.map(h => h.users), 1);
+                      const maxSessions = Math.max(...stats.hourly_activity.map(h => h.sessions), 1);
                       return (
-                        <div key={index} className="flex items-center justify-between">
-                          <span className="text-sm">{hour.hour}:00</span>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-sm">{hour.users} users</span>
-                            <div className="w-20 bg-muted rounded-full h-2">
-                              <div 
-                                className="bg-primary h-2 rounded-full" 
+                        <div key={index} className="flex items-center justify-between py-1">
+                          <span className="text-sm font-medium min-w-[60px]">
+                            {String(hour.hour).padStart(2, '0')}:00
+                          </span>
+                          <div className="flex items-center space-x-3 flex-1">
+                            <span className="text-xs text-muted-foreground min-w-[80px]">
+                              {hour.users} users, {hour.sessions} sessions
+                            </span>
+                            <div className="w-24 bg-muted rounded-full h-2">
+                          <div 
+                            className="bg-primary h-2 rounded-full" 
                                 style={{ width: `${(hour.users / maxUsers) * 100}%` }}
-                              />
-                            </div>
-                          </div>
+                          />
                         </div>
+                      </div>
+                    </div>
                       );
                     })}
-                  </div>
+                </div>
                 ) : (
                   <p className="text-sm text-muted-foreground text-center py-4">
                     No hourly activity data available
@@ -679,26 +876,26 @@ export default function UsageAnalytics() {
               </CardHeader>
               <CardContent>
                 {stats.device_breakdown.desktop > 0 || stats.device_breakdown.mobile > 0 || stats.device_breakdown.tablet > 0 ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Monitor className="h-4 w-4" />
-                        <span className="text-sm">Desktop</span>
-                      </div>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Monitor className="h-4 w-4" />
+                      <span className="text-sm">Desktop</span>
+                    </div>
                       <span className="font-medium">{stats.device_breakdown.desktop}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Smartphone className="h-4 w-4" />
+                      <span className="text-sm">Mobile</span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Smartphone className="h-4 w-4" />
-                        <span className="text-sm">Mobile</span>
-                      </div>
                       <span className="font-medium">{stats.device_breakdown.mobile}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Monitor className="h-4 w-4" />
+                      <span className="text-sm">Tablet</span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Monitor className="h-4 w-4" />
-                        <span className="text-sm">Tablet</span>
-                      </div>
                       <span className="font-medium">{stats.device_breakdown.tablet}</span>
                     </div>
                   </div>
@@ -717,25 +914,25 @@ export default function UsageAnalytics() {
               </CardHeader>
               <CardContent>
                 {stats.browser_breakdown.chrome > 0 || stats.browser_breakdown.firefox > 0 || stats.browser_breakdown.safari > 0 || stats.browser_breakdown.edge > 0 || stats.browser_breakdown.other > 0 ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Chrome</span>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Chrome</span>
                       <span className="font-medium">{stats.browser_breakdown.chrome}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Firefox</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Firefox</span>
                       <span className="font-medium">{stats.browser_breakdown.firefox}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Safari</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Safari</span>
                       <span className="font-medium">{stats.browser_breakdown.safari}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Edge</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Edge</span>
                       <span className="font-medium">{stats.browser_breakdown.edge}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Other</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Other</span>
                       <span className="font-medium">{stats.browser_breakdown.other}</span>
                     </div>
                   </div>

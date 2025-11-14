@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { useBlockedUserCheck } from "@/hooks/useBlockedUserCheck";
+import { usePageTracking } from "@/hooks/usePageTracking";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import HowToUse from "./pages/HowToUse";
@@ -134,6 +135,9 @@ function AppContent() {
 
   // Check for blocked users and handle auto-logout
   useBlockedUserCheck();
+  
+  // Track page views with browser and device info
+  usePageTracking();
 
   // Hide header/footer only on dashboard and session routes, or when coming from dashboard
   const hideGlobalChrome =
