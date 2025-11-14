@@ -36,6 +36,9 @@ export const useRealtimeBookings = () => {
   const channelRef = useRef<any>(null);
   const [onNewBooking, setOnNewBooking] = useState<((booking: Booking) => void) | null>(null);
 
+  // Note: Auto-expire is now handled by Supabase Edge Function that runs daily at 6 AM IST
+  // This function is kept for manual refresh if needed, but the scheduled job handles it automatically
+
   useEffect(() => {
     if (!profile) return;
 
