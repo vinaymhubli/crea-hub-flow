@@ -14,7 +14,8 @@ import {
   FileText,
   AlertTriangle,
   Receipt,
-  LogOut
+  LogOut,
+  Bell
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useDesignerProfile } from '@/hooks/useDesignerProfile';
@@ -36,6 +37,7 @@ const sidebarItems = [
   { title: "Portfolio", url: "/designer-dashboard/portfolio", icon: FolderOpen },
   { title: "Bookings", url: "/designer-dashboard/bookings", icon: Calendar },
   { title: "Messages", url: "/designer-dashboard/messages", icon: MessageSquare },
+  { title: "Notifications", url: "/designer-dashboard/notifications", icon: Bell },
   // { title: "File Reviews", url: "/designer-dashboard/file-reviews", icon: FileCheck },
   { title: "Complaints", url: "/designer/complaints", icon: AlertTriangle },
   { title: "Invoices", url: "/designer-dashboard/invoices", icon: Receipt },

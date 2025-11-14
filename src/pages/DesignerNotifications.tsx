@@ -26,7 +26,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { CustomerSidebar } from "@/components/CustomerSidebar";
+import { DesignerSidebar } from "@/components/DesignerSidebar";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import NotificationBell from '@/components/NotificationBell';
 import { Card, CardContent } from "@/components/ui/card";
@@ -62,10 +62,12 @@ function NotificationCard({ notification, onMarkAsRead, onDelete, onViewDetails 
   const getIcon = (type: string) => {
     switch (type) {
       case 'booking_confirmed':
+      case 'booking_request':
         return CheckCircle;
       case 'message':
         return MessageCircle;
       case 'payment':
+      case 'withdrawal':
         return DollarSign;
       case 'reminder':
         return Clock;
@@ -76,6 +78,7 @@ function NotificationCard({ notification, onMarkAsRead, onDelete, onViewDetails 
       case 'promotion':
         return Gift;
       case 'booking_cancelled':
+      case 'booking_declined':
         return X;
       case 'session_ended':
         return Clock;
@@ -104,11 +107,13 @@ function NotificationCard({ notification, onMarkAsRead, onDelete, onViewDetails 
   const getIconColor = (type: string) => {
     switch (type) {
       case 'booking_confirmed':
+      case 'booking_request':
       case 'project_completed':
         return 'text-green-500';
       case 'message':
         return 'text-blue-500';
       case 'payment':
+      case 'withdrawal':
       case 'session_earnings':
       case 'wallet_recharged':
       case 'wallet_transaction':
@@ -121,6 +126,7 @@ function NotificationCard({ notification, onMarkAsRead, onDelete, onViewDetails 
       case 'promotion':
         return 'text-purple-500';
       case 'booking_cancelled':
+      case 'booking_declined':
         return 'text-red-500';
       case 'invoice_generated':
         return 'text-blue-500';
@@ -206,14 +212,6 @@ function NotificationCard({ notification, onMarkAsRead, onDelete, onViewDetails 
                   minute: '2-digit' 
                 })}
               </p>
-              {/* <Button 
-                size="sm" 
-                variant={!notification.is_read ? "default" : "outline"} 
-                className={!notification.is_read ? "bg-gradient-to-r from-green-400 to-blue-500 text-white" : ""}
-                onClick={() => onViewDetails(notification)}
-              >
-                View Details
-              </Button> */}
             </div>
           </div>
         </div>
@@ -222,7 +220,7 @@ function NotificationCard({ notification, onMarkAsRead, onDelete, onViewDetails 
   );
 }
 
-export default function CustomerNotifications() {
+export default function DesignerNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const { user, profile, signOut } = useAuth();
@@ -231,12 +229,12 @@ export default function CustomerNotifications() {
 
   const userDisplayName = profile?.first_name && profile?.last_name 
     ? `${profile.first_name} ${profile.last_name}`
-    : user?.email || 'Customer';
+    : user?.email || 'Designer';
 
   const userInitials = profile?.first_name && profile?.last_name 
     ? `${profile.first_name[0]}${profile.last_name[0]}`
     : user?.email ? user.email.substring(0, 2).toUpperCase()
-    : 'CU';
+    : 'DE';
   
   useEffect(() => {
     // Initialize notification sound system
@@ -389,17 +387,20 @@ export default function CustomerNotifications() {
     // Navigate based on notification type
     switch (notification.type) {
       case 'booking_confirmed':
+      case 'booking_request':
       case 'booking_cancelled':
-        navigate('/customer-dashboard/bookings');
+      case 'booking_declined':
+        navigate('/designer-dashboard/bookings');
         break;
       case 'message':
-        navigate('/customer-dashboard/messages');
+        navigate('/designer-dashboard/messages');
         break;
       case 'payment':
-        navigate('/customer-dashboard/wallet');
+      case 'withdrawal':
+        navigate('/designer-dashboard/earnings');
         break;
       case 'project_completed':
-        navigate('/customer-dashboard/session-history');
+        navigate('/designer-dashboard/history');
         break;
       default:
         // For other types, just mark as read
@@ -413,7 +414,7 @@ export default function CustomerNotifications() {
     return (
       <SidebarProvider>
         <div className="min-h-screen flex w-full bg-background">
-          <CustomerSidebar />
+          <DesignerSidebar />
           <main className="flex-1 flex items-center justify-center">
             <div className="text-center">
               <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
@@ -428,7 +429,7 @@ export default function CustomerNotifications() {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
-        <CustomerSidebar />
+        <DesignerSidebar />
         
         <main className="flex-1">
           <DashboardHeader
@@ -467,21 +468,21 @@ export default function CustomerNotifications() {
                       <Separator className="my-3" />
                       <div className="space-y-1">
                         <Link 
-                          to="/customer-dashboard" 
+                          to="/designer-dashboard" 
                           className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
                         >
                           <LayoutDashboard className="w-4 h-4 mr-3" />
                           Dashboard
                         </Link>
                         <Link 
-                          to="/customer-dashboard/wallet" 
+                          to="/designer-dashboard/earnings" 
                           className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
                         >
-                          <Wallet className="w-4 h-4 mr-3" />
-                          Wallet
+                          <DollarSign className="w-4 h-4 mr-3" />
+                          Earnings
                         </Link>
                         <Link 
-                          to="/customer-dashboard/profile" 
+                          to="/designer-dashboard/profile" 
                           className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
                         >
                           <User className="w-4 h-4 mr-3" />
@@ -570,7 +571,7 @@ export default function CustomerNotifications() {
                       <p className="text-sm text-gray-600 mb-1 font-medium">Important</p>
                       <p className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-yellow-600 bg-clip-text text-transparent">
                         {notifications.filter(n => 
-                          ['booking_confirmed', 'payment', 'booking_cancelled'].includes(n.type)
+                          ['booking_confirmed', 'booking_request', 'payment', 'withdrawal', 'booking_cancelled'].includes(n.type)
                         ).length}
                       </p>
                       <p className="text-sm text-orange-600 mt-3 font-medium">High priority</p>
@@ -609,7 +610,6 @@ export default function CustomerNotifications() {
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="all">All ({notifications.length})</TabsTrigger>
                 <TabsTrigger value="unread">Unread ({unreadCount})</TabsTrigger>
-                {/* <TabsTrigger value="settings">Settings</TabsTrigger> */}
               </TabsList>
 
               <TabsContent value="all" className="space-y-4 mt-6">
@@ -655,91 +655,6 @@ export default function CustomerNotifications() {
                   </div>
                 )}
               </TabsContent>
-
-              {/* <TabsContent value="settings" className="mt-6">
-                <Card>
-                  <CardContent className="p-6 space-y-6">
-                    <div>
-                      <h3 className="text-lg font-semibold mb-4">Notification Preferences</h3>
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">Email Notifications</p>
-                            <p className="text-sm text-gray-600">Receive notifications via email</p>
-                          </div>
-                           <Switch
-                             checked={settings.notifications_email}
-                             onCheckedChange={(checked) => 
-                               updateSetting('notifications_email', checked)
-                             }
-                           />
-                        </div>
-                        
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">Push Notifications</p>
-                            <p className="text-sm text-gray-600">Receive browser push notifications</p>
-                          </div>
-                           <Switch
-                             checked={settings.notifications_push}
-                             onCheckedChange={(checked) => 
-                               updateSetting('notifications_push', checked)
-                             }
-                           />
-                        </div>
-                        
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">Booking Reminders</p>
-                            <p className="text-sm text-gray-600">Get reminded about upcoming sessions</p>
-                          </div>
-                           <Switch
-                             checked={settings.booking_reminders}
-                             onCheckedChange={(checked) => 
-                               updateSetting('booking_reminders', checked)
-                             }
-                           />
-                        </div>
-                        
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">Message Notifications</p>
-                            <p className="text-sm text-gray-600">Get notified of new messages</p>
-                          </div>
-                           <Switch
-                             checked={settings.message_notifications}
-                             onCheckedChange={(checked) => 
-                               updateSetting('message_notifications', checked)
-                             }
-                           />
-                        </div>
-                        
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">Marketing Emails</p>
-                            <p className="text-sm text-gray-600">Receive promotional content and updates</p>
-                          </div>
-                           <Switch
-                             checked={settings.notifications_marketing}
-                             onCheckedChange={(checked) => 
-                               updateSetting('notifications_marketing', checked)
-                             }
-                           />
-                        </div>
-                      </div>
-                    </div>
-                    
-                     <div className="flex justify-end">
-                       <Button 
-                         className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600"
-                         disabled={saving}
-                       >
-                         {saving ? 'Saving...' : 'Preferences Auto-Saved'}
-                       </Button>
-                     </div>
-                  </CardContent>
-                </Card>
-              </TabsContent> */}
             </Tabs>
           </div>
         </main>
@@ -747,3 +662,4 @@ export default function CustomerNotifications() {
     </SidebarProvider>
   );
 }
+

@@ -86,6 +86,7 @@ import DesignerProfile from "./pages/DesignerProfile";
 import DesignerPortfolio from "./pages/DesignerPortfolio";
 import DesignerBookings from "./pages/DesignerBookings";
 import DesignerMessages from "./pages/DesignerMessages";
+import DesignerNotifications from "./pages/DesignerNotifications";
 import DesignerAvailability from "./pages/DesignerAvailability";
 import DesignerEarnings from "./pages/DesignerEarnings";
 import DesignerComplaints from "./pages/DesignerComplaints";
@@ -792,18 +793,26 @@ function AppContent() {
             }
           />
           <Route
-            path="/designer-dashboard/services"
-            element={
-              <ProtectedRoute requireUserType="designer">
-                <DesignerServices />
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/designer-dashboard/messages"
             element={
               <ProtectedRoute requireUserType="designer">
                 <DesignerMessages />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/designer-dashboard/notifications"
+            element={
+              <ProtectedRoute requireUserType="designer">
+                <DesignerNotifications />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/designer-dashboard/services"
+            element={
+              <ProtectedRoute requireUserType="designer">
+                <DesignerServices />
               </ProtectedRoute>
             }
           />

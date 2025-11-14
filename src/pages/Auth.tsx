@@ -265,6 +265,7 @@ export default function Auth() {
       toast({
         title: "Account created successfully!",
         description: "Please check your email to verify your account.",
+        duration: 10000, // 10 seconds
       });
     } catch (error: any) {
       setError(error.message);
