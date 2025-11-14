@@ -113,6 +113,17 @@ export default function DesignerVerification() {
 
   const handleBlockDesigner = async (designerId: string) => {
     try {
+      // First get the user_id from the designer record
+      const { data: designerData, error: fetchError } = await supabase
+        .from('designers')
+        .select('user_id')
+        .eq('id', designerId)
+        .single();
+      
+      if (fetchError || !designerData) {
+        throw fetchError || new Error('Designer not found');
+      }
+
       // Block the user account
       const { error: blockError } = await supabase
         .from('profiles')
@@ -121,7 +132,7 @@ export default function DesignerVerification() {
           blocked_at: new Date().toISOString(),
           blocked_reason: 'Account blocked by admin'
         } as Record<string, unknown>)
-        .eq('user_id', designerId);
+        .eq('user_id', designerData.user_id);
       
       if (blockError) {
         console.error('Error blocking user:', blockError);
@@ -194,8 +205,9 @@ export default function DesignerVerification() {
 
         <Tabs value={statusFilter} onValueChange={setStatusFilter} className="space-y-6">
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            <TabsList className="grid w-full grid-cols-4 lg:w-auto">
+            <TabsList className="grid w-full grid-cols-5 lg:w-auto">
               <TabsTrigger value="pending">Pending</TabsTrigger>
+              <TabsTrigger value="draft">Draft</TabsTrigger>
               <TabsTrigger value="approved">Approved</TabsTrigger>
               <TabsTrigger value="rejected">Rejected</TabsTrigger>
               <TabsTrigger value="all">All</TabsTrigger>
@@ -299,7 +311,7 @@ export default function DesignerVerification() {
                     )}
 
                     <div className="pt-4 space-y-2">
-                      {designer.verification_status === 'pending' && (
+                      {(designer.verification_status === 'pending' || designer.verification_status === 'draft') && (
                         <div className="flex gap-2">
                           <Button
                             size="sm"
@@ -323,44 +335,28 @@ export default function DesignerVerification() {
                         </div>
                       )}
                       
-                      {designer.verification_status !== 'pending' && (
-                        <div className="flex gap-2">
-                          {designer.verification_status === 'approved' && (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => handleReject(designer.id)}
-                                disabled={updateVerificationMutation.isPending}
-                                className="flex-1"
-                              >
-                                <XCircle className="w-4 h-4 mr-1" />
-                                Reject
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => handleBlockDesigner(designer.id)}
-                                className="flex-1"
-                              >
-                                <XCircle className="w-4 h-4 mr-1" />
-                                Block
-                              </Button>
-                            </>
-                          )}
+                      {designer.verification_status === 'approved' && (
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleBlockDesigner(designer.id)}
+                          className="w-full"
+                        >
+                          <XCircle className="w-4 h-4 mr-1" />
+                          Block
+                        </Button>
+                      )}
                           
-                          {designer.verification_status === 'rejected' && (
-                            <Button
-                              size="sm"
-                              onClick={() => handleApprove(designer.id)}
-                              disabled={updateVerificationMutation.isPending}
-                              className="flex-1"
-                            >
-                              <CheckCircle className="w-4 h-4 mr-1" />
-                              Approve
-                            </Button>
-                          )}
-                        </div>
+                      {designer.verification_status === 'rejected' && (
+                        <Button
+                          size="sm"
+                          onClick={() => handleApprove(designer.id)}
+                          disabled={updateVerificationMutation.isPending}
+                          className="w-full"
+                        >
+                          <CheckCircle className="w-4 h-4 mr-1" />
+                          Approve
+                        </Button>
                       )}
                       
                       <Button 
