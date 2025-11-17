@@ -138,7 +138,7 @@ const Designers = () => {
           .eq('category', cat.name)
           .eq('is_active', true);
         categoryMap.set(cat.name, count || 0);
-      }
+        }
 
       setCategories(Array.from(categoryMap.entries()).map(([name, count]) => ({ name, count })));
       setSkills((skillsData || []).map(s => s.name));

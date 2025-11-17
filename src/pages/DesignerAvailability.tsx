@@ -503,6 +503,8 @@ export default function DesignerAvailability() {
                 ) : (
                   <div className="grid gap-4">
                     {weekDays.map((day) => {
+                      const daySchedule = getScheduleForDay(day.value);
+                      const isDayAvailable = daySchedule.is_available;
                       const daySlots = getSlotsForDay(day.value);
                       const slotsCount = daySlots.length;
                       const totalDayHours = daySlots.reduce((total, slot) => 
@@ -510,32 +512,50 @@ export default function DesignerAvailability() {
                       );
                       
                       return (
-                        <Card key={day.name} className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
+                        <Card key={day.name} className={`bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 ${!isDayAvailable ? 'opacity-60' : ''}`}>
                           <CardContent className="p-4 sm:p-6">
                             <div className="flex flex-col gap-4">
                               <div className="flex items-start space-x-3 sm:space-x-4">
                                 <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 ${
-                                  slotsCount > 0 
+                                  isDayAvailable && slotsCount > 0 
                                     ? 'bg-gradient-to-r from-green-400 to-blue-500' 
-                                    : 'bg-gray-200'
+                                    : isDayAvailable
+                                    ? 'bg-gray-200'
+                                    : 'bg-red-200'
                                 }`}>
-                                  <Calendar className={`w-5 h-5 sm:w-6 sm:h-6 ${slotsCount > 0 ? 'text-white' : 'text-gray-400'}`} />
+                                  <Calendar className={`w-5 h-5 sm:w-6 sm:h-6 ${isDayAvailable && slotsCount > 0 ? 'text-white' : isDayAvailable ? 'text-gray-400' : 'text-red-600'}`} />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                                     <h3 className="text-base sm:text-lg font-semibold text-gray-900">{day.name}</h3>
-                                    <Badge variant={slotsCount > 0 ? "default" : "secondary"} className="text-xs">
-                                      {slotsCount} slot{slotsCount !== 1 ? 's' : ''}
-                                    </Badge>
-                                    {totalDayHours > 0 && (
-                                      <Badge variant="outline" className="text-xs">
-                                        {Math.round(totalDayHours)}h
-                                      </Badge>
+                                    <div className="flex items-center gap-2">
+                                      <Switch 
+                                        checked={isDayAvailable}
+                                        onCheckedChange={() => toggleDayAvailability(day.value)}
+                                        className="data-[state=checked]:bg-green-500"
+                                      />
+                                      <span className="text-xs text-gray-500">
+                                        {isDayAvailable ? 'Available' : 'Unavailable'}
+                                      </span>
+                                    </div>
+                                    {isDayAvailable && (
+                                      <>
+                                        <Badge variant={slotsCount > 0 ? "default" : "secondary"} className="text-xs">
+                                          {slotsCount} slot{slotsCount !== 1 ? 's' : ''}
+                                        </Badge>
+                                        {totalDayHours > 0 && (
+                                          <Badge variant="outline" className="text-xs">
+                                            {Math.round(totalDayHours)}h
+                                          </Badge>
+                                        )}
+                                      </>
                                     )}
                                   </div>
                                   <div className="mt-2">
-                                    {slotsCount === 0 ? (
-                                      <p className="text-xs sm:text-sm text-gray-500">No time slots configured</p>
+                                    {!isDayAvailable ? (
+                                      <p className="text-xs sm:text-sm text-red-600 font-medium">This day is unavailable - no bookings will be accepted</p>
+                                    ) : slotsCount === 0 ? (
+                                      <p className="text-xs sm:text-sm text-gray-500">No time slots configured - add slots to accept bookings</p>
                                     ) : (
                                       <div className="space-y-1">
                                         {daySlots.map((slot, index) => (
@@ -554,16 +574,18 @@ export default function DesignerAvailability() {
                                   </div>
                                 </div>
                               </div>
-                              <div className="flex items-center">
-                                <Button
-                                  onClick={() => handleManageSlots(day.value)}
-                                  className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 font-medium rounded-lg sm:rounded-xl px-4 sm:px-6 py-2 sm:py-2.5 border-0 w-full sm:w-auto text-sm sm:text-base"
-                                  size="sm"
-                                >
-                                  <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2" />
-                                  Manage Slots
-                                </Button>
-                              </div>
+                              {isDayAvailable && (
+                                <div className="flex items-center">
+                                  <Button
+                                    onClick={() => handleManageSlots(day.value)}
+                                    className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 font-medium rounded-lg sm:rounded-xl px-4 sm:px-6 py-2 sm:py-2.5 border-0 w-full sm:w-auto text-sm sm:text-base"
+                                    size="sm"
+                                  >
+                                    <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2" />
+                                    Manage Slots
+                                  </Button>
+                                </div>
+                              )}
                             </div>
                           </CardContent>
                         </Card>

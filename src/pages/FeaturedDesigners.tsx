@@ -400,11 +400,11 @@ export default function FeaturedDesigners() {
                         
                         <div className="flex items-center space-x-2 mb-2">
                           {designer.rating && designer.rating > 0 && (
-                            <div className="flex items-center space-x-1">
-                              <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                          <div className="flex items-center space-x-1">
+                            <Star className="w-4 h-4 text-yellow-400 fill-current" />
                               <span className="text-sm font-medium text-gray-700">{designer.rating}</span>
-                             
-                            </div>
+                           
+                          </div>
                           )}
                           <span className="text-sm text-green-600 font-medium">
                             {designer.is_online ? 'Active Now' : 'Offline'}

@@ -105,10 +105,10 @@ function DesignerCard({ designer, favorites, onToggleFavorite, onMessage, onLive
               </h3>
               <p className="text-gray-600 font-medium text-sm sm:text-base truncate">{designer.specialty}</p>
               {designer.rating && designer.rating > 0 && (
-                <div className="flex items-center space-x-1 mt-1">
-                  <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400 fill-current" />
-                  <span className="text-xs sm:text-sm font-medium text-gray-700">{designer.rating}</span>
-                </div>
+              <div className="flex items-center space-x-1 mt-1">
+                <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400 fill-current" />
+                <span className="text-xs sm:text-sm font-medium text-gray-700">{designer.rating}</span>
+              </div>
               )}
             </div>
           </div>
@@ -207,15 +207,15 @@ function DesignerCard({ designer, favorites, onToggleFavorite, onMessage, onLive
               avatar_url: designer.profile?.avatar_url
             }}
           >
-            <Button 
-              type="button"
-              variant="outline" 
-              className="sm:flex-1 border-2 border-gradient-to-r from-green-400 to-blue-400 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 text-xs sm:text-sm"
-            >
-              <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
-              <span className="hidden sm:inline">Book Again</span>
-              <span className="sm:hidden">Book</span>
-            </Button>
+          <Button 
+            type="button"
+            variant="outline" 
+            className="sm:flex-1 border-2 border-gradient-to-r from-green-400 to-blue-400 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 text-xs sm:text-sm"
+          >
+            <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+            <span className="hidden sm:inline">Book Again</span>
+            <span className="sm:hidden">Book</span>
+          </Button>
           </BookingDialog>
           <Button 
             type="button"

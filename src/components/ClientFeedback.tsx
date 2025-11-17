@@ -206,8 +206,8 @@ export default function ClientFeedback() {
                     <div className="flex items-center space-x-4 mt-2">
                       {stats.avgRating > 0 && (
                         <>
-                          <span className="text-white/90 font-medium">{stats.avgRating.toFixed(1)} ⭐ average rating</span>
-                          <span className="text-white/60">•</span>
+                      <span className="text-white/90 font-medium">{stats.avgRating.toFixed(1)} ⭐ average rating</span>
+                      <span className="text-white/60">•</span>
                         </>
                       )}
                       <span className="text-white/90 font-medium">{stats.totalFeedback} total reviews</span>
@@ -232,8 +232,8 @@ export default function ClientFeedback() {
                   </div>
                   {stats.avgRating > 0 ? (
                     <>
-                      <p className="text-2xl font-bold text-gray-900">{stats.avgRating.toFixed(1)}</p>
-                      <p className="text-sm text-gray-600">Average Rating</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.avgRating.toFixed(1)}</p>
+                  <p className="text-sm text-gray-600">Average Rating</p>
                     </>
                   ) : (
                     <p className="text-sm text-gray-600">No ratings yet</p>

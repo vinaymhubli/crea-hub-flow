@@ -419,8 +419,8 @@ export default function DesignerSessionHistory() {
                 <span className="text-white/90 font-medium">{stats.totalHours.toFixed(1)} hours</span>
                 {stats.avgRating > 0 && (
                   <>
-                    <span className="text-white/60 hidden sm:inline">•</span>
-                    <span className="text-white/90 font-medium">{stats.avgRating.toFixed(1)} ⭐ avg rating</span>
+                <span className="text-white/60 hidden sm:inline">•</span>
+                <span className="text-white/90 font-medium">{stats.avgRating.toFixed(1)} ⭐ avg rating</span>
                   </>
                 )}
               </div>
@@ -531,8 +531,8 @@ export default function DesignerSessionHistory() {
                   </div>
                   {stats.avgRating > 0 ? (
                     <>
-                      <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.avgRating.toFixed(1)}</p>
-                      <p className="text-xs sm:text-sm text-gray-600">Avg. Rating</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.avgRating.toFixed(1)}</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Avg. Rating</p>
                     </>
                   ) : (
                     <p className="text-xs sm:text-sm text-gray-600">No ratings yet</p>

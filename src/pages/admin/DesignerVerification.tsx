@@ -335,28 +335,28 @@ export default function DesignerVerification() {
                         </div>
                       )}
                       
-                      {designer.verification_status === 'approved' && (
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleBlockDesigner(designer.id)}
+                          {designer.verification_status === 'approved' && (
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleBlockDesigner(designer.id)}
                           className="w-full"
-                        >
-                          <XCircle className="w-4 h-4 mr-1" />
-                          Block
-                        </Button>
-                      )}
+                              >
+                                <XCircle className="w-4 h-4 mr-1" />
+                                Block
+                              </Button>
+                          )}
                           
-                      {designer.verification_status === 'rejected' && (
-                        <Button
-                          size="sm"
-                          onClick={() => handleApprove(designer.id)}
-                          disabled={updateVerificationMutation.isPending}
+                          {designer.verification_status === 'rejected' && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleApprove(designer.id)}
+                              disabled={updateVerificationMutation.isPending}
                           className="w-full"
-                        >
-                          <CheckCircle className="w-4 h-4 mr-1" />
-                          Approve
-                        </Button>
+                            >
+                              <CheckCircle className="w-4 h-4 mr-1" />
+                              Approve
+                            </Button>
                       )}
                       
                       <Button 

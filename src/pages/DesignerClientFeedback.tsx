@@ -258,17 +258,17 @@ export default function DesignerClientFeedback() {
                       <Star className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600" />
                     </div>
                     {stats.averageRating > 0 && (
-                      <div className="text-center sm:text-left">
-                        <p className="text-xs sm:text-sm font-medium text-gray-600">Average Rating</p>
-                        <div className="flex items-center justify-center sm:justify-start space-x-2 mt-1">
-                          <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.averageRating}</p>
-                          <Badge className={`${getRatingColor(stats.averageRating)} text-xs`}>
-                            {stats.averageRating >= 4.5 ? 'Excellent' : 
-                             stats.averageRating >= 3.5 ? 'Good' : 
-                             stats.averageRating >= 2.5 ? 'Fair' : 'Needs Improvement'}
-                          </Badge>
-                        </div>
+                    <div className="text-center sm:text-left">
+                      <p className="text-xs sm:text-sm font-medium text-gray-600">Average Rating</p>
+                      <div className="flex items-center justify-center sm:justify-start space-x-2 mt-1">
+                        <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.averageRating}</p>
+                        <Badge className={`${getRatingColor(stats.averageRating)} text-xs`}>
+                          {stats.averageRating >= 4.5 ? 'Excellent' : 
+                           stats.averageRating >= 3.5 ? 'Good' : 
+                           stats.averageRating >= 2.5 ? 'Fair' : 'Needs Improvement'}
+                        </Badge>
                       </div>
+                    </div>
                     )}
                   </div>
                 </CardContent>

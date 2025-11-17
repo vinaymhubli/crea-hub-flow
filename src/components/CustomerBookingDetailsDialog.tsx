@@ -157,11 +157,11 @@ export function CustomerBookingDetailsDialog({
               <p className="text-muted-foreground">{booking.designer?.specialty}</p>
               <div className="flex items-center space-x-4 mt-2">
                 {booking.designer?.rating && booking.designer.rating > 0 && (
-                  <div className="flex items-center space-x-1">
-                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                <div className="flex items-center space-x-1">
+                  <Star className="w-4 h-4 text-yellow-400 fill-current" />
                     <span className="text-sm">{booking.designer.rating}</span>
-                    
-                  </div>
+                  
+                </div>
                 )}
                 {booking.designer?.is_online && (
                   <div className="flex items-center space-x-1">

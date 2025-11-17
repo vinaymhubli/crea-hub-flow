@@ -294,7 +294,7 @@ export default function DesignerDashboard() {
       try {
         // Get unique clients from completed bookings
         const bookingClients = new Set(
-          completedBookings.map((booking) => booking.customer_id)
+    completedBookings.map((booking) => booking.customer_id)
         );
         
         // Get unique clients from completed live sessions
@@ -541,7 +541,7 @@ export default function DesignerDashboard() {
                   <div
                     className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full ${
                       activity?.is_online
-                        ? "bg-green-400 animate-pulse"
+                          ? "bg-green-400 animate-pulse"
                         : "bg-gray-400"
                     }`}
                   ></div>
@@ -828,33 +828,33 @@ export default function DesignerDashboard() {
               </Card>
 
               {avgRating > 0 && (
-                <Card
-                  className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in"
-                  style={{ animationDelay: "0.7s" }}
-                >
-                  <CardContent className="p-4 sm:p-6 bg-gradient-to-br from-yellow-50 to-orange-50">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs sm:text-sm text-gray-600 mb-1 font-medium">
-                          Avg. Rating
-                        </p>
-                        <div className="flex items-center space-x-2 mb-2 sm:mb-3">
-                          <p className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
+              <Card
+                className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in"
+                style={{ animationDelay: "0.7s" }}
+              >
+                <CardContent className="p-4 sm:p-6 bg-gradient-to-br from-yellow-50 to-orange-50">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm text-gray-600 mb-1 font-medium">
+                        Avg. Rating
+                      </p>
+                      <div className="flex items-center space-x-2 mb-2 sm:mb-3">
+                        <p className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
                             {avgRating.toFixed(1)}
-                          </p>
-                          <Star className="w-4 h-4 sm:w-6 sm:h-6 text-yellow-400 fill-current" />
-                        </div>
-                        <p className="text-xs sm:text-sm text-yellow-600 font-medium">
-                          From {totalCompletedSessions} completed
-                          sessions
                         </p>
+                        <Star className="w-4 h-4 sm:w-6 sm:h-6 text-yellow-400 fill-current" />
                       </div>
-                      <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
-                        <Star className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-                      </div>
+                      <p className="text-xs sm:text-sm text-yellow-600 font-medium">
+                          From {totalCompletedSessions} completed
+                        sessions
+                      </p>
                     </div>
-                  </CardContent>
-                </Card>
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
+                      <Star className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
               )}
 
               <Card
@@ -914,19 +914,19 @@ export default function DesignerDashboard() {
                       </div>
                     </div>
                   ) : (
-                    <div className="h-48 sm:h-64 flex items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl">
-                      <div className="text-center">
-                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                          <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-500" />
-                        </div>
-                        <h3 className="font-bold text-gray-800 text-base sm:text-lg mb-2">
-                          No Earnings Data
-                        </h3>
-                        <p className="text-gray-600 text-sm sm:text-base px-4">
-                          Start taking sessions to see your weekly progress
-                        </p>
+                  <div className="h-48 sm:h-64 flex items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl">
+                    <div className="text-center">
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                        <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-500" />
                       </div>
+                      <h3 className="font-bold text-gray-800 text-base sm:text-lg mb-2">
+                        No Earnings Data
+                      </h3>
+                      <p className="text-gray-600 text-sm sm:text-base px-4">
+                        Start taking sessions to see your weekly progress
+                      </p>
                     </div>
+                  </div>
                   )}
                 </CardContent>
               </Card>

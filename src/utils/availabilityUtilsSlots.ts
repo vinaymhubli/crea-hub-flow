@@ -88,6 +88,39 @@ export async function checkDesignerBookingAvailability(
       }
     }
 
+    // Check weekly schedule - if day is not available, return false immediately
+    let { data: weeklySchedule, error: scheduleError } = await supabase
+      .from("designer_weekly_schedule")
+      .select("is_available")
+      .eq("designer_id", designerId)
+      .eq("day_of_week", currentDay)
+      .maybeSingle();
+
+    // Try with user_id if no results with designer_id
+    if ((!weeklySchedule || scheduleError) && designerData?.user_id) {
+      const { data: weeklyScheduleUserID, error: scheduleErrorUserID } = await supabase
+        .from("designer_weekly_schedule")
+        .select("is_available")
+        .eq("designer_id", designerData.user_id)
+        .eq("day_of_week", currentDay)
+        .maybeSingle();
+      
+      if (!scheduleErrorUserID && weeklyScheduleUserID) {
+        weeklySchedule = weeklyScheduleUserID;
+        scheduleError = scheduleErrorUserID;
+      }
+    }
+
+    // If day is explicitly marked as unavailable, return false
+    if (weeklySchedule && !weeklySchedule.is_available) {
+      return {
+        isAvailable: false,
+        reason: "Designer is not available on this day of the week",
+        isInSchedule: false,
+        isOnline,
+      };
+    }
+
     // Check designer slots - fetch all active slots for this day
     console.log('🗓️ Querying designer slots for designer_id:', designerId, 'day_of_week:', currentDay);
     
@@ -247,6 +280,39 @@ export async function checkDesignerAvailabilityForDateTime(
           isOnline: false,
         };
       }
+    }
+
+    // Check weekly schedule - if day is not available, return false immediately
+    let { data: weeklySchedule, error: scheduleError } = await supabase
+      .from("designer_weekly_schedule")
+      .select("is_available")
+      .eq("designer_id", designerId)
+      .eq("day_of_week", scheduledDay)
+      .maybeSingle();
+
+    // Try with user_id if no results with designer_id
+    if ((!weeklySchedule || scheduleError) && designerDataForSpecial?.user_id) {
+      const { data: weeklyScheduleUserID, error: scheduleErrorUserID } = await supabase
+        .from("designer_weekly_schedule")
+        .select("is_available")
+        .eq("designer_id", designerDataForSpecial.user_id)
+        .eq("day_of_week", scheduledDay)
+        .maybeSingle();
+      
+      if (!scheduleErrorUserID && weeklyScheduleUserID) {
+        weeklySchedule = weeklyScheduleUserID;
+        scheduleError = scheduleErrorUserID;
+      }
+    }
+
+    // If day is explicitly marked as unavailable, return false
+    if (weeklySchedule && !weeklySchedule.is_available) {
+      return {
+        isAvailable: false,
+        reason: "Designer is not available on this day of the week",
+        isInSchedule: false,
+        isOnline: false,
+      };
     }
 
     // Check designer slots for the scheduled day

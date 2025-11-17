@@ -744,7 +744,7 @@ export default function UsageAnalytics() {
                             className="bg-primary h-2 rounded-full" 
                               style={{ width: `${(page.views / Math.max(...stats.top_pages.map(p => p.views), 1)) * 100}%` }}
                           />
-                          </div>
+                        </div>
                       </div>
                     </div>
                   ))}

@@ -222,12 +222,12 @@ export function FeaturedDesignersDisplay({
                     </h3>
                     <div className="flex items-center space-x-2 mt-1">
                       {designer.designer_rating && designer.designer_rating > 0 && (
-                        <div className="flex items-center">
-                          <Star className="w-4 h-4 text-green-500 fill-current" />
-                          <span className="text-sm font-medium ml-1 text-green-700">
-                            {designer.designer_rating.toFixed(1)}
-                          </span>
-                        </div>
+                      <div className="flex items-center">
+                        <Star className="w-4 h-4 text-green-500 fill-current" />
+                        <span className="text-sm font-medium ml-1 text-green-700">
+                          {designer.designer_rating.toFixed(1)}
+                        </span>
+                      </div>
                       )}
                       <Badge variant="outline" className="text-xs border-teal-300 text-teal-700">
                         {designer.designer_experience} years
