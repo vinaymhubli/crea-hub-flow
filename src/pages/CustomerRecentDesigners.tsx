@@ -35,6 +35,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import LiveSessionRequestDialog from "@/components/LiveSessionRequestDialog";
 import { checkDesignerBookingAvailability } from "@/utils/availabilityUtilsSlots";
+import { BookingDialog } from "@/components/BookingDialog";
 
 interface RecentDesigner {
   id: string;
@@ -61,12 +62,11 @@ interface RecentDesigner {
   latestBookingId?: string;
 }
 
-function DesignerCard({ designer, favorites, onToggleFavorite, onMessage, onBookAgain, onLiveSession }: { 
+function DesignerCard({ designer, favorites, onToggleFavorite, onMessage, onLiveSession }: { 
   designer: RecentDesigner; 
   favorites: Set<string>;
   onToggleFavorite: (designerId: string) => void;
   onMessage: (designerId: string, bookingId?: string) => void;
-  onBookAgain: (designerId: string) => void;
   onLiveSession: (designer: RecentDesigner) => void;
 }) {
   const designerName = designer.profile 
@@ -196,16 +196,27 @@ function DesignerCard({ designer, favorites, onToggleFavorite, onMessage, onBook
             <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
             Message
           </Button>
-          <Button 
-            type="button"
-            variant="outline" 
-            className="sm:flex-1 border-2 border-gradient-to-r from-green-400 to-blue-400 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 text-xs sm:text-sm"
-            onClick={() => onBookAgain(designer.id)}
+          <BookingDialog
+            designer={{
+              id: designer.id,
+              user_id: designer.user_id,
+              hourly_rate: designer.hourly_rate,
+              specialty: designer.specialty,
+              first_name: designer.profile?.first_name || 'Unknown',
+              last_name: designer.profile?.last_name || 'Designer',
+              avatar_url: designer.profile?.avatar_url
+            }}
           >
-            <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
-            <span className="hidden sm:inline">Book Again</span>
-            <span className="sm:hidden">Book</span>
-          </Button>
+            <Button 
+              type="button"
+              variant="outline" 
+              className="sm:flex-1 border-2 border-gradient-to-r from-green-400 to-blue-400 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 text-xs sm:text-sm"
+            >
+              <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+              <span className="hidden sm:inline">Book Again</span>
+              <span className="sm:hidden">Book</span>
+            </Button>
+          </BookingDialog>
           <Button 
             type="button"
             variant="outline" 
@@ -390,9 +401,6 @@ export default function CustomerRecentDesigners() {
     navigate(path);
   };
 
-  const handleBookAgain = (designerId: string) => {
-    navigate(`/designer/${designerId}`);
-  };
 
   const handleLiveSession = async (designer: RecentDesigner) => {
     try {
@@ -716,7 +724,6 @@ export default function CustomerRecentDesigners() {
                      favorites={favorites}
                      onToggleFavorite={toggleFavorite}
                      onMessage={handleMessage}
-                     onBookAgain={handleBookAgain}
                      onLiveSession={handleLiveSession}
                    />
                  ))}
