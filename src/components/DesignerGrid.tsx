@@ -616,12 +616,14 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
                     </div>
                     <p className="text-green-600 font-medium text-sm mb-1">{designer.specialty}</p>
                     
-                    {/* Rating */}
+                    {/* Rating - Only show if rating exists and is greater than 0 */}
                     <div className="flex items-center space-x-2 mb-3">
-                      <div className="flex items-center">
-                        <span className="text-yellow-400 text-lg">★</span>
-                        <span className="text-lg font-semibold text-foreground ml-1">{designer.rating || 4.8}</span>
-                      </div>
+                      {designer.rating != null && designer.rating !== 0 && Number(designer.rating) > 0 && (
+                        <div className="flex items-center">
+                          <span className="text-yellow-400 text-lg">★</span>
+                          <span className="text-lg font-semibold text-foreground ml-1">{designer.rating}</span>
+                        </div>
+                      )}
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         designer.is_online
                           ? 'bg-green-100 text-green-700' 

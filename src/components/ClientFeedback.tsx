@@ -204,8 +204,12 @@ export default function ClientFeedback() {
                     <h1 className="text-3xl font-bold text-white">Client Feedback</h1>
                     <p className="text-white/90 text-lg">Reviews and testimonials from your clients</p>
                     <div className="flex items-center space-x-4 mt-2">
-                      <span className="text-white/90 font-medium">{stats.avgRating.toFixed(1)} ⭐ average rating</span>
-                      <span className="text-white/60">•</span>
+                      {stats.avgRating > 0 && (
+                        <>
+                          <span className="text-white/90 font-medium">{stats.avgRating.toFixed(1)} ⭐ average rating</span>
+                          <span className="text-white/60">•</span>
+                        </>
+                      )}
                       <span className="text-white/90 font-medium">{stats.totalFeedback} total reviews</span>
                     </div>
                   </div>
@@ -226,8 +230,14 @@ export default function ClientFeedback() {
                   <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-xl flex items-center justify-center mx-auto mb-3">
                     <Star className="w-6 h-6 text-white" />
                   </div>
-                  <p className="text-2xl font-bold text-gray-900">{stats.avgRating.toFixed(1)}</p>
-                  <p className="text-sm text-gray-600">Average Rating</p>
+                  {stats.avgRating > 0 ? (
+                    <>
+                      <p className="text-2xl font-bold text-gray-900">{stats.avgRating.toFixed(1)}</p>
+                      <p className="text-sm text-gray-600">Average Rating</p>
+                    </>
+                  ) : (
+                    <p className="text-sm text-gray-600">No ratings yet</p>
+                  )}
                 </CardContent>
               </Card>
 

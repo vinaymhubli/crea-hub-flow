@@ -239,10 +239,12 @@ const DesignerDetails: React.FC = () => {
                   <p className="text-green-600 font-semibold text-base sm:text-lg mb-2">{designer.specialty}</p>
                   
                   <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-4">
-                    <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 sm:w-5 sm:h-5 fill-yellow-400 text-yellow-400" />
-                      <span className="font-semibold text-sm sm:text-base">{designer.rating}</span>
-                    </div>
+                    {designer.rating && designer.rating > 0 && (
+                      <div className="flex items-center gap-1">
+                        <Star className="w-4 h-4 sm:w-5 sm:h-5 fill-yellow-400 text-yellow-400" />
+                        <span className="font-semibold text-sm sm:text-base">{designer.rating}</span>
+                      </div>
+                    )}
                     
                     {designer.location && (
                       <div className="flex items-center gap-1 text-muted-foreground">

@@ -104,10 +104,12 @@ function DesignerCard({ designer, favorites, onToggleFavorite, onMessage, onBook
                 )}
               </h3>
               <p className="text-gray-600 font-medium text-sm sm:text-base truncate">{designer.specialty}</p>
-              <div className="flex items-center space-x-1 mt-1">
-                <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400 fill-current" />
-                <span className="text-xs sm:text-sm font-medium text-gray-700">{designer.rating}</span>
-              </div>
+              {designer.rating && designer.rating > 0 && (
+                <div className="flex items-center space-x-1 mt-1">
+                  <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400 fill-current" />
+                  <span className="text-xs sm:text-sm font-medium text-gray-700">{designer.rating}</span>
+                </div>
+              )}
             </div>
           </div>
           <div className="sm:text-right flex sm:flex-col items-center sm:items-end justify-between sm:justify-start flex-shrink-0">

@@ -472,8 +472,13 @@ export default function ServiceDetail() {
                       )}
                     </h4>
                     <div className="flex items-center text-sm text-gray-600">
-                      <Star className="w-3 h-3 fill-yellow-400 text-yellow-400 mr-1" />
-                      {service.designer.rating} • {service.designer.completion_rate}% completion rate
+                      {service.designer.rating && service.designer.rating > 0 && (
+                        <>
+                          <Star className="w-3 h-3 fill-yellow-400 text-yellow-400 mr-1" />
+                          {service.designer.rating} • 
+                        </>
+                      )}
+                      {service.designer.completion_rate}% completion rate
                     </div>
                   </div>
                 </div>

@@ -399,11 +399,13 @@ export default function FeaturedDesigners() {
                         <p className="text-gray-600 font-medium mb-2 text-sm truncate">{designer.specialty || 'Design'}</p>
                         
                         <div className="flex items-center space-x-2 mb-2">
-                          <div className="flex items-center space-x-1">
-                            <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                            <span className="text-sm font-medium text-gray-700">{designer.rating || 0}</span>
-                           
-                          </div>
+                          {designer.rating && designer.rating > 0 && (
+                            <div className="flex items-center space-x-1">
+                              <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                              <span className="text-sm font-medium text-gray-700">{designer.rating}</span>
+                             
+                            </div>
+                          )}
                           <span className="text-sm text-green-600 font-medium">
                             {designer.is_online ? 'Active Now' : 'Offline'}
                           </span>

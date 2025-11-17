@@ -827,33 +827,35 @@ export default function DesignerDashboard() {
                 </CardContent>
               </Card>
 
-              <Card
-                className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in"
-                style={{ animationDelay: "0.7s" }}
-              >
-                <CardContent className="p-4 sm:p-6 bg-gradient-to-br from-yellow-50 to-orange-50">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs sm:text-sm text-gray-600 mb-1 font-medium">
-                        Avg. Rating
-                      </p>
-                      <div className="flex items-center space-x-2 mb-2 sm:mb-3">
-                        <p className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
-                          {avgRating.toFixed(1)}
+              {avgRating > 0 && (
+                <Card
+                  className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in"
+                  style={{ animationDelay: "0.7s" }}
+                >
+                  <CardContent className="p-4 sm:p-6 bg-gradient-to-br from-yellow-50 to-orange-50">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs sm:text-sm text-gray-600 mb-1 font-medium">
+                          Avg. Rating
                         </p>
-                        <Star className="w-4 h-4 sm:w-6 sm:h-6 text-yellow-400 fill-current" />
+                        <div className="flex items-center space-x-2 mb-2 sm:mb-3">
+                          <p className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
+                            {avgRating.toFixed(1)}
+                          </p>
+                          <Star className="w-4 h-4 sm:w-6 sm:h-6 text-yellow-400 fill-current" />
+                        </div>
+                        <p className="text-xs sm:text-sm text-yellow-600 font-medium">
+                          From {totalCompletedSessions} completed
+                          sessions
+                        </p>
                       </div>
-                      <p className="text-xs sm:text-sm text-yellow-600 font-medium">
-                        From {totalCompletedSessions} completed
-                        sessions
-                      </p>
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
+                        <Star className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                      </div>
                     </div>
-                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
-                      <Star className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              )}
 
               <Card
                 className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in"

@@ -1137,19 +1137,23 @@ export default function DesignerProfile() {
                           <Star className="w-8 h-8 sm:w-10 sm:h-10 text-green-600" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-2">
-                            <span className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-                              {designerProfile?.rating?.toFixed(1) || '0.0'}
-                            </span>
-                            <div className="flex space-x-0.5 sm:space-x-1">
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <Star key={star} className="w-4 h-4 sm:w-6 sm:h-6 fill-yellow-400 text-yellow-400 hover:scale-110 transition-transform" />
-                              ))}
-                            </div>
-                          </div>
-                          <p className="text-xs sm:text-sm text-gray-500 font-medium mt-1">
-                            Based on {designerProfile?.reviews_count || 0} reviews
-                          </p>
+                          {designerProfile?.rating && designerProfile.rating > 0 && (
+                            <>
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-2">
+                                <span className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+                                  {designerProfile.rating.toFixed(1)}
+                                </span>
+                                <div className="flex space-x-0.5 sm:space-x-1">
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <Star key={star} className="w-4 h-4 sm:w-6 sm:h-6 fill-yellow-400 text-yellow-400 hover:scale-110 transition-transform" />
+                                  ))}
+                                </div>
+                              </div>
+                              <p className="text-xs sm:text-sm text-gray-500 font-medium mt-1">
+                                Based on {designerProfile?.reviews_count || 0} reviews
+                              </p>
+                            </>
+                          )}
                         </div>
                       </div>
                       <div className="text-left sm:text-right p-3 sm:p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">

@@ -643,15 +643,17 @@ export function FeaturedDesignersWithVideo() {
                                         </p>
 
                                         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2">
-                                          <div className="flex items-center space-x-1">
-                                            <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400 fill-current flex-shrink-0" />
-                                            <span className="text-xs sm:text-sm font-medium text-gray-700">
-                                              {designer.rating || 0}
-                                            </span>
-                                            {/* <span className="text-xs sm:text-sm text-gray-500">
-                                              ({designer.reviews_count || 0})
-                                            </span> */}
-                                          </div>
+                                          {designer.rating && designer.rating > 0 && (
+                                            <div className="flex items-center space-x-1">
+                                              <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400 fill-current flex-shrink-0" />
+                                              <span className="text-xs sm:text-sm font-medium text-gray-700">
+                                                {designer.rating}
+                                              </span>
+                                              {/* <span className="text-xs sm:text-sm text-gray-500">
+                                                ({designer.reviews_count || 0})
+                                              </span> */}
+                                            </div>
+                                          )}
                                           <span className="text-xs sm:text-sm text-green-600 font-medium">
                                             {designer.is_online
                                               ? "Active Now"

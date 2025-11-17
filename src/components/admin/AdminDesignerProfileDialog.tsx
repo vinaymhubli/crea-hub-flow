@@ -124,13 +124,15 @@ export function AdminDesignerProfileDialog({
                   <p className="text-green-600 font-semibold mb-2">{designer.specialty}</p>
                   
                   <div className="flex flex-wrap items-center gap-3 mb-3">
-                    <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      <span className="font-semibold">{designer.rating || 0}</span>
-                      <span className="text-muted-foreground text-sm">
-                        ({designer.reviews_count || 0} reviews)
-                      </span>
-                    </div>
+                    {designer.rating && designer.rating > 0 && (
+                      <div className="flex items-center gap-1">
+                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                        <span className="font-semibold">{designer.rating}</span>
+                        <span className="text-muted-foreground text-sm">
+                          ({designer.reviews_count || 0} reviews)
+                        </span>
+                      </div>
+                    )}
                     
                     {designer.location && (
                       <div className="flex items-center gap-1 text-muted-foreground">
@@ -308,10 +310,12 @@ export function AdminDesignerProfileDialog({
                       </p>
                       <div className="flex items-center justify-between">
                         <div className="text-lg font-bold">₹{service.price}</div>
-                        <div className="flex items-center gap-1 text-sm">
-                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                          <span>{service.rating || 0}</span>
-                        </div>
+                        {service.rating && service.rating > 0 && (
+                          <div className="flex items-center gap-1 text-sm">
+                            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                            <span>{service.rating}</span>
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>

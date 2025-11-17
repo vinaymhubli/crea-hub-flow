@@ -417,8 +417,12 @@ export default function DesignerSessionHistory() {
                 <span className="text-white/90 font-medium">{stats.totalSessions} sessions</span>
                 <span className="text-white/60 hidden sm:inline">•</span>
                 <span className="text-white/90 font-medium">{stats.totalHours.toFixed(1)} hours</span>
-                <span className="text-white/60 hidden sm:inline">•</span>
-                <span className="text-white/90 font-medium">{stats.avgRating.toFixed(1)} ⭐ avg rating</span>
+                {stats.avgRating > 0 && (
+                  <>
+                    <span className="text-white/60 hidden sm:inline">•</span>
+                    <span className="text-white/90 font-medium">{stats.avgRating.toFixed(1)} ⭐ avg rating</span>
+                  </>
+                )}
               </div>
             }
             userInitials={userInitials}
@@ -525,8 +529,14 @@ export default function DesignerSessionHistory() {
                   <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-lg sm:rounded-xl flex items-center justify-center mx-auto mb-2 sm:mb-3">
                     <Star className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
-                  <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.avgRating.toFixed(1)}</p>
-                  <p className="text-xs sm:text-sm text-gray-600">Avg. Rating</p>
+                  {stats.avgRating > 0 ? (
+                    <>
+                      <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.avgRating.toFixed(1)}</p>
+                      <p className="text-xs sm:text-sm text-gray-600">Avg. Rating</p>
+                    </>
+                  ) : (
+                    <p className="text-xs sm:text-sm text-gray-600">No ratings yet</p>
+                  )}
                 </CardContent>
               </Card>
 
