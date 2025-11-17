@@ -21,7 +21,6 @@ import {
 } from 'lucide-react';
 import { useAdminStats } from '@/hooks/useAdminStats';
 import { useAdminUsers } from '@/hooks/useAdminUsers';
-import { useAdminBookings } from '@/hooks/useAdminBookings';
 import { useAdminPlatformSettings } from '@/hooks/useAdminPlatformSettings';
 import { useAdminAnnouncements } from '@/hooks/useAdminAnnouncements';
 
@@ -29,7 +28,6 @@ export default function AdminDashboard() {
   const { user } = useAuth();
   const { stats, loading: statsLoading } = useAdminStats();
   const { users, loading: usersLoading, toggleAdminStatus } = useAdminUsers();
-  const { bookings, loading: bookingsLoading, updateBookingStatus } = useAdminBookings();
   const { settings, loading: settingsLoading, updateSettings } = useAdminPlatformSettings();
   const { announcements, loading: announcementsLoading, createAnnouncement } = useAdminAnnouncements();
   
@@ -87,7 +85,7 @@ export default function AdminDashboard() {
     return matchesSearch;
   });
 
-  const loading = statsLoading || usersLoading || bookingsLoading || settingsLoading || announcementsLoading;
+  const loading = statsLoading || usersLoading || settingsLoading || announcementsLoading;
 
   if (loading) {
     return (
@@ -182,10 +180,9 @@ export default function AdminDashboard() {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 lg:w-auto">
+        <TabsList className="grid w-full grid-cols-2 lg:w-auto">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
-          <TabsTrigger value="bookings">Bookings</TabsTrigger>
           {/* <TabsTrigger value="announcements">Announcements</TabsTrigger> */}
           {/* <TabsTrigger value="communications">Communications</TabsTrigger> */}
           {/* <TabsTrigger value="settings">Settings</TabsTrigger> */}
@@ -328,82 +325,6 @@ export default function AdminDashboard() {
                         >
                           {user.is_admin ? 'Remove Admin' : 'Make Admin'}
                         </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Bookings Tab */}
-        <TabsContent value="bookings" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Booking Management</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Service</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Designer</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {bookings.map((booking) => (
-                    <TableRow key={booking.id}>
-                      <TableCell className="font-medium">{booking.service}</TableCell>
-                      <TableCell>
-                        {booking.customer ? 
-                          `${booking.customer.first_name || ''} ${booking.customer.last_name || ''}`.trim() || 'Unknown' 
-                          : 'Unknown'}
-                      </TableCell>
-                      <TableCell>
-                        {booking.designer?.user ? 
-                          `${booking.designer.user.first_name || ''} ${booking.designer.user.last_name || ''}`.trim() || 'Unknown' 
-                          : 'Unknown'}
-                      </TableCell>
-                      <TableCell>
-                        <Badge 
-                          variant={
-                            booking.status === 'completed' ? 'default' :
-                            booking.status === 'pending' ? 'secondary' :
-                            booking.status === 'confirmed' ? 'outline' : 'destructive'
-                          }
-                        >
-                          {booking.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>₹{booking.total_amount}</TableCell>
-                      <TableCell>
-                        {new Date(booking.scheduled_date).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className="space-x-2">
-                        {booking.status === 'pending' && (
-                          <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => updateBookingStatus(booking.id, 'confirmed')}
-                            >
-                              Approve
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => updateBookingStatus(booking.id, 'cancelled')}
-                            >
-                              Reject
-                            </Button>
-                          </>
-                        )}
                       </TableCell>
                     </TableRow>
                   ))}

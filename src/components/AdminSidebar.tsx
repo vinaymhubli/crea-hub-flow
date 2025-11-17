@@ -63,6 +63,11 @@ const mainSections = [
     icon: Users,
   },
   {
+    title: "Booking Management",
+    url: "/admin/bookings",
+    icon: Calendar,
+  },
+  {
     title: "Transactions",
     url: "/admin/transactions",
     icon: Receipt,
