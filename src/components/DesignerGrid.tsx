@@ -610,7 +610,7 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
                       {designer.kyc_status === 'approved' && (
                         <span className="inline-flex items-center gap-1 text-xs font-medium bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
                           <CheckCircle className="w-3 h-3" />
-                          KYC Verified
+                          Verified Profile
                         </span>
                       )}
                     </div>

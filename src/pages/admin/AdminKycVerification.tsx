@@ -29,15 +29,13 @@ export default function AdminKycVerification() {
   const load = async () => {
     try {
       setLoading(true);
-      let query = supabase
+      let query = (supabase as any)
         .from('designers')
         .select('id,user_id,kyc_status,verification_status,kyc_aadhaar_front_url,kyc_aadhaar_back_url,kyc_pan_front_url,kyc_pan_back_url,profiles:user_id(first_name,last_name,email)')
         .order('updated_at', { ascending: false });
       query = query.eq('kyc_status', status);
-      // Only show designers who have actually submitted at least one KYC document
-      query = query.or(
-        'kyc_aadhaar_front_url.not.is.null,kyc_aadhaar_back_url.not.is.null,kyc_pan_front_url.not.is.null,kyc_pan_back_url.not.is.null'
-      );
+      // Only show designers who have actually submitted at least one authenticity document
+      query = query.or('kyc_aadhaar_front_url.not.is.null,kyc_pan_front_url.not.is.null');
       const { data, error } = await query;
       if (error) throw error;
       let result = (data || []) as unknown as KycDesignerRow[];
@@ -47,8 +45,8 @@ export default function AdminKycVerification() {
       }
       setRows(result);
     } catch (e: any) {
-      console.error('Load KYC error:', e);
-      toast({ title: 'Error', description: e?.message ?? 'Failed to load KYC requests', variant: 'destructive' });
+      console.error('Load authenticity error:', e);
+      toast({ title: 'Error', description: e?.message ?? 'Failed to load authenticity requests', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -58,15 +56,15 @@ export default function AdminKycVerification() {
 
   const setKyc = async (designerId: string, next: 'approved' | 'rejected') => {
     try {
-      // KYC status is decoupled from account verification
+      // Authenticity status is decoupled from account verification
       const payload: any = { kyc_status: next };
       const { error } = await supabase.from('designers').update(payload).eq('id', designerId);
       if (error) throw error;
-      toast({ title: 'Updated', description: `KYC ${next}` });
+      toast({ title: 'Updated', description: `Business authenticity ${next}` });
       load();
     } catch (e: any) {
-      console.error('Update KYC error:', e);
-      toast({ title: 'Error', description: e?.message ?? 'Failed to update KYC', variant: 'destructive' });
+      console.error('Update authenticity error:', e);
+      toast({ title: 'Error', description: e?.message ?? 'Failed to update authenticity status', variant: 'destructive' });
     }
   };
 
@@ -74,8 +72,8 @@ export default function AdminKycVerification() {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Designer KYC Verification</h1>
-          <p className="text-gray-600">Review Aadhaar and PAN uploads, and approve or reject.</p>
+          <h1 className="text-3xl font-bold">Business Authenticity Review</h1>
+          <p className="text-gray-600">Review identity and business proof uploads, then approve or reject.</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={load} disabled={loading}>Refresh</Button>
@@ -106,12 +104,10 @@ export default function AdminKycVerification() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="text-sm">KYC Status: <span className="font-medium">{r.kyc_status || '—'}</span></div>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <DocLink label="Aadhaar Front" url={r.kyc_aadhaar_front_url} />
-                    <DocLink label="Aadhaar Back" url={r.kyc_aadhaar_back_url} />
-                    <DocLink label="PAN Front" url={r.kyc_pan_front_url} />
-                    <DocLink label="PAN Back" url={r.kyc_pan_back_url} />
+                  <div className="text-sm">Authenticity Status: <span className="font-medium">{r.kyc_status || '—'}</span></div>
+                  <div className="grid grid-cols-1 gap-2 text-xs">
+                    <DocLink label="Identity Proof" url={r.kyc_aadhaar_front_url} />
+                    <DocLink label="Business Proof" url={r.kyc_pan_front_url} />
                   </div>
                   <div className="flex gap-2 pt-2">
                     {r.kyc_status === 'approved' ? (

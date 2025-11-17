@@ -98,7 +98,7 @@ const mainSections = [
     icon: UserCheck,
   },
   {
-    title: "KYC Verification",
+    title: "Business Authenticity",
     url: "/admin/kyc-verification",
     icon: Shield,
   },

@@ -73,9 +73,10 @@ export default function DesignerProfile() {
   const [isSaving, setIsSaving] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const portfolioInputRef = useRef<HTMLInputElement>(null);
-  const kycInputRef = useRef<HTMLInputElement>(null);
+  const identityProofInputRef = useRef<HTMLInputElement>(null);
+  const businessProofInputRef = useRef<HTMLInputElement>(null);
   const [kycUploading, setKycUploading] = useState(false);
-  const [kycUrls, setKycUrls] = useState<{ aadhaar_front?: string; aadhaar_back?: string; pan_front?: string; pan_back?: string }>({});
+  const [kycUrls, setKycUrls] = useState<{ identity?: string; business?: string }>({});
   const [verificationStatus, setVerificationStatus] = useState<string | null>(null);
   const [kycStatus, setKycStatus] = useState<string | null>(null);
 
@@ -148,20 +149,18 @@ export default function DesignerProfile() {
   }, [designerProfile]);
 
   useEffect(() => {
-    // Load existing KYC url if present
+    // Load existing authenticity document URLs if present
     const loadKyc = async () => {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
           .from('designers')
-          .select('kyc_aadhaar_front_url, kyc_aadhaar_back_url, kyc_pan_front_url, kyc_pan_back_url, verification_status, kyc_status')
+          .select('kyc_aadhaar_front_url, kyc_pan_front_url, verification_status, kyc_status')
           .eq('user_id', user?.id)
           .single();
         if (!error && data) {
           setKycUrls({
-            aadhaar_front: (data as any).kyc_aadhaar_front_url || undefined,
-            aadhaar_back: (data as any).kyc_aadhaar_back_url || undefined,
-            pan_front: (data as any).kyc_pan_front_url || undefined,
-            pan_back: (data as any).kyc_pan_back_url || undefined,
+            identity: (data as any).kyc_aadhaar_front_url || undefined,
+            business: (data as any).kyc_pan_front_url || undefined,
           });
           setVerificationStatus(data.verification_status || null);
           setKycStatus((data as any).kyc_status || null);
@@ -171,7 +170,7 @@ export default function DesignerProfile() {
     if (user?.id) loadKyc();
   }, [user?.id]);
 
-  const handleKycUpload = async (event: React.ChangeEvent<HTMLInputElement>, kind: 'aadhaar_front' | 'aadhaar_back' | 'pan_front' | 'pan_back') => {
+  const handleKycUpload = async (event: React.ChangeEvent<HTMLInputElement>, kind: 'identity' | 'business') => {
     const file = event.target.files?.[0];
     if (!file || !user?.id) return;
     setKycUploading(true);
@@ -186,30 +185,33 @@ export default function DesignerProfile() {
       const url = pubUrl?.publicUrl;
       // Only store URLs on upload. Do NOT flip status yet; status changes on explicit submit
       const payload: any = { updated_at: new Date().toISOString() };
-      if (kind === 'aadhaar_front') payload.kyc_aadhaar_front_url = url;
-      if (kind === 'aadhaar_back') payload.kyc_aadhaar_back_url = url;
-      if (kind === 'pan_front') payload.kyc_pan_front_url = url;
-      if (kind === 'pan_back') payload.kyc_pan_back_url = url;
+      if (kind === 'identity') payload.kyc_aadhaar_front_url = url;
+      if (kind === 'business') payload.kyc_pan_front_url = url;
       const { error: updErr } = await supabase
         .from('designers')
         .update(payload)
         .eq('user_id', user.id);
       if (updErr) throw updErr;
       setKycUrls(prev => ({ ...prev, [kind]: url || undefined }));
-      toast({ title: 'Uploaded', description: 'Document uploaded. Submit when all files are attached.' });
+      toast({ title: 'Uploaded', description: 'Document uploaded. Submit once both files are attached.' });
     } catch (e: any) {
-      console.error('KYC upload error:', e);
-      toast({ title: 'Error', description: e?.message ?? 'Failed to upload KYC', variant: 'destructive' });
+      console.error('Authenticity upload error:', e);
+      toast({ title: 'Error', description: e?.message ?? 'Failed to upload document', variant: 'destructive' });
     } finally {
       setKycUploading(false);
-      if (kycInputRef.current) kycInputRef.current.value = '';
+      if (kind === 'identity' && identityProofInputRef.current) {
+        identityProofInputRef.current.value = '';
+      }
+      if (kind === 'business' && businessProofInputRef.current) {
+        businessProofInputRef.current.value = '';
+      }
     }
   };
 
-  const allKycUploaded = !!(kycUrls.aadhaar_front && kycUrls.aadhaar_back && kycUrls.pan_front && kycUrls.pan_back);
+  const allKycUploaded = !!(kycUrls.identity && kycUrls.business);
 
-  const openKycFile = async (kind: 'aadhaar_front' | 'aadhaar_back' | 'pan_front' | 'pan_back') => {
-    const url = (kycUrls as any)[kind] as string | undefined;
+  const openKycFile = async (kind: 'identity' | 'business') => {
+    const url = kind === 'identity' ? kycUrls.identity : kycUrls.business;
     if (!url) return;
     try {
       const bucket = 'kyc-docs';
@@ -232,12 +234,12 @@ export default function DesignerProfile() {
       }
       
       const decodedPath = decodeURIComponent(path);
-      console.log('Opening KYC file, path:', decodedPath);
+      console.log('Opening authenticity file, path:', decodedPath);
       const { data, error } = await supabase.storage.from(bucket).createSignedUrl(decodedPath, 60);
       if (error || !data?.signedUrl) throw error || new Error('Failed to create signed URL');
       window.open(data.signedUrl, '_blank');
     } catch (e: any) {
-      console.error('Open KYC file error:', e);
+      console.error('Open authenticity file error:', e);
       toast({ title: 'Cannot open file', description: e?.message ?? 'Failed to open document', variant: 'destructive' });
     }
   };
@@ -245,7 +247,7 @@ export default function DesignerProfile() {
   const handleSubmitKyc = async () => {
     if (!user?.id) return;
     if (!allKycUploaded) {
-      toast({ title: 'Missing documents', description: 'Please upload all four documents before submitting', variant: 'destructive' });
+      toast({ title: 'Missing documents', description: 'Please upload both authenticity documents before submitting', variant: 'destructive' });
       return;
     }
     try {
@@ -255,10 +257,10 @@ export default function DesignerProfile() {
         .eq('user_id', user.id);
       if (error) throw error;
       setKycStatus('pending');
-      toast({ title: 'Submitted for review', description: 'Admin will review and update your KYC status shortly' });
+      toast({ title: 'Submitted for review', description: 'Admin will review your authenticity documents shortly.' });
     } catch (e: any) {
-      console.error('KYC submit error:', e);
-      toast({ title: 'Error', description: e?.message ?? 'Failed to submit KYC', variant: 'destructive' });
+      console.error('Authenticity submit error:', e);
+      toast({ title: 'Error', description: e?.message ?? 'Failed to submit documents', variant: 'destructive' });
     }
   };
 
@@ -267,14 +269,14 @@ export default function DesignerProfile() {
     const loadMinRate = async () => {
       try {
         // Prefer RPC helper if available
-        const { data, error } = await supabase.rpc('get_min_rate_per_minute');
+        const { data, error } = await (supabase as any).rpc('get_min_rate_per_minute');
         if (!error) {
           const value = Array.isArray(data) ? parseFloat(data?.[0]) : parseFloat(data as any);
           if (!isNaN(value)) setMinRate(value);
           return;
         }
         // Fallback to platform_settings column if RPC not available
-        const { data: rows } = await supabase
+        const { data: rows } = await (supabase as any)
           .from('platform_settings')
           .select('min_rate_per_minute')
           .order('updated_at', { ascending: false })
@@ -986,11 +988,13 @@ export default function DesignerProfile() {
                   </CardContent>
                 </Card>
 
-                {/* KYC Verification */}
+                {/* Business Authenticity Verification */}
                 <Card className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
                   <CardHeader className="bg-gradient-to-r from-green-400 to-blue-500 text-white rounded-t-lg p-4 sm:p-6">
-                    <CardTitle className="text-base sm:text-lg lg:text-xl font-bold">KYC Verification</CardTitle>
-                    <CardDescription className="text-white/80 text-xs sm:text-sm">Upload a government-issued document for verification.</CardDescription>
+                    <CardTitle className="text-base sm:text-lg lg:text-xl font-bold">Business Authenticity Verification</CardTitle>
+                    <CardDescription className="text-white/80 text-xs sm:text-sm">
+                      We don’t perform formal KYC. Upload any two documents (identity + business proof) so we can confirm you’re a real professional.
+                    </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6">
                     <div className="flex items-center justify-between p-3 sm:p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
@@ -1001,41 +1005,67 @@ export default function DesignerProfile() {
                     </div>
 
                     {kycStatus === 'pending' ? (
-                      <div className="p-4 bg-yellow-50 border border-yellow-200 rounded text-yellow-800 text-sm">Admin is currently reviewing your KYC documents.</div>
+                      <div className="p-4 bg-yellow-50 border border-yellow-200 rounded text-yellow-800 text-sm">
+                        Thanks! Your authenticity documents are currently being reviewed.
+                      </div>
                     ) : kycStatus === 'approved' ? (
-                      <div className="p-4 bg-green-50 border border-green-200 rounded text-green-800 text-sm">KYC Verified ✅</div>
+                      <div className="p-4 bg-green-50 border border-green-200 rounded text-green-800 text-sm">
+                        Business authenticity verified ✅
+                      </div>
                     ) : (
                       <>
-                        {/* Aadhaar Section */}
-                        <div className="rounded-lg border p-4">
-                          <div className="font-semibold mb-2">Aadhaar</div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div className="flex items-center gap-3">
-                              <div className="w-36 text-sm">Front</div>
-                              <input ref={kycInputRef} type="file" accept="image/*,application/pdf" onChange={(e) => handleKycUpload(e, 'aadhaar_front')} className="text-sm" />
-                              {kycUrls.aadhaar_front && <button type="button" onClick={() => openKycFile('aadhaar_front')} className="text-xs text-blue-600 underline">View</button>}
+                        <div className="space-y-4">
+                          <div className="rounded-lg border p-4 space-y-3">
+                            <div>
+                              <div className="font-semibold">Identity Proof</div>
+                              <p className="text-xs text-gray-500">
+                                Upload Aadhaar, Passport, Driver’s License, or any government-issued ID.
+                              </p>
                             </div>
-                            <div className="flex items-center gap-3">
-                              <div className="w-36 text-sm">Back</div>
-                              <input type="file" accept="image/*,application/pdf" onChange={(e) => handleKycUpload(e, 'aadhaar_back')} className="text-sm" />
-                              {kycUrls.aadhaar_back && <button type="button" onClick={() => openKycFile('aadhaar_back')} className="text-xs text-blue-600 underline">View</button>}
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                              <input
+                                ref={identityProofInputRef}
+                                type="file"
+                                accept="image/*,application/pdf"
+                                onChange={(e) => handleKycUpload(e, 'identity')}
+                                className="text-sm"
+                              />
+                              {kycUrls.identity && (
+                                <button
+                                  type="button"
+                                  onClick={() => openKycFile('identity')}
+                                  className="text-xs text-blue-600 underline"
+                                >
+                                  View document
+                                </button>
+                              )}
                             </div>
                           </div>
-                        </div>
 
-                        {/* PAN Section */}
-                        <div className="rounded-lg border p-4">
-                          <div className="font-semibold mb-2">PAN</div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div className="flex items-center gap-3">
-                              <div className="w-36 text-sm">Front</div>
-                              <input type="file" accept="image/*,application/pdf" onChange={(e) => handleKycUpload(e, 'pan_front')} className="text-sm" />
-                              {kycUrls.pan_front && <button type="button" onClick={() => openKycFile('pan_front')} className="text-xs text-blue-600 underline">View</button>}
+                          <div className="rounded-lg border p-4 space-y-3">
+                            <div>
+                              <div className="font-semibold">Business Proof</div>
+                              <p className="text-xs text-gray-500">
+                                Upload GST certificate, business registration, current bank statement, PAN, or any proof of business.
+                              </p>
                             </div>
-                            <div className="flex items-center gap-3">
-                              <div className="w-36 text-sm">Back</div>
-                              <input type="file" accept="image/*,application/pdf" onChange={(e) => handleKycUpload(e, 'pan_back')} className="text-sm" />
-                              {kycUrls.pan_back && <button type="button" onClick={() => openKycFile('pan_back')} className="text-xs text-blue-600 underline">View</button>}
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                              <input
+                                ref={businessProofInputRef}
+                                type="file"
+                                accept="image/*,application/pdf"
+                                onChange={(e) => handleKycUpload(e, 'business')}
+                                className="text-sm"
+                              />
+                              {kycUrls.business && (
+                                <button
+                                  type="button"
+                                  onClick={() => openKycFile('business')}
+                                  className="text-xs text-blue-600 underline"
+                                >
+                                  View document
+                                </button>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -1045,7 +1075,9 @@ export default function DesignerProfile() {
                             Submit for Review
                           </Button>
                         </div>
-                        <p className="text-xs text-gray-500">Upload Aadhaar (front/back) and PAN (front/back). Submit to send for admin review.</p>
+                        <p className="text-xs text-gray-500">
+                          We only use these documents to verify business authenticity for client safety. Upload any two documents you are comfortable sharing.
+                        </p>
                       </>
                     )}
                   </CardContent>

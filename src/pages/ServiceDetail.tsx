@@ -467,7 +467,7 @@ export default function ServiceDetail() {
                       {service.designer.profiles?.first_name || 'Unknown'} {service.designer.profiles?.last_name || 'User'}
                       {(service.designer.verification_status === 'approved' || service.designer.kyc_status === 'approved') && (
                         <span className="inline-flex items-center text-green-700 text-[10px] bg-green-100 px-1.5 py-0.5 rounded">
-                          ✓ {service.designer.kyc_status === 'approved' ? 'KYC Verified' : 'Verified'}
+                          ✓ {service.designer.kyc_status === 'approved' ? 'Verified Profile' : 'Verified'}
                         </span>
                       )}
                     </h4>

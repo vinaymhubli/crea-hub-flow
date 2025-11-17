@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -257,10 +258,10 @@ export default function Signup() {
                 </p>
               </div>
 
-              {/* Optional KYC at signup */}
+              {/* Optional authenticity docs at signup */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  KYC (optional) - Govt ID (PDF/JPG/PNG)
+                  Business Authenticity (optional) - Govt/Business proof (PDF/JPG/PNG)
                 </label>
                 <input type="file" accept="image/*,application/pdf" onChange={async (e) => {
                   const file = e.target.files?.[0];

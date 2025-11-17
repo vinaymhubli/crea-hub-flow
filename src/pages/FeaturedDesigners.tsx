@@ -390,7 +390,7 @@ export default function FeaturedDesigners() {
                             <div className="flex items-center space-x-1 flex-shrink-0">
                               <CheckCircle className="w-4 h-4 text-green-500" />
                               <span className="text-xs text-green-600 font-medium">
-                                {(designer as any).kyc_status === 'approved' ? 'KYC Verified' : 'Verified'}
+                                {(designer as any).kyc_status === 'approved' ? 'Verified Profile' : 'Verified'}
                               </span>
                             </div>
                           )}

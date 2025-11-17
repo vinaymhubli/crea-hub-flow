@@ -632,7 +632,7 @@ export function FeaturedDesignersWithVideo() {
                                             <div className="flex items-center space-x-1 flex-shrink-0">
                                               <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-500" />
                                               <span className="text-xs text-green-600 font-medium">
-                                                {designer.kyc_status === "approved" ? "KYC Verified" : "Verified"}
+                                                {designer.kyc_status === "approved" ? "Verified Profile" : "Verified"}
                                               </span>
                                             </div>
                                           )}
