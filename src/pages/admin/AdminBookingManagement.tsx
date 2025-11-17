@@ -53,11 +53,16 @@ const matchesSearch = (booking: any, query: string) => {
 
 const isUpcoming = (booking: any) => {
   const status = booking.status?.toLowerCase();
+  
+  // Exclude completed and cancelled bookings
   if (["completed", "cancelled"].includes(status)) return false;
-  if (["pending", "confirmed", "in_progress"].includes(status)) return true;
-
+  
+  // Check if the scheduled date is in the future
   const sessionDate = new Date(booking.scheduled_date);
-  return sessionDate.getTime() >= Date.now();
+  const isFutureDate = sessionDate.getTime() >= Date.now();
+  
+  // Only show as upcoming if date is in the future AND status is appropriate
+  return isFutureDate && ["pending", "confirmed", "in_progress"].includes(status);
 };
 
 const filterByTab = (booking: any, tab: BookingTab) => {
