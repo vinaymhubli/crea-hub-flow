@@ -39,6 +39,7 @@ import { Link } from 'react-router-dom';
 
 interface Service {
   id: string;
+  designer_id: string;
   title: string;
   description: string;
   category: string;
@@ -240,6 +241,33 @@ export default function DesignerServices() {
     } catch (error) {
       console.error('Error updating service:', error);
       toast.error('Failed to update service');
+    }
+  };
+
+  const handleDeleteService = async (service: Service) => {
+    if (!window.confirm('Delete this service? This cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await supabase
+        .from('service_packages')
+        .delete()
+        .eq('service_id', service.id);
+
+      const { error } = await supabase
+        .from('services')
+        .delete()
+        .eq('id', service.id)
+        .eq('designer_id', service.designer_id);
+
+      if (error) throw error;
+
+      toast.success('Service deleted successfully');
+      fetchServices();
+    } catch (error) {
+      console.error('Error deleting service:', error);
+      toast.error('Failed to delete service');
     }
   };
 
@@ -1235,6 +1263,14 @@ export default function DesignerServices() {
                     className="px-2 sm:px-3"
                   >
                     <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDeleteService(service)}
+                    className="px-2 sm:px-3 text-red-600 hover:text-red-700"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </Button>
                   <Button 
                     variant="outline" 

@@ -5,6 +5,8 @@ import { useAuth } from './useAuth';
 import { useDesignerProfile } from './useDesignerProfile';
 import { toast } from '@/hooks/use-toast';
 
+const MAX_PORTFOLIO_IMAGE_SIZE = 3 * 1024 * 1024; // 3MB
+
 interface PortfolioItem {
   id: string;
   designer_id: string;
@@ -96,6 +98,14 @@ export const usePortfolio = () => {
 
   const uploadPortfolioImage = async (file: File) => {
     if (!user?.id) return null;
+    if (file.size > MAX_PORTFOLIO_IMAGE_SIZE) {
+      toast({
+        title: "File too large",
+        description: "Portfolio images must be 3MB or less.",
+        variant: "destructive"
+      });
+      return null;
+    }
 
     try {
       const fileExt = file.name.split('.').pop();

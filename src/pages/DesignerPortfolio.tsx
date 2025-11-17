@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { 
   FolderOpen, 
   Plus,
-  X,
   Eye,
   Edit,
   Trash2,
@@ -78,7 +77,7 @@ function AddPortfolioDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-blue-600 hover:bg-blue-700 text-white flex items-center space-x-2">
+        <Button className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 font-medium rounded-xl px-6 py-2.5 border-0 flex items-center space-x-2">
           <Plus className="w-4 h-4" />
           <span>Add Portfolio Item</span>
         </Button>
@@ -86,12 +85,6 @@ function AddPortfolioDialog() {
       <DialogContent className="max-w-lg mx-auto">
         <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle className="text-lg font-semibold">Add Portfolio Item</DialogTitle>
-          <button 
-            onClick={() => setIsOpen(false)}
-            className="p-1 hover:bg-gray-100 rounded"
-          >
-            <X className="w-5 h-5 text-gray-500" />
-          </button>
         </DialogHeader>
         
         <div className="space-y-4 mt-4">
@@ -184,13 +177,14 @@ function AddPortfolioDialog() {
             <Button 
               variant="outline" 
               onClick={() => setIsOpen(false)}
+              className="rounded-xl px-6 py-2.5 border-gray-300 hover:bg-gray-50 font-medium transition-all duration-200"
             >
               Cancel
             </Button>
             <Button 
               onClick={handleSave}
               disabled={!formData.title || !formData.image}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 font-medium rounded-xl px-6 py-2.5 border-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-lg"
             >
               Save
             </Button>
@@ -234,9 +228,6 @@ function EditPortfolioDialog({ item, onClose }: { item: any; onClose: () => void
     <DialogContent className="max-w-lg mx-auto">
       <DialogHeader className="flex flex-row items-center justify-between">
         <DialogTitle className="text-lg font-semibold">Edit Portfolio Item</DialogTitle>
-        <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
-          <X className="w-5 h-5 text-gray-500" />
-        </button>
       </DialogHeader>
       
       <div className="space-y-4 mt-4">
@@ -318,12 +309,16 @@ function EditPortfolioDialog({ item, onClose }: { item: any; onClose: () => void
         </div>
 
         <div className="flex justify-end space-x-3 pt-4">
-          <Button variant="outline" onClick={onClose}>
+          <Button 
+            variant="outline" 
+            onClick={onClose}
+            className="rounded-xl px-6 py-2.5 border-gray-300 hover:bg-gray-50 font-medium transition-all duration-200"
+          >
             Cancel
           </Button>
           <Button 
             onClick={handleSave}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 font-medium rounded-xl px-6 py-2.5 border-0"
           >
             Update
           </Button>
