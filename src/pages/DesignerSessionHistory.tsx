@@ -251,9 +251,12 @@ export default function DesignerSessionHistory() {
   };
 
   const renderSessionCard = (session: any) => (
-    <Card key={session.id} className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
-      <CardContent className="p-4 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-0 mb-4">
+    <Card 
+      key={session.id} 
+      className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 h-full rounded-2xl"
+    >
+      <CardContent className="p-4 sm:p-5 flex flex-col h-full">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-0 mb-3">
           <div className="flex items-start space-x-3 sm:space-x-4 min-w-0 flex-1">
             <Avatar className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
               <AvatarImage src={session.client.avatar} />
@@ -262,9 +265,9 @@ export default function DesignerSessionHistory() {
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-gray-900 mb-1 text-sm sm:text-base truncate">{session.project}</h3>
-              <p className="text-gray-600 font-medium text-sm truncate">{session.client.name}</p>
-              <p className="text-xs sm:text-sm text-gray-500">{session.date}</p>
+              <h3 className="font-bold text-gray-900 text-sm sm:text-base truncate">{session.project}</h3>
+              <p className="text-gray-600 font-medium text-xs sm:text-sm truncate">{session.client.name}</p>
+              <p className="text-xs text-gray-500">{session.date}</p>
               
               {/* Show rating if available */}
               {session.rating && (
@@ -285,7 +288,7 @@ export default function DesignerSessionHistory() {
               
               {/* Show feedback if available */}
               {session.feedback && (
-                <div className="mt-2 p-2 bg-gray-50 rounded text-xs sm:text-sm text-gray-700 line-clamp-2">
+                <div className="mt-2 p-2 bg-gray-50 rounded text-xs text-gray-700 line-clamp-3">
                   "{session.feedback}"
                 </div>
               )}
@@ -326,7 +329,7 @@ export default function DesignerSessionHistory() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-4">
+        <div className="grid grid-cols-2 gap-2 mt-auto">
           <div className="flex items-center space-x-1.5 sm:space-x-2">
             <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" />
             <span className="text-xs sm:text-sm text-gray-600 truncate">{session.date}</span>
@@ -337,67 +340,19 @@ export default function DesignerSessionHistory() {
           </div>
           <div className="flex items-center space-x-1.5 sm:space-x-2">
             {session.type === 'Video Call' ? (
-              <Video className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" />
+              <Video className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
             ) : (
-              <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" />
+              <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
             )}
-            <span className="text-xs sm:text-sm text-gray-600 truncate">{session.type}</span>
+            <span className="text-xs text-gray-600 truncate">{session.type}</span>
           </div>
           <div className="flex items-center space-x-1.5 sm:space-x-2">
-            <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" />
-            <span className="text-xs sm:text-sm font-semibold text-green-600">₹{session.earnings}</span>
+            <DollarSign className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+            <span className="text-xs font-semibold text-green-600">₹{session.earnings}</span>
           </div>
         </div>
 
-        {session.rating && (
-          <div className="flex items-center space-x-2 mb-3 sm:mb-4">
-            <div className="flex items-center">
-              {[...Array(5)].map((_, i) => (
-                <Star
-                  key={i}
-                  className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${
-                    i < session.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
-                  }`}
-                />
-              ))}
-            </div>
-            <span className="text-xs sm:text-sm text-gray-600">({session.rating}/5)</span>
-          </div>
-        )}
-
-        {session.feedback && (
-          <div className="bg-blue-50 rounded-lg p-2.5 sm:p-3 mb-3 sm:mb-4">
-            <p className="text-xs sm:text-sm text-blue-800 italic line-clamp-2">"{session.feedback}"</p>
-          </div>
-        )}
-
         {/* Tools used + action buttons commented out per request */}
-        {/* <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-500">Tools used:</span>
-              <div className="flex space-x-1">
-                {session.tools.map((tool: string) => (
-                  <Badge key={tool} variant="outline" className="text-xs">{tool}</Badge>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="flex space-x-2">
-            {session.hasRecording && (
-              <Button variant="outline" size="sm">
-                <Play className="w-4 h-4 mr-1" />
-                Recording
-              </Button>
-            )}
-            {session.hasNotes && (
-              <Button variant="outline" size="sm">
-                <FileText className="w-4 h-4 mr-1" />
-                Notes
-              </Button>
-            )}
-          </div>
-        </div> */}
       </CardContent>
     </Card>
   );
@@ -603,11 +558,13 @@ export default function DesignerSessionHistory() {
                 </TabsList>
               </div>
 
-              <TabsContent value="recent" className="space-y-4 sm:space-y-6">
-                {sessions.map(renderSessionCard)}
+              <TabsContent value="recent">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-5">
+                  {sessions.map(renderSessionCard)}
+                </div>
               </TabsContent>
 
-              <TabsContent value="feedback" className="space-y-4 sm:space-y-6">
+              <TabsContent value="feedback">
                 {reviewsLoading ? (
                   <div className="text-sm text-gray-500 px-2">Loading feedback…</div>
                 ) : reviewsError ? (
@@ -615,12 +572,13 @@ export default function DesignerSessionHistory() {
                 ) : reviews.length === 0 ? (
                   <div className="text-sm text-gray-500 px-2">No client feedback yet.</div>
                 ) : (
-                  reviews.map((review) => (
-                    <Card key={review.id} className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
-                      <CardContent className="p-4 sm:p-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-5">
+                    {reviews.map((review) => (
+                      <Card key={review.id} className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 h-full rounded-2xl">
+                        <CardContent className="p-4 sm:p-5 flex flex-col h-full">
                         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-0 mb-4">
                           <div className="flex items-start space-x-3 sm:space-x-4 min-w-0 flex-1">
-                            <Avatar className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
+                            <Avatar className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 rounded-xl">
                               <AvatarImage src={undefined} />
                               <AvatarFallback className="bg-gradient-to-r from-green-400 to-blue-500 text-white font-semibold text-sm sm:text-base">
                                 {(review.customer_profile?.first_name || 'C').slice(0,1)}
@@ -628,9 +586,9 @@ export default function DesignerSessionHistory() {
                               </AvatarFallback>
                             </Avatar>
                             <div className="flex-1 min-w-0">
-                              <h3 className="font-bold text-gray-900 mb-1 text-sm sm:text-base truncate">Live Design Session</h3>
-                              <p className="text-gray-600 font-medium text-sm truncate">{`${review.customer_profile?.first_name || ''} ${review.customer_profile?.last_name || ''}`.trim() || 'Customer'}</p>
-                              <p className="text-xs sm:text-sm text-gray-500">{new Date(review.review_date).toLocaleDateString()}</p>
+                              <h3 className="font-bold text-gray-900 text-sm sm:text-base truncate">Live Design Session</h3>
+                              <p className="text-gray-600 font-medium text-xs sm:text-sm truncate">{`${review.customer_profile?.first_name || ''} ${review.customer_profile?.last_name || ''}`.trim() || 'Customer'}</p>
+                              <p className="text-xs text-gray-500">{new Date(review.review_date).toLocaleDateString()}</p>
                             </div>
                           </div>
                           <div className="flex items-center space-x-2 self-start">
@@ -648,24 +606,18 @@ export default function DesignerSessionHistory() {
 
                         {review.review_text && (
                           <div className="bg-gradient-to-br from-blue-50 to-green-50 rounded-lg sm:rounded-xl p-3 sm:p-4 mb-3 sm:mb-4">
-                            <p className="text-gray-800 italic text-sm sm:text-base lg:text-lg leading-relaxed">"{review.review_text}"</p>
+                            <p className="text-gray-800 italic text-sm leading-relaxed line-clamp-4">"{review.review_text}"</p>
                           </div>
                         )}
 
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 pt-3 sm:pt-4 border-t border-gray-100">
-                          <div className="flex items-center space-x-2 sm:space-x-4">
-                            <span className="text-xs sm:text-sm text-gray-500">Session ID:</span>
-                            <span className="text-xs sm:text-sm font-medium text-gray-700 break-all">{review.session_id}</span>
-                          </div>
-                          {/* Reply to Feedback button commented out per request */}
-                          {/* <Button variant="outline" size="sm">
-                            <MessageCircle className="w-4 h-4 mr-2" />
-                            Reply to Feedback
-                          </Button> */}
+                        <div className="flex items-center justify-between gap-2 pt-3 border-t border-gray-100 mt-auto">
+                          <span className="text-[11px] sm:text-xs text-gray-500">Session: {review.session_id.slice(0, 10)}...</span>
+                          {/* Reply button intentionally hidden */}
                         </div>
                       </CardContent>
                     </Card>
-                  ))
+                    ))}
+                  </div>
                 )}
               </TabsContent>
             </Tabs>

@@ -35,7 +35,7 @@ export default function DesignerGuide() {
           details: ['List all your design services', 'Set competitive pricing', 'Create service packages', 'Define project timelines']
         }
       ],
-      image: 'professional designer setting up online portfolio on laptop in modern creative workspace with design tools sketches and color palettes visible clean minimalist aesthetic bright natural lighting creative studio environment'
+      image: 'https://images.unsplash.com/photo-1481277542470-605612bd2d61?auto=format&fit=crop&w=1400&q=80'
     },
     profile: {
       title: 'Optimize Your Profile for Success',
@@ -60,7 +60,7 @@ export default function DesignerGuide() {
           details: ['Encourage client reviews', 'Display certifications and awards', 'Show client logos and testimonials', 'Maintain high rating and response time']
         }
       ],
-      image: 'designer optimizing professional online profile with multiple screens showing portfolio website creative workspace with awards certificates and client testimonials visible professional branding setup modern aesthetic'
+      image: 'https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?auto=format&fit=crop&w=1400&q=80'
     },
     projects: {
       title: 'Managing Client Projects',
@@ -85,7 +85,7 @@ export default function DesignerGuide() {
           details: ['Go above and beyond expectations', 'Ask for feedback throughout process', 'Resolve issues quickly and professionally', 'Follow up after project completion']
         }
       ],
-      image: 'designer managing multiple client projects on computer screens with project management tools timeline charts and client communication interfaces visible organized creative workspace collaborative environment'
+      image: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&w=1400&q=80'
     },
     growth: {
       title: 'Growing Your Design Business',
@@ -110,7 +110,7 @@ export default function DesignerGuide() {
           details: ['Gradually increase your rates', 'Create efficient workflows', 'Focus on high-value clients', 'Develop passive income streams']
         }
       ],
-      image: 'successful designer celebrating business growth with charts showing increasing revenue client testimonials and awards displayed modern office setup with multiple monitors showing thriving design business metrics'
+      image: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1400&q=80'
     }
   };
 
@@ -154,9 +154,14 @@ export default function DesignerGuide() {
           <div className="order-2 lg:order-1">
             <div className="relative rounded-3xl overflow-hidden shadow-2xl">
               <img
-                src={`https://readdy.ai/api/search-image?query=${content[activeTab as keyof typeof content].image}&width=600&height=400&seq=designer-guide-${activeTab}&orientation=landscape`}
+                src={content[activeTab as keyof typeof content].image}
                 alt={content[activeTab as keyof typeof content].title}
                 className="w-full h-[400px] object-cover object-top"
+                loading="lazy"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  target.src = "/placeholder.svg";
+                }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
             </div>

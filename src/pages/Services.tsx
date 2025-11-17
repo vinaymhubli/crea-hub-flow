@@ -365,7 +365,7 @@ export default function Services() {
           {sortedServices.map((service) => (
             <Card 
               key={service.id} 
-              className="cursor-pointer hover:shadow-lg transition-shadow bg-white group"
+              className="cursor-pointer hover:shadow-lg transition-shadow bg-white group h-full flex flex-col"
               onClick={() => navigate(`/services/${service.id}`)}
             >
               <CardHeader className="p-0 relative overflow-hidden">
@@ -386,7 +386,7 @@ export default function Services() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="p-4">
+              <CardContent className="p-4 flex flex-col h-full">
                 <div className="flex items-center space-x-2 mb-3">
                   <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100">
                     <img
@@ -442,7 +442,7 @@ export default function Services() {
                   )}
                 </div>
                 
-                <div className="pt-3 border-t border-gray-100">
+                <div className="pt-3 border-t border-gray-100 mt-auto">
                   <Button 
                     variant="outline" 
                     className="w-full group-hover:bg-green-600 group-hover:text-white group-hover:border-green-600 transition-all"
