@@ -64,6 +64,7 @@ export function SlotManagementDialog({
   const [slots, setSlots] = useState<Slot[]>([]);
   const [newSlot, setNewSlot] = useState({ start_time: "09:00", end_time: "10:00" });
   const [editingSlot, setEditingSlot] = useState<string | null>(null);
+  const [editingValues, setEditingValues] = useState<Record<string, { start_time: string; end_time: string }>>({});
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const { toast } = useToast();
@@ -73,14 +74,13 @@ export function SlotManagementDialog({
     if (isOpen) {
       setSlots([...existingSlots]);
       setErrors([]);
+      setEditingSlot(null);
+      setEditingValues({});
     }
   }, [isOpen, existingSlots]);
 
-  const validateSlot = (slot: Slot, excludeId?: string): string[] => {
+  const validateSlot = (slot: Pick<Slot, 'start_time' | 'end_time'>, excludeId?: string): string[] => {
     const validationErrors: string[] = [];
-    const now = new Date();
-    const todayDow = now.getDay(); // 0=Sun..6=Sat
-    const isToday = dayOfWeek === todayDow;
 
     const toDate = (time: string) => new Date(`1970-01-01T${time}`);
     const start = toDate(slot.start_time);
@@ -100,19 +100,6 @@ export function SlotManagementDialog({
     // Enforce minimum duration of 30 minutes
     if (minutesDiff < 30) {
       validationErrors.push("Minimum slot duration is 30 minutes");
-    }
-
-    // For today's day, disallow past times
-    if (isToday) {
-      const hh = String(now.getHours()).padStart(2, '0');
-      const mm = String(now.getMinutes()).padStart(2, '0');
-      const current = `${hh}:${mm}`;
-      if (slot.start_time <= current) {
-        validationErrors.push("Start time cannot be in the past");
-      }
-      if (slot.end_time <= current) {
-        validationErrors.push("End time cannot be in the past");
-      }
     }
 
     // Check for overlaps with existing slots
@@ -153,8 +140,14 @@ export function SlotManagementDialog({
     setErrors([]);
   };
 
-  const updateSlot = (slotId: string, updatedSlot: Partial<Slot>) => {
-    const slotErrors = validateSlot({ ...slots.find(s => s.id === slotId)!, ...updatedSlot }, slotId);
+  const confirmSlotUpdate = (slotId: string) => {
+    const pendingValues = editingValues[slotId];
+    if (!pendingValues) {
+      setEditingSlot(null);
+      return;
+    }
+
+    const slotErrors = validateSlot({ ...slots.find(s => s.id === slotId)!, ...pendingValues }, slotId);
     
     if (slotErrors.length > 0) {
       setErrors(slotErrors);
@@ -162,14 +155,22 @@ export function SlotManagementDialog({
     }
 
     setSlots(slots.map(slot => 
-      slot.id === slotId ? { ...slot, ...updatedSlot } : slot
+      slot.id === slotId ? { ...slot, ...pendingValues } : slot
     ));
     setEditingSlot(null);
+    setEditingValues(prev => {
+      const { [slotId]: _, ...rest } = prev;
+      return rest;
+    });
     setErrors([]);
   };
 
   const removeSlot = (slotId: string) => {
     setSlots(slots.filter(slot => slot.id !== slotId));
+    setEditingValues(prev => {
+      const { [slotId]: _, ...rest } = prev;
+      return rest;
+    });
     setErrors([]);
   };
 
@@ -261,21 +262,39 @@ export function SlotManagementDialog({
                             <div className="flex items-center space-x-2 mt-2">
                               <Input
                                 type="time"
-                                value={slot.start_time}
-                                onChange={(e) => updateSlot(slot.id!, { start_time: e.target.value })}
+                                value={editingValues[slot.id!]?.start_time ?? slot.start_time}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  setEditingValues(prev => ({
+                                    ...prev,
+                                    [slot.id!]: {
+                                      start_time: value,
+                                      end_time: prev[slot.id!]?.end_time ?? slot.end_time
+                                    }
+                                  }));
+                                }}
                                 className="w-32"
                               />
                               <span className="text-gray-400">to</span>
                               <Input
                                 type="time"
-                                value={slot.end_time}
-                                onChange={(e) => updateSlot(slot.id!, { end_time: e.target.value })}
+                                value={editingValues[slot.id!]?.end_time ?? slot.end_time}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  setEditingValues(prev => ({
+                                    ...prev,
+                                    [slot.id!]: {
+                                      start_time: prev[slot.id!]?.start_time ?? slot.start_time,
+                                      end_time: value
+                                    }
+                                  }));
+                                }}
                                 className="w-32"
                               />
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => setEditingSlot(null)}
+                                onClick={() => confirmSlotUpdate(slot.id!)}
                                 className="rounded-xl border-green-300 text-green-600 hover:bg-green-50 hover:border-green-400 transition-all duration-200"
                               >
                                 <CheckCircle className="w-4 h-4" />
@@ -286,7 +305,16 @@ export function SlotManagementDialog({
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => setEditingSlot(slot.id!)}
+                                onClick={() => {
+                                  setEditingSlot(slot.id!);
+                                  setEditingValues(prev => ({
+                                    ...prev,
+                                    [slot.id!]: {
+                                      start_time: slot.start_time,
+                                      end_time: slot.end_time
+                                    }
+                                  }));
+                                }}
                                 className="rounded-xl hover:bg-blue-50 text-blue-600 hover:text-blue-700 transition-all duration-200"
                               >
                                 <Edit className="w-4 h-4" />
