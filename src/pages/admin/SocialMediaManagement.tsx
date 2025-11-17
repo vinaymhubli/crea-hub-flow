@@ -23,7 +23,8 @@ import {
   Twitter,
   Instagram,
   Linkedin,
-  Globe
+  Globe,
+  Youtube
 } from 'lucide-react';
 
 interface SocialMediaLink {
@@ -42,6 +43,7 @@ const PLATFORM_ICONS = {
   twitter: Twitter,
   instagram: Instagram,
   linkedin: Linkedin,
+  youtube: Youtube,
   default: Globe
 };
 
@@ -50,6 +52,7 @@ const PLATFORM_COLORS = {
   twitter: 'text-blue-400',
   instagram: 'text-pink-500',
   linkedin: 'text-blue-700',
+  youtube: 'text-red-600',
   default: 'text-gray-600'
 };
 
@@ -206,13 +209,13 @@ export default function SocialMediaManagement() {
   };
 
   const getPlatformIcon = (icon: string | null) => {
-    const iconKey = icon || 'default';
+    const iconKey = (icon || 'default').toLowerCase();
     const IconComponent = PLATFORM_ICONS[iconKey as keyof typeof PLATFORM_ICONS] || PLATFORM_ICONS.default;
     return <IconComponent className="h-4 w-4" />;
   };
 
   const getPlatformColor = (icon: string | null) => {
-    const iconKey = icon || 'default';
+    const iconKey = (icon || 'default').toLowerCase();
     return PLATFORM_COLORS[iconKey as keyof typeof PLATFORM_COLORS] || PLATFORM_COLORS.default;
   };
 

@@ -1,11 +1,40 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ArrowDown } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import heroBanner from '../assets/hero-banner.mp4';
 import heroThumbnail from '../assets/hero-thumbnail.webp';
 
 const HeroSection = () => {
+  const [homeLogo, setHomeLogo] = useState<string | null>(null);
+  const [taglineText, setTaglineText] = useState<string>('Connect with talented designers or showcase your skills');
+
+  // Fetch auth logo and tagline (same as login/signup)
+  useEffect(() => {
+    const fetchHomeLogo = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('logo_management')
+          .select('logo_url, tagline_text')
+          .eq('logo_type', 'auth_logo')
+          .eq('is_active', true)
+          .maybeSingle();
+
+        if (!error && data) {
+          setHomeLogo((data as any).logo_url);
+          if ((data as any).tagline_text) {
+            setTaglineText((data as any).tagline_text);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching home logo:', error);
+      }
+    };
+
+    fetchHomeLogo();
+  }, []);
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       <video
@@ -26,6 +55,18 @@ const HeroSection = () => {
       <div className="relative z-10 w-full">
         <div className="max-w-7xl mx-auto px-6 py-20 text-center">
           <div className="max-w-4xl mx-auto pb-4">
+            {homeLogo && (
+              <div className="mb-8">
+                <img
+                  src={homeLogo}
+                  alt="Platform Logo"
+                  className="h-20 md:h-24 w-auto mx-auto mb-4 object-contain drop-shadow-2xl"
+                />
+                <p className="text-lg md:text-xl text-gray-200 font-light">
+                  {taglineText}
+                </p>
+              </div>
+            )}
             <h1 className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white mb-8 !leading-tight tracking-tight" style={{ lineHeight: '1.2' }}>
               Connect with
               <span className="block text-green-500">

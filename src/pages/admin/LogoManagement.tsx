@@ -29,6 +29,7 @@ interface Logo {
   logo_type: string;
   logo_url: string;
   alt_text: string | null;
+  tagline_text: string | null;
   is_active: boolean;
   created_at: string | null;
   updated_at: string | null;
@@ -36,12 +37,14 @@ interface Logo {
 
 const LOGO_TYPES = {
   header_logo: 'Header Logo',
-  footer_logo: 'Footer Logo'
+  footer_logo: 'Footer Logo',
+  auth_logo: 'Auth Logo (Login/Signup/Home)'
 };
 
 const LOGO_DESCRIPTIONS = {
   header_logo: 'Logo displayed in the website header (top-left corner)',
-  footer_logo: 'Logo displayed in the website footer'
+  footer_logo: 'Logo displayed in the website footer',
+  auth_logo: 'Logo and tagline displayed on login, signup, and home page'
 };
 
 export default function LogoManagement() {
@@ -137,6 +140,7 @@ export default function LogoManagement() {
           .update({
             logo_url: logoUrl,
             alt_text: logo.alt_text,
+            tagline_text: logo.tagline_text,
             is_active: logo.is_active
           })
           .eq('id', logo.id);
@@ -155,6 +159,7 @@ export default function LogoManagement() {
             logo_type: logo.logo_type,
             logo_url: logoUrl,
             alt_text: logo.alt_text,
+            tagline_text: logo.tagline_text,
             is_active: logo.is_active
           });
 
@@ -222,6 +227,7 @@ export default function LogoManagement() {
         logo_type: 'header_logo',
         logo_url: '',
         alt_text: '',
+        tagline_text: '',
         is_active: true,
         created_at: null,
         updated_at: null
@@ -343,6 +349,7 @@ export default function LogoManagement() {
                   <TableHead>Preview</TableHead>
                   <TableHead>URL</TableHead>
                   <TableHead>Alt Text</TableHead>
+                  <TableHead>Tagline</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -395,6 +402,11 @@ export default function LogoManagement() {
                     </TableCell>
                     <TableCell>
                       <span className="text-sm">{logo.alt_text || 'No alt text'}</span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm text-muted-foreground">
+                        {logo.logo_type === 'auth_logo' ? (logo.tagline_text || 'No tagline') : 'N/A'}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <Badge variant={logo.is_active ? 'default' : 'secondary'}>
@@ -463,6 +475,7 @@ export default function LogoManagement() {
                 >
                   <option value="header_logo">Header Logo</option>
                   <option value="footer_logo">Footer Logo</option>
+                  <option value="auth_logo">Auth Logo (Login/Signup/Home)</option>
                 </select>
               </div>
 
@@ -542,6 +555,18 @@ export default function LogoManagement() {
                   placeholder="Logo description for accessibility"
                 />
               </div>
+              
+              {editingLogo.logo_type === 'auth_logo' && (
+                <div>
+                  <Label htmlFor="tagline_text">Tagline Text</Label>
+                  <Input
+                    id="tagline_text"
+                    value={editingLogo.tagline_text || ''}
+                    onChange={(e) => setEditingLogo({ ...editingLogo, tagline_text: e.target.value })}
+                    placeholder="Text displayed below logo on login/signup/home pages"
+                  />
+                </div>
+              )}
               
               <div className="flex items-center space-x-2">
                 <Switch

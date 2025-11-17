@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
@@ -12,6 +13,37 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [authLogo, setAuthLogo] = useState<string | null>(null);
+  const [taglineText, setTaglineText] = useState<string>('Connect with talented designers or showcase your skills');
+
+  // Fetch auth logo and tagline
+  useEffect(() => {
+    const fetchAuthLogo = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('logo_management')
+          .select('logo_url, tagline_text')
+          .eq('logo_type', 'auth_logo')
+          .eq('is_active', true)
+          .maybeSingle();
+
+        if (!error && data) {
+          setAuthLogo((data as any).logo_url);
+          if ((data as any).tagline_text) {
+            setTaglineText((data as any).tagline_text);
+          }
+        } else {
+          // Fallback to default logo
+          setAuthLogo('https://res.cloudinary.com/dknafpppp/image/upload/v1757697849/logo_final_2_x8c1wu.png');
+        }
+      } catch (error) {
+        console.error('Error fetching auth logo:', error);
+        setAuthLogo('https://res.cloudinary.com/dknafpppp/image/upload/v1757697849/logo_final_2_x8c1wu.png');
+      }
+    };
+
+    fetchAuthLogo();
+  }, []);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -50,6 +82,16 @@ export default function Login() {
       <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
+            {authLogo && (
+              <div className="mb-6">
+                <img
+                  src={authLogo}
+                  alt="Logo"
+                  className="h-16 w-auto mx-auto mb-4 object-contain"
+                />
+                <p className="text-gray-600">{taglineText}</p>
+              </div>
+            )}
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome back</h2>
             <p className="text-gray-600">Sign in to your account to continue</p>
           </div>
