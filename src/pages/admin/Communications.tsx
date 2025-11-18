@@ -32,7 +32,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import { checkForContactInfo } from "@/utils/chatMonitor";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 interface Announcement {
   id: string;
@@ -61,6 +61,7 @@ interface AnnouncementTemplate {
 
 export default function Communications() {
   const { user } = useAuth();
+  const { isAdmin } = useAdminAuth();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -193,12 +194,8 @@ export default function Communications() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Check for contact information (phone numbers and email addresses) in announcement message
-    const contactCheck = checkForContactInfo(formData.message.trim());
-    if (contactCheck.hasContactInfo) {
-      toast.error(contactCheck.message);
-      return;
-    }
+    // Admins can enter anything they want - no restrictions on contact info
+    // Only non-admin users would have restrictions (but this is an admin-only page anyway)
 
     try {
       if (editingAnnouncement) {
