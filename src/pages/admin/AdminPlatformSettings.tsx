@@ -44,7 +44,7 @@ export default function AdminPlatformSettings() {
     id: string;
     user_id: string;
     name: string;
-    hourly_rate: number | null; // stored as per-minute in some UIs, but DB trigger enforces minimum * 60 if hourly
+    hourly_rate: number | null; // Note: Despite the name "hourly_rate", this field stores rate per-minute
   }>>([]);
   const [designersLoading, setDesignersLoading] = useState<boolean>(false);
   const [designerSearch, setDesignerSearch] = useState<string>("");
@@ -277,11 +277,10 @@ export default function AdminPlatformSettings() {
         return;
       }
 
-      // designers.hourly_rate stores rate (some UIs use per-minute). We keep consistency with existing UI: per-minute input here.
-      const newHourly = newPerMinute * 60.0;
+      // designers.hourly_rate is stored as per-minute (despite the name), so we save directly
       const { error } = await supabase
         .from('designers')
-        .update({ hourly_rate: newHourly, updated_at: new Date().toISOString() })
+        .update({ hourly_rate: newPerMinute, updated_at: new Date().toISOString() })
         .eq('id', designerId);
       if (error) throw error;
       toast({ title: 'Rate updated', description: `Designer rate set to ₹${newPerMinute.toFixed(2)} / min` });
@@ -462,7 +461,8 @@ export default function AdminPlatformSettings() {
               ) : (
                 <div className="space-y-2">
                   {designers.map((d) => {
-                    const perMinute = d.hourly_rate ? Number(d.hourly_rate) / 60.0 : 0;
+                    // hourly_rate is stored as per-minute (despite the name), so use directly
+                    const perMinute = d.hourly_rate ? Number(d.hourly_rate) : 0;
                     return (
                       <div key={d.id} className="flex items-center justify-between p-3 border rounded-lg">
                         <div className="min-w-0 flex-1 mr-3">

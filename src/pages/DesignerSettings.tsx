@@ -55,6 +55,7 @@ export default function DesignerSettings() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [updatingPassword, setUpdatingPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [minRate, setMinRate] = useState<number>(5.0);
   
   const { user, profile, signOut } = useAuth();
 
@@ -67,6 +68,33 @@ export default function DesignerSettings() {
     ? `${profile.first_name} ${profile.last_name}`
     : user?.email?.split('@')[0] || 'Designer';
   const { toast } = useToast();
+
+  // Load platform minimum rate
+  useEffect(() => {
+    const loadMinRate = async () => {
+      try {
+        const { data, error } = await (supabase as any).rpc('get_min_rate_per_minute');
+        if (!error) {
+          const value = Array.isArray(data) ? parseFloat(data?.[0]) : parseFloat(data as any);
+          if (!isNaN(value)) setMinRate(value);
+          return;
+        }
+        // Fallback to platform_settings column if RPC not available
+        const { data: rows } = await (supabase as any)
+          .from('platform_settings')
+          .select('min_rate_per_minute')
+          .order('updated_at', { ascending: false })
+          .limit(1);
+        if (rows && rows.length > 0) {
+          const v = parseFloat(rows[0].min_rate_per_minute ?? 5.0);
+          if (!isNaN(v)) setMinRate(v);
+        }
+      } catch (e) {
+        // Keep default 5.0 if anything fails
+      }
+    };
+    loadMinRate();
+  }, []);
 
   // Export sessions and earnings as CSV files (simple multi-file download)
   const handleExportAccountData = async () => {
@@ -554,11 +582,24 @@ export default function DesignerSettings() {
                           <Input 
                             type="number"
                             value={designerProfile?.hourly_rate || 0}
-                            onChange={(e) => updateDesignerProfile({ hourly_rate: Number(e.target.value) })}
+                            onChange={(e) => {
+                              const val = parseFloat(e.target.value) || 0;
+                              if (val < minRate) {
+                                toast({
+                                  title: 'Below platform minimum',
+                                  description: `You cannot set below ₹${minRate.toFixed(2)} / min`,
+                                  variant: 'destructive'
+                                });
+                                updateDesignerProfile({ hourly_rate: minRate });
+                              } else {
+                                updateDesignerProfile({ hourly_rate: val });
+                              }
+                            }}
                             className="flex-1 border-gray-200 focus:border-green-400"
                           />
                           <span className="text-gray-500">/min</span>
                         </div>
+                        <p className="text-xs text-gray-500 mt-1">Minimum allowed: ₹{minRate.toFixed(2)} / min</p>
                       </div>
 
                       <div>
