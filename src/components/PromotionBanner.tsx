@@ -3,7 +3,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
-  X, 
   Megaphone, 
   TrendingUp, 
   Target, 
@@ -42,43 +41,44 @@ interface PromotionBannerProps {
 export function PromotionBanner({ location = 'homepage', className = '' }: PromotionBannerProps) {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dismissedPromotions, setDismissedPromotions] = useState<string[]>([]);
   const { user, profile } = useAuth();
 
   useEffect(() => {
     fetchPromotions();
-    loadDismissedPromotions();
-  }, [location]);
+  }, [location, profile]);
+
+  // Map user_type to target_audience format
+  const mapUserTypeToTargetAudience = (userType?: string): string => {
+    if (!userType) return 'all';
+    
+    switch (userType) {
+      case 'client':
+        return 'customers';
+      case 'designer':
+        return 'designers';
+      case 'admin':
+        return 'all'; // Admins see all promotions
+      default:
+        return 'all';
+    }
+  };
 
   const fetchPromotions = async () => {
     try {
       setLoading(true);
-      const userType = profile?.user_type || 'all';
-      const { data, error } = await supabase.rpc('get_active_promotions', {
+      const targetAudience = mapUserTypeToTargetAudience(profile?.user_type);
+      const { data, error } = await (supabase as any).rpc('get_active_promotions', {
         p_location: location,
-        p_user_type: userType
+        p_user_type: targetAudience
       });
 
       if (error) throw error;
-      setPromotions(data || []);
+      setPromotions((data || []) as Promotion[]);
     } catch (error) {
       console.error('Error fetching promotions:', error);
     } finally {
       setLoading(false);
     }
-  };
-
-  const loadDismissedPromotions = () => {
-    const dismissed = localStorage.getItem('dismissed_promotions');
-    if (dismissed) {
-      setDismissedPromotions(JSON.parse(dismissed));
-    }
-  };
-
-  const dismissPromotion = (promotionId: string) => {
-    const newDismissed = [...dismissedPromotions, promotionId];
-    setDismissedPromotions(newDismissed);
-    localStorage.setItem('dismissed_promotions', JSON.stringify(newDismissed));
   };
 
   const getPromotionIcon = (type: string) => {
@@ -125,7 +125,6 @@ export function PromotionBanner({ location = 'homepage', className = '' }: Promo
   };
 
   const activePromotions = promotions
-    .filter(promotion => !dismissedPromotions.includes(promotion.id))
     .sort((a, b) => b.priority - a.priority);
 
   if (loading || activePromotions.length === 0) {
@@ -202,41 +201,29 @@ export function PromotionBanner({ location = 'homepage', className = '' }: Promo
                 </div>
               </div>
 
-              <div className="flex items-center space-x-2">
-                {promotion.cta_url && (
-                  <Button
-                    size="sm"
-                    className="font-medium"
-                    style={{
-                      backgroundColor: promotion.banner_text_color,
-                      color: promotion.banner_background_color
-                    }}
-                    onClick={() => window.open(promotion.cta_url, '_blank')}
-                  >
-                    {promotion.cta_text}
-                    <ExternalLink className="w-4 h-4 ml-1" />
-                  </Button>
-                )}
-                
+              {promotion.cta_url && (
                 <Button
                   size="sm"
-                  variant="ghost"
-                  onClick={() => dismissPromotion(promotion.id)}
-                  className="opacity-70 hover:opacity-100"
-                  style={{ color: promotion.banner_text_color }}
+                  className="font-medium"
+                  style={{
+                    backgroundColor: promotion.banner_text_color,
+                    color: promotion.banner_background_color
+                  }}
+                  onClick={() => window.open(promotion.cta_url, '_blank')}
                 >
-                  <X className="w-4 h-4" />
+                  {promotion.cta_text}
+                  <ExternalLink className="w-4 h-4 ml-1" />
                 </Button>
-              </div>
+              )}
             </div>
 
             {/* Banner Image */}
             {promotion.banner_image_url && (
-              <div className="mt-4">
+              <div className="mt-4 w-full flex justify-center">
                 <img
                   src={promotion.banner_image_url}
                   alt={promotion.title}
-                  className="w-full h-32 object-cover rounded-lg"
+                  className="max-w-full max-h-64 w-auto h-auto object-contain rounded-lg"
                 />
               </div>
             )}

@@ -550,13 +550,20 @@ export function PromotionsManager() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Users</SelectItem>
-                        <SelectItem value="customers">Customers Only</SelectItem>
-                        <SelectItem value="designers">Designers Only</SelectItem>
-                        <SelectItem value="new_users">New Users</SelectItem>
-                        <SelectItem value="existing_users">Existing Users</SelectItem>
+                        <SelectItem value="all">All Users - Show to everyone</SelectItem>
+                        <SelectItem value="customers">Customers Only - Only users who are clients/customers</SelectItem>
+                        <SelectItem value="designers">Designers Only - Only users who are designers</SelectItem>
+                        <SelectItem value="new_users">New Users - Users who just signed up</SelectItem>
+                        <SelectItem value="existing_users">Existing Users - Users who have been on platform for a while</SelectItem>
                       </SelectContent>
                     </Select>
+                    <p className="text-xs text-gray-500">
+                      {formData.target_audience === 'all' && 'Promotion will be visible to all users'}
+                      {formData.target_audience === 'customers' && 'Promotion will only show to customers (clients)'}
+                      {formData.target_audience === 'designers' && 'Promotion will only show to designers'}
+                      {formData.target_audience === 'new_users' && 'Promotion will only show to newly registered users'}
+                      {formData.target_audience === 'existing_users' && 'Promotion will only show to existing users (not new)'}
+                    </p>
                   </div>
                   <div className="space-y-2">
                     <Label>Priority</Label>
@@ -611,11 +618,11 @@ export function PromotionsManager() {
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
                     {imagePreview || formData.banner_image_url ? (
                       <div className="space-y-4">
-                        <div className="relative inline-block">
+                        <div className="relative inline-block w-full flex justify-center">
                           <img
                             src={imagePreview || formData.banner_image_url}
                             alt="Banner preview"
-                            className="max-w-full max-h-48 rounded-lg mx-auto"
+                            className="max-w-full max-h-64 w-auto h-auto object-contain rounded-lg"
                           />
                           <Button
                             type="button"
@@ -863,13 +870,20 @@ export function PromotionsManager() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Users</SelectItem>
-                      <SelectItem value="customers">Customers Only</SelectItem>
-                      <SelectItem value="designers">Designers Only</SelectItem>
-                      <SelectItem value="new_users">New Users</SelectItem>
-                      <SelectItem value="existing_users">Existing Users</SelectItem>
+                      <SelectItem value="all">All Users - Show to everyone</SelectItem>
+                      <SelectItem value="customers">Customers Only - Only users who are clients/customers</SelectItem>
+                      <SelectItem value="designers">Designers Only - Only users who are designers</SelectItem>
+                      <SelectItem value="new_users">New Users - Users who just signed up</SelectItem>
+                      <SelectItem value="existing_users">Existing Users - Users who have been on platform for a while</SelectItem>
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-gray-500">
+                    {formData.target_audience === 'all' && 'Promotion will be visible to all users'}
+                    {formData.target_audience === 'customers' && 'Promotion will only show to customers (clients)'}
+                    {formData.target_audience === 'designers' && 'Promotion will only show to designers'}
+                    {formData.target_audience === 'new_users' && 'Promotion will only show to newly registered users'}
+                    {formData.target_audience === 'existing_users' && 'Promotion will only show to existing users (not new)'}
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label>Priority</Label>
@@ -924,11 +938,11 @@ export function PromotionsManager() {
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
                   {imagePreview || formData.banner_image_url ? (
                     <div className="space-y-4">
-                      <div className="relative inline-block">
+                      <div className="relative inline-block w-full flex justify-center">
                         <img
                           src={imagePreview || formData.banner_image_url}
                           alt="Banner preview"
-                          className="max-w-full max-h-48 rounded-lg mx-auto"
+                          className="max-w-full max-h-64 w-auto h-auto object-contain rounded-lg"
                         />
                         <Button
                           type="button"
