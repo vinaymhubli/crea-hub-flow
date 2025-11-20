@@ -179,7 +179,17 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
     const screenTrackRef = useRef<ILocalVideoTrack | null>(null);
     const screenSharingRef = useRef(false);
     // Track which remote user is screen sharing
-    const [remoteScreenSharingUser, setRemoteScreenSharingUser] = useState<string | number | null>(null);
+    const [remoteScreenSharingUser, setRemoteScreenSharingUser] = useState<
+      string | number | null
+    >(null);
+
+    const remoteVideoPlayConfig = useMemo(
+      () =>
+        remoteScreenSharing || remoteScreenSharingState
+          ? ({ fit: "contain" } as const)
+          : undefined,
+      [remoteScreenSharing, remoteScreenSharingState]
+    );
 
     // Store original state before screen sharing
     const [originalVideoState, setOriginalVideoState] = useState<boolean>(true);
@@ -1008,14 +1018,14 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
 
           // Play the screen track immediately
           try {
-            await screenTrack.play("local-player");
+            await screenTrack.play("local-player", { fit: "contain" });
             console.log("✅ Screen track playing immediately");
           } catch (playError) {
             console.warn("❌ Immediate screen play failed:", playError);
             // Retry after a short delay
             setTimeout(async () => {
               try {
-                await screenTrack.play("local-player");
+                await screenTrack.play("local-player", { fit: "contain" });
                 console.log("✅ Screen track playing after retry");
               } catch (retryError) {
                 console.warn("❌ Screen track retry failed:", retryError);
@@ -1134,7 +1144,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
         if (screenSharing && screenTrackRef.current) {
           try {
             console.log("🖥️ Attempting to play screen share track");
-            await screenTrackRef.current.play("local-player");
+            await screenTrackRef.current.play("local-player", { fit: "contain" });
             console.log("✅ Screen share playing successfully");
           } catch (e) {
             console.warn("❌ Screen play failed:", e);
@@ -1142,7 +1152,9 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
             setTimeout(async () => {
               try {
                 console.log("🔄 Retrying screen share play");
-                await screenTrackRef.current?.play("local-player");
+                await screenTrackRef.current?.play("local-player", {
+                  fit: "contain",
+                });
                 console.log("✅ Screen share retry success");
               } catch (retryError) {
                 console.warn("❌ Screen share retry failed:", retryError);
@@ -1185,7 +1197,9 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
         const forcePlayScreen = async () => {
           try {
             console.log("🖥️ Force playing screen share track");
-            await screenTrackRef.current.play("local-player");
+            await screenTrackRef.current.play("local-player", {
+              fit: "contain",
+            });
             console.log("✅ Force play screen share successful");
           } catch (e) {
             console.warn("❌ Force play screen share failed:", e);
@@ -1209,7 +1223,10 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
             console.log(
               `🎥 Attempting to play remote video for user ${u.uid} on main player`
             );
-            await u.videoTrack.play(`remote-player-${u.uid}`);
+            await u.videoTrack.play(
+              `remote-player-${u.uid}`,
+              remoteVideoPlayConfig
+            );
             console.log(
               `✅ Remote video playing for user ${u.uid} on main player`
             );
@@ -1242,7 +1259,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
           }
         }
       });
-    }, [remoteUsers, fullscreenVideo]);
+    }, [remoteUsers, fullscreenVideo, remoteVideoPlayConfig]);
 
     // Force play remote video when screen sharing is active
     useEffect(() => {
@@ -1252,7 +1269,10 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
           if (u.videoTrack && u.hasVideo) {
             try {
               console.log(`🖥️ Force playing remote video for user ${u.uid} during screen share`);
-              await u.videoTrack.play(`remote-player-${u.uid}`);
+            await u.videoTrack.play(
+              `remote-player-${u.uid}`,
+              remoteVideoPlayConfig
+            );
               console.log(`✅ Force play successful for user ${u.uid}`);
             } catch (e) {
               console.warn(`❌ Force play failed for user ${u.uid}:`, e);
@@ -1260,7 +1280,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
           }
         });
       }
-    }, [remoteScreenSharingState, remoteScreenSharing, remoteUsers]);
+    }, [remoteScreenSharingState, remoteScreenSharing, remoteUsers, remoteVideoPlayConfig]);
 
     // Force play local video when screen sharing is active (designer side)
     useEffect(() => {
@@ -1269,14 +1289,18 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
         const playLocalScreen = async () => {
           try {
             console.log("🖥️ Force playing local screen share");
-            await screenTrackRef.current.play("local-player");
+            await screenTrackRef.current.play("local-player", {
+              fit: "contain",
+            });
             console.log("✅ Force play local screen share successful");
           } catch (e) {
             console.warn("❌ Force play local screen share failed:", e);
             // Retry after a short delay
             setTimeout(async () => {
               try {
-                await screenTrackRef.current?.play("local-player");
+                await screenTrackRef.current?.play("local-player", {
+                  fit: "contain",
+                });
                 console.log("✅ Force play local screen share retry successful");
               } catch (retryError) {
                 console.warn("❌ Force play local screen share retry failed:", retryError);
@@ -1308,7 +1332,8 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
 
     // Force video play when screen sharing layout is active
     useEffect(() => {
-      const shouldShowScreenShare = screenSharing || remoteScreenSharingState;
+      const shouldShowScreenShare =
+        screenSharing || remoteScreenSharingState || remoteScreenSharing;
       if (shouldShowScreenShare) {
         console.log("🖥️ Screen sharing layout is active, forcing video play");
         
@@ -1317,7 +1342,9 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
           setTimeout(async () => {
             try {
               console.log("🖥️ Force playing local screen share in main area");
-              await screenTrackRef.current.play("local-player");
+              await screenTrackRef.current.play("local-player", {
+                fit: "contain",
+              });
               console.log("✅ Local screen share playing in main area");
             } catch (e) {
               console.warn("❌ Failed to play local screen share in main area:", e);
@@ -1332,7 +1359,9 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
               setTimeout(async () => {
                 try {
                   console.log(`🖥️ Force playing remote screen share for user ${u.uid} in main area`);
-                  await u.videoTrack.play(`remote-player-${u.uid}`);
+                  await u.videoTrack.play(`remote-player-${u.uid}`, {
+                    fit: "contain",
+                  });
                   console.log(`✅ Remote screen share playing for user ${u.uid} in main area`);
                 } catch (e) {
                   console.warn(`❌ Failed to play remote screen share for user ${u.uid} in main area:`, e);

@@ -1240,7 +1240,7 @@ export default function SessionSidePanel({
   return (
     <>
       {/* Sidebar Toggle Button */}
-      {!mobileMode && (
+      {/* {!mobileMode && (
         <button
           onClick={() => setShowSidebar(!showSidebar)}
           className="fixed top-1/2 right-4 z-50 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full shadow-lg transition-all duration-200"
@@ -1276,7 +1276,7 @@ export default function SessionSidePanel({
             </svg>
           )}
         </button>
-      )}
+      )} */}
 
       {/* Sidebar */}
       {showSidebar && (

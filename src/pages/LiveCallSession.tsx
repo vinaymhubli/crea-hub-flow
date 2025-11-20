@@ -63,6 +63,7 @@ export default function LiveCallSession() {
   const [sessionApprovalRequest, setSessionApprovalRequest] = useState<any>(null);
   const [uploadedFile, setUploadedFile] = useState<{url: string, name: string} | null>(null);
   const [sessionData, setSessionData] = useState<any>(null);
+  const [isMobileSidePanelOpen, setIsMobileSidePanelOpen] = useState(false);
   
   // Rate and multiplier approval dialogs
   const [showRateApprovalDialog, setShowRateApprovalDialog] = useState(false);
@@ -79,6 +80,21 @@ export default function LiveCallSession() {
     () => supabase.channel(`session_control_${sessionId}`),
     [sessionId]
   );
+
+  // Close mobile panel if viewport grows beyond lg breakpoint
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setIsMobileSidePanelOpen(false);
+      }
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Load session data on component mount
   useEffect(() => {
@@ -1290,7 +1306,7 @@ export default function LiveCallSession() {
   // Component is ready to render with stable props
 
   return (
-    <div className="w-full h-screen flex">
+    <div className="w-full h-screen flex flex-col lg:flex-row">
       {/* Screen Share Notification */}
       {screenShareNotification && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
@@ -1300,7 +1316,27 @@ export default function LiveCallSession() {
       )}
       <div className="flex-1 min-w-0 flex flex-col">
         {/* Top status bar with timer - pause button commented out */}
-        <div className="w-full flex items-center justify-end gap-3 px-3 py-2 border-b bg-white/80 backdrop-blur">
+        <div className="w-full flex items-center justify-between lg:justify-end gap-3 px-3 py-2 border-b bg-white/80 backdrop-blur">
+          <button
+            type="button"
+            onClick={() => setIsMobileSidePanelOpen(true)}
+            className="lg:hidden inline-flex items-center gap-2 px-3 py-1 text-xs font-semibold rounded-full bg-zinc-900 text-white shadow-sm"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 6v12m6-6H6"
+              />
+            </svg>
+            Session details
+          </button>
           <div className="text-sm font-medium tabular-nums">
             {Math.floor(duration / 60)}:
             {(duration % 60).toString().padStart(2, "0")}
@@ -1360,22 +1396,48 @@ export default function LiveCallSession() {
         />
         {/* Remove old screen share modal - using native Agora sharing */}
       </div>
-      <SessionSidePanel
-        sessionId={sessionId}
-        designerName={designerName}
-        customerName={customerName}
-        isDesigner={!!isDesigner}
-        duration={duration}
-        rate={rate}
-        balance={customerBalance}
-        onPauseSession={handlePauseSession}
-        onResumeSession={handleResumeSession}
-        isPaused={isPaused}
-        userId={user.id}
-        onRateChange={handleRateChange}
-        onMultiplierChange={handleMultiplierChange}
-        formatMultiplier={formatMultiplier}
-      />
+      {isMobileSidePanelOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/40 z-30 transition-opacity"
+          onClick={() => setIsMobileSidePanelOpen(false)}
+        />
+      )}
+      <div
+        className={`fixed inset-x-0 bottom-0 z-40 max-h-[92vh] bg-white rounded-t-3xl shadow-2xl transition-transform duration-300 ease-out overflow-hidden pointer-events-auto ${
+          isMobileSidePanelOpen
+            ? "translate-y-0"
+            : "translate-y-full pointer-events-none"
+        } lg:translate-y-0 lg:static lg:z-auto lg:max-h-none lg:rounded-none lg:shadow-none lg:pointer-events-auto lg:border-l lg:w-[380px] xl:w-[420px] lg:flex lg:flex-col lg:h-full`}
+      >
+        <div className="lg:hidden flex items-center justify-between px-4 py-3 border-b bg-white">
+          <span className="text-sm font-semibold">Session details</span>
+          <button
+            type="button"
+            onClick={() => setIsMobileSidePanelOpen(false)}
+            className="text-sm font-medium text-gray-500 hover:text-gray-800"
+          >
+            Close
+          </button>
+        </div>
+        <div className="h-full overflow-y-auto">
+          <SessionSidePanel
+            sessionId={sessionId}
+            designerName={designerName}
+            customerName={customerName}
+            isDesigner={!!isDesigner}
+            duration={duration}
+            rate={rate}
+            balance={customerBalance}
+            onPauseSession={handlePauseSession}
+            onResumeSession={handleResumeSession}
+            isPaused={isPaused}
+            userId={user.id}
+            onRateChange={handleRateChange}
+            onMultiplierChange={handleMultiplierChange}
+            formatMultiplier={formatMultiplier}
+          />
+        </div>
+      </div>
 
       {/* Enhanced Session Flow Dialogs */}
       <SessionApprovalDialog
