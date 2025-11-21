@@ -511,6 +511,32 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
             `📡 User published: ${user.uid}, mediaType: ${mediaType}, hasVideo: ${user.hasVideo}, hasAudio: ${user.hasAudio}`
           );
           await client.subscribe(user, mediaType);
+          
+          // Immediately try to play video after subscription
+          if (mediaType === "video" && user.videoTrack) {
+            console.log(`🎥 Immediately attempting to play video for user ${user.uid} after subscription`);
+            setTimeout(async () => {
+              try {
+                const playConfig = remoteVideoPlayConfig || {};
+                console.log(`🎥 Playing with config:`, playConfig);
+                await user.videoTrack.play(`remote-player-${user.uid}`, playConfig);
+                console.log(`✅ Immediate play successful for user ${user.uid}`);
+              } catch (playError) {
+                console.warn(`❌ Immediate play failed for user ${user.uid}:`, playError);
+                // Retry after a delay
+                setTimeout(async () => {
+                  try {
+                    const playConfig = remoteVideoPlayConfig || {};
+                    await user.videoTrack?.play(`remote-player-${user.uid}`, playConfig);
+                    console.log(`✅ Retry play successful for user ${user.uid}`);
+                  } catch (retryError) {
+                    console.warn(`❌ Retry play failed for user ${user.uid}:`, retryError);
+                  }
+                }, 500);
+              }
+            }, 100);
+          }
+          
           setRemoteUsers((prev) => {
             const existing = prev[user.uid as any] || { uid: user.uid };
             if (mediaType === "video") {
@@ -1335,7 +1361,11 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
       const shouldShowScreenShare =
         screenSharing || remoteScreenSharingState || remoteScreenSharing;
       if (shouldShowScreenShare) {
-        console.log("🖥️ Screen sharing layout is active, forcing video play");
+        console.log("🖥️ Screen sharing layout is active, forcing video play", {
+          screenSharing,
+          remoteScreenSharingState,
+          remoteScreenSharing
+        });
         
         // Force play local screen share if active
         if (screenSharing && screenTrackRef.current) {
@@ -1352,26 +1382,57 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
           }, 100);
         }
         
-        // Force play remote screen share if active
+        // Force play remote screen share if active - with aggressive retry
         if (remoteScreenSharingState || remoteScreenSharing) {
+          console.log("🖥️ Remote screen sharing detected, forcing play for all remote users");
+          
+          // Try immediately
           Object.values(remoteUsers).forEach(async (u) => {
             if (u.videoTrack && u.hasVideo) {
-              setTimeout(async () => {
+              const playRemoteVideo = async (attempt = 1) => {
                 try {
-                  console.log(`🖥️ Force playing remote screen share for user ${u.uid} in main area`);
+                  console.log(`🖥️ [Attempt ${attempt}] Force playing remote screen share for user ${u.uid}`);
                   await u.videoTrack.play(`remote-player-${u.uid}`, {
                     fit: "contain",
                   });
-                  console.log(`✅ Remote screen share playing for user ${u.uid} in main area`);
+                  console.log(`✅ Remote screen share playing for user ${u.uid}`);
                 } catch (e) {
-                  console.warn(`❌ Failed to play remote screen share for user ${u.uid} in main area:`, e);
+                  console.warn(`❌ [Attempt ${attempt}] Failed to play remote screen share for user ${u.uid}:`, e);
+                  // Retry up to 5 times with increasing delays
+                  if (attempt < 5) {
+                    setTimeout(() => playRemoteVideo(attempt + 1), attempt * 500);
+                  }
                 }
-              }, 100);
+              };
+              
+              playRemoteVideo();
             }
           });
+          
+          // Also set up a periodic retry for the first few seconds
+          const retryInterval = setInterval(() => {
+            Object.values(remoteUsers).forEach(async (u) => {
+              if (u.videoTrack && u.hasVideo) {
+                try {
+                  console.log(`🖥️ [Periodic retry] Playing remote screen share for user ${u.uid}`);
+                  await u.videoTrack.play(`remote-player-${u.uid}`, {
+                    fit: "contain",
+                  });
+                  console.log(`✅ [Periodic retry] Success for user ${u.uid}`);
+                } catch (e) {
+                  // Silent fail for periodic retries
+                }
+              }
+            });
+          }, 1000);
+          
+          // Clear interval after 10 seconds
+          setTimeout(() => clearInterval(retryInterval), 10000);
+          
+          return () => clearInterval(retryInterval);
         }
       }
-    }, [screenSharing, remoteScreenSharingState, remoteScreenSharing]);
+    }, [screenSharing, remoteScreenSharingState, remoteScreenSharing, remoteUsers]);
 
     // Helper function to switch video to fullscreen
     const handleVideoClick = useCallback(
@@ -1388,16 +1449,24 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
         <div className="flex-1 relative overflow-hidden">
           {/* Google Meet style video layout */}
           {(() => {
-            const shouldShowScreenShare = screenSharing || remoteScreenSharingState;
+            const shouldShowScreenShare = screenSharing || remoteScreenSharingState || remoteScreenSharing;
             console.log("🖥️ LAYOUT DECISION:", {
               screenSharing,
               remoteScreenSharingState,
+              remoteScreenSharing,
               shouldShowScreenShare
             });
             return shouldShowScreenShare;
           })() ? (
             /* Screen sharing layout - ALWAYS show screen share as main content */
             <div className="w-full h-full relative">
+              {/* Debug indicator */}
+              <div className="absolute top-20 left-4 bg-yellow-500/90 text-black px-3 py-2 rounded-lg text-xs z-50">
+                Screen Share Layout Active
+                <div className="text-[10px] mt-1">
+                  Local: {screenSharing ? 'YES' : 'NO'} | Remote: {remoteScreenSharingState ? 'YES' : 'NO'} | Prop: {remoteScreenSharing ? 'YES' : 'NO'}
+                </div>
+              </div>
               {/* Main screen share area - takes full space */}
               <div className="w-full h-full relative bg-black">
                 {/* Screen share content - always full size when screen sharing is active */}
@@ -1411,9 +1480,35 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
                     />
                   ) : (
                     // Customer side - show remote screen share
-                    Object.values(remoteUsers)
-                      .filter((u) => u.hasVideo)
-                      .map((u) => {
+                    (() => {
+                      const remoteUsersArray = Object.values(remoteUsers);
+                      console.log("🖥️ ===== REMOTE SCREEN SHARE RENDER =====");
+                      console.log("🖥️ Total remote users:", remoteUsersArray.length);
+                      console.log("🖥️ Remote users with video:", remoteUsersArray.filter((u) => u.hasVideo).length);
+                      console.log("🖥️ remoteScreenSharing prop:", remoteScreenSharing);
+                      console.log("🖥️ remoteScreenSharingState:", remoteScreenSharingState);
+                      console.log("🖥️ Remote users details:", remoteUsersArray.map(u => ({
+                        uid: u.uid,
+                        hasVideo: u.hasVideo,
+                        hasVideoTrack: !!u.videoTrack
+                      })));
+                      
+                      const usersWithVideo = remoteUsersArray.filter((u) => u.hasVideo);
+                      
+                      if (usersWithVideo.length === 0) {
+                        // Show loading message if broadcast received but video not ready yet
+                        return (
+                          <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+                            <div className="text-center">
+                              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white mx-auto mb-4"></div>
+                              <p className="text-white text-lg">Loading screen share...</p>
+                              <p className="text-gray-400 text-sm mt-2">Waiting for video stream</p>
+                            </div>
+                          </div>
+                        );
+                      }
+                      
+                      return usersWithVideo.map((u) => {
                         console.log("🖥️ Rendering remote screen share for user:", u.uid, "hasVideo:", u.hasVideo);
                         return (
                           <div key={u.uid as any} className="absolute inset-0">
@@ -1424,20 +1519,30 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
                             />
                           </div>
                         );
-                      })
+                      });
+                    })()
                   )}
 
                   {/* Screen sharing indicator - only show when actually sharing */}
-                  {(screenSharing || remoteScreenSharingState) && (
-                    <div className="absolute top-4 left-4 bg-red-500/90 backdrop-blur-sm text-white px-3 py-2 rounded-lg flex items-center gap-2 shadow-lg">
-                      <ScreenShare className="w-4 h-4" />
-                      <span className="text-sm font-medium">
-                        {screenSharing
-                          ? "You are presenting"
-                          : `${isDesigner ? "Customer" : "Designer"} is presenting`}
-                      </span>
-                    </div>
-                  )}
+                  {(() => {
+                    const showIndicator = screenSharing || remoteScreenSharingState || remoteScreenSharing;
+                    console.log("🖥️ Screen sharing indicator check:", {
+                      screenSharing,
+                      remoteScreenSharingState,
+                      remoteScreenSharing,
+                      showIndicator
+                    });
+                    return showIndicator && (
+                      <div className="absolute top-4 left-4 bg-red-500/90 backdrop-blur-sm text-white px-3 py-2 rounded-lg flex items-center gap-2 shadow-lg">
+                        <ScreenShare className="w-4 h-4" />
+                        <span className="text-sm font-medium">
+                          {screenSharing
+                            ? "You are presenting"
+                            : `${isDesigner ? "Customer" : "Designer"} is presenting`}
+                        </span>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
 
@@ -1756,8 +1861,8 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
               <ScreenShare className="w-5 h-5" />
             </Button>
 
-            {/* Pause/Resume button - only for designer when NOT screen sharing */}
-            {isDesigner && !screenSharing && (
+            {/* Pause/Resume button - only for designer when NO screen sharing is active */}
+            {isDesigner && !screenSharing && !remoteScreenSharingState && !remoteScreenSharing && (
               <Button
                 variant={isPaused ? "outline" : "destructive"}
                 size="lg"
@@ -1777,8 +1882,8 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
               </Button>
             )}
 
-            {/* Rate change button - only for designer when NOT screen sharing */}
-            {isDesigner && !screenSharing && (
+            {/* Rate change button - only for designer when NO screen sharing is active */}
+            {isDesigner && !screenSharing && !remoteScreenSharingState && !remoteScreenSharing && (
               <div className="relative rate-input-container">
                 <Button
                   variant="outline"
@@ -1827,8 +1932,8 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
               </div>
             )}
 
-            {/* Format Multiplier button - only for designer when NOT screen sharing */}
-            {isDesigner && !screenSharing && (
+            {/* Format Multiplier button - only for designer when NO screen sharing is active */}
+            {isDesigner && !screenSharing && !remoteScreenSharingState && !remoteScreenSharing && (
               <Button
                 variant="outline"
                 size="lg"
