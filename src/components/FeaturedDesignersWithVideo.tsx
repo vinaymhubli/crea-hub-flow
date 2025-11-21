@@ -29,6 +29,7 @@ import LiveSessionRequestDialog from "@/components/LiveSessionRequestDialog";
 import { ScreenShareModal } from "@/components/ScreenShareModal";
 import { cleanupStaleSessions } from "@/utils/sessionCleanup";
 import { checkDesignerBookingAvailability } from "@/utils/availabilityUtilsSlots";
+import { useDesignerAverageRatings } from "@/hooks/useDesignerAverageRatings";
 
 interface FeaturedDesigner {
   id: string;
@@ -49,6 +50,10 @@ interface FeaturedDesigner {
   response_time?: string;
   portfolio_items?: any[];
   social_media_links?: any[];
+  profiles?: {
+    first_name?: string | null;
+    last_name?: string | null;
+  } | null;
 }
 
 interface VideoContent {
@@ -73,6 +78,9 @@ export function FeaturedDesignersWithVideo() {
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [selectedDesigner, setSelectedDesigner] =
     useState<FeaturedDesigner | null>(null);
+  const { ratings: designerRatings } = useDesignerAverageRatings(
+    featuredDesigners
+  );
   const [showLiveSessionDialog, setShowLiveSessionDialog] = useState(false);
   const [showScreenShare, setShowScreenShare] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
@@ -205,6 +213,12 @@ export function FeaturedDesignersWithVideo() {
             kyc_status: designer.kyc_status || null,
             portfolio_items: designer.portfolio_images || [],
             social_media_links: designer.skills || [],
+            profiles: profile
+              ? {
+                  first_name: profile.first_name,
+                  last_name: profile.last_name,
+                }
+              : null,
           };
         })
         .filter(Boolean);
@@ -572,7 +586,10 @@ export function FeaturedDesignersWithVideo() {
                         <div className="space-y-4">
                           {featuredDesigners
                             .slice(slideIndex * 2, slideIndex * 2 + 2)
-                            .map((designer) => (
+                            .map((designer) => {
+                              const avgRating = designerRatings[designer.id] ?? 0;
+
+                              return (
                               <Card
                                 key={designer.id}
                                 className="group hover:shadow-xl transition-all duration-300 border border-gray-200 bg-white hover:border-green-200 overflow-hidden"
@@ -643,11 +660,11 @@ export function FeaturedDesignersWithVideo() {
                                         </p>
 
                                         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2">
-                                          {designer.rating && designer.rating > 0 && (
+                                          {avgRating > 0 && (
                                           <div className="flex items-center space-x-1">
                                             <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400 fill-current flex-shrink-0" />
                                             <span className="text-xs sm:text-sm font-medium text-gray-700">
-                                                {designer.rating}
+                                                {avgRating.toFixed(1)}
                                             </span>
                                             {/* <span className="text-xs sm:text-sm text-gray-500">
                                               ({designer.reviews_count || 0})
@@ -784,7 +801,8 @@ export function FeaturedDesignersWithVideo() {
                                   </div>
                                 </CardContent>
                               </Card>
-                            ))}
+                              );
+                            })}
                         </div>
                       </div>
                     ))}

@@ -12,6 +12,7 @@ import { FilterState } from '../pages/Designers';
 import { useAuth } from '@/hooks/useAuth';
 import { Video, MessageCircle, Calendar, Eye, CheckCircle } from 'lucide-react';
 import { checkDesignerBookingAvailability } from '@/utils/availabilityUtilsSlots';
+import { useDesignerAverageRatings } from '@/hooks/useDesignerAverageRatings';
 
 interface DesignerGridProps {
   filters: FilterState;
@@ -29,6 +30,7 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
   const [showLiveSessionDialog, setShowLiveSessionDialog] = useState(false);
   const [showScreenShare, setShowScreenShare] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const { ratings: designerRatings } = useDesignerAverageRatings(designers);
 
   const sortOptions = [
     { value: 'rating', label: 'Highest Rated' },
@@ -618,12 +620,17 @@ const DesignerGrid: React.FC<DesignerGridProps> = ({ filters }) => {
                     
                     {/* Rating - Only show if rating exists and is greater than 0 */}
                     <div className="flex items-center space-x-2 mb-3">
-                      {designer.rating != null && designer.rating !== 0 && Number(designer.rating) > 0 && (
-                      <div className="flex items-center">
-                        <span className="text-yellow-400 text-lg">★</span>
-                          <span className="text-lg font-semibold text-foreground ml-1">{designer.rating}</span>
-                      </div>
-                      )}
+                      {(() => {
+                        const avgRating = designerRatings[designer.id] ?? 0;
+                        return avgRating > 0 ? (
+                          <div className="flex items-center">
+                            <span className="text-yellow-400 text-lg">★</span>
+                            <span className="text-lg font-semibold text-foreground ml-1">
+                              {avgRating.toFixed(1)}
+                            </span>
+                          </div>
+                        ) : null;
+                      })()}
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         designer.is_online
                               ? 'bg-green-100 text-green-700' 

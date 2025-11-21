@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { 
   Search,
   Users,
@@ -36,6 +36,7 @@ import { useAuth } from "@/hooks/useAuth";
 import LiveSessionRequestDialog from "@/components/LiveSessionRequestDialog";
 import { checkDesignerBookingAvailability } from "@/utils/availabilityUtilsSlots";
 import { BookingDialog } from "@/components/BookingDialog";
+import { useDesignerAverageRatings } from "@/hooks/useDesignerAverageRatings";
 
 interface RecentDesigner {
   id: string;
@@ -50,6 +51,8 @@ interface RecentDesigner {
   reviews_count: number;
   rating: number;
   response_time: string;
+  verification_status?: string;
+  kyc_status?: string | null;
   profile?: {
     first_name: string;
     last_name: string;
@@ -62,8 +65,31 @@ interface RecentDesigner {
   latestBookingId?: string;
 }
 
-function DesignerCard({ designer, favorites, onToggleFavorite, onMessage, onLiveSession }: { 
+type BookingDesigner = {
+  id: string;
+  user_id: string;
+  specialty?: string;
+  hourly_rate?: number;
+  location?: string;
+  skills?: string[];
+  bio?: string;
+  is_online?: boolean;
+  completion_rate?: number;
+  reviews_count?: number;
+  rating?: number;
+  response_time?: string;
+  verification_status?: string;
+  kyc_status?: string | null;
+  user?: {
+    first_name?: string;
+    last_name?: string;
+    avatar_url?: string;
+  };
+};
+
+function DesignerCard({ designer, avgRating, favorites, onToggleFavorite, onMessage, onLiveSession }: { 
   designer: RecentDesigner; 
+  avgRating: number;
   favorites: Set<string>;
   onToggleFavorite: (designerId: string) => void;
   onMessage: (designerId: string, bookingId?: string) => void;
@@ -104,10 +130,10 @@ function DesignerCard({ designer, favorites, onToggleFavorite, onMessage, onLive
                 )}
               </h3>
               <p className="text-gray-600 font-medium text-sm sm:text-base truncate">{designer.specialty}</p>
-              {designer.rating && designer.rating > 0 && (
+              {avgRating > 0 && (
               <div className="flex items-center space-x-1 mt-1">
                 <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400 fill-current" />
-                <span className="text-xs sm:text-sm font-medium text-gray-700">{designer.rating}</span>
+                <span className="text-xs sm:text-sm font-medium text-gray-700">{avgRating.toFixed(1)}</span>
               </div>
               )}
             </div>
@@ -257,6 +283,21 @@ export default function CustomerRecentDesigners() {
   const [selectedDesigner, setSelectedDesigner] = useState<RecentDesigner | null>(null);
   const { user, profile, signOut } = useAuth();
 
+  const ratingInput = useMemo(
+    () =>
+      recentDesigners.map((designer) => ({
+        id: designer.id,
+        profiles: designer.profile
+          ? {
+              first_name: designer.profile.first_name,
+              last_name: designer.profile.last_name,
+            }
+          : undefined,
+      })),
+    [recentDesigners]
+  );
+  const { ratings: designerRatings } = useDesignerAverageRatings(ratingInput);
+
   const userDisplayName = profile?.first_name && profile?.last_name 
     ? `${profile.first_name} ${profile.last_name}`
     : user?.email || 'Customer';
@@ -348,13 +389,37 @@ export default function CustomerRecentDesigners() {
       
       bookings?.forEach(booking => {
         const designerId = booking.designer_id;
-        const designer = booking.designer;
+        const designer = booking.designer as unknown as BookingDesigner | null;
+        if (!designer) return;
         const bookingDate = new Date(booking.created_at);
         
         if (!designerMap.has(designerId)) {
+          const baseDesigner: RecentDesigner = {
+            id: designer.id,
+            user_id: designer.user_id,
+            specialty: designer.specialty || 'Design',
+            hourly_rate: Number(designer.hourly_rate) || 0,
+            location: designer.location || '',
+            skills: designer.skills || [],
+            bio: designer.bio || '',
+            is_online: !!designer.is_online,
+            completion_rate: Number(designer.completion_rate) || 0,
+            reviews_count: Number(designer.reviews_count) || 0,
+            rating: Number(designer.rating) || 0,
+            response_time: designer.response_time || '1 hour',
+            verification_status: designer.verification_status,
+            kyc_status: designer.kyc_status,
+            profile: designer.user
+              ? {
+                  first_name: designer.user.first_name,
+                  last_name: designer.user.last_name,
+                  avatar_url: designer.user.avatar_url,
+                }
+              : undefined,
+          };
+
           designerMap.set(designerId, {
-            ...designer,
-            profile: designer.user, // Set profile from user data
+            ...baseDesigner,
             lastWorkedAt: bookingDate,
             projectsCompleted: 0,
             ongoingCount: 0,
@@ -435,8 +500,11 @@ export default function CustomerRecentDesigners() {
     })
     .sort((a, b) => {
       switch (sortBy) {
-        case 'rating':
-          return b.rating - a.rating;
+        case 'rating': {
+          const ratingA = designerRatings[a.id] ?? a.rating ?? 0;
+          const ratingB = designerRatings[b.id] ?? b.rating ?? 0;
+          return ratingB - ratingA;
+        }
         case 'price':
           return a.hourly_rate - b.hourly_rate;
         case 'projects':
@@ -658,7 +726,7 @@ export default function CustomerRecentDesigners() {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
               <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-0 shadow-lg">
                 <CardContent className="p-4 sm:p-6">
                   <div className="flex items-center justify-between">
@@ -687,7 +755,7 @@ export default function CustomerRecentDesigners() {
                  </CardContent>
                </Card>
 
-               <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-0 shadow-lg">
+               {/* <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-0 shadow-lg">
                  <CardContent className="p-4 sm:p-6">
                    <div className="flex items-center justify-between">
                      <div>
@@ -702,7 +770,7 @@ export default function CustomerRecentDesigners() {
                      <Star className="w-10 h-10 sm:w-12 sm:h-12 text-yellow-500 fill-current" />
                    </div>
                  </CardContent>
-              </Card>
+              </Card> */}
             </div>
 
             {/* Designers Grid */}
@@ -721,6 +789,7 @@ export default function CustomerRecentDesigners() {
                    <DesignerCard 
                      key={designer.id} 
                      designer={designer} 
+                     avgRating={designerRatings[designer.id] ?? 0}
                      favorites={favorites}
                      onToggleFavorite={toggleFavorite}
                      onMessage={handleMessage}

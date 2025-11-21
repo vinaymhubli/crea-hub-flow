@@ -2,58 +2,92 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Star, ArrowLeft, ArrowRight } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useDesignerAverageRatings } from '@/hooks/useDesignerAverageRatings';
 
 const FeaturedDesigners = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [designers, setDesigners] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const designers = [
-    {
-      id: 1,
-      name: 'Sarah Chen',
-      specialty: 'UI/UX Design',
-      rating: 4.9,
-      reviews: 127,
-      pricePerMin: 2.1,
-      bio: 'I specialize in creating intuitive user experiences and modern interfaces with over 5 years of experience working with startups and Fortune 500 companies.',
-      image: 'https://readdy.ai/api/search-image?query=professional%20female%20asian%20designer%20working%20on%20laptop%20in%20modern%20office%2C%20creative%20workspace%20with%20design%20tools%2C%20smiling%20confident%20expression%2C%20contemporary%20style%2C%20bright%20lighting%2C%20minimalist%20background%20with%20plants%20and%20design%20elements&width=400&height=400&seq=featured-1&orientation=squarish',
-      tools: ['Figma', 'Sketch', 'InVision'],
-      projects: 89,
-      isOnline: true,
-      availability: 'Available'
-    },
-    {
-      id: 2,
-      name: 'Marcus Johnson',
-      specialty: 'Brand Identity',
-      rating: 4.8,
-      reviews: 94,
-      pricePerMin: 1.8,
-      bio: 'I create memorable brands and logos with over 7 years of experience working with both startups and established businesses. My design philosophy focuses on clean, functional aesthetics.',
-      image: 'https://readdy.ai/api/search-image?query=professional%20african%20american%20male%20graphic%20designer%20in%20creative%20studio%2C%20working%20on%20brand%20identity%20projects%2C%20focused%20expression%2C%20modern%20workspace%20with%20color%20swatches%20and%20design%20materials%2C%20natural%20lighting&width=400&height=400&seq=featured-2&orientation=squarish',
-      tools: ['Illustrator', 'Photoshop', 'InDesign'],
-      projects: 76,
-      isOnline: false,
-      availability: 'Available'
-    },
-    {
-      id: 3,
-      name: 'Elena Rodriguez',
-      specialty: 'Web Design',
-      rating: 5.0,
-      reviews: 156,
-      pricePerMin: 2.5,
-      bio: 'Passionate about creating stunning websites that convert visitors into customers. I blend creativity with technical expertise to deliver exceptional web experiences.',
-      image: 'https://readdy.ai/api/search-image?query=professional%20hispanic%20female%20web%20designer%20at%20computer%20workstation%2C%20multiple%20monitors%20showing%20website%20designs%2C%20creative%20office%20environment%2C%20confident%20pose%2C%20modern%20tech%20setup%20with%20design%20tools%20and%20references&width=400&height=400&seq=featured-3&orientation=squarish',
-      tools: ['Webflow', 'WordPress', 'Figma'],
-      projects: 112,
-      isOnline: true,
-      availability: 'Available'
-    }
-  ];
+  // Get average ratings for all designers
+  const designerRatings = useDesignerAverageRatings(designers);
+
+  // Fetch featured designers from database
+  useEffect(() => {
+    const fetchFeaturedDesigners = async () => {
+      try {
+        setLoading(true);
+
+        // Get featured designer IDs
+        const { data: featuredData, error: featuredError } = await supabase
+          .from('featured_designers')
+          .select('designer_id, position')
+          .eq('is_active', true)
+          .order('position', { ascending: true })
+          .limit(6); // Get top 6 featured designers
+
+        if (featuredError) throw featuredError;
+
+        if (!featuredData || featuredData.length === 0) {
+          setDesigners([]);
+          return;
+        }
+
+        const designerIds = featuredData.map((fd: any) => fd.designer_id);
+
+        // Fetch designer details
+        const { data: designersData, error: designersError } = await supabase
+          .from('designers')
+          .select(`
+            *,
+            user:profiles!user_id(blocked, user_type)
+          `)
+          .in('user_id', designerIds)
+          .eq('user.blocked', false)
+          .eq('user.user_type', 'designer')
+          .eq('verification_status', 'approved');
+
+        if (designersError) throw designersError;
+
+        // Fetch profiles for each designer
+        const designersWithProfiles = await Promise.all(
+          (designersData || []).map(async (designer) => {
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('first_name, last_name, avatar_url, email')
+              .eq('user_id', designer.user_id)
+              .single();
+
+            return {
+              ...designer,
+              profiles: profileData
+            };
+          })
+        );
+
+        // Sort by featured position
+        const sortedDesigners = designersWithProfiles.sort((a, b) => {
+          const aPos = featuredData.find((fd: any) => fd.designer_id === a.user_id)?.position || 999;
+          const bPos = featuredData.find((fd: any) => fd.designer_id === b.user_id)?.position || 999;
+          return aPos - bPos;
+        });
+
+        setDesigners(sortedDesigners);
+      } catch (error) {
+        console.error('Error fetching featured designers:', error);
+        setDesigners([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFeaturedDesigners();
+  }, []);
 
   const slidesToShow = 2;
-  const totalSlides = Math.ceil(designers.length / slidesToShow);
+  const totalSlides = Math.max(1, Math.ceil(designers.length / slidesToShow));
 
   useEffect(() => {
     if (!isAutoPlaying) return;
@@ -82,6 +116,22 @@ const FeaturedDesigners = () => {
     setIsAutoPlaying(false);
     setTimeout(() => setIsAutoPlaying(true), 10000);
   };
+
+  if (loading) {
+    return (
+      <section className="py-20 bg-gradient-to-br from-gray-50 to-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (designers.length === 0) {
+    return null; // Don't show the section if no featured designers
+  }
 
   return (
     <section className="py-20 bg-gradient-to-br from-gray-50 to-white">
@@ -130,57 +180,72 @@ const FeaturedDesigners = () => {
                 {Array.from({ length: totalSlides }).map((_, slideIndex) => (
                   <div key={slideIndex} className="w-full flex-shrink-0">
                     <div className="grid grid-cols-1 gap-6">
-                      {designers.slice(slideIndex * slidesToShow, (slideIndex + 1) * slidesToShow).map((designer) => (
+                      {designers.slice(slideIndex * slidesToShow, (slideIndex + 1) * slidesToShow).map((designer) => {
+                        const avgRating = designerRatings[designer.id] ?? 0;
+                        const designerName = designer.profiles?.first_name && designer.profiles?.last_name 
+                          ? `${designer.profiles.first_name} ${designer.profiles.last_name}` 
+                          : designer.profiles?.email?.split('@')[0] || 'Designer';
+                        
+                        return (
                         <div key={designer.id} className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-green-200 group">
                           <div className="flex items-start space-x-4">
                             <div className="relative">
-                              <img 
-                                src={designer.image} 
-                                alt={designer.name}
-                                className="w-16 h-16 rounded-full object-cover object-top group-hover:scale-105 transition-transform duration-300"
-                              />
-                              {designer.isOnline && (
+                              {designer.profiles?.avatar_url ? (
+                                <img 
+                                  src={designer.profiles.avatar_url} 
+                                  alt={designerName}
+                                  className="w-16 h-16 rounded-full object-cover object-top group-hover:scale-105 transition-transform duration-300"
+                                />
+                              ) : (
+                                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-white font-semibold group-hover:scale-105 transition-transform duration-300">
+                                  {designer.profiles?.first_name?.[0]?.toUpperCase() || 'D'}
+                                  {designer.profiles?.last_name?.[0]?.toUpperCase() || 'E'}
+                                </div>
+                              )}
+                              {designer.is_online && (
                                 <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-400 rounded-full border-2 border-white animate-pulse"></div>
                               )}
                             </div>
                             
                             <div className="flex-1">
                               <div className="flex items-center justify-between mb-2">
-                                <h3 className="text-lg font-semibold text-gray-900 group-hover:text-green-600 transition-colors">{designer.name}</h3>
-                                <div className="flex items-center space-x-1">
-                                  <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                                  <span className="text-sm font-semibold text-gray-700">{designer.rating}</span>
-                                  {/* <span className="text-xs text-gray-500">({designer.reviews})</span>
-                                </div> */}
+                                <h3 className="text-lg font-semibold text-gray-900 group-hover:text-green-600 transition-colors">{designerName}</h3>
+                                {avgRating > 0 && (
+                                  <div className="flex items-center space-x-1">
+                                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                                    <span className="text-sm font-semibold text-gray-700">{avgRating.toFixed(1)}</span>
+                                  </div>
+                                )}
                               </div>
                               
-                              <p className="text-green-600 font-medium text-sm mb-2">{designer.specialty}</p>
-                              <p className="text-gray-600 text-sm mb-3 line-clamp-2">{designer.bio}</p>
+                              <p className="text-green-600 font-medium text-sm mb-2">{designer.specialty || 'Design Expert'}</p>
+                              <p className="text-gray-600 text-sm mb-3 line-clamp-2">{designer.bio || 'Professional designer ready to bring your vision to life.'}</p>
                               
                               <div className="flex flex-wrap gap-2 mb-3">
-                                {designer.tools.slice(0, 3).map((tool, index) => (
+                                {(designer.skills || []).slice(0, 3).map((skill: string, index: number) => (
                                   <span key={index} className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs font-medium hover:bg-green-100 hover:text-green-700 transition-colors">
-                                    {tool}
+                                    {skill}
                                   </span>
                                 ))}
                               </div>
                               
                               <div className="flex items-center justify-between">
                                 <div className="text-lg font-bold text-gray-900">
-                                  ${designer.pricePerMin}<span className="text-sm font-normal text-gray-500">/min</span>
+                                  ₹{designer.hourly_rate}<span className="text-sm font-normal text-gray-500">/min</span>
                                 </div>
                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                  designer.availability === 'Available' 
+                                  designer.is_online 
                                     ? 'bg-green-100 text-green-700' 
-                                    : 'bg-orange-100 text-orange-700'
+                                    : 'bg-gray-100 text-gray-700'
                                 }`}>
-                                  {designer.isOnline ? 'Online' : 'Offline'}
+                                  {designer.is_online ? 'Online' : 'Offline'}
                                 </span>
                               </div>
                             </div>
                           </div>
                         </div>
-                      ))}
+                      );
+                      })}
                     </div>
                   </div>
                 ))}

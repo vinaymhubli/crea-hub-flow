@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,10 +22,12 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useDesignerAverageRatings } from '@/hooks/useDesignerAverageRatings';
 
 interface Designer {
   id: string;
   user_id: string;
+  designer_table_id?: string;
   first_name?: string;
   last_name?: string;
   email?: string;
@@ -40,6 +42,7 @@ interface Designer {
 interface FeaturedDesigner {
   id: string;
   designer_id: string;
+  designer_table_id?: string;
   position: number;
   is_active: boolean;
   featured_since: string;
@@ -64,6 +67,44 @@ export function FeaturedDesignersManager() {
   const [selectedPosition, setSelectedPosition] = useState<number>(1);
   const [adminNotes, setAdminNotes] = useState('');
   const [featuredUntil, setFeaturedUntil] = useState('');
+  const ratingInput = useMemo(() => {
+    const entries: { id: string; profiles?: { first_name?: string | null; last_name?: string | null } }[] = [];
+    const seen = new Set<string>();
+
+    featuredDesigners.forEach((designer) => {
+      const designerKey = designer.designer_table_id || designer.designer_id;
+      if (!designerKey || seen.has(designerKey)) return;
+
+      const nameParts = designer.designer_name?.split(' ') || [];
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+
+      entries.push({
+        id: designerKey,
+        profiles: { first_name: firstName, last_name: lastName },
+      });
+      seen.add(designerKey);
+    });
+
+    availableDesigners.forEach((designer) => {
+      const designerKey = designer.designer_table_id || designer.user_id;
+      if (!designerKey || seen.has(designerKey)) return;
+
+      entries.push({
+        id: designerKey,
+        profiles: {
+          first_name: designer.first_name || '',
+          last_name: designer.last_name || '',
+        },
+      });
+      seen.add(designerKey);
+    });
+
+    return entries;
+  }, [featuredDesigners, availableDesigners]);
+
+  const { ratings: designerRatings } = useDesignerAverageRatings(ratingInput);
+
   
   // Video management state
   const [videoUrl, setVideoUrl] = useState('');
@@ -82,7 +123,43 @@ export function FeaturedDesignersManager() {
       setLoading(true);
       const { data, error } = await (supabase as any).rpc('get_featured_designers_admin');
       if (error) throw error;
-      setFeaturedDesigners(data || []);
+      
+      // Fetch experience_years from designers table for each featured designer
+      const designersWithExperience = await Promise.all(
+        (data || []).map(async (designer: FeaturedDesigner) => {
+          try {
+            const { data: designerData, error: designerError } = await supabase
+              .from('designers')
+              .select('id, experience_years')
+              .eq('user_id', designer.designer_id)
+              .single();
+            
+            if (designerError) {
+              console.warn(`Error fetching experience for designer ${designer.designer_id}:`, designerError);
+              return {
+                ...designer,
+                designer_table_id: designer.designer_id,
+                designer_experience: designer.designer_experience || 0
+              };
+            }
+            
+            return {
+              ...designer,
+              designer_table_id: designerData?.id || designer.designer_id,
+              designer_experience: designerData?.experience_years || 0
+            };
+          } catch (err) {
+            console.error('Error fetching designer experience:', err);
+            return {
+              ...designer,
+              designer_table_id: designer.designer_id,
+              designer_experience: designer.designer_experience || 0
+            };
+          }
+        })
+      );
+      
+      setFeaturedDesigners(designersWithExperience);
     } catch (error) {
       console.error('Error fetching featured designers:', error);
       toast.error('Failed to fetch featured designers');
@@ -103,6 +180,7 @@ export function FeaturedDesignersManager() {
           avatar_url,
           created_at,
           designers!inner(
+            id,
             rating,
             skills,
             experience_years,
@@ -119,6 +197,7 @@ export function FeaturedDesignersManager() {
       const transformedData = data?.map(profile => ({
         id: profile.user_id,
         user_id: profile.user_id,
+        designer_table_id: profile.designers?.id || profile.user_id,
         first_name: profile.first_name || null,
         last_name: profile.last_name || null,
         email: profile.email || null,
@@ -394,6 +473,18 @@ export function FeaturedDesignersManager() {
                             <p className="text-sm text-muted-foreground">
                               {(designer.specialties || []).join(', ')} • {designer.experience_years || 0} years
                             </p>
+                              <div className="flex items-center space-x-1 text-xs text-muted-foreground">
+                                {(() => {
+                                  const ratingKey = designer.designer_table_id || designer.user_id;
+                                  const avgRating = designerRatings[ratingKey || ''] ?? designer.rating;
+                                  return avgRating > 0 ? (
+                                    <>
+                                      <Star className="w-3 h-3 text-yellow-500 fill-current" />
+                                      <span>{avgRating.toFixed(1)}</span>
+                                    </>
+                                  ) : null;
+                                })()}
+                              </div>
                           </div>
                         </div>
                       </SelectItem>
@@ -549,7 +640,11 @@ export function FeaturedDesignersManager() {
                         <div className="flex items-center">
                           <Star className="w-4 h-4 text-yellow-500 fill-current" />
                           <span className="text-sm font-medium ml-1">
-                            {designer.designer_rating.toFixed(1)}
+                            {(() => {
+                              const ratingKey = designer.designer_table_id || designer.designer_id;
+                              const avgRating = designerRatings[ratingKey || ''] ?? designer.designer_rating;
+                              return avgRating > 0 ? avgRating.toFixed(1) : '0.0';
+                            })()}
                           </span>
                         </div>
                         <Badge variant="outline" className="text-xs">

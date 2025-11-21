@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { 
   Calendar, 
   MessageCircle, 
@@ -35,8 +35,9 @@ import { useRealtimeBookings } from "@/hooks/useRealtimeBookings";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useDesignerAverageRatings } from "@/hooks/useDesignerAverageRatings";
 
-function BookingCard({ booking, onClick }: { booking: any; onClick: () => void }) {
+function BookingCard({ booking, avgRating, onClick }: { booking: any; avgRating: number; onClick: () => void }) {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'confirmed':
@@ -89,10 +90,10 @@ function BookingCard({ booking, onClick }: { booking: any; onClick: () => void }
             </div>
             <div>
               <h3 className="font-semibold text-foreground">{designerName}</h3>
-              {booking.designer?.rating && booking.designer.rating > 0 && (
+              {avgRating > 0 && (
               <div className="flex items-center space-x-1 mt-1">
                 <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                  <span className="text-sm text-muted-foreground">{booking.designer.rating}</span>
+                  <span className="text-sm text-muted-foreground">{avgRating.toFixed(1)}</span>
               </div>
               )}
             </div>
@@ -160,6 +161,23 @@ export default function CustomerBookings() {
     refetch 
   } = useRealtimeBookings();
 
+  const ratingInput = useMemo(
+    () =>
+      bookings
+        .map((booking) => ({
+          id: booking.designer?.id || booking.designer_id || '',
+          profiles: booking.designer?.user
+            ? {
+                first_name: booking.designer.user.first_name,
+                last_name: booking.designer.user.last_name,
+              }
+            : undefined,
+        }))
+        .filter((designer) => designer.id),
+    [bookings]
+  );
+  const { ratings: designerRatings } = useDesignerAverageRatings(ratingInput);
+
   const handleBookingClick = (booking: any) => {
     setSelectedBooking(booking);
     setShowDetailsDialog(true);
@@ -205,6 +223,12 @@ export default function CustomerBookings() {
         variant: "destructive",
       });
     }
+  };
+
+  const getBookingRating = (booking: any) => {
+    const designerId = booking.designer?.id || booking.designer_id;
+    if (!designerId) return booking.designer?.rating || 0;
+    return designerRatings[designerId] ?? booking.designer?.rating ?? 0;
   };
 
   const filterBookings = (status: string) => {
@@ -439,7 +463,12 @@ export default function CustomerBookings() {
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {filterBookings('all').map((booking) => (
-                        <BookingCard key={booking.id} booking={booking} onClick={() => handleBookingClick(booking)} />
+                        <BookingCard
+                          key={booking.id}
+                          booking={booking}
+                          avgRating={getBookingRating(booking)}
+                          onClick={() => handleBookingClick(booking)}
+                        />
                       ))}
                     </div>
                   )}
@@ -455,7 +484,12 @@ export default function CustomerBookings() {
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {filterBookings('upcoming').map((booking) => (
-                        <BookingCard key={booking.id} booking={booking} onClick={() => handleBookingClick(booking)} />
+                        <BookingCard
+                          key={booking.id}
+                          booking={booking}
+                          avgRating={getBookingRating(booking)}
+                          onClick={() => handleBookingClick(booking)}
+                        />
                       ))}
                     </div>
                   )}
@@ -471,7 +505,12 @@ export default function CustomerBookings() {
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {filterBookings('completed').map((booking) => (
-                        <BookingCard key={booking.id} booking={booking} onClick={() => handleBookingClick(booking)} />
+                        <BookingCard
+                          key={booking.id}
+                          booking={booking}
+                          avgRating={getBookingRating(booking)}
+                          onClick={() => handleBookingClick(booking)}
+                        />
                       ))}
                     </div>
                   )}
@@ -487,7 +526,12 @@ export default function CustomerBookings() {
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {filterBookings('pending').map((booking) => (
-                        <BookingCard key={booking.id} booking={booking} onClick={() => handleBookingClick(booking)} />
+                        <BookingCard
+                          key={booking.id}
+                          booking={booking}
+                          avgRating={getBookingRating(booking)}
+                          onClick={() => handleBookingClick(booking)}
+                        />
                       ))}
                     </div>
                   )}
