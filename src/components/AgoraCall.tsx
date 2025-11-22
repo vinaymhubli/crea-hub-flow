@@ -178,6 +178,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
     const [screenSharing, setScreenSharing] = useState(false);
     const [remoteScreenSharingState, setRemoteScreenSharingState] =
       useState(false);
+    const remoteScreenSharingStateRef = useRef(false);
     const [permissionError, setPermissionError] = useState<string | null>(null);
     const screenTrackRef = useRef<ILocalVideoTrack | null>(null);
     const screenSharingRef = useRef(false);
@@ -188,6 +189,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
     const [remoteScreenSharingUser, setRemoteScreenSharingUser] = useState<
       string | number | null
     >(null);
+    const remoteScreenSharingUserRef = useRef<string | number | null>(null);
 
     const remoteVideoPlayConfig = useMemo(
       () =>
@@ -272,11 +274,16 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
       }
     }, [muted, cameraOff, mediaStateKey]);
 
-    // Keep ref in sync with state
+    // Keep refs in sync with states
     useEffect(() => {
       screenSharingRef.current = screenSharing;
       console.log("🖥️ ScreenSharing state changed to:", screenSharing);
     }, [screenSharing]);
+
+    useEffect(() => {
+      remoteScreenSharingStateRef.current = remoteScreenSharingState;
+      remoteScreenSharingUserRef.current = remoteScreenSharingUser;
+    }, [remoteScreenSharingState, remoteScreenSharingUser]);
 
     // Handle remote screen sharing state changes
     useEffect(() => {
@@ -591,11 +598,24 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
                   setRemoteScreenSharingUser(user.uid);
                 } else {
                   console.log(
-                    "🖥️ Regular video track - track label:",
+                    "🖥️ Regular video track (NOT screen share) - track label:",
                     track.label,
                     "trackMediaType:",
                     user.videoTrack.trackMediaType
                   );
+                  // Clear screen sharing state if this is a camera track replacing screen share
+                  // Use refs to avoid stale closure values
+                  if (remoteScreenSharingStateRef.current && remoteScreenSharingUserRef.current === user.uid) {
+                    console.log("🖥️ ✅ Clearing screen sharing state - user switched to camera");
+                    setRemoteScreenSharingState(false);
+                    setRemoteScreenSharingUser(null);
+                    setFullscreenVideo(null);
+                    // Notify parent component that screen sharing stopped
+                    if (onRemoteScreenShareStopped) {
+                      console.log("🖥️ ✅ Calling onRemoteScreenShareStopped callback");
+                      onRemoteScreenShareStopped();
+                    }
+                  }
                 }
               }
             }
@@ -624,10 +644,11 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
 
               // ALWAYS clear screen sharing state when ANY remote user unpublishes video
               // This handles cases where remoteScreenSharingUser wasn't set correctly
-              if (remoteScreenSharingState) {
+              // Use ref to avoid stale closure values
+              if (remoteScreenSharingStateRef.current) {
                 console.log("🖥️ ✅ REMOTE SCREEN SHARING STOPPED - clearing all screen sharing state");
                 console.log("🖥️ User who stopped:", user.uid);
-                console.log("🖥️ Previously tracked user:", remoteScreenSharingUser);
+                console.log("🖥️ Previously tracked user:", remoteScreenSharingUserRef.current);
                 setRemoteScreenSharingState(false);
                 setRemoteScreenSharingUser(null);
                 setFullscreenVideo(null);
@@ -662,7 +683,8 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
           });
           
           // If the user who left was screen sharing, reset screen sharing state
-          if (remoteScreenSharingUser === user.uid) {
+          // Use ref to avoid stale closure values
+          if (remoteScreenSharingUserRef.current === user.uid) {
             console.log(
               "🖥️ REMOTE SCREEN SHARING STOPPED - user left while screen sharing:",
               user.uid
@@ -682,7 +704,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
           if (onRemoteUserLeft) onRemoteUserLeft(user.uid);
         });
       },
-      [onRemoteUserJoined, onRemoteUserLeft, remoteScreenSharingUser, onRemoteScreenShareStopped]
+      [onRemoteUserJoined, onRemoteUserLeft, onRemoteScreenShareStopped]
     );
 
     const join = useCallback(async () => {
@@ -1030,13 +1052,15 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
               "❌ Failed to create screen track:",
               screenTrackError
             );
-            // Reset ALL states if track creation fails or user cancels
+            // Reset ALL states and refs if track creation fails or user cancels
+            console.log("🛑 Resetting all screen sharing states due to error");
             flushSync(() => {
               setScreenSharing(false);
               setIsStartingScreenShare(false);
             });
             screenSharingRef.current = false;
             isStartingScreenShareRef.current = false;
+            console.log("✅ All states and refs cleared after error");
             throw screenTrackError;
           }
 
@@ -1094,6 +1118,10 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
             screenTrackRef.current = null;
           }
 
+          // First ensure all screen sharing states are cleared
+          setRemoteScreenSharingState(false);
+          setRemoteScreenSharingUser(null);
+          
           // Publish camera track if it exists
           if (localVideoTrack) {
             console.log("📹 Publishing camera track");
@@ -1120,15 +1148,16 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
             setMuted(originalAudioState);
           }
 
-          // Use flushSync to ensure immediate state update
+          // Use flushSync to ensure immediate state update - clear ALL screen sharing states and refs
           flushSync(() => {
             setScreenSharing(false);
             setIsStartingScreenShare(false);
             setScreenShareBlocked(false);
             setFullscreenVideo(null);
           });
+          screenSharingRef.current = false;
           isStartingScreenShareRef.current = false;
-          console.log("✅ Screen sharing stopped, original state restored");
+          console.log("✅ Screen sharing stopped, all states and refs cleared");
 
           // Notify that screen sharing stopped
           console.log("📡 Calling onScreenShareStopped callback...");
@@ -1142,11 +1171,12 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
         }
       } catch (error) {
         console.error("❌ Screen share error:", error);
-        // Reset all screen sharing states
+        // Reset all screen sharing states and refs
         flushSync(() => {
           setScreenSharing(false);
           setIsStartingScreenShare(false);
         });
+        screenSharingRef.current = false;
         isStartingScreenShareRef.current = false;
 
         // Check if it's a permission error
@@ -1478,11 +1508,18 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
         <div className="flex-1 relative overflow-hidden">
           {/* Google Meet style video layout */}
           {(() => {
-            const shouldShowScreenShare = screenSharing || remoteScreenSharingState || remoteScreenSharing;
+            // Check both states AND refs for most reliable screen sharing detection
+            const isLocallySharing = screenSharing || screenSharingRef.current || isStartingScreenShareRef.current;
+            const isRemotelySharing = remoteScreenSharingState || remoteScreenSharing;
+            const shouldShowScreenShare = isLocallySharing || isRemotelySharing;
             console.log("🖥️ LAYOUT DECISION:", {
               screenSharing,
+              screenSharingRef: screenSharingRef.current,
+              isStartingScreenShareRef: isStartingScreenShareRef.current,
               remoteScreenSharingState,
               remoteScreenSharing,
+              isLocallySharing,
+              isRemotelySharing,
               shouldShowScreenShare
             });
             return shouldShowScreenShare;
@@ -1775,8 +1812,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
                       className="relative bg-black rounded-xl overflow-hidden shadow-lg cursor-pointer hover:shadow-2xl transition-all duration-200 hover:scale-[1.02]"
                       onClick={() => handleVideoClick("remote")}
                     >
-                      {Object.values(remoteUsers).filter((u) => u.hasVideo)
-                        .length === 0 ? (
+                      {Object.keys(remoteUsers).length === 0 ? (
                         <div className="w-full h-full flex items-center justify-center bg-gray-800">
                           <div className="text-center text-gray-300">
                             <div className="w-16 h-16 mx-auto mb-4 bg-gray-700 rounded-full flex items-center justify-center">
@@ -1787,6 +1823,18 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
                             </p>
                             <p className="text-sm text-gray-400 mt-2">
                               They will appear here when they join
+                            </p>
+                          </div>
+                        </div>
+                      ) : Object.values(remoteUsers).filter((u) => u.hasVideo)
+                        .length === 0 ? (
+                        <div className="w-full h-full flex items-center justify-center bg-gray-800">
+                          <div className="text-center text-gray-300">
+                            <div className="w-16 h-16 mx-auto mb-4 bg-gray-700 rounded-full flex items-center justify-center">
+                              <VideoOff className="w-8 h-8" />
+                            </div>
+                            <p className="text-lg font-medium">
+                              {isDesigner ? "Customer" : "Designer"}'s camera is off
                             </p>
                           </div>
                         </div>
