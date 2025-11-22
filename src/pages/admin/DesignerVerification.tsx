@@ -31,7 +31,10 @@ interface DesignerWithProfile {
     last_name: string;
     email: string;
     avatar_url?: string;
+    phone?: string;
     blocked?: boolean;
+    blocked_at?: string;
+    blocked_reason?: string;
   };
 }
 
@@ -51,10 +54,17 @@ export default function DesignerVerification() {
         .from('designers')
         .select(`
           *,
-          user:profiles!user_id(first_name, last_name, email, avatar_url, phone)
+          user:profiles!user_id(first_name, last_name, email, avatar_url, phone, blocked, blocked_at, blocked_reason)
         `);
 
-      if (statusFilter !== 'all') {
+      if (statusFilter === 'blocked') {
+        // For blocked tab, we need to filter by blocked status in the profiles table
+        // We'll fetch all and filter in JavaScript since we need to check nested user.blocked
+        const { data, error } = await query.order('created_at', { ascending: false });
+        if (error) throw error;
+        // Filter to show only blocked designers
+        return (data || []).filter(d => d.user?.blocked === true) as DesignerWithProfile[];
+      } else if (statusFilter !== 'all') {
         query = query.eq('verification_status', statusFilter);
       }
 
@@ -154,6 +164,49 @@ export default function DesignerVerification() {
     }
   };
 
+  const handleUnblockDesigner = async (designerId: string) => {
+    try {
+      // First get the user_id from the designer record
+      const { data: designerData, error: fetchError } = await supabase
+        .from('designers')
+        .select('user_id')
+        .eq('id', designerId)
+        .single();
+      
+      if (fetchError || !designerData) {
+        throw fetchError || new Error('Designer not found');
+      }
+
+      // Unblock the user account
+      const { error: unblockError } = await supabase
+        .from('profiles')
+        .update({
+          blocked: false,
+          blocked_at: null,
+          blocked_reason: null
+        } as Record<string, unknown>)
+        .eq('user_id', designerData.user_id);
+      
+      if (unblockError) {
+        console.error('Error unblocking user:', unblockError);
+        toast({
+          title: "Error",
+          description: "Failed to unblock designer account.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Designer account unblocked successfully.",
+        });
+        // Refresh the data
+        queryClient.invalidateQueries({ queryKey: ['admin-designers'] });
+      }
+    } catch (error) {
+      console.error('Error unblocking designer:', error);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'approved':
@@ -193,8 +246,8 @@ export default function DesignerVerification() {
       <div className="container mx-auto p-6 max-w-7xl">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold">Designer Verification</h1>
-            <p className="text-muted-foreground">Review and approve designer applications</p>
+            <h1 className="text-3xl font-bold">Designer Management</h1>
+            <p className="text-muted-foreground">Manage designers, review applications, and handle account status</p>
           </div>
           <div className="flex items-center gap-4">
             <Badge variant="outline" className="px-4 py-2">
@@ -205,11 +258,12 @@ export default function DesignerVerification() {
 
         <Tabs value={statusFilter} onValueChange={setStatusFilter} className="space-y-6">
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            <TabsList className="grid w-full grid-cols-5 lg:w-auto">
+            <TabsList className="grid w-full grid-cols-6 lg:w-auto">
               <TabsTrigger value="pending">Pending</TabsTrigger>
               <TabsTrigger value="draft">Draft</TabsTrigger>
               <TabsTrigger value="approved">Approved</TabsTrigger>
               <TabsTrigger value="rejected">Rejected</TabsTrigger>
+              <TabsTrigger value="blocked">Blocked</TabsTrigger>
               <TabsTrigger value="all">All</TabsTrigger>
             </TabsList>
             
@@ -244,7 +298,14 @@ export default function DesignerVerification() {
                           <p className="text-sm text-muted-foreground">{designer.user.email}</p>
                         </div>
                       </div>
-                      {getStatusBadge(designer.verification_status)}
+                      <div className="flex flex-col items-end gap-1">
+                        {getStatusBadge(designer.verification_status)}
+                        {designer.user?.blocked && (
+                          <Badge variant="destructive" className="text-xs">
+                            Blocked
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </CardHeader>
                   
@@ -336,15 +397,29 @@ export default function DesignerVerification() {
                       )}
                       
                           {designer.verification_status === 'approved' && (
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => handleBlockDesigner(designer.id)}
-                          className="w-full"
-                              >
-                                <XCircle className="w-4 h-4 mr-1" />
-                                Block
-                              </Button>
+                              <>
+                                {designer.user?.blocked ? (
+                                  <Button
+                                    size="sm"
+                                    variant="default"
+                                    onClick={() => handleUnblockDesigner(designer.id)}
+                                    className="w-full bg-green-600 hover:bg-green-700 text-white"
+                                  >
+                                    <CheckCircle className="w-4 h-4 mr-1" />
+                                    Unblock
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => handleBlockDesigner(designer.id)}
+                                    className="w-full"
+                                  >
+                                    <XCircle className="w-4 h-4 mr-1" />
+                                    Block
+                                  </Button>
+                                )}
+                              </>
                           )}
                           
                           {designer.verification_status === 'rejected' && (

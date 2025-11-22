@@ -44,10 +44,11 @@ import { useToast } from "@/hooks/use-toast";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Link } from "react-router-dom";
 import NotificationBell from '@/components/NotificationBell';
+import { DeleteAccountDialog } from '@/components/DeleteAccountDialog';
 
 
 export default function DesignerSettings() {
-  const [activeTab, setActiveTab] = useState("general");
+  const [activeTab, setActiveTab] = useState("profile");
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -56,6 +57,7 @@ export default function DesignerSettings() {
   const [updatingPassword, setUpdatingPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [minRate, setMinRate] = useState<number>(5.0);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
   const { user, profile, signOut } = useAuth();
 
@@ -96,24 +98,64 @@ export default function DesignerSettings() {
     loadMinRate();
   }, []);
 
-  // Export sessions and earnings as CSV files (simple multi-file download)
+  // Export account data: session earnings with customer names, TDS, platform fee, and money earned
   const handleExportAccountData = async () => {
     try {
-      if (!user) return;
+      if (!user || !profile) return;
 
-      // Fetch bookings (sessions) for this user (as designer or customer)
-      const { data: bookings } = await (supabase as any)
-        .from('bookings')
+      // Determine if user is a designer
+      const isDesigner = profile.user_type === 'designer' || profile.role === 'designer';
+      if (!isDesigner) return;
+
+      // Fetch session invoices - only designer invoices (earnings)
+      const { data: invoices, error: invoicesError } = await (supabase as any)
+        .from('invoices')
         .select('*')
-        .or(`designer_id.eq.${user.id},customer_id.eq.${user.id}`)
+        .eq('designer_id', user.id)
+        .eq('invoice_type', 'designer')
         .order('created_at', { ascending: false });
 
-      // Fetch wallet transactions (earnings history)
-      const { data: transactions } = await (supabase as any)
-        .from('wallet_transactions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+      if (invoicesError) {
+        console.error('Error fetching invoices:', invoicesError);
+        return;
+      }
+
+      if (!invoices || invoices.length === 0) {
+        toast({ title: 'No Data', description: 'No earnings data to export.' });
+        return;
+      }
+
+      // Get unique customer IDs
+      const customerIds = [...new Set(invoices.map((inv: any) => inv.customer_id).filter(Boolean))];
+
+      // Fetch customer profiles
+      const { data: customersData } = await (supabase as any)
+        .from('profiles')
+        .select('user_id, first_name, last_name, email')
+        .in('user_id', customerIds);
+
+      // Create lookup map
+      const customersMap = new Map(customersData?.map((c: any) => [c.user_id, c]) || []);
+
+      // Format invoice data for CSV
+      const formatInvoiceRow = (invoice: any) => {
+        const metadata = invoice.metadata || {};
+        const customer = customersMap.get(invoice.customer_id);
+        const customerName = customer 
+          ? `${customer.first_name || ''} ${customer.last_name || ''}`.trim() || customer.email || 'Unknown'
+          : 'Unknown';
+        
+        return {
+          'Date': new Date(invoice.created_at).toLocaleDateString('en-IN'),
+          'Customer Name': customerName,
+          'Invoice Type': invoice.invoice_type || 'designer',
+          'TDS Deducted (₹)': (metadata.tds_amount || 0).toFixed(2),
+          'Platform Fee (₹)': (metadata.commission_amount || 0).toFixed(2),
+          'Money Earned (₹)': (invoice.total_amount || 0).toFixed(2),
+          'Invoice Number': invoice.invoice_number || '',
+          'Session ID': invoice.session_id || ''
+        };
+      };
 
       const toCsv = (rows: any[]) => {
         if (!rows || rows.length === 0) return '';
@@ -126,22 +168,19 @@ export default function DesignerSettings() {
         return [headers.join(','), ...body].join('\n');
       };
 
-      const files = [
-        { name: 'sessions.csv', content: toCsv(bookings || []) },
-        { name: 'earnings_transactions.csv', content: toCsv(transactions || []) },
-      ];
+      const formattedInvoices = (invoices || []).map(formatInvoiceRow);
+      const csvContent = toCsv(formattedInvoices);
 
-      files.forEach(f => {
-        const blob = new Blob([f.content], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = f.name;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      });
+      // Download single CSV file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'designer_earnings.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Error exporting account data', err);
     }
@@ -184,9 +223,9 @@ export default function DesignerSettings() {
     }
   };
 
-  // Open official Government of India Form 16 help/download page
-  const handleDownloadForm16 = () => {
-    window.open('https://www.incometax.gov.in/iec/foportal/help/form16', '_blank');
+  // Redirect to official Government of India Form 16 page
+  const handleGetForm16 = () => {
+    window.open('https://incometaxindia.gov.in/Pages/tax-services/form-16A-download-deductor.aspx', '_blank');
   };
   const { settings: userSettings, loading: settingsLoading, updateSetting } = useUserSettings();
   const { designerProfile, loading: profileLoading, updateDesignerProfile } = useDesignerProfile();
@@ -315,21 +354,7 @@ export default function DesignerSettings() {
             {/* Enhanced Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl border border-gray-100 p-1.5 sm:p-2 mb-6 sm:mb-8 overflow-x-auto">
-                <TabsList className="grid w-auto grid-cols-5 bg-transparent gap-2">
-                  <TabsTrigger 
-                    value="general"
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-xl py-3 px-6 font-semibold flex items-center space-x-2"
-                  >
-                    <Globe className="w-4 h-4" />
-                    <span>General</span>
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="notifications"
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-xl py-3 px-6 font-semibold flex items-center space-x-2"
-                  >
-                    <Bell className="w-4 h-4" />
-                    <span>Notifications</span>
-                  </TabsTrigger>
+                <TabsList className="grid w-auto grid-cols-2 bg-transparent gap-2">
                   <TabsTrigger 
                     value="profile"
                     className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-xl py-3 px-6 font-semibold flex items-center space-x-2"
@@ -344,18 +369,16 @@ export default function DesignerSettings() {
                     <Shield className="w-4 h-4" />
                     <span>Security</span>
                   </TabsTrigger>
-                  <TabsTrigger 
-                    value="billing"
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-xl py-3 px-6 font-semibold flex items-center space-x-2"
-                  >
-                    <CreditCard className="w-4 h-4" />
-                    <span>Billing</span>
-                  </TabsTrigger>
                 </TabsList>
               </div>
 
               {/* General Tab */}
               <TabsContent value="general" className="space-y-6">
+                {/* NOTE: Language, Timezone, Currency, Date Format, and Time Format settings are saved to database
+                    but are NOT currently used anywhere in the application. They are commented out until backend
+                    implementation is complete.
+                */}
+                {/*
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
                     <CardHeader className="bg-gradient-to-br from-green-400 to-blue-500 text-white rounded-t-lg">
@@ -415,9 +438,9 @@ export default function DesignerSettings() {
                     <CardHeader className="bg-gradient-to-br from-purple-400 to-pink-500 text-white rounded-t-lg">
                       <CardTitle className="flex items-center">
                         <Palette className="w-5 h-5 mr-2" />
-                        Appearance
+                        Date & Time Format
                       </CardTitle>
-                      <CardDescription className="text-white/80">Customize your interface appearance</CardDescription>
+                      <CardDescription className="text-white/80">Configure how dates and times are displayed</CardDescription>
                     </CardHeader>
                     <CardContent className="p-6 space-y-4">
                       <div>
@@ -446,29 +469,22 @@ export default function DesignerSettings() {
                           </SelectContent>
                         </Select>
                       </div>
-
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label className="font-semibold text-gray-700">Compact Mode</Label>
-                          <p className="text-sm text-gray-500">Use a more compact interface</p>
-                        </div>
-                        <Switch />
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label className="font-semibold text-gray-700">Animations</Label>
-                          <p className="text-sm text-gray-500">Enable interface animations</p>
-                        </div>
-                        <Switch defaultChecked />
-                      </div>
                     </CardContent>
                   </Card>
+                </div>
+                */}
+                <div className="text-center py-12 text-gray-500">
+                  <p>General settings will be available here soon.</p>
                 </div>
               </TabsContent>
 
               {/* Notifications Tab */}
               <TabsContent value="notifications" className="space-y-6">
+                {/* NOTE: Notification preferences are saved to database but are NOT currently checked
+                    before sending notifications. The notification system sends all notifications regardless
+                    of these settings. Commented out until backend implementation is complete.
+                */}
+                {/*
                 <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
                   <CardHeader className="bg-gradient-to-br from-blue-400 to-indigo-500 text-white rounded-t-lg">
                     <CardTitle className="flex items-center">
@@ -517,6 +533,10 @@ export default function DesignerSettings() {
                     </div>
                   </CardContent>
                 </Card>
+                */}
+                <div className="text-center py-12 text-gray-500">
+                  <p>Notification preferences will be available here soon.</p>
+                </div>
               </TabsContent>
 
               {/* Profile Tab */}
@@ -531,6 +551,10 @@ export default function DesignerSettings() {
                       <CardDescription className="text-white/80">Control how others see your profile</CardDescription>
                     </CardHeader>
                     <CardContent className="p-6 space-y-4">
+                      {/* NOTE: Privacy settings are saved to database but are NOT currently used to filter
+                          profiles or control visibility. Commented out until backend implementation is complete.
+                      */}
+                      {/*
                       <div className="flex items-center justify-between">
                         <div>
                           <Label className="font-semibold text-gray-700">Public profile</Label>
@@ -552,6 +576,7 @@ export default function DesignerSettings() {
                           onCheckedChange={(checked) => updateSetting('privacy_activity_status', checked)}
                         />
                       </div>
+                      */}
 
                       <div className="flex items-center justify-between">
                         <div>
@@ -602,20 +627,53 @@ export default function DesignerSettings() {
                         <p className="text-xs text-gray-500 mt-1">Minimum allowed: ₹{minRate.toFixed(2)} / min</p>
                       </div>
 
-                      <div>
-                        <Label className="font-semibold text-gray-700">Minimum session duration</Label>
-                        <Select defaultValue="60">
-                          <SelectTrigger className="border-gray-200 focus:border-green-400">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="30">30 minutes</SelectItem>
-                            <SelectItem value="60">1 hour</SelectItem>
-                            <SelectItem value="90">1.5 hours</SelectItem>
-                            <SelectItem value="120">2 hours</SelectItem>
-                          </SelectContent>
-                        </Select>
+                    </CardContent>
+                  </Card>
+
+                  {/* Account Data & Management Card */}
+                  <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
+                    <CardHeader className="bg-gradient-to-br from-green-400 to-emerald-500 text-white rounded-t-lg">
+                      <CardTitle className="flex items-center">
+                        <Download className="w-5 h-5 mr-2" />
+                        Account Data
+                      </CardTitle>
+                      <CardDescription className="text-white/80">Export your account data and documents</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-4">
+                      <div className="flex flex-col md:flex-row items-center justify-center gap-3">
+                        <Button variant="outline" className="min-w-[240px]" onClick={handleExportAccountData}>
+                          <Download className="w-4 h-4 mr-2" />
+                          Export Account Data
+                        </Button>
+                        <Button variant="outline" className="min-w-[240px]" onClick={handleGetForm16}>
+                          Get Form 16
+                        </Button>
                       </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Delete Account Card */}
+                  <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
+                    <CardHeader className="bg-gradient-to-br from-red-400 to-orange-500 text-white rounded-t-lg">
+                      <CardTitle className="flex items-center">
+                        <Trash2 className="w-5 h-5 mr-2" />
+                        Account Management
+                      </CardTitle>
+                      <CardDescription className="text-white/80">Delete your account</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-4">
+                      <Button 
+                        variant="outline" 
+                        className="w-full border-red-200 text-red-600 hover:bg-red-50"
+                        onClick={() => setShowDeleteDialog(true)}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete Account
+                      </Button>
+
+                      <p className="text-xs text-gray-500">
+                        Account deletion is permanent and cannot be undone. All your data will be permanently removed.
+                      </p>
                     </CardContent>
                   </Card>
                 </div>
@@ -765,78 +823,13 @@ export default function DesignerSettings() {
                 </div>
               </TabsContent>
 
-              {/* Billing Tab */}
-              <TabsContent value="billing" className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
-                    <CardHeader className="bg-gradient-to-br from-green-400 to-emerald-500 text-white rounded-t-lg">
-                      <CardTitle className="flex items-center">
-                        <CreditCard className="w-5 h-5 mr-2" />
-                        Payment Methods
-                      </CardTitle>
-                      <CardDescription className="text-white/80">Manage how you receive payments</CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-6 space-y-4">
-                      <div>
-                        <Label className="font-semibold text-gray-700">Payout Method</Label>
-                        <Select defaultValue="bank">
-                          <SelectTrigger className="border-gray-200 focus:border-green-400">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="bank">Bank Transfer</SelectItem>
-                            {/* <SelectItem value="paypal">PayPal</SelectItem>
-                            <SelectItem value="stripe">Stripe</SelectItem> */}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {/*
-                      <Button className="w-full bg-gradient-to-r from-green-400 to-emerald-500 text-white">
-                        <CreditCard className="w-4 h-4 mr-2" />
-                        Add Payment Method
-                      </Button>
-                      */}
-
-                      <div className="flex flex-col md:flex-row items-center justify-center gap-3">
-                        <Button variant="outline" className="min-w-[240px]" onClick={handleExportAccountData}>
-                          <Download className="w-4 h-4 mr-2" />
-                          Export Account Data
-                        </Button>
-                        <Button variant="outline" className="min-w-[240px]" onClick={handleDownloadForm16}>
-                          <Download className="w-4 h-4 mr-2" />
-                          Download Form 16
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
-                    <CardHeader className="bg-gradient-to-br from-red-400 to-orange-500 text-white rounded-t-lg">
-                      <CardTitle className="flex items-center">
-                        <Trash2 className="w-5 h-5 mr-2" />
-                        Account Management
-                      </CardTitle>
-                      <CardDescription className="text-white/80">Account deletion</CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-6 space-y-4">
-
-                      <Button variant="outline" className="w-full border-red-200 text-red-600 hover:bg-red-50">
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Delete Account
-                      </Button>
-
-                      <p className="text-xs text-gray-500">
-                        Account deletion is permanent and cannot be undone. All your data will be permanently removed.
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
             </Tabs>
           </div>
         </main>
       </div>
+      
+      {/* Delete Account Dialog */}
+      <DeleteAccountDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog} />
     </SidebarProvider>
   );
 }

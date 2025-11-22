@@ -2,44 +2,20 @@ import { useState } from 'react';
 import { 
   LayoutDashboard, 
   User, 
-  Calendar, 
   MessageCircle, 
-  CreditCard,
   Bell,
-  Settings,
-  Search,
-  Users,
   Wallet,
-  ChevronRight,
-  Star,
-  X,
   LogOut,
-  Shield,
-  Lock,
-  Eye,
-  EyeOff,
-  Globe,
-  Moon,
-  Sun,
-  Volume2,
-  VolumeX,
   Smartphone,
   Mail,
   Trash2,
-  Download,
-  Upload,
-  HelpCircle,
-  ExternalLink,
-  CheckCircle,
   AlertCircle,
-  RefreshCw,
-  Key,
-  Database,
-  Languages
+  Download
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserSettings } from '@/hooks/useUserSettings';
+import { supabase } from '@/integrations/supabase/client';
 import { CustomerSidebar } from '@/components/CustomerSidebar';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import NotificationBell from '@/components/NotificationBell';
@@ -58,11 +34,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DeleteAccountDialog } from '@/components/DeleteAccountDialog';
 
 export default function CustomerSettings() {
   const { user, profile, signOut } = useAuth();
   const { settings, loading, saving, updateSetting } = useUserSettings();
-  const [theme, setTheme] = useState('light');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const getInitials = () => {
     const displayName = profile?.display_name;
@@ -100,6 +77,133 @@ export default function CustomerSettings() {
 
   const handleLogout = async () => {
     await signOut();
+  };
+
+  // Export account data: session payments with designer names, tax deducted, money transferred, and wallet deposits
+  const handleExportAccountData = async () => {
+    try {
+      if (!user || !profile) return;
+      
+      // Ensure user is a customer (not a designer)
+      const isCustomer = profile.user_type === 'customer' || profile.user_type === 'client';
+      
+      if (!isCustomer || profile.user_type === 'designer') {
+        console.error('User is not a customer');
+        return;
+      }
+      
+      // Fetch session invoices - only customer invoices (payments)
+      const { data: invoices, error: invoicesError } = await (supabase as any)
+        .from('invoices')
+        .select('*')
+        .eq('customer_id', user.id)
+        .eq('invoice_type', 'customer')
+        .order('created_at', { ascending: false });
+
+      if (invoicesError) {
+        console.error('Error fetching invoices:', invoicesError);
+        return;
+      }
+
+      // Get unique designer IDs
+      const designerIds = [...new Set((invoices || []).map((inv: any) => inv.designer_id).filter(Boolean))];
+
+      // Fetch designer profiles
+      const { data: designersData } = await (supabase as any)
+        .from('profiles')
+        .select('user_id, first_name, last_name, email')
+        .in('user_id', designerIds);
+
+      // Create lookup map
+      const designersMap = new Map(designersData?.map((d: any) => [d.user_id, d]) || []);
+
+      // Fetch wallet deposits (money added to wallet)
+      const { data: deposits, error: depositsError } = await (supabase as any)
+        .from('wallet_transactions')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('transaction_type', 'deposit')
+        .order('created_at', { ascending: false });
+
+      if (depositsError) {
+        console.error('Error fetching deposits:', depositsError);
+      }
+
+      // Format invoice data for CSV
+      const formatInvoiceRow = (invoice: any) => {
+        const designer = designersMap.get(invoice.designer_id) as any;
+        const designerName = designer 
+          ? `${designer.first_name || ''} ${designer.last_name || ''}`.trim() || designer.email || 'Unknown'
+          : 'Unknown';
+        
+        return {
+          'Date': new Date(invoice.created_at).toLocaleDateString('en-IN'),
+          'Designer Name': designerName,
+          'Invoice Type': invoice.invoice_type || 'customer',
+          'Tax Deducted (₹)': (invoice.tax_amount || 0).toFixed(2),
+          'Money Transferred (₹)': (invoice.total_amount || 0).toFixed(2),
+          'Money Added to Wallet (₹)': '0.00',
+          'Invoice Number': invoice.invoice_number || '',
+          'Session ID': invoice.session_id || ''
+        };
+      };
+
+      // Format deposit data for CSV
+      const formatDepositRow = (deposit: any) => {
+        return {
+          'Date': new Date(deposit.created_at).toLocaleDateString('en-IN'),
+          'Designer Name': 'N/A',
+          'Invoice Type': 'Wallet Deposit',
+          'Tax Deducted (₹)': '0.00',
+          'Money Transferred (₹)': '0.00',
+          'Money Added to Wallet (₹)': (parseFloat(deposit.amount) || 0).toFixed(2),
+          'Transaction ID': deposit.id || '',
+          'Description': deposit.description || 'Wallet Recharge'
+        };
+      };
+
+      const toCsv = (rows: any[]) => {
+        if (!rows || rows.length === 0) return '';
+        const headers = Object.keys(rows[0]);
+        const escape = (v: any) => {
+          if (v === null || v === undefined) return '';
+          return String(v).replace(/\"/g, '""');
+        };
+        const body = rows.map(r => headers.map(h => `"${escape(r[h])}"`).join(','));
+        return [headers.join(','), ...body].join('\n');
+      };
+
+      // Combine invoices and deposits
+      const formattedInvoices = (invoices || []).map(formatInvoiceRow);
+      const formattedDeposits = (deposits || []).map(formatDepositRow);
+      
+      // Add "Money Added to Wallet" column to invoice rows (set to 0)
+      const invoicesWithWallet = formattedInvoices.map(row => ({
+        ...row,
+        'Money Added to Wallet (₹)': '0.00'
+      }));
+
+      const allRows = [...invoicesWithWallet, ...formattedDeposits];
+      const csvContent = toCsv(allRows);
+
+      // Download single CSV file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'customer_payments_and_wallet.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error exporting account data', err);
+    }
+  };
+
+  // Redirect to official Government of India Form 16 page
+  const handleGetForm16 = () => {
+    window.open('https://incometaxindia.gov.in/Pages/tax-services/form-16A-download-deductor.aspx', '_blank');
   };
 
   if (loading) {
@@ -180,77 +284,6 @@ export default function CustomerSettings() {
           />
 
           <div className="p-4 sm:p-6 space-y-6 sm:space-y-8 overflow-x-hidden">
-            {/* Settings Overview Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <Card className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in">
-                <CardContent className="p-6 bg-gradient-to-br from-green-50 to-emerald-50">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1 font-medium">Security Score</p>
-                      <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                        {settings.security_two_factor ? '95%' : '85%'}
-                      </p>
-                      <p className="text-sm text-green-600 mt-3 font-medium">Good security</p>
-                    </div>
-                    <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg">
-                      <Shield className="w-8 h-8 text-white" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in" style={{animationDelay: '0.1s'}}>
-                <CardContent className="p-6 bg-gradient-to-br from-blue-50 to-cyan-50">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1 font-medium">Active Notifications</p>
-                      <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                        {[settings.notifications_email, settings.notifications_push, settings.notifications_sms, settings.booking_reminders, settings.message_notifications].filter(Boolean).length}
-                      </p>
-                      <p className="text-sm text-blue-600 mt-3 font-medium">Enabled types</p>
-                    </div>
-                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
-                      <Bell className="w-8 h-8 text-white" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in" style={{animationDelay: '0.2s'}}>
-                <CardContent className="p-6 bg-gradient-to-br from-purple-50 to-pink-50">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1 font-medium">Privacy Level</p>
-                      <p className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                        {settings.privacy_profile_visible ? 'Public' : 'Private'}
-                      </p>
-                      <p className="text-sm text-purple-600 mt-3 font-medium">Profile visibility</p>
-                    </div>
-                    <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
-                      <Eye className="w-8 h-8 text-white" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 animate-fade-in" style={{animationDelay: '0.3s'}}>
-                <CardContent className="p-6 bg-gradient-to-br from-yellow-50 to-orange-50">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1 font-medium">Language</p>
-                      <p className="text-2xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
-                        {settings.language === 'en' ? 'English' : settings.language}
-                      </p>
-                      <p className="text-sm text-yellow-600 mt-3 font-medium">Current setting</p>
-                    </div>
-                    <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
-                      <Languages className="w-8 h-8 text-white" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
             {/* Settings Tabs */}
             <Card className="overflow-hidden border-0 shadow-lg w-full">
               <CardHeader>
@@ -258,19 +291,20 @@ export default function CustomerSettings() {
                 <CardDescription>Customize your account preferences and privacy settings</CardDescription>
               </CardHeader>
               <CardContent className="overflow-x-hidden">
-                <Tabs defaultValue="notifications" className="space-y-6 w-full">
+                <Tabs defaultValue="privacy" className="space-y-6 w-full">
                   <div className="overflow-x-auto -mx-4 sm:mx-0">
-                    <TabsList className="inline-flex w-max min-w-full sm:grid sm:grid-cols-5 sm:w-full">
-                      <TabsTrigger value="notifications" className="whitespace-nowrap px-3 sm:px-4">Notifications</TabsTrigger>
+                    <TabsList className="inline-flex w-max min-w-full sm:grid sm:grid-cols-1 sm:w-full">
                       <TabsTrigger value="privacy" className="whitespace-nowrap px-3 sm:px-4">Privacy</TabsTrigger>
-                      <TabsTrigger value="security" className="whitespace-nowrap px-3 sm:px-4">Security</TabsTrigger>
-                      <TabsTrigger value="general" className="whitespace-nowrap px-3 sm:px-4">General</TabsTrigger>
-                      <TabsTrigger value="account" className="whitespace-nowrap px-3 sm:px-4">Account</TabsTrigger>
                     </TabsList>
                   </div>
 
                   {/* Notifications Settings */}
                   <TabsContent value="notifications">
+                    {/* NOTE: Notification preferences are saved to database but are NOT currently checked
+                        before sending notifications. The notification system sends all notifications regardless
+                        of these settings. Commented out until backend implementation is complete.
+                    */}
+                    {/*
                     <div className="space-y-4 sm:space-y-6">
                       <div>
                         <h3 className="text-lg font-medium mb-4">Notification Preferences</h3>
@@ -366,11 +400,19 @@ export default function CustomerSettings() {
                         </div>
                       </div>
                     </div>
+                    */}
+                    <div className="text-center py-12 text-gray-500">
+                      <p>Notification preferences will be available here soon.</p>
+                    </div>
                   </TabsContent>
 
                   {/* Privacy Settings */}
                   <TabsContent value="privacy">
                     <div className="space-y-6">
+                      {/* NOTE: Privacy settings are saved to database but are NOT currently used to filter
+                          profiles or control visibility. Commented out until backend implementation is complete.
+                      */}
+                      {/*
                       <div>
                         <h3 className="text-lg font-medium mb-4">Privacy Controls</h3>
                         <div className="space-y-4">
@@ -400,30 +442,59 @@ export default function CustomerSettings() {
                           </div>
                         </div>
                       </div>
+                      */}
+
+                      {/* Account Data Section */}
+                      <Separator />
+                      <div>
+                        <h3 className="text-lg font-medium mb-4">Account Data</h3>
+                        <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                          <div className="flex flex-col md:flex-row items-center justify-center gap-3">
+                            <Button variant="outline" className="min-w-[240px]" onClick={handleExportAccountData}>
+                              <Download className="w-4 h-4 mr-2" />
+                              Export Account Data
+                            </Button>
+                            <Button variant="outline" className="min-w-[240px]" onClick={handleGetForm16}>
+                              Get Form 16
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Delete Account Section */}
+                      <Separator />
+                      <div>
+                        <h3 className="text-lg font-medium mb-4 text-red-600">Danger Zone</h3>
+                        <div className="border border-red-200 rounded-lg p-4 bg-red-50">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium">Delete Account</p>
+                              <p className="text-sm text-gray-500">Permanently delete your account and all data</p>
+                            </div>
+                            <Button 
+                              variant="destructive" 
+                              className="flex items-center space-x-2"
+                              onClick={() => setShowDeleteDialog(true)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              <span>Delete</span>
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </TabsContent>
 
                   {/* Security Settings */}
                   <TabsContent value="security">
+                    {/* NOTE: Security login alerts setting is saved to database but is NOT currently implemented.
+                        Commented out until backend implementation is complete.
+                    */}
+                    {/*
                     <div className="space-y-6">
                       <div>
                         <h3 className="text-lg font-medium mb-4">Security Settings</h3>
                         <div className="space-y-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                              <Key className="w-4 h-4 text-gray-500" />
-                              <div>
-                                <p className="font-medium">Two-Factor Authentication</p>
-                                <p className="text-sm text-gray-500">Add an extra layer of security</p>
-                              </div>
-                            </div>
-                            <Switch 
-                              checked={settings.security_two_factor}
-                              onCheckedChange={(checked) => updateSetting('security_two_factor', checked)}
-                              disabled={saving}
-                            />
-                          </div>
-
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-3">
                               <AlertCircle className="w-4 h-4 text-gray-500" />
@@ -441,10 +512,19 @@ export default function CustomerSettings() {
                         </div>
                       </div>
                     </div>
+                    */}
+                    <div className="text-center py-12 text-gray-500">
+                      <p>Security settings will be available here soon.</p>
+                    </div>
                   </TabsContent>
 
                   {/* General Settings */}
                   <TabsContent value="general">
+                    {/* NOTE: Language, Timezone, and Time Format settings are saved to database
+                        but are NOT currently used anywhere in the application. Commented out until
+                        backend implementation is complete.
+                    */}
+                    {/*
                     <div className="space-y-6">
                       <div>
                         <h3 className="text-lg font-medium mb-4">General Preferences</h3>
@@ -495,69 +575,23 @@ export default function CustomerSettings() {
                           </div>
                         </div>
 
-                        <div className="mt-6">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="font-medium">Theme</p>
-                              <p className="text-sm text-gray-500">Choose your preferred theme</p>
-                            </div>
-                            <Select value={theme} onValueChange={setTheme}>
-                              <SelectTrigger className="w-32">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="light">Light</SelectItem>
-                                <SelectItem value="dark">Dark</SelectItem>
-                                <SelectItem value="system">System</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
                       </div>
+                    </div>
+                    */}
+                    <div className="text-center py-12 text-gray-500">
+                      <p>General preferences will be available here soon.</p>
                     </div>
                   </TabsContent>
 
-                  {/* Account Settings */}
-                  <TabsContent value="account">
-                    <div className="space-y-6">
-                      <div>
-                        <h3 className="text-lg font-medium mb-4">Account Management</h3>
-                        <div className="space-y-4">
-                          <div className="border rounded-lg p-4">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="font-medium">Download Data</p>
-                                <p className="text-sm text-gray-500">Download a copy of your account data</p>
-                              </div>
-                              <Button variant="outline" className="flex items-center space-x-2">
-                                <Download className="w-4 h-4" />
-                                <span>Download</span>
-                              </Button>
-                            </div>
-                          </div>
-
-                          <div className="border rounded-lg p-4">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="font-medium">Delete Account</p>
-                                <p className="text-sm text-gray-500">Permanently delete your account and all data</p>
-                              </div>
-                              <Button variant="destructive" className="flex items-center space-x-2">
-                                <Trash2 className="w-4 h-4" />
-                                <span>Delete</span>
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </TabsContent>
                 </Tabs>
               </CardContent>
             </Card>
           </div>
         </main>
       </div>
+      
+      {/* Delete Account Dialog */}
+      <DeleteAccountDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog} />
     </SidebarProvider>
   );
 }

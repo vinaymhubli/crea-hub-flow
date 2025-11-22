@@ -98,7 +98,7 @@ const mainSections = [
   //   icon: DollarSign,
   // },
   {
-    title: "Designer Verification",
+    title: "Designer Management",
     url: "/admin/designer-verification",
     icon: UserCheck,
   },
