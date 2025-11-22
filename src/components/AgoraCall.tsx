@@ -307,8 +307,26 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
         setRemoteScreenSharingState(false);
         setRemoteScreenSharingUser(null);
         console.log("🖥️ Set screenShareBlocked to FALSE and remoteScreenSharingState to FALSE - button should be enabled now");
+        
+        // CRITICAL: Force re-check and play all remote videos after screen sharing stops
+        // This ensures camera tracks that were published during the transition are played
+        console.log("🎥 Forcing re-play of all remote videos after screen share stopped");
+        setTimeout(() => {
+          Object.values(remoteUsers).forEach(async (u) => {
+            if (u.videoTrack && u.hasVideo) {
+              const elementId = `remote-player-${u.uid}`;
+              try {
+                console.log(`🎥 Force re-playing video for user ${u.uid} after screen share stopped`);
+                await u.videoTrack.play(elementId);
+                console.log(`✅ Successfully playing video for user ${u.uid}`);
+              } catch (e) {
+                console.warn(`❌ Failed to play video for user ${u.uid}:`, e);
+              }
+            }
+          });
+        }, 500);
       }
-    }, [remoteScreenSharing, screenShareBlocked]);
+    }, [remoteScreenSharing, screenShareBlocked, remoteUsers]);
 
     // Debug effect to track screenShareBlocked changes
     useEffect(() => {
@@ -532,9 +550,27 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
           // Immediately try to play video after subscription
           if (mediaType === "video" && user.videoTrack) {
             console.log(`🎥 Immediately attempting to play video for user ${user.uid} after subscription`);
+            
+            // Detect if this is a screen share or regular camera
+            const track = user.videoTrack.getMediaStreamTrack();
+            const isScreenShare =
+              track.label.includes("screen") ||
+              track.label.includes("Screen") ||
+              track.label.includes("window") ||
+              track.label.includes("Window") ||
+              track.label.includes("desktop") ||
+              track.label.includes("Desktop") ||
+              track.label.includes("Entire Screen") ||
+              track.label.includes("entire screen") ||
+              track.label.includes("Screen Capture") ||
+              track.label.includes("screen capture");
+            
+            console.log(`🎥 Track type: ${isScreenShare ? 'SCREEN SHARE' : 'CAMERA'}, label: ${track.label}`);
+            
             setTimeout(async () => {
               try {
-                const playConfig = remoteVideoPlayConfig || {};
+                // Use fit: "contain" for screen shares, undefined for regular camera
+                const playConfig = isScreenShare ? { fit: "contain" as const } : undefined;
                 console.log(`🎥 Playing with config:`, playConfig);
                 await user.videoTrack.play(`remote-player-${user.uid}`, playConfig);
                 console.log(`✅ Immediate play successful for user ${user.uid}`);
@@ -543,7 +579,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
                 // Retry after a delay
                 setTimeout(async () => {
                   try {
-                    const playConfig = remoteVideoPlayConfig || {};
+                    const playConfig = isScreenShare ? { fit: "contain" as const } : undefined;
                     await user.videoTrack?.play(`remote-player-${user.uid}`, playConfig);
                     console.log(`✅ Retry play successful for user ${user.uid}`);
                   } catch (retryError) {
@@ -961,26 +997,163 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
     );
 
     const toggleMic = useCallback(async () => {
-      if (!localAudioTrack) return;
-      if (muted) {
-        await localAudioTrack.setEnabled(true);
-        setMuted(false);
-      } else {
-        await localAudioTrack.setEnabled(false);
-        setMuted(true);
+      const client = clientRef.current;
+      if (!client) return;
+
+      try {
+        if (muted) {
+          // Turning mic ON
+          console.log("🎤 Turning microphone ON...");
+          
+          // Check if we have a valid track
+          if (!localAudioTrack || !localAudioTrackRef.current) {
+            console.log("🎤 No valid audio track, creating new one...");
+            
+            // Create new microphone track
+            try {
+              const mic = await AgoraRTC.createMicrophoneAudioTrack();
+              console.log("✅ Created new microphone track");
+              
+              setLocalAudioTrack(mic);
+              localAudioTrackRef.current = mic;
+              
+              // Publish the new track
+              await client.publish(mic);
+              console.log("✅ Published new microphone track");
+              
+              setMuted(false);
+            } catch (error) {
+              console.error("❌ Failed to create/publish microphone track:", error);
+              toast({
+                title: "Microphone Error",
+                description: "Failed to turn on microphone. Please check permissions.",
+                variant: "destructive",
+              });
+              return;
+            }
+          } else {
+            // Track exists, just enable it
+            console.log("🎤 Enabling existing microphone track...");
+            await localAudioTrack.setEnabled(true);
+            setMuted(false);
+            console.log("✅ Microphone enabled");
+          }
+        } else {
+          // Turning mic OFF
+          console.log("🎤 Turning microphone OFF...");
+          if (localAudioTrack) {
+            await localAudioTrack.setEnabled(false);
+            setMuted(true);
+            console.log("✅ Microphone disabled");
+          }
+        }
+      } catch (error) {
+        console.error("❌ Error toggling microphone:", error);
+        toast({
+          title: "Microphone Error",
+          description: "Failed to toggle microphone. Please try again.",
+          variant: "destructive",
+        });
       }
-    }, [localAudioTrack, muted]);
+    }, [muted, localAudioTrack, toast]);
 
     const toggleCamera = useCallback(async () => {
-      if (!localVideoTrack) return;
-      if (cameraOff) {
-        await localVideoTrack.setEnabled(true);
-        setCameraOff(false);
-      } else {
-        await localVideoTrack.setEnabled(false);
-        setCameraOff(true);
+      const client = clientRef.current;
+      if (!client) return;
+
+      try {
+        if (cameraOff) {
+          // Turning camera ON
+          console.log("📹 Turning camera ON...");
+          
+          // Check if we have a valid track
+          if (!localVideoTrack || !localVideoTrackRef.current) {
+            console.log("📹 No valid video track, creating new one...");
+            
+            // Create new camera track
+            try {
+              const cam = await AgoraRTC.createCameraVideoTrack();
+              console.log("✅ Created new camera track");
+              
+              setLocalVideoTrack(cam);
+              localVideoTrackRef.current = cam;
+              
+              // Publish the new track
+              await client.publish(cam);
+              console.log("✅ Published new camera track");
+              
+              // IMPORTANT: Play the new camera track in the local video container
+              console.log("📹 Playing new camera track in local-player");
+              try {
+                await cam.play("local-player");
+                console.log("✅ New camera track playing successfully");
+              } catch (playError) {
+                console.warn("❌ Failed to play new camera track:", playError);
+                // Retry after a delay
+                setTimeout(async () => {
+                  try {
+                    await cam.play("local-player");
+                    console.log("✅ Retry play successful for new camera track");
+                  } catch (retryError) {
+                    console.warn("❌ Retry play failed for new camera track:", retryError);
+                  }
+                }, 500);
+              }
+              
+              setCameraOff(false);
+            } catch (error) {
+              console.error("❌ Failed to create/publish camera track:", error);
+              toast({
+                title: "Camera Error",
+                description: "Failed to turn on camera. Please check permissions.",
+                variant: "destructive",
+              });
+              return;
+            }
+          } else {
+            // Track exists, just enable it
+            console.log("📹 Enabling existing camera track...");
+            await localVideoTrack.setEnabled(true);
+            
+            // IMPORTANT: Play the track to ensure it displays
+            console.log("📹 Playing enabled camera track in local-player");
+            try {
+              await localVideoTrack.play("local-player");
+              console.log("✅ Enabled camera track playing successfully");
+            } catch (playError) {
+              console.warn("❌ Failed to play enabled camera track:", playError);
+              // Retry after a delay
+              setTimeout(async () => {
+                try {
+                  await localVideoTrack.play("local-player");
+                  console.log("✅ Retry play successful for enabled camera track");
+                } catch (retryError) {
+                  console.warn("❌ Retry play failed for enabled camera track:", retryError);
+                }
+              }, 500);
+            }
+            
+            setCameraOff(false);
+            console.log("✅ Camera enabled");
+          }
+        } else {
+          // Turning camera OFF
+          console.log("📹 Turning camera OFF...");
+          if (localVideoTrack) {
+            await localVideoTrack.setEnabled(false);
+            setCameraOff(true);
+            console.log("✅ Camera disabled");
+          }
+        }
+      } catch (error) {
+        console.error("❌ Error toggling camera:", error);
+        toast({
+          title: "Camera Error",
+          description: "Failed to toggle camera. Please try again.",
+          variant: "destructive",
+        });
       }
-    }, [cameraOff, localVideoTrack]);
+    }, [cameraOff, localVideoTrack, toast]);
 
     const toggleScreenShare = useCallback(async () => {
       console.log("🖥️ ===== SCREEN SHARE BUTTON CLICKED =====");
@@ -1122,10 +1295,47 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
           setRemoteScreenSharingState(false);
           setRemoteScreenSharingUser(null);
           
+          // IMPORTANT: Create a fresh camera track if needed
+          let cameraTrack = localVideoTrack;
+          if (!cameraTrack || !localVideoTrackRef.current) {
+            console.log("📹 No valid camera track, creating new one before publishing");
+            try {
+              cameraTrack = await AgoraRTC.createCameraVideoTrack();
+              setLocalVideoTrack(cameraTrack);
+              localVideoTrackRef.current = cameraTrack;
+              console.log("✅ Created fresh camera track");
+            } catch (error) {
+              console.error("❌ Failed to create camera track:", error);
+            }
+          }
+          
           // Publish camera track if it exists
-          if (localVideoTrack) {
-            console.log("📹 Publishing camera track");
-            await client.publish(localVideoTrack);
+          if (cameraTrack) {
+            console.log("📹 Publishing camera track after screen share stopped");
+            try {
+              await client.publish(cameraTrack);
+              console.log("✅ Camera track published successfully");
+            } catch (publishError) {
+              console.error("❌ Failed to publish camera track:", publishError);
+            }
+            
+            // IMPORTANT: Play the camera track in the local video container
+            console.log("📹 Playing camera track in local-player");
+            try {
+              await cameraTrack.play("local-player");
+              console.log("✅ Camera track playing successfully");
+            } catch (playError) {
+              console.warn("❌ Failed to play camera track:", playError);
+              // Retry after a delay
+              setTimeout(async () => {
+                try {
+                  await cameraTrack.play("local-player");
+                  console.log("✅ Retry play successful for camera track");
+                } catch (retryError) {
+                  console.warn("❌ Retry play failed for camera track:", retryError);
+                }
+              }, 500);
+            }
           }
 
           // Restore original video and audio state
@@ -1258,15 +1468,18 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
             console.warn("❌ Local play failed on main player:", e);
           }
 
-          // Also try to play on thumbnail if element exists
-          const thumbElement = document.getElementById("local-player-thumb");
-          if (thumbElement) {
-            try {
-              console.log("🎥 Attempting to play local video on thumbnail");
-              await localVideoTrack.play("local-player-thumb");
-              console.log("✅ Local video playing on thumbnail");
-            } catch (e) {
-              console.warn("❌ Local thumbnail play failed:", e);
+          // Also try to play on thumbnail if element exists and not screen sharing
+          // (thumbnail is hidden during screen sharing)
+          if (!screenSharing) {
+            const thumbElement = document.getElementById("local-player-thumb");
+            if (thumbElement) {
+              try {
+                console.log("🎥 Attempting to play local video on thumbnail");
+                await localVideoTrack.play("local-player-thumb");
+                console.log("✅ Local video playing on thumbnail");
+              } catch (e) {
+                console.warn("❌ Local thumbnail play failed:", e);
+              }
             }
           }
         }
@@ -1367,6 +1580,60 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
       }
     }, [remoteScreenSharingState, remoteScreenSharing, remoteUsers, remoteVideoPlayConfig]);
 
+    // CRITICAL: Re-play remote videos when transitioning from screen share to normal layout
+    // This handles the case where video was playing in thumbnail during screen share,
+    // but needs to play in main grid after screen share stops
+    useEffect(() => {
+      const isLocallySharing = screenSharing || screenSharingRef.current || isStartingScreenShareRef.current;
+      const isRemotelySharing = remoteScreenSharingState || remoteScreenSharing;
+      const shouldShowScreenShare = isLocallySharing || isRemotelySharing;
+      
+      console.log("🎥 Layout transition check:", {
+        shouldShowScreenShare,
+        remoteUsersCount: Object.keys(remoteUsers).length,
+        remoteUsersWithVideo: Object.values(remoteUsers).filter(u => u.hasVideo).length
+      });
+      
+      // When NOT in screen sharing mode, ensure all remote videos play in main grid
+      if (!shouldShowScreenShare) {
+        console.log("🎥 ✅ Normal layout active - ensuring remote videos play in main grid");
+        
+        const playRemoteVideo = async (user: RemoteUser, attempt = 1) => {
+          if (!user.videoTrack || !user.hasVideo) {
+            console.log(`⚠️ User ${user.uid} has no video track or hasVideo is false`);
+            return;
+          }
+          
+          const elementId = `remote-player-${user.uid}`;
+          const element = document.getElementById(elementId);
+          
+          if (!element) {
+            console.warn(`❌ [Attempt ${attempt}] Element ${elementId} not found in DOM`);
+            if (attempt < 5) {
+              setTimeout(() => playRemoteVideo(user, attempt + 1), 300);
+            }
+            return;
+          }
+          
+          try {
+            console.log(`🎥 [Attempt ${attempt}] Re-playing remote video for user ${user.uid} in main grid`);
+            await user.videoTrack.play(elementId);
+            console.log(`✅ Remote video playing in main grid for user ${user.uid}`);
+          } catch (e) {
+            console.warn(`❌ [Attempt ${attempt}] Failed to play remote video for user ${user.uid}:`, e);
+            if (attempt < 5) {
+              setTimeout(() => playRemoteVideo(user, attempt + 1), 300);
+            }
+          }
+        };
+        
+        // Try to play all remote users' videos
+        Object.values(remoteUsers).forEach(user => {
+          playRemoteVideo(user, 1);
+        });
+      }
+    }, [screenSharing, remoteScreenSharingState, remoteScreenSharing, remoteUsers]);
+
     // Force play local video when screen sharing is active (designer side)
     useEffect(() => {
       if (screenSharing && screenTrackRef.current) {
@@ -1396,6 +1663,49 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
         playLocalScreen();
       }
     }, [screenSharing]);
+
+    // CRITICAL: Re-play local camera when transitioning from screen share to normal layout
+    // This ensures camera plays in the main grid after screen share stops
+    useEffect(() => {
+      const isLocallySharing = screenSharing || screenSharingRef.current || isStartingScreenShareRef.current;
+      
+      console.log("🎥 Local camera check:", {
+        isLocallySharing,
+        hasLocalVideoTrack: !!localVideoTrack,
+        cameraOff
+      });
+      
+      // When NOT sharing screen and have camera track, ensure it plays in main area
+      if (!isLocallySharing && localVideoTrack && !cameraOff) {
+        console.log("🎥 ✅ Normal layout active - ensuring local camera plays in main grid");
+        
+        const playLocalCamera = async (attempt = 1) => {
+          const element = document.getElementById("local-player");
+          
+          if (!element) {
+            console.warn(`❌ [Attempt ${attempt}] Element local-player not found in DOM`);
+            if (attempt < 5) {
+              setTimeout(() => playLocalCamera(attempt + 1), 300);
+            }
+            return;
+          }
+          
+          try {
+            console.log(`🎥 [Attempt ${attempt}] Re-playing local camera in main grid`);
+            await localVideoTrack.play("local-player");
+            console.log("✅ Local camera playing in main grid");
+          } catch (e) {
+            console.warn(`❌ [Attempt ${attempt}] Failed to play local camera:`, e);
+            if (attempt < 5) {
+              setTimeout(() => playLocalCamera(attempt + 1), 300);
+            }
+          }
+        };
+        
+        // Start trying to play with small delay for DOM to be ready
+        setTimeout(() => playLocalCamera(1), 200);
+      }
+    }, [screenSharing, localVideoTrack, cameraOff]);
 
     // Debug effect to track remote video elements
     useEffect(() => {
@@ -1614,8 +1924,8 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
 
               {/* Video thumbnails strip at bottom */}
               <div className="absolute bottom-4 left-4 right-4 flex gap-3 justify-center">
-                {/* Local video thumbnail */}
-                {localVideoTrack && (
+                {/* Local video thumbnail - only show if NOT screen sharing (camera is unpublished during screen share) */}
+                {localVideoTrack && !screenSharing && (
                   <div
                     className={`relative bg-black rounded-lg overflow-hidden border-2 cursor-pointer transition-all duration-200 hover:scale-105 ${
                       fullscreenVideo === "local"
