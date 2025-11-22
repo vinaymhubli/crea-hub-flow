@@ -88,9 +88,9 @@ const mainSections = [
     icon: Mail,
   },
   {
-    title: "Demo Requests",
-    url: "/admin/demo-requests",
-    icon: Calendar,
+    title: "Demo Sessions",
+    url: "/admin/demo-sessions",
+    icon: Play,
   },
   // {
   //   title: "Refunds",

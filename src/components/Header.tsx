@@ -63,13 +63,24 @@ export default function Header() {
         .from('platform_settings')
         .select('setting_value')
         .eq('setting_key', 'show_free_demo_button')
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
-      setShowDemoButton(data?.setting_value ?? true);
+      // If no error and data exists, use it; otherwise default to true
+      if (error && error.code !== 'PGRST116') {
+        // Only log non-"no rows" errors
+        console.error('Error fetching platform settings:', error);
+      }
+      // Convert setting_value to boolean (handle string "true"/"false" or boolean)
+      // If no data found, default to true
+      if (!data) {
+        setShowDemoButton(true);
+      } else {
+        const settingValue = data.setting_value;
+        const isEnabled = settingValue === true || settingValue === 'true' || settingValue === 1;
+        setShowDemoButton(isEnabled);
+      }
     } catch (error) {
-      console.error('Error fetching platform settings:', error);
-      // Default to true if error occurs
+      // Default to true if any unexpected error occurs
       setShowDemoButton(true);
     }
   };
@@ -138,7 +149,7 @@ export default function Header() {
             ))}
           </nav>
 
-          {/* Free Demo Session Button */}
+          {/* Free Demo Session Button - Show to everyone */}
           {showDemoButton && (
             <div className="hidden md:block">
               <Button

@@ -51,8 +51,10 @@ import AboutManagement from "./pages/admin/AboutManagement";
 import AboutDynamic from "./pages/AboutDynamic";
 import ContactManagement from "./pages/admin/ContactManagement";
 import ContactSubmissions from "./pages/admin/ContactSubmissions";
-import DemoRequests from "./pages/admin/DemoRequests";
+import AdminDemoSessions from "./pages/admin/AdminDemoSessions";
 import ContactDynamic from "./pages/ContactDynamic";
+import RequestDemo from "./pages/RequestDemo";
+import DemoSession from "./pages/DemoSession";
 import SocialMediaManagement from "./pages/admin/SocialMediaManagement";
 import LogoManagement from "./pages/admin/LogoManagement";
 import RefundPolicyManagement from "./pages/admin/RefundPolicyManagement";
@@ -161,6 +163,8 @@ function AppContent() {
           <Route path="/" element={<Index />} />
           <Route path="/about" element={<AboutDynamic />} />
           <Route path="/how-to-use" element={<HowToUse />} />
+          <Route path="/request-demo" element={<RequestDemo />} />
+          <Route path="/demo-session/:sessionId" element={<DemoSession />} />
           <Route path="/contact" element={<ContactDynamic />} />
           <Route path="/designers" element={<Designers />} />
           <Route path="/featured-designers" element={<FeaturedDesigners />} />
@@ -271,11 +275,11 @@ function AppContent() {
 
           {/* Demo Requests */}
           <Route
-            path="/admin/demo-requests"
+            path="/admin/demo-sessions"
             element={
               <ProtectedAdminRoute>
                 <AdminLayout>
-                  <DemoRequests />
+                  <AdminDemoSessions />
                 </AdminLayout>
               </ProtectedAdminRoute>
             }

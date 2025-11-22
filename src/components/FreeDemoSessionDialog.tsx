@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,7 +19,7 @@ export default function FreeDemoSessionDialog({ isOpen, onClose }: FreeDemoSessi
   const { user, profile } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    name: profile?.first_name ? `${profile.first_name} ${profile.last_name}` : '',
+    name: (profile?.first_name && profile?.last_name) ? `${profile.first_name} ${profile.last_name}` : '',
     email: user?.email || '',
     company: '',
     projectType: '',
@@ -28,6 +28,17 @@ export default function FreeDemoSessionDialog({ isOpen, onClose }: FreeDemoSessi
     message: '',
     phone: ''
   });
+
+  // Update form data when user/profile loads
+  useEffect(() => {
+    if (user && profile) {
+      setFormData(prev => ({
+        ...prev,
+        name: (profile.first_name && profile.last_name) ? `${profile.first_name} ${profile.last_name}` : prev.name,
+        email: user.email || prev.email
+      }));
+    }
+  }, [user, profile]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -41,28 +52,28 @@ export default function FreeDemoSessionDialog({ isOpen, onClose }: FreeDemoSessi
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user) {
-      toast.error('Please sign in to request a free demo session');
+    if (!formData.name || !formData.email || !formData.projectType || !formData.preferredDate || !formData.preferredTime) {
+      toast.error('Please fill in all required fields (marked with *)');
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase
-        .from('free_demo_requests')
-        .insert([{
-          user_id: user.id,
-          name: formData.name,
-          email: formData.email,
-          company: formData.company,
+      const { error } = await (supabase as any)
+        .from('demo_sessions')
+        .insert({
+          requester_name: formData.name,
+          requester_email: formData.email,
+          requester_phone: formData.phone || null,
+          requester_company: formData.company || null,
           project_type: formData.projectType,
-          preferred_date: formData.preferredDate,
+          preferred_date: formData.preferredDate || null,
           preferred_time: formData.preferredTime,
-          message: formData.message,
-          phone: formData.phone,
-          status: 'pending'
-        }]);
+          requester_message: formData.message || null,
+          status: 'pending',
+          user_id: user?.id || null // Include user_id if logged in, null for guests
+        });
 
       if (error) throw error;
 
