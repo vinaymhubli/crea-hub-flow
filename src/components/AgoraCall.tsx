@@ -7,6 +7,7 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from "react";
+import { flushSync } from "react-dom";
 import AgoraRTC, {
   IAgoraRTCClient,
   ILocalAudioTrack,
@@ -155,6 +156,8 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
         
         // Reset all screen sharing states on unmount
         setScreenSharing(false);
+        setIsStartingScreenShare(false);
+        isStartingScreenShareRef.current = false;
         setRemoteScreenSharingState(false);
         setRemoteScreenSharingUser(null);
         setScreenShareBlocked(false);
@@ -178,6 +181,9 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
     const [permissionError, setPermissionError] = useState<string | null>(null);
     const screenTrackRef = useRef<ILocalVideoTrack | null>(null);
     const screenSharingRef = useRef(false);
+    // Additional state to track when screen share is being initiated (before window selection)
+    const [isStartingScreenShare, setIsStartingScreenShare] = useState(false);
+    const isStartingScreenShareRef = useRef(false);
     // Track which remote user is screen sharing
     const [remoteScreenSharingUser, setRemoteScreenSharingUser] = useState<
       string | number | null
@@ -303,6 +309,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
       console.log("🔍 Button should be:", screenShareBlocked ? "DISABLED" : "ENABLED");
     }, [screenShareBlocked]);
 
+
     // Debug effect to track screen sharing layout changes - simplified to avoid infinite loops
     useEffect(() => {
       console.log("🖥️ ===== SCREEN SHARING LAYOUT STATE =====");
@@ -354,11 +361,14 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
     useEffect(() => {
       console.log("🔄 Session changed, resetting screen sharing states");
       setScreenSharing(false);
+      setIsStartingScreenShare(false);
+      isStartingScreenShareRef.current = false;
       setRemoteScreenSharingState(false);
       setRemoteScreenSharingUser(null);
       setScreenShareBlocked(false);
       setFullscreenVideo(null);
     }, [sessionId]);
+
 
     // Platform minimum per-minute rate
     const [minRate, setMinRate] = useState<number>(5.0);
@@ -899,6 +909,8 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
         setRemoteUsers({});
         setJoined(false);
         setScreenSharing(false);
+        setIsStartingScreenShare(false);
+        isStartingScreenShareRef.current = false;
         setRemoteScreenSharingState(false);
         setRemoteScreenSharingUser(null);
         setMuted(false);
@@ -950,16 +962,12 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
 
     const toggleScreenShare = useCallback(async () => {
       console.log("🖥️ ===== SCREEN SHARE BUTTON CLICKED =====");
-      console.log("🖥️ Current screenSharing state:", screenSharing);
+      console.log("🖥️ Current screenSharing:", screenSharing, "screenSharingRef:", screenSharingRef.current);
       console.log("🖥️ Remote screen sharing:", remoteScreenSharing);
-      console.log("🖥️ Client exists:", !!clientRef.current);
-      console.log("🖥️ Joined state:", joined);
 
       const client = clientRef.current;
       if (!client || !joined) {
-        console.log(
-          "❌ Cannot start screen share: client not ready or not joined"
-        );
+        console.log("❌ Cannot start screen share: client not ready or not joined");
         return;
       }
 
@@ -992,7 +1000,20 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
             !muted
           );
 
-          // Create screen track with system picker
+          // Use flushSync to force immediate synchronous state update
+          // Set all states and refs to true to hide buttons immediately
+          console.log("🖥️ Setting all screen sharing states to true with flushSync...");
+          flushSync(() => {
+            setScreenSharing(true);
+            setIsStartingScreenShare(true);
+          });
+          screenSharingRef.current = true;
+          isStartingScreenShareRef.current = true;
+          console.log("✅ All states updated - buttons should be hidden NOW");
+
+          // Create screen track
+          // Note: Browser will show native picker - user can select screen, window, or tab
+          // Our refs are already set to hide buttons immediately, regardless of selection
           console.log("🖥️ Creating screen video track...");
           let screenTrack;
           try {
@@ -1001,7 +1022,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
                 encoderConfig: "720p_1",
                 optimizationMode: "detail",
               },
-              "auto"
+              "disable" // No audio from screen share
             );
             console.log("✅ Screen track created successfully:", screenTrack);
           } catch (screenTrackError) {
@@ -1009,6 +1030,13 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
               "❌ Failed to create screen track:",
               screenTrackError
             );
+            // Reset ALL states if track creation fails or user cancels
+            flushSync(() => {
+              setScreenSharing(false);
+              setIsStartingScreenShare(false);
+            });
+            screenSharingRef.current = false;
+            isStartingScreenShareRef.current = false;
             throw screenTrackError;
           }
 
@@ -1026,16 +1054,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
           console.log("📹 Publishing screen track");
           await client.publish(screenTrack);
 
-          console.log("🖥️ About to set screenSharing to true...");
-          setScreenSharing(true);
-          console.log(
-            "✅ Screen sharing started successfully, state updated to true"
-          );
-
-          // Force a re-render to see the state change
-          setTimeout(() => {
-            console.log("🖥️ State check after 100ms:", screenSharing);
-          }, 100);
+          console.log("✅ Screen sharing started successfully!");
 
           // Notify that screen sharing started
           if (onScreenShareStarted) {
@@ -1101,9 +1120,14 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
             setMuted(originalAudioState);
           }
 
-          setScreenSharing(false);
-          setScreenShareBlocked(false);
-          setFullscreenVideo(null); // Reset fullscreen state to return to grid layout
+          // Use flushSync to ensure immediate state update
+          flushSync(() => {
+            setScreenSharing(false);
+            setIsStartingScreenShare(false);
+            setScreenShareBlocked(false);
+            setFullscreenVideo(null);
+          });
+          isStartingScreenShareRef.current = false;
           console.log("✅ Screen sharing stopped, original state restored");
 
           // Notify that screen sharing stopped
@@ -1118,7 +1142,12 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
         }
       } catch (error) {
         console.error("❌ Screen share error:", error);
-        setScreenSharing(false);
+        // Reset all screen sharing states
+        flushSync(() => {
+          setScreenSharing(false);
+          setIsStartingScreenShare(false);
+        });
+        isStartingScreenShareRef.current = false;
 
         // Check if it's a permission error
         if (error.code === "PERMISSION_DENIED") {
@@ -1862,7 +1891,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
             </Button>
 
             {/* Pause/Resume button - only for designer when NO screen sharing is active */}
-            {isDesigner && !screenSharing && !remoteScreenSharingState && !remoteScreenSharing && (
+            {isDesigner && !screenSharingRef.current && !isStartingScreenShareRef.current && !remoteScreenSharingState && !remoteScreenSharing && (
               <Button
                 variant={isPaused ? "outline" : "destructive"}
                 size="lg"
@@ -1883,7 +1912,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
             )}
 
             {/* Rate change button - only for designer when NO screen sharing is active */}
-            {isDesigner && !screenSharing && !remoteScreenSharingState && !remoteScreenSharing && (
+            {isDesigner && !screenSharingRef.current && !isStartingScreenShareRef.current && !remoteScreenSharingState && !remoteScreenSharing && (
               <div className="relative rate-input-container">
                 <Button
                   variant="outline"
@@ -1933,7 +1962,7 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
             )}
 
             {/* Format Multiplier button - only for designer when NO screen sharing is active */}
-            {isDesigner && !screenSharing && !remoteScreenSharingState && !remoteScreenSharing && (
+            {isDesigner && !screenSharingRef.current && !isStartingScreenShareRef.current && !remoteScreenSharingState && !remoteScreenSharing && (
               <Button
                 variant="outline"
                 size="lg"
