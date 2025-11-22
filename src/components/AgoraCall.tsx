@@ -1814,6 +1814,18 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
 
     return (
       <div className="w-full h-full flex flex-col bg-gray-900">
+        {/* Global style to ensure screen share videos use object-fit: contain */}
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            #local-player video,
+            [id^="remote-player-"] video {
+              object-fit: contain !important;
+              width: 100% !important;
+              height: 100% !important;
+            }
+          `
+        }} />
+        
         {/* Main video area */}
         <div className="flex-1 relative overflow-hidden">
           {/* Google Meet style video layout */}
@@ -1837,12 +1849,12 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
             /* Screen sharing layout - ALWAYS show screen share as main content */
             <div className="w-full h-full relative">
               {/* Debug indicator */}
-              <div className="absolute top-20 left-4 bg-yellow-500/90 text-black px-3 py-2 rounded-lg text-xs z-50">
+              {/* <div className="absolute top-20 left-4 bg-yellow-500/90 text-black px-3 py-2 rounded-lg text-xs z-50">
                 Screen Share Layout Active
                 <div className="text-[10px] mt-1">
                   Local: {screenSharing ? 'YES' : 'NO'} | Remote: {remoteScreenSharingState ? 'YES' : 'NO'} | Prop: {remoteScreenSharing ? 'YES' : 'NO'}
                 </div>
-              </div>
+              </div> */}
               {/* Main screen share area - takes full space */}
               <div className="w-full h-full relative bg-black">
                 {/* Screen share content - always full size when screen sharing is active */}
@@ -1852,6 +1864,12 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
                     <div
                       id="local-player"
                       className="absolute inset-0 cursor-pointer"
+                      style={{ 
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: '#000'
+                      }}
                       onClick={() => handleVideoClick("screen")}
                     />
                   ) : (
@@ -1891,6 +1909,12 @@ const AgoraCall = forwardRef<any, AgoraCallProps>(
                             <div
                               id={`remote-player-${u.uid}`}
                               className="absolute inset-0 cursor-pointer"
+                              style={{ 
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                backgroundColor: '#000'
+                              }}
                               onClick={() => handleVideoClick("screen")}
                             />
                           </div>
