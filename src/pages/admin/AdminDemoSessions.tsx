@@ -40,7 +40,6 @@ export default function AdminDemoSessions() {
   const [demoSessions, setDemoSessions] = useState<DemoSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSession, setSelectedSession] = useState<DemoSession | null>(null);
-  const [scheduledDate, setScheduledDate] = useState('');
   const [adminNotes, setAdminNotes] = useState('');
   const [activeTab, setActiveTab] = useState('pending');
   const [showLinkDialog, setShowLinkDialog] = useState(false);
@@ -87,38 +86,19 @@ export default function AdminDemoSessions() {
   };
 
   const approveSession = async () => {
-    if (!selectedSession || !scheduledDate) {
+    if (!selectedSession) {
       toast({
         title: 'Missing Information',
-        description: 'Please select a date and time',
+        description: 'Please select a session',
         variant: 'destructive'
       });
       return;
     }
 
-    // Validate date
-    const selectedDate = new Date(scheduledDate);
-    const now = new Date();
-    const oneMonthFromNow = new Date();
-    oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
-    
-    if (selectedDate < now) {
-      toast({
-        title: 'Invalid Date',
-        description: 'Cannot schedule demo session in the past',
-        variant: 'destructive'
-      });
-      return;
-    }
-    
-    if (selectedDate > oneMonthFromNow) {
-      toast({
-        title: 'Invalid Date',
-        description: 'Cannot schedule demo session more than 1 month in advance',
-        variant: 'destructive'
-      });
-      return;
-    }
+    // Use the preferred date/time from the form submission
+    const scheduledDate = selectedSession.preferred_date && selectedSession.preferred_time
+      ? `${selectedSession.preferred_date}T${selectedSession.preferred_time}`
+      : new Date().toISOString();
 
     try {
       // Generate unique session_id and meeting link
@@ -439,43 +419,14 @@ export default function AdminDemoSessions() {
                                       </DialogDescription>
                                     </DialogHeader>
                                     <div className="space-y-4 py-4">
-                                      <div>
-                                        <Label htmlFor="scheduled_date">Scheduled Date & Time</Label>
-                                        <Input
-                                          id="scheduled_date"
-                                          type="datetime-local"
-                                          value={scheduledDate}
-                                          onChange={(e) => {
-                                            const selectedDate = new Date(e.target.value);
-                                            const now = new Date();
-                                            const oneMonthFromNow = new Date();
-                                            oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
-                                            
-                                            if (selectedDate < now) {
-                                              toast({
-                                                title: 'Invalid Date',
-                                                description: 'Cannot schedule demo session in the past',
-                                                variant: 'destructive'
-                                              });
-                                              return;
-                                            }
-                                            
-                                            if (selectedDate > oneMonthFromNow) {
-                                              toast({
-                                                title: 'Invalid Date',
-                                                description: 'Cannot schedule demo session more than 1 month in advance',
-                                                variant: 'destructive'
-                                              });
-                                              return;
-                                            }
-                                            
-                                            setScheduledDate(e.target.value);
-                                          }}
-                                          min={new Date().toISOString().slice(0, 16)}
-                                          max={new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16)}
-                                        />
-                                        <p className="text-xs text-gray-500 mt-1">
-                                          Must be between now and 1 month from today
+                                      <div className="p-4 bg-blue-50 rounded-lg space-y-2">
+                                        <p className="text-sm font-semibold text-blue-900">User's Preferred Schedule:</p>
+                                        <div className="space-y-1 text-sm text-blue-800">
+                                          <p><strong>Date:</strong> {session.preferred_date || 'Not specified'}</p>
+                                          <p><strong>Time:</strong> {session.preferred_time || 'Not specified'}</p>
+                                        </div>
+                                        <p className="text-xs text-gray-600 mt-2">
+                                          ℹ️ The demo session will be scheduled for the above date/time
                                         </p>
                                       </div>
                                       <div>

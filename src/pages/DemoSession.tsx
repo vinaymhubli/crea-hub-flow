@@ -1,54 +1,60 @@
-import { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import AgoraCall from "@/components/AgoraCall";
-import { ScreenShareModal } from "@/components/ScreenShareModal";
 import SessionSidePanel from "@/components/SessionSidePanel";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { Video } from 'lucide-react';
+import { Loader2 } from "lucide-react";
 
 interface DemoSessionData {
   id: string;
   session_id: string;
-  requester_name: string;
   status: string;
+  meeting_link: string;
   scheduled_date: string;
-  duration_minutes: number;
-  started_at: string | null;
-  ended_at: string | null;
+  requester_name: string;
+  requester_email: string;
 }
 
 export default function DemoSession() {
-  const { sessionId = "" } = useParams();
+  const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
-  const { user, profile, loading } = useAuth();
-  const isDesigner = profile?.user_type === "designer" || profile?.is_admin;
+  const { user, profile } = useAuth();
+  const isDesigner = profile?.user_type === "designer";
 
-  const [showScreenShare, setShowScreenShare] = useState(false);
-  const [participantName, setParticipantName] = useState('');
-  const [hasJoined, setHasJoined] = useState(false);
+  const [demoSession, setDemoSession] = useState<DemoSessionData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [joined, setJoined] = useState(false);
   const [bothJoined, setBothJoined] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
   const [duration, setDuration] = useState(0);
-  const [rate, setRate] = useState(50); // Demo rate (not used for billing)
+  const [rate, setRate] = useState(0);
   const [formatMultiplier, setFormatMultiplier] = useState(1);
+  const [isPaused, setIsPaused] = useState(false);
   const [screenShareNotification, setScreenShareNotification] = useState<string | null>(null);
   const [remoteScreenSharing, setRemoteScreenSharing] = useState(false);
-  const agoraCallRef = useRef<any>(null);
-  const [demoSession, setDemoSession] = useState<DemoSessionData | null>(null);
   const [isMobileSidePanelOpen, setIsMobileSidePanelOpen] = useState(false);
+  
+  // Demo-specific approval dialogs (formality only, no actual billing)
+  const [showRateApprovalDialog, setShowRateApprovalDialog] = useState(false);
+  const [showMultiplierApprovalDialog, setShowMultiplierApprovalDialog] = useState(false);
+  const [pendingRateChange, setPendingRateChange] = useState<number | null>(null);
+  const [pendingMultiplierChange, setPendingMultiplierChange] = useState<number | null>(null);
+  const [pendingFileFormat, setPendingFileFormat] = useState<string>('');
 
-  // Broadcast helper
+  const agoraCallRef = useRef<any>(null);
+
   const channel = useMemo(
-    () => supabase.channel(`demo_session_control_${sessionId}`),
+    () => supabase.channel(`demo_session_${sessionId}`),
     [sessionId]
   );
+
+  // 30-minute timer (1800 seconds)
+  const MAX_DURATION = 1800;
 
   // Close mobile panel if viewport grows beyond lg breakpoint
   useEffect(() => {
@@ -65,114 +71,82 @@ export default function DemoSession() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Load session data on component mount
   useEffect(() => {
-    if (sessionId) {
-      fetchDemoSession();
-    }
-  }, [sessionId]);
-
-  const fetchDemoSession = async () => {
-    try {
-      const { data, error } = await (supabase as any)
-        .from('demo_sessions')
-        .select('*')
-        .eq('session_id', sessionId)
-        .single();
-
-      if (error) throw error;
-
-      if (!data) {
-        toast.error('This demo session does not exist.');
-        navigate('/');
-        return;
-      }
-
-      if (data.status === 'expired' || data.status === 'completed') {
-        toast.error('This demo session has already ended.');
-        navigate('/');
-        return;
-      }
-
-      if (data.status !== 'approved') {
-        toast.error('This demo session is not yet approved.');
-        navigate('/');
-        return;
-      }
-
-      setDemoSession(data as DemoSessionData);
-    } catch (err: any) {
-      console.error('Error fetching demo session:', err);
-      toast.error('Failed to load demo session');
-      navigate('/');
-    }
-  };
-
-  const joinSession = async () => {
-    if (!participantName.trim()) {
-      toast.error('Please enter your name to join');
-      return;
-    }
-
-    try {
-      // Record participant
-      const { error } = await (supabase as any)
-        .from('demo_session_participants')
-        .insert({
-          demo_session_id: demoSession?.id,
-          participant_name: participantName,
-          participant_type: 'guest'
-        });
-
-      if (error) throw error;
-
-      // Update session start time if not already started
-      if (!demoSession?.started_at) {
-        await (supabase as any)
+    const loadDemoSession = async () => {
+      try {
+        const { data, error } = await (supabase as any)
           .from('demo_sessions')
-          .update({
-            started_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', demoSession?.id);
+          .select('*')
+          .eq('session_id', sessionId)
+          .eq('status', 'approved')
+          .single();
+
+        if (error) {
+          toast.error('Demo session not found or expired');
+          navigate('/');
+          return;
+        }
+
+        const sessionData = data as DemoSessionData;
+
+        // Check if session is expired (more than 24 hours after scheduled date)
+        const scheduledDate = new Date(sessionData.scheduled_date);
+        const now = new Date();
+        const hoursSinceScheduled = (now.getTime() - scheduledDate.getTime()) / (1000 * 60 * 60);
+
+        if (hoursSinceScheduled > 24) {
+          toast.error('This demo session has expired');
+          navigate('/');
+          return;
+        }
+
+        setDemoSession(sessionData);
+      } catch (error) {
+        console.error('Error loading demo session:', error);
+        toast.error('Failed to load demo session');
+        navigate('/');
+      } finally {
+        setLoading(false);
       }
+    };
 
-      setHasJoined(true);
-      toast.success('Joined successfully');
-    } catch (err: any) {
-      console.error('Error joining session:', err);
-      toast.error('Failed to join session');
-    }
-  };
+    loadDemoSession();
+  }, [sessionId, navigate]);
 
+  // Subscribe to real-time events
   useEffect(() => {
     const sub = channel
       .on("broadcast", { event: "session_pause" }, () => setIsPaused(true))
       .on("broadcast", { event: "session_resume" }, () => setIsPaused(false))
-      .on("broadcast", { event: "pricing_change" }, (p) =>
-        setRate(p.payload.newRate)
-      )
-      .on("broadcast", { event: "multiplier_change" }, (p) =>
-        setFormatMultiplier(p.payload.newMultiplier)
-      )
-      .on("broadcast", { event: "timer_sync" }, (p) => {
-        if (!isDesigner) setDuration(p.payload.duration);
+      .on("broadcast", { event: "rate_change_request" }, (p) => {
+        if (!isDesigner) {
+          setPendingRateChange(p.payload.newRate);
+          setShowRateApprovalDialog(true);
+        }
+      })
+      .on("broadcast", { event: "multiplier_change_request" }, (p) => {
+        if (!isDesigner) {
+          setPendingMultiplierChange(p.payload.newMultiplier);
+          setPendingFileFormat(p.payload.fileFormat || '');
+          setShowMultiplierApprovalDialog(true);
+        }
+      })
+      .on("broadcast", { event: "rate_change_approved" }, (p) => {
+        setRate(p.payload.newRate);
+        toast.success(`Rate changed to ₹${p.payload.newRate}/min (Demo only)`);
+      })
+      .on("broadcast", { event: "multiplier_change_approved" }, (p) => {
+        setFormatMultiplier(p.payload.newMultiplier);
+        toast.success(`Multiplier changed to ${p.payload.newMultiplier}x for ${p.payload.fileFormat} (Demo only)`);
       })
       .on("broadcast", { event: "screen_share_start" }, (p) => {
-        console.log("📡 Screen share started by:", p.payload);
         setRemoteScreenSharing(true);
-        setScreenShareNotification(
-          `${isDesigner ? "Customer" : "Designer"} is sharing their screen`
-        );
+        setScreenShareNotification(`${p.payload.sharedBy} is sharing their screen`);
         setTimeout(() => setScreenShareNotification(null), 3000);
       })
-      .on("broadcast", { event: "screen_share_stop" }, (p) => {
-        console.log("📡 Screen share stopped by:", p.payload);
+      .on("broadcast", { event: "screen_share_stop" }, () => {
         setRemoteScreenSharing(false);
-        setScreenShareNotification(
-          `${isDesigner ? "Customer" : "Designer"} stopped sharing`
-        );
-        setTimeout(() => setScreenShareNotification(null), 3000);
+        setScreenShareNotification(null);
       })
       .subscribe();
 
@@ -181,23 +155,23 @@ export default function DemoSession() {
     };
   }, [channel, isDesigner]);
 
-  // Timer tick
+  // Timer that runs for 30 minutes only (even if paused - demo purposes)
   useEffect(() => {
-    if (!isPaused && bothJoined) {
-      const interval = setInterval(() => {
-        setDuration((prev) => {
-          const newDuration = prev + 1;
-          // Auto-end after 30 minutes
-          if (newDuration >= 1800) {
-            handleEnd();
-            return prev;
-          }
-          return newDuration;
-        });
-      }, 1000);
-      return () => clearInterval(interval);
-    }
-  }, [isPaused, bothJoined]);
+    if (!bothJoined) return;
+
+    const interval = setInterval(() => {
+      setDuration((prev) => {
+        if (prev >= MAX_DURATION) {
+          clearInterval(interval);
+          handleEnd();
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [bothJoined]);
 
   const handleEnd = useCallback(async () => {
     try {
@@ -220,6 +194,7 @@ export default function DemoSession() {
 
   const handleLocalJoined = useCallback(() => {
     console.log("✅ Local user joined");
+    setJoined(true);
   }, []);
 
   const handleRemoteUserJoined = useCallback((remoteUserId: string | number) => {
@@ -253,133 +228,147 @@ export default function DemoSession() {
     channel.send({
       type: "broadcast",
       event: "screen_share_stop",
-      payload: { stoppedBy: isDesigner ? "Designer" : "Customer" },
+      payload: {},
     });
-  }, [channel, isDesigner]);
+  }, [channel]);
 
   const handleRemoteScreenShareStopped = useCallback(() => {
     console.log("📺 Remote screen share stopped");
     setRemoteScreenSharing(false);
+    setScreenShareNotification(null);
   }, []);
 
   const handlePauseSession = useCallback(() => {
     setIsPaused(true);
-    channel.send({
-      type: "broadcast",
-      event: "session_pause",
-      payload: {},
-    });
-  }, [channel]);
+    if (isDesigner) {
+      channel.send({ type: "broadcast", event: "session_pause", payload: {} });
+    }
+  }, [isDesigner, channel]);
 
   const handleResumeSession = useCallback(() => {
     setIsPaused(false);
-    channel.send({
-      type: "broadcast",
-      event: "session_resume",
-      payload: {},
-    });
-  }, [channel]);
+    if (isDesigner) {
+      channel.send({ type: "broadcast", event: "session_resume", payload: {} });
+    }
+  }, [isDesigner, channel]);
 
-  const handleRateChange = useCallback(
-    (newRate: number) => {
-      setRate(newRate);
+  const handleRateChange = useCallback((newRate: number) => {
+    if (isDesigner) {
+      // Send request to customer (formality only)
       channel.send({
         type: "broadcast",
-        event: "pricing_change",
-        payload: { newRate },
+        event: "rate_change_request",
+        payload: { newRate }
       });
-      toast.success(`Rate updated to ₹${newRate}/min (Demo only - no billing)`);
-    },
-    [channel]
-  );
+      toast.info("Rate change request sent (Demo only)");
+    }
+  }, [isDesigner, channel]);
 
-  const handleMultiplierChange = useCallback(
-    (newMultiplier: number, fileFormat?: string) => {
-      setFormatMultiplier(newMultiplier);
+  const handleMultiplierChange = useCallback((newMultiplier: number, fileFormat?: string) => {
+    if (isDesigner) {
+      // Send request to customer (formality only)
       channel.send({
         type: "broadcast",
-        event: "multiplier_change",
-        payload: { newMultiplier, fileFormat },
+        event: "multiplier_change_request",
+        payload: { newMultiplier, fileFormat }
       });
-      toast.success(`Multiplier updated to ${newMultiplier}x (Demo only - no billing)`);
-    },
-    [channel]
-  );
+      toast.info("Multiplier change request sent (Demo only)");
+    }
+  }, [isDesigner, channel]);
+
+  const approveRateChange = useCallback(() => {
+    if (pendingRateChange !== null) {
+      setRate(pendingRateChange);
+      channel.send({
+        type: "broadcast",
+        event: "rate_change_approved",
+        payload: { newRate: pendingRateChange }
+      });
+      toast.success(`Rate changed to ₹${pendingRateChange}/min (Demo only)`);
+    }
+    setShowRateApprovalDialog(false);
+    setPendingRateChange(null);
+  }, [pendingRateChange, channel]);
+
+  const rejectRateChange = useCallback(() => {
+    toast.info("Rate change rejected");
+    setShowRateApprovalDialog(false);
+    setPendingRateChange(null);
+  }, []);
+
+  const approveMultiplierChange = useCallback(() => {
+    if (pendingMultiplierChange !== null) {
+      setFormatMultiplier(pendingMultiplierChange);
+      channel.send({
+        type: "broadcast",
+        event: "multiplier_change_approved",
+        payload: { newMultiplier: pendingMultiplierChange, fileFormat: pendingFileFormat }
+      });
+      toast.success(`Multiplier changed to ${pendingMultiplierChange}x (Demo only)`);
+    }
+    setShowMultiplierApprovalDialog(false);
+    setPendingMultiplierChange(null);
+    setPendingFileFormat('');
+  }, [pendingMultiplierChange, pendingFileFormat, channel]);
+
+  const rejectMultiplierChange = useCallback(() => {
+    toast.info("Multiplier change rejected");
+    setShowMultiplierApprovalDialog(false);
+    setPendingMultiplierChange(null);
+    setPendingFileFormat('');
+  }, []);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p>Loading...</p>
+      <div className="h-screen flex items-center justify-center bg-gradient-to-br from-green-600 to-green-700">
+        <Loader2 className="w-8 h-8 animate-spin text-white" />
       </div>
     );
   }
 
-  if (!hasJoined) {
+  if (!joined) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-600 to-green-700 flex items-center justify-center p-4">
-        <div className="max-w-md w-full">
-          <Card className="shadow-2xl">
-            <CardHeader className="bg-gradient-to-r from-green-600 to-green-700 text-white">
-              <div className="flex items-center gap-3">
-                <Video className="w-6 h-6" />
-                <CardTitle>Join Demo Session</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="p-6 space-y-4">
-              <div className="space-y-2">
-                <p className="text-sm text-gray-600">
-                  <strong>Duration:</strong> 30 minutes
-                </p>
-                <p className="text-sm text-gray-600">
-                  <strong>Scheduled:</strong>{' '}
-                  {demoSession?.scheduled_date
-                    ? new Date(demoSession.scheduled_date).toLocaleString('en-IN')
-                    : 'Not scheduled'}
-                </p>
-              </div>
-
-              <Badge className="bg-yellow-500 text-black font-bold">
-                FREE DEMO SESSION - NO BILLING
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-600 to-green-700 p-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-8 space-y-6">
+            <div className="text-center space-y-4">
+              <Badge className="bg-yellow-500 text-black font-bold text-lg px-6 py-2">
+                FREE DEMO - NO BILLING
               </Badge>
-
-              <div className="space-y-2">
-                <Label htmlFor="participant_name">Your Name</Label>
-                <Input
-                  id="participant_name"
-                  type="text"
-                  placeholder="Enter your name"
-                  value={participantName}
-                  onChange={(e) => setParticipantName(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && joinSession()}
-                />
-              </div>
-
-              <Button
-                onClick={joinSession}
-                className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800"
-              >
-                Join Demo Session
-              </Button>
-
-              <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                <p className="text-xs text-green-800 font-semibold">✅ 100% Free Demo</p>
-                <p className="text-xs text-gray-600 mt-1">
-                  No billing, no payment required. Experience all live session features for free.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              <h1 className="text-2xl font-bold">Join Demo Session</h1>
+              <p className="text-gray-600">
+                This is a 30-minute free demo session to experience our platform.
+              </p>
+              <p className="text-sm text-gray-500">
+                Session ID: {sessionId}
+              </p>
+            </div>
+            <Button
+              onClick={() => setJoined(true)}
+              className="w-full py-6 text-lg"
+              size="lg"
+            >
+              Join Now
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
+
+  // Format duration display (always show 0:00 initially, then count up)
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   return (
     <div className="h-screen flex flex-col bg-black relative">
       {/* FREE DEMO Banner */}
       <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50">
         <Badge className="bg-yellow-500 text-black font-bold text-sm px-4 py-2">
-          FREE DEMO - NO BILLING
+          FREE DEMO - NO BILLING | Time: {formatDuration(duration)} / 30:00
         </Badge>
       </div>
 
@@ -400,11 +389,9 @@ export default function DemoSession() {
             onLocalJoined={handleLocalJoined}
             onRemoteUserJoined={handleRemoteUserJoined}
             onRemoteUserLeft={handleRemoteUserLeft}
-            onOpenShare={() => setShowScreenShare(true)}
             onScreenShareStarted={handleScreenShareStart}
             onScreenShareStopped={handleScreenShareStop}
             onRemoteScreenShareStopped={handleRemoteScreenShareStopped}
-            onSessionEnd={handleEnd}
             remoteScreenSharing={remoteScreenSharing}
             isPaused={isPaused}
             onPauseSession={handlePauseSession}
@@ -417,29 +404,83 @@ export default function DemoSession() {
 
         <SessionSidePanel
           sessionId={`demo_${sessionId}`}
-          designerName={isDesigner ? participantName : "Designer"}
-          customerName={!isDesigner ? participantName : "Customer"}
+          designerName="Demo Designer"
+          customerName="Demo Customer"
           isDesigner={isDesigner}
-          rate={rate}
           duration={duration}
+          rate={rate}
           balance={0}
-          formatMultiplier={formatMultiplier}
-          isPaused={isPaused}
           onPauseSession={handlePauseSession}
           onResumeSession={handleResumeSession}
+          isPaused={isPaused}
+          userId={user?.id || `guest_${Date.now()}`}
           onRateChange={handleRateChange}
           onMultiplierChange={handleMultiplierChange}
+          formatMultiplier={formatMultiplier}
           defaultTab="chat"
+          mobileMode={isMobileSidePanelOpen}
         />
       </div>
 
-      <ScreenShareModal
-        isOpen={showScreenShare}
-        onClose={() => setShowScreenShare(false)}
-        sessionId={`demo_${sessionId}`}
-        onScreenShareStarted={handleScreenShareStart}
-        onScreenShareStopped={handleScreenShareStop}
-      />
+      {isMobileSidePanelOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          onClick={() => setIsMobileSidePanelOpen(false)}
+        />
+      )}
+
+      {/* Mobile menu button */}
+      <button
+        className="lg:hidden fixed bottom-4 right-4 z-40 bg-blue-600 text-white p-4 rounded-full shadow-lg"
+        onClick={() => setIsMobileSidePanelOpen(true)}
+      >
+        <span className="sr-only">Open menu</span>
+        ☰
+      </button>
+
+      {/* Rate Change Approval Dialog (Demo formality) */}
+      <Dialog open={showRateApprovalDialog} onOpenChange={setShowRateApprovalDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rate Change Request (Demo)</DialogTitle>
+            <DialogDescription>
+              Designer wants to change the rate to ₹{pendingRateChange}/min
+              <br />
+              <span className="text-yellow-600 font-semibold">This is just for demonstration - no actual charges will apply.</span>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-4">
+            <Button onClick={approveRateChange} className="flex-1">
+              Approve (Demo)
+            </Button>
+            <Button onClick={rejectRateChange} variant="outline" className="flex-1">
+              Reject
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Multiplier Change Approval Dialog (Demo formality) */}
+      <Dialog open={showMultiplierApprovalDialog} onOpenChange={setShowMultiplierApprovalDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Multiplier Change Request (Demo)</DialogTitle>
+            <DialogDescription>
+              Designer wants to change the multiplier to {pendingMultiplierChange}x for {pendingFileFormat}
+              <br />
+              <span className="text-yellow-600 font-semibold">This is just for demonstration - no actual charges will apply.</span>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-4">
+            <Button onClick={approveMultiplierChange} className="flex-1">
+              Approve (Demo)
+            </Button>
+            <Button onClick={rejectMultiplierChange} variant="outline" className="flex-1">
+              Reject
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
