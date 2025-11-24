@@ -494,14 +494,18 @@ export default function SessionSidePanel({
       const messageText = newMessage.trim();
       setNewMessage("");
 
-      const messageData = {
+      const messageData: any = {
         session_id: sessionId,
-        booking_id: isDemo ? null : (bookingId || null), // Demo sessions don't have bookings
         content: messageText,
         sender_type: isDesigner ? "designer" : "customer",
         sender_name: senderName,
         sender_id: userId, // Can be UUID or email for demo sessions
       };
+      
+      // Only add booking_id for regular sessions (not demo)
+      if (!isDemo) {
+        messageData.booking_id = bookingId || null;
+      }
 
       // Create optimistic message for immediate UI update
       const optimisticMessage: ChatMessage = {
@@ -688,9 +692,8 @@ export default function SessionSidePanel({
           ? `📎 ${file.name} (Watermarked Preview)`
           : `📎 ${file.name}`;
 
-        const messageData = {
+        const messageData: any = {
           session_id: sessionId,
-          booking_id: isDemo ? null : (bookingId || null), // Demo sessions don't have bookings
           content: fileMessageContent,
           sender_type: isDesigner ? "designer" : "customer",
           sender_name: senderName,
@@ -700,6 +703,11 @@ export default function SessionSidePanel({
           file_size: fileToUpload.size,
           is_watermarked: isWatermarked,
         };
+        
+        // Only add booking_id for regular sessions (not demo)
+        if (!isDemo) {
+          messageData.booking_id = bookingId || null;
+        }
 
         const { data: messageDataResult, error: messageError } = await (supabase as any)
           .from(messagesTable)

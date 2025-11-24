@@ -159,49 +159,69 @@ export default function DemoSession() {
 
   // Subscribe to real-time events
   useEffect(() => {
-    const sub = channel
-      .on("broadcast", { event: "session_pause" }, () => setIsPaused(true))
-      .on("broadcast", { event: "session_resume" }, () => setIsPaused(false))
-      .on("broadcast", { event: "rate_change_request" }, (p) => {
-        console.log("📡 Received rate change request:", p.payload);
-        if (!isDesigner) {
-          setPendingRateChange(p.payload.newRate);
-          setShowRateApprovalDialog(true);
-        }
-      })
-      .on("broadcast", { event: "multiplier_change_request" }, (p) => {
-        console.log("📡 Received multiplier change request:", p.payload);
-        if (!isDesigner) {
-          setPendingMultiplierChange(p.payload.newMultiplier);
-          setPendingFileFormat(p.payload.fileFormat || '');
-          setShowMultiplierApprovalDialog(true);
-        }
-      })
-      .on("broadcast", { event: "rate_change_approved" }, (p) => {
-        console.log("📡 Rate change approved:", p.payload);
-        setRate(p.payload.newRate);
-        toast.success(`Rate changed to ₹${p.payload.newRate}/min (Demo only)`);
-      })
-      .on("broadcast", { event: "multiplier_change_approved" }, (p) => {
-        console.log("📡 Multiplier change approved:", p.payload);
-        setFormatMultiplier(p.payload.newMultiplier);
-        toast.success(`Multiplier changed to ${p.payload.newMultiplier}x for ${p.payload.fileFormat} (Demo only)`);
-      })
-      .on("broadcast", { event: "screen_share_start" }, (p) => {
-        setRemoteScreenSharing(true);
-        setScreenShareNotification(`${p.payload.sharedBy} is sharing their screen`);
-        setTimeout(() => setScreenShareNotification(null), 3000);
-      })
-      .on("broadcast", { event: "screen_share_stop" }, () => {
-        setRemoteScreenSharing(false);
-        setScreenShareNotification(null);
-      })
-      .subscribe();
+    if (!joined) return; // Only subscribe after user joins
+    
+    console.log("🔌 Setting up demo session broadcast channel:", `demo_session_${sessionId}`);
+    console.log("👤 User role:", isDesigner ? "Designer" : "Customer");
+    
+    const setupChannel = async () => {
+      const sub = channel
+        .on("broadcast", { event: "session_pause" }, () => {
+          console.log("📡 Received pause event");
+          setIsPaused(true);
+        })
+        .on("broadcast", { event: "session_resume" }, () => {
+          console.log("📡 Received resume event");
+          setIsPaused(false);
+        })
+        .on("broadcast", { event: "rate_change_request" }, (p) => {
+          console.log("📡 Received rate change request:", p.payload, "isDesigner:", isDesigner);
+          if (!isDesigner) {
+            setPendingRateChange(p.payload.newRate);
+            setShowRateApprovalDialog(true);
+          }
+        })
+        .on("broadcast", { event: "multiplier_change_request" }, (p) => {
+          console.log("📡 Received multiplier change request:", p.payload, "isDesigner:", isDesigner);
+          if (!isDesigner) {
+            setPendingMultiplierChange(p.payload.newMultiplier);
+            setPendingFileFormat(p.payload.fileFormat || '');
+            setShowMultiplierApprovalDialog(true);
+          }
+        })
+        .on("broadcast", { event: "rate_change_approved" }, (p) => {
+          console.log("📡 Rate change approved:", p.payload);
+          setRate(p.payload.newRate);
+          toast.success(`Rate changed to ₹${p.payload.newRate}/min (Demo only)`);
+        })
+        .on("broadcast", { event: "multiplier_change_approved" }, (p) => {
+          console.log("📡 Multiplier change approved:", p.payload);
+          setFormatMultiplier(p.payload.newMultiplier);
+          toast.success(`Multiplier changed to ${p.payload.newMultiplier}x for ${p.payload.fileFormat} (Demo only)`);
+        })
+        .on("broadcast", { event: "screen_share_start" }, (p) => {
+          console.log("📡 Received screen share start:", p.payload);
+          setRemoteScreenSharing(true);
+          setScreenShareNotification(`${p.payload.sharedBy} is sharing their screen`);
+          setTimeout(() => setScreenShareNotification(null), 3000);
+        })
+        .on("broadcast", { event: "screen_share_stop" }, () => {
+          console.log("📡 Received screen share stop");
+          setRemoteScreenSharing(false);
+          setScreenShareNotification(null);
+        });
+        
+      await sub.subscribe();
+      console.log("✅ Demo session broadcast channel subscribed");
+    };
+
+    setupChannel();
 
     return () => {
-      sub.unsubscribe();
+      console.log("🔌 Unsubscribing from demo session broadcast channel");
+      channel.unsubscribe();
     };
-  }, [channel, isDesigner]);
+  }, [channel, isDesigner, joined, sessionId]);
 
   // Timer that counts up (not paused by isPaused - just counts total session time)
   useEffect(() => {
@@ -262,22 +282,24 @@ export default function DemoSession() {
     }, 2000); // Give 2 seconds to show the message
   }, [handleEnd]);
 
-  const handleScreenShareStart = useCallback(() => {
+  const handleScreenShareStart = useCallback(async () => {
     console.log("📺 Local screen share started");
-    channel.send({
+    await channel.send({
       type: "broadcast",
       event: "screen_share_start",
       payload: { sharedBy: isDesigner ? "Designer" : "Customer" },
     });
+    console.log("✅ Screen share start sent via broadcast");
   }, [channel, isDesigner]);
 
-  const handleScreenShareStop = useCallback(() => {
+  const handleScreenShareStop = useCallback(async () => {
     console.log("📺 Local screen share stopped");
-    channel.send({
+    await channel.send({
       type: "broadcast",
       event: "screen_share_stop",
       payload: {},
     });
+    console.log("✅ Screen share stop sent via broadcast");
   }, [channel]);
 
   const handleRemoteScreenShareStopped = useCallback(() => {
@@ -300,40 +322,43 @@ export default function DemoSession() {
     }
   }, [isDesigner, channel]);
 
-  const handleRateChange = useCallback((newRate: number) => {
+  const handleRateChange = useCallback(async (newRate: number) => {
     console.log("💰 Designer requesting rate change to:", newRate);
     if (isDesigner) {
       // Send request to customer (formality only)
-      channel.send({
+      await channel.send({
         type: "broadcast",
         event: "rate_change_request",
         payload: { newRate }
       });
+      console.log("✅ Rate change request sent via broadcast");
       toast.info("Rate change request sent (Demo only - no actual charges)");
     }
   }, [isDesigner, channel]);
 
-  const handleMultiplierChange = useCallback((newMultiplier: number, fileFormat?: string) => {
+  const handleMultiplierChange = useCallback(async (newMultiplier: number, fileFormat?: string) => {
     console.log("📊 Designer requesting multiplier change to:", newMultiplier, "for format:", fileFormat);
     if (isDesigner) {
       // Send request to customer (formality only)
-      channel.send({
+      await channel.send({
         type: "broadcast",
         event: "multiplier_change_request",
         payload: { newMultiplier, fileFormat }
       });
+      console.log("✅ Multiplier change request sent via broadcast");
       toast.info("Multiplier change request sent (Demo only - no actual charges)");
     }
   }, [isDesigner, channel]);
 
-  const approveRateChange = useCallback(() => {
+  const approveRateChange = useCallback(async () => {
     if (pendingRateChange !== null) {
       setRate(pendingRateChange);
-      channel.send({
+      await channel.send({
         type: "broadcast",
         event: "rate_change_approved",
         payload: { newRate: pendingRateChange }
       });
+      console.log("✅ Rate change approval sent via broadcast");
       toast.success(`Rate changed to ₹${pendingRateChange}/min (Demo only)`);
     }
     setShowRateApprovalDialog(false);
@@ -346,14 +371,15 @@ export default function DemoSession() {
     setPendingRateChange(null);
   }, []);
 
-  const approveMultiplierChange = useCallback(() => {
+  const approveMultiplierChange = useCallback(async () => {
     if (pendingMultiplierChange !== null) {
       setFormatMultiplier(pendingMultiplierChange);
-      channel.send({
+      await channel.send({
         type: "broadcast",
         event: "multiplier_change_approved",
         payload: { newMultiplier: pendingMultiplierChange, fileFormat: pendingFileFormat }
       });
+      console.log("✅ Multiplier change approval sent via broadcast");
       toast.success(`Multiplier changed to ${pendingMultiplierChange}x (Demo only)`);
     }
     setShowMultiplierApprovalDialog(false);
