@@ -25,19 +25,25 @@ export default function DemoSession() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const isDesigner = profile?.user_type === "designer";
+  
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isDesigner, setIsDesigner] = useState(false);
+  const [checkingAdmin, setCheckingAdmin] = useState(true);
 
   const [demoSession, setDemoSession] = useState<DemoSessionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [joined, setJoined] = useState(false);
   const [bothJoined, setBothJoined] = useState(false);
   const [duration, setDuration] = useState(0);
-  const [rate, setRate] = useState(0);
+  const [rate, setRate] = useState(50); // Demo rate
   const [formatMultiplier, setFormatMultiplier] = useState(1);
   const [isPaused, setIsPaused] = useState(false);
   const [screenShareNotification, setScreenShareNotification] = useState<string | null>(null);
   const [remoteScreenSharing, setRemoteScreenSharing] = useState(false);
   const [isMobileSidePanelOpen, setIsMobileSidePanelOpen] = useState(false);
+  
+  // Email for guest users
+  const [guestEmail, setGuestEmail] = useState('');
   
   // Demo-specific approval dialogs (formality only, no actual billing)
   const [showRateApprovalDialog, setShowRateApprovalDialog] = useState(false);
@@ -70,6 +76,43 @@ export default function DemoSession() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // Check if user is admin
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (!user) {
+        // Guest user = Customer
+        setIsAdmin(false);
+        setIsDesigner(false);
+        setCheckingAdmin(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase.rpc('is_admin', {
+          user_uuid: user.id
+        });
+
+        if (error) {
+          console.error('Error checking admin status:', error);
+          setIsAdmin(false);
+          setIsDesigner(false);
+        } else {
+          const adminStatus = data === true;
+          setIsAdmin(adminStatus);
+          setIsDesigner(adminStatus); // Admin = Designer in demo session
+        }
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        setIsAdmin(false);
+        setIsDesigner(false);
+      } finally {
+        setCheckingAdmin(false);
+      }
+    };
+
+    checkAdminStatus();
+  }, [user]);
 
   useEffect(() => {
     const loadDemoSession = async () => {
@@ -119,12 +162,14 @@ export default function DemoSession() {
       .on("broadcast", { event: "session_pause" }, () => setIsPaused(true))
       .on("broadcast", { event: "session_resume" }, () => setIsPaused(false))
       .on("broadcast", { event: "rate_change_request" }, (p) => {
+        console.log("📡 Received rate change request:", p.payload);
         if (!isDesigner) {
           setPendingRateChange(p.payload.newRate);
           setShowRateApprovalDialog(true);
         }
       })
       .on("broadcast", { event: "multiplier_change_request" }, (p) => {
+        console.log("📡 Received multiplier change request:", p.payload);
         if (!isDesigner) {
           setPendingMultiplierChange(p.payload.newMultiplier);
           setPendingFileFormat(p.payload.fileFormat || '');
@@ -132,10 +177,12 @@ export default function DemoSession() {
         }
       })
       .on("broadcast", { event: "rate_change_approved" }, (p) => {
+        console.log("📡 Rate change approved:", p.payload);
         setRate(p.payload.newRate);
         toast.success(`Rate changed to ₹${p.payload.newRate}/min (Demo only)`);
       })
       .on("broadcast", { event: "multiplier_change_approved" }, (p) => {
+        console.log("📡 Multiplier change approved:", p.payload);
         setFormatMultiplier(p.payload.newMultiplier);
         toast.success(`Multiplier changed to ${p.payload.newMultiplier}x for ${p.payload.fileFormat} (Demo only)`);
       })
@@ -155,9 +202,9 @@ export default function DemoSession() {
     };
   }, [channel, isDesigner]);
 
-  // Timer that runs for 30 minutes only (even if paused - demo purposes)
+  // Timer that counts up (not paused by isPaused - just counts total session time)
   useEffect(() => {
-    if (!bothJoined) return;
+    if (!joined) return; // Start timer when local user joins
 
     const interval = setInterval(() => {
       setDuration((prev) => {
@@ -171,7 +218,7 @@ export default function DemoSession() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [bothJoined]);
+  }, [joined]); // Changed from bothJoined to joined - start when YOU join
 
   const handleEnd = useCallback(async () => {
     try {
@@ -193,18 +240,18 @@ export default function DemoSession() {
   }, [demoSession, navigate]);
 
   const handleLocalJoined = useCallback(() => {
-    console.log("✅ Local user joined");
+    console.log("✅ Local user joined demo session");
     setJoined(true);
   }, []);
 
   const handleRemoteUserJoined = useCallback((remoteUserId: string | number) => {
-    console.log("✅ Remote user joined:", remoteUserId);
+    console.log("✅ Remote user joined demo session:", remoteUserId);
     setBothJoined(true);
-    toast.success("Participant joined");
+    toast.success("Participant joined the demo session!");
   }, []);
 
   const handleRemoteUserLeft = useCallback(async (remoteUserId: string | number) => {
-    console.log("❌ Remote user left:", remoteUserId);
+    console.log("❌ Remote user left demo session:", remoteUserId);
     setBothJoined(false);
     toast.info("Participant disconnected - ending demo session");
     
@@ -253,6 +300,7 @@ export default function DemoSession() {
   }, [isDesigner, channel]);
 
   const handleRateChange = useCallback((newRate: number) => {
+    console.log("💰 Designer requesting rate change to:", newRate);
     if (isDesigner) {
       // Send request to customer (formality only)
       channel.send({
@@ -260,11 +308,12 @@ export default function DemoSession() {
         event: "rate_change_request",
         payload: { newRate }
       });
-      toast.info("Rate change request sent (Demo only)");
+      toast.info("Rate change request sent (Demo only - no actual charges)");
     }
   }, [isDesigner, channel]);
 
   const handleMultiplierChange = useCallback((newMultiplier: number, fileFormat?: string) => {
+    console.log("📊 Designer requesting multiplier change to:", newMultiplier, "for format:", fileFormat);
     if (isDesigner) {
       // Send request to customer (formality only)
       channel.send({
@@ -272,7 +321,7 @@ export default function DemoSession() {
         event: "multiplier_change_request",
         payload: { newMultiplier, fileFormat }
       });
-      toast.info("Multiplier change request sent (Demo only)");
+      toast.info("Multiplier change request sent (Demo only - no actual charges)");
     }
   }, [isDesigner, channel]);
 
@@ -291,7 +340,7 @@ export default function DemoSession() {
   }, [pendingRateChange, channel]);
 
   const rejectRateChange = useCallback(() => {
-    toast.info("Rate change rejected");
+    toast.info("Rate change request rejected");
     setShowRateApprovalDialog(false);
     setPendingRateChange(null);
   }, []);
@@ -312,19 +361,38 @@ export default function DemoSession() {
   }, [pendingMultiplierChange, pendingFileFormat, channel]);
 
   const rejectMultiplierChange = useCallback(() => {
-    toast.info("Multiplier change rejected");
+    toast.info("Multiplier change request rejected");
     setShowMultiplierApprovalDialog(false);
     setPendingMultiplierChange(null);
     setPendingFileFormat('');
   }, []);
 
-  if (loading) {
+  if (loading || checkingAdmin) {
     return (
       <div className="h-screen flex items-center justify-center bg-gradient-to-br from-green-600 to-green-700">
         <Loader2 className="w-8 h-8 animate-spin text-white" />
       </div>
     );
   }
+
+  const handleJoinSession = () => {
+    // Check if guest user has entered email
+    if (!user && !guestEmail.trim()) {
+      toast.error('Please enter your email to join the demo session');
+      return;
+    }
+
+    // Validate email format for guest users
+    if (!user && guestEmail.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(guestEmail)) {
+        toast.error('Please enter a valid email address');
+        return;
+      }
+    }
+
+    setJoined(true);
+  };
 
   if (!joined) {
     return (
@@ -339,13 +407,49 @@ export default function DemoSession() {
               <p className="text-gray-600">
                 This is a 30-minute free demo session to experience our platform.
               </p>
+              {isAdmin && (
+                <Badge className="bg-blue-600 text-white px-3 py-1">
+                  Joining as Designer (Admin)
+                </Badge>
+              )}
+              {!isAdmin && user && (
+                <Badge className="bg-green-600 text-white px-3 py-1">
+                  Joining as Customer
+                </Badge>
+              )}
+              {!user && (
+                <Badge className="bg-purple-600 text-white px-3 py-1">
+                  Joining as Guest Customer
+                </Badge>
+              )}
               <p className="text-sm text-gray-500">
                 Session ID: {sessionId}
               </p>
             </div>
+
+            {/* Email input for guest users */}
+            {!user && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Email Address *
+                </label>
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={guestEmail}
+                  onChange={(e) => setGuestEmail(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  required
+                />
+                <p className="text-xs text-gray-500">
+                  Required to join the demo session
+                </p>
+              </div>
+            )}
+
             <Button
-              onClick={() => setJoined(true)}
-              className="w-full py-6 text-lg"
+              onClick={handleJoinSession}
+              className="w-full py-6 text-lg bg-green-600 hover:bg-green-700"
               size="lg"
             >
               Join Now
@@ -356,7 +460,7 @@ export default function DemoSession() {
     );
   }
 
-  // Format duration display (always show 0:00 initially, then count up)
+  // Format duration display
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -382,7 +486,7 @@ export default function DemoSession() {
         <div className={`flex-1 transition-all duration-300 ${isMobileSidePanelOpen ? '' : 'lg:mr-80'}`}>
           <AgoraCall
             ref={agoraCallRef}
-            sessionId={`demo_${sessionId}`}
+            sessionId={sessionId!} // Use the actual session ID directly, not `demo_${sessionId}`
             userId={user?.id || `guest_${Date.now()}`}
             isDesigner={isDesigner}
             onEndByDesigner={handleEnd}
@@ -403,17 +507,17 @@ export default function DemoSession() {
         </div>
 
         <SessionSidePanel
-          sessionId={`demo_${sessionId}`}
-          designerName="Demo Designer"
-          customerName="Demo Customer"
+          sessionId={sessionId!}
+          designerName={isDesigner ? (profile?.first_name && profile?.last_name ? `${profile.first_name} ${profile.last_name}` : "Admin Designer") : "Demo Designer"}
+          customerName={!isDesigner ? (user ? (profile?.first_name && profile?.last_name ? `${profile.first_name} ${profile.last_name}` : "Customer") : guestEmail) : "Demo Customer"}
           isDesigner={isDesigner}
           duration={duration}
           rate={rate}
-          balance={0}
+          balance={9999999} // Unlimited balance for demo
           onPauseSession={handlePauseSession}
           onResumeSession={handleResumeSession}
           isPaused={isPaused}
-          userId={user?.id || `guest_${Date.now()}`}
+          userId={user?.id || `guest_${guestEmail}`}
           onRateChange={handleRateChange}
           onMultiplierChange={handleMultiplierChange}
           formatMultiplier={formatMultiplier}
@@ -446,7 +550,7 @@ export default function DemoSession() {
             <DialogDescription>
               Designer wants to change the rate to ₹{pendingRateChange}/min
               <br />
-              <span className="text-yellow-600 font-semibold">This is just for demonstration - no actual charges will apply.</span>
+              <span className="text-yellow-600 font-semibold">⚠️ This is just for demonstration - no actual charges will apply.</span>
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-4">
@@ -468,7 +572,7 @@ export default function DemoSession() {
             <DialogDescription>
               Designer wants to change the multiplier to {pendingMultiplierChange}x for {pendingFileFormat}
               <br />
-              <span className="text-yellow-600 font-semibold">This is just for demonstration - no actual charges will apply.</span>
+              <span className="text-yellow-600 font-semibold">⚠️ This is just for demonstration - no actual charges will apply.</span>
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-4">
