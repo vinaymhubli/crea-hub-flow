@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -35,7 +35,7 @@ interface DemoSession {
 }
 
 export default function AdminDemoSessions() {
-  const { user } = useAdminAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [demoSessions, setDemoSessions] = useState<DemoSession[]>([]);
   const [loading, setLoading] = useState(true);
@@ -96,9 +96,19 @@ export default function AdminDemoSessions() {
     }
 
     // Use the preferred date/time from the form submission
-    const scheduledDate = selectedSession.preferred_date && selectedSession.preferred_time
-      ? `${selectedSession.preferred_date}T${selectedSession.preferred_time}`
-      : new Date().toISOString();
+    const scheduledDateIso = (() => {
+      if (selectedSession.preferred_date && selectedSession.preferred_time) {
+        const [startTimeRaw] = selectedSession.preferred_time.split('-');
+        const startTime = startTimeRaw?.trim();
+        if (startTime) {
+          const parsed = new Date(`${selectedSession.preferred_date}T${startTime}`);
+          if (!isNaN(parsed.getTime())) {
+            return parsed.toISOString();
+          }
+        }
+      }
+      return new Date().toISOString();
+    })();
 
     try {
       // Generate unique session_id and meeting link
@@ -109,12 +119,12 @@ export default function AdminDemoSessions() {
       const meetingLink = `${window.location.origin}/demo-session/${generatedId}`;
 
       // Update demo session
-      const { error: updateError } = await supabase
+      const { error: updateError } = await (supabase as any)
         .from('demo_sessions')
         .update({
           status: 'approved',
           session_id: generatedId,
-          scheduled_date: scheduledDate,
+          scheduled_date: scheduledDateIso,
           meeting_link: meetingLink,
           admin_notes: adminNotes,
           created_by: user?.id,
@@ -141,7 +151,6 @@ export default function AdminDemoSessions() {
       });
       
       setSelectedSession(null);
-      setScheduledDate('');
       setAdminNotes('');
     } catch (err: any) {
       console.error('Error approving session:', err);
