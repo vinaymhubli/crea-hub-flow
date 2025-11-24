@@ -31,6 +31,7 @@ interface SessionSidePanelProps {
   formatMultiplier?: number;
   defaultTab?: string;
   mobileMode?: boolean;
+  isDemo?: boolean; // NEW: Flag for demo sessions
 }
 
 interface ChatMessage {
@@ -108,7 +109,11 @@ export default function SessionSidePanel({
   formatMultiplier = 1,
   defaultTab = "billing",
   mobileMode = false,
+  isDemo = false, // NEW: Default to false (regular session)
 }: SessionSidePanelProps) {
+  // Determine which tables to use based on session type
+  const messagesTable = isDemo ? "demo_session_messages" : "session_messages";
+  const filesTable = isDemo ? "demo_session_files" : "session_files";
   // SessionSidePanel rendered
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -224,7 +229,7 @@ export default function SessionSidePanel({
         {
           event: "INSERT",
           schema: "public",
-          table: "session_messages",
+          table: messagesTable,
           filter: `session_id=eq.${sessionId}`,
         },
         (payload) => {
@@ -365,9 +370,9 @@ export default function SessionSidePanel({
 
   const loadMessages = async () => {
     try {
-      console.log("🔄 Loading messages for session:", sessionId);
+      console.log("🔄 Loading messages for session:", sessionId, "from table:", messagesTable);
       const { data, error } = await (supabase as any)
-        .from("session_messages")
+        .from(messagesTable)
         .select("*")
         .eq("session_id", sessionId)
         .order("created_at", { ascending: true });
@@ -491,11 +496,11 @@ export default function SessionSidePanel({
 
       const messageData = {
         session_id: sessionId,
-        booking_id: bookingId || null,
+        booking_id: isDemo ? null : (bookingId || null), // Demo sessions don't have bookings
         content: messageText,
         sender_type: isDesigner ? "designer" : "customer",
         sender_name: senderName,
-        sender_id: userId,
+        sender_id: userId, // Can be UUID or email for demo sessions
       };
 
       // Create optimistic message for immediate UI update
@@ -512,7 +517,7 @@ export default function SessionSidePanel({
       setMessages((prev) => [...prev, optimisticMessage]);
 
       const { data, error } = await (supabase as any)
-        .from("session_messages")
+        .from(messagesTable)
         .insert(messageData)
         .select()
         .single();
@@ -570,6 +575,22 @@ export default function SessionSidePanel({
   ) => {
     const file = event.target.files?.[0];
     if (!file || !userId) return;
+
+    // Demo session file size limit: 2MB
+    const MAX_DEMO_FILE_SIZE = 2 * 1024 * 1024; // 2MB in bytes
+    
+    if (isDemo && file.size > MAX_DEMO_FILE_SIZE) {
+      toast({
+        title: "File Too Large",
+        description: "Demo sessions have a 2MB file size limit. Please choose a smaller file.",
+        variant: "destructive",
+      });
+      // Reset file input
+      if (event.target) {
+        event.target.value = '';
+      }
+      return;
+    }
 
     try {
       setIsUploading(true);
@@ -669,11 +690,11 @@ export default function SessionSidePanel({
 
         const messageData = {
           session_id: sessionId,
-          booking_id: bookingId || null,
+          booking_id: isDemo ? null : (bookingId || null), // Demo sessions don't have bookings
           content: fileMessageContent,
           sender_type: isDesigner ? "designer" : "customer",
           sender_name: senderName,
-          sender_id: userId,
+          sender_id: userId, // Can be UUID or email for demo sessions
           file_url: publicUrl,
           file_name: file.name,
           file_size: fileToUpload.size,
@@ -681,7 +702,7 @@ export default function SessionSidePanel({
         };
 
         const { data: messageDataResult, error: messageError } = await (supabase as any)
-          .from("session_messages")
+          .from(messagesTable)
           .insert(messageData)
           .select()
           .single();

@@ -44,6 +44,7 @@ export default function DemoSession() {
   
   // Email for guest users
   const [guestEmail, setGuestEmail] = useState('');
+  const [guestUserId, setGuestUserId] = useState('');
   
   // Demo-specific approval dialogs (formality only, no actual billing)
   const [showRateApprovalDialog, setShowRateApprovalDialog] = useState(false);
@@ -375,6 +376,20 @@ export default function DemoSession() {
     );
   }
 
+  // Generate a valid UUID v4 for guest users
+  const generateGuestUUID = (email: string, sessionId: string) => {
+    // Create a deterministic but unique UUID based on email + session
+    const hash = btoa(email + sessionId).replace(/[^a-zA-Z0-9]/g, '');
+    const uuid = [
+      hash.substring(0, 8),
+      hash.substring(8, 12),
+      '4' + hash.substring(13, 16), // version 4
+      ((parseInt(hash.substring(16, 18), 36) & 0x3f) | 0x80).toString(16).padStart(2, '0') + hash.substring(18, 20),
+      hash.substring(20, 32)
+    ].join('-');
+    return uuid;
+  };
+
   const handleJoinSession = () => {
     // Check if guest user has entered email
     if (!user && !guestEmail.trim()) {
@@ -389,6 +404,11 @@ export default function DemoSession() {
         toast.error('Please enter a valid email address');
         return;
       }
+      
+      // Generate a valid UUID v4 for this guest user
+      const guestId = generateGuestUUID(guestEmail, sessionId!);
+      console.log('Generated guest UUID:', guestId);
+      setGuestUserId(guestId);
     }
 
     setJoined(true);
@@ -486,8 +506,8 @@ export default function DemoSession() {
         <div className={`flex-1 transition-all duration-300 ${isMobileSidePanelOpen ? '' : 'lg:mr-80'}`}>
           <AgoraCall
             ref={agoraCallRef}
-            sessionId={sessionId!} // Use the actual session ID directly, not `demo_${sessionId}`
-            userId={user?.id || `guest_${Date.now()}`}
+            sessionId={sessionId!} // Use the actual session ID directly
+            userId={user?.id || guestUserId}
             isDesigner={isDesigner}
             onEndByDesigner={handleEnd}
             onLocalJoined={handleLocalJoined}
@@ -517,12 +537,13 @@ export default function DemoSession() {
           onPauseSession={handlePauseSession}
           onResumeSession={handleResumeSession}
           isPaused={isPaused}
-          userId={user?.id || `guest_${guestEmail}`}
+          userId={user?.id || guestEmail} // Use guest email as identifier
           onRateChange={handleRateChange}
           onMultiplierChange={handleMultiplierChange}
           formatMultiplier={formatMultiplier}
           defaultTab="chat"
           mobileMode={isMobileSidePanelOpen}
+          isDemo={true} // NEW: This is a demo session
         />
       </div>
 
